@@ -1,0 +1,36 @@
+# Various IDEs and Editors
+.vscode/
+.idea/
+**/*~
+
+# Mac OSX temporary files
+.DS_Store
+**/.DS_Store
+
+# dfx temporary files
+.dfx/
+
+# Vessel
+.vessel/
+
+# frontend code
+node_modules/
+dist/
+
+# debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# env files
+.env
+
+# Mops
+.mops/
+
+# Typescript
+**/tsconfig.tsbuildinfo
+
+# Canister declaration files
+src/declarations/tester/
