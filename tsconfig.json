@@ -4,7 +4,7 @@
     "useDefineForClassFields": true,
     "lib": ["DOM", "DOM.Iterable", "ESNext"],
     "allowJs": false,
-    "baseUrl": "./frontend",
+    // "baseUrl": "./frontend",
     "skipLibCheck": true,
     "esModuleInterop": false,
     "allowSyntheticDefaultImports": true,
@@ -17,10 +17,10 @@
     "noEmit": true,
     "jsx": "react-jsx",
     "paths": {
-      "@/*": ["/src/*"],
-      "@test-utils": ["/test-utils"]
+      "@/*": ["./src/frontend/src/*"],
+      "@test-utils": ["./src/frontend//test-utils"]
     }
   },
-  "include": ["frontend/test-utils"],
+  "include": ["./src/frontend/src", "./src/declarations", "./src/frontend/test-utils"],
   "references": [{ "path": "./tsconfig.node.json" }]
 }

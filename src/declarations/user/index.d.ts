@@ -3,11 +3,11 @@ import type {
     HttpAgentOptions,
     ActorConfig,
     Agent,
-} from "@dfinity/agent";
-import type { Principal } from "@dfinity/principal";
-import type { IDL } from "@dfinity/candid";
+} from '@dfinity/agent';
+import type { Principal } from '@dfinity/principal';
+import type { IDL } from '@dfinity/candid';
 
-import { _SERVICE } from "./user.did";
+import { _SERVICE } from './user.did';
 
 export declare const idlFactory: IDL.InterfaceFactory;
 export declare const canisterId: string;
