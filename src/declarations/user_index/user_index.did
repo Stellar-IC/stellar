@@ -1,0 +1,21 @@
+type Result = 
+ variant {
+   err;
+   ok: vec principal;
+ };
+type RegisterUserResult = 
+ variant {
+   err: RegisterUserError;
+   ok: principal;
+ };
+type RegisterUserError = 
+ variant {
+   anonymousUser;
+   insufficientCycles;
+   userNotFound;
+ };
+service : {
+  registerUser: () -> (RegisterUserResult);
+  users: () -> (Result) query;
+  walletBalance: () -> (nat);
+}
