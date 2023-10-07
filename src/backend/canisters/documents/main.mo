@@ -270,6 +270,11 @@ actor Documents {
         );
     };
 
+    let timer = setTimer(
+        #nanoseconds(0),
+        processEvents,
+    );
+
     system func preupgrade() {
         let transformedData = RBTree.RBTree<Nat, Types.ShareableBlock>(Nat.compare);
         for (block in state.data.Block.objects.data.entries()) {
@@ -291,9 +296,6 @@ actor Documents {
         stable_blocks := #leaf;
         stable_blocks_id_counter := 0;
 
-        let timer = setTimer(
-            #nanoseconds(0),
-            processEvents,
-        );
+       
     };
 };
