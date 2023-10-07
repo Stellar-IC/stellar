@@ -28,7 +28,6 @@ export default defineConfig({
     ...initCanisterEnv(),
     'process.env.DFX_NETWORK': `"${process.env.DFX_NETWORK}"`,
     'process.env.DFX_VERSION': `"${process.env.DFX_VERSION}"`,
-    // global: 'window',
   },
   plugins: [react()],
   build: {
