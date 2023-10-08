@@ -16,14 +16,14 @@ module {
     public func execute(
         state : State.State,
         user_principal : Principal,
-        input : Types.CreatePageServiceInput,
-    ) : async Types.CreatePageServiceOutput {
+        input : Types.Services.CreatePageService.CreatePageServiceInput,
+    ) : async Types.Services.CreatePageService.CreatePageServiceOutput {
         if (Principal.isAnonymous(user_principal)) {
             return #err(#anonymousUser);
         };
 
         let content_block_uuid = await Source.Source().new();
-        let content_block : Types.UnsavedBlock = {
+        let content_block : BlocksTypes.UnsavedBlock = {
             blockType = #paragraph;
             uuid = content_block_uuid;
             var content = [];
@@ -34,7 +34,7 @@ module {
             parent = ?input.uuid;
         };
 
-        let page_to_create : Types.UnsavedPage = {
+        let page_to_create : BlocksTypes.UnsavedBlock = {
             blockType = #page;
             uuid = input.uuid;
             var content = [content_block.uuid];
@@ -75,7 +75,7 @@ module {
                         Tree.toShareableTree(title);
                     };
                 };
-                let shareableProperties : Types.ShareableBlockProperties = {
+                let shareableProperties : BlocksTypes.ShareableBlockProperties = {
                     block.properties with title = ?shareableTitle;
                 };
 
@@ -90,7 +90,7 @@ module {
         };
     };
 
-    private func _validate(input : Types.UnsavedPage) : Result.Result<(), { #anonymousUser; #inputTooLong; #invalidBlockType }> {
+    private func _validate(input : BlocksTypes.UnsavedBlock) : Result.Result<(), { #anonymousUser; #inputTooLong; #invalidBlockType }> {
         if (Array.size<UUID.UUID>(input.content) > MAX_CONTENT_SIZE) {
             return #err(#inputTooLong);
         };

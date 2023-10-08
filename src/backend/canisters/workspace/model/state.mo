@@ -1,19 +1,13 @@
-import Debug "mo:base/Debug";
-import Principal "mo:base/Principal";
-import Nat "mo:base/Nat";
-import Hash "mo:base/Hash";
-import HashMap "mo:base/HashMap";
-import Text "mo:base/Text";
 import List "mo:base/List";
-import Iter "mo:base/Iter";
 import RBTree "mo:base/RBTree";
-import TrieMap "mo:base/TrieMap";
-import Bool "mo:base/Bool";
 import Result "mo:base/Result";
+import Text "mo:base/Text";
 import Order "mo:base/Order";
 import UUID "mo:uuid/UUID";
 
-import { Block = BlockModule } "../../../lib/blocks/models";
+import { Workspace = WorkspaceModel } "../../../lib/workspaces/models";
+import BlocksModels "../../../lib/blocks/models";
+import WorkspacesTypes "../../../lib/workspaces/types";
 import BlocksTypes "../../../lib/blocks/types";
 import IdManager "../../../utils/data/id_manager";
 import CoreTypes "../../../types";
@@ -21,6 +15,9 @@ import CoreTypes "../../../types";
 import Types "../types";
 
 module {
+    type PrimaryKey = Types.PrimaryKey;
+    type UnsavedWorkspace = WorkspacesTypes.UnsavedWorkspace;
+
     public class State(_data : Data) {
         public var data = _data;
     };
@@ -33,7 +30,7 @@ module {
             };
         }
     ) {
-        public var Block = BlockModule.Block(initial_value.blocks.id, initial_value.blocks.data);
+        public var Block = BlocksModels.Block.Block(initial_value.blocks.id, initial_value.blocks.data);
 
         // Red-black trees to index orders by product ID and products by order ID
         var blocks_by_parent_uuid = RBTree.RBTree<Text, List.List<BlocksTypes.PrimaryKey>>(Text.compare);
@@ -71,6 +68,26 @@ module {
         public func deleteBlock(id : Types.PrimaryKey) : () {
             Block.objects.delete(id);
             ignore _removeBlockFromBlocksByParentIdIndex(id);
+        };
+
+        public func deleteBlockByUuid(uuid : UUID.UUID) : () {
+            let block = Block.objects.indexFilter(
+                "uuid",
+                #text(UUID.toText(uuid)),
+            ).first();
+
+            let blockId = switch (block) {
+                case (null) {
+                    // Block not found, nothing to do
+                    return;
+                };
+                case (?block) {
+                    deleteBlock(block.id);
+                    block.id;
+                };
+            };
+
+            ignore _removeBlockFromBlocksByParentIdIndex(blockId);
         };
 
         public func addPageBlock(

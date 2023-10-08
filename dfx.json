@@ -12,6 +12,10 @@
       "main": "src/backend/canisters/documents/main.mo",
       "type": "motoko"
     },
+    "workspace_index": {
+      "main": "src/backend/canisters/workspace_index/main.mo",
+      "type": "motoko"
+    },
     "user_index": {
       "main": "src/backend/canisters/user_index/main.mo",
       "type": "motoko"

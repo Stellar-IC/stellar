@@ -3,83 +3,77 @@ import Debug "mo:base/Debug";
 import List "mo:base/List";
 import Result "mo:base/Result";
 import RBTree "mo:base/RBTree";
-import Time "mo:base/Time";
-import { setTimer } = "mo:base/Timer";
+import Nat "mo:base/Nat";
+import Principal "mo:base/Principal";
+import Timer = "mo:base/Timer";
 import UUID "mo:uuid/UUID";
 import Source "mo:uuid/async/SourceV4";
-import Nat "mo:base/Nat";
-import Iter "mo:base/Iter";
-
-import CoreTypes "../../types";
-
-import BlockCreatedConsumer "./consumers/BlockCreatedConsumer";
-import BlockUpdatedConsumer "./consumers/BlockUpdatedConsumer";
-import BlockRemovedConsumer "./consumers/BlockRemovedConsumer";
-import State "./model/state";
-import CreatePage "./services/create_page";
-import UpdateBlock "./services/update_block";
-import Types "./types";
 
 import BlocksModels "../../lib/blocks/models";
-import Tree "../../utils/data/lseq/Tree";
-import Events "../../utils/data/lseq/Events";
+import BlocksTypes "../../lib/blocks/types";
+import CoreTypes "../../types";
+import LseqEvents "../../utils/data/lseq/Events";
+import LseqTree "../../utils/data/lseq/Tree";
 
-actor Documents {
-    stable var stable_blocks : RBTree.Tree<Types.PrimaryKey, Types.ShareableBlock> = #leaf;
+import BlockCreatedConsumer "./consumers/BlockCreatedConsumer";
+import BlockRemovedConsumer "./consumers/BlockRemovedConsumer";
+import BlockUpdatedConsumer "./consumers/BlockUpdatedConsumer";
+import State "./model/state";
+import Types "./types";
+
+actor class Workspace(
+    initArgs : {
+        capacity : Nat;
+        ownerPrincipal : Principal;
+        workspaceIndexPrincipal : Principal;
+    }
+) {
+    /*************************************************************************
+     * Types
+     *************************************************************************/
+
+    type BlockByUuidResult = Types.Queries.BlockByUuid.BlockByUuidResult;
+    type PrimaryKey = Types.PrimaryKey;
+    type ShareableBlock = BlocksTypes.ShareableBlock;
+
+    /*************************************************************************
+     * Stable Data
+     *************************************************************************/
+
+    stable var stable_blocks : RBTree.Tree<PrimaryKey, ShareableBlock> = #leaf;
     stable var stable_blocks_id_counter = 0;
+
+    /*************************************************************************
+     * Transient Data
+     *************************************************************************/
 
     var state = State.State(State.Data({ blocks = { id = stable_blocks_id_counter; data = stable_blocks } }));
 
-    type AddBlockInput = Types.UnsavedBlock;
+    let eventStream = LseqEvents.EventStream<BlocksTypes.BlockEvent>();
 
-    public query func blockByUuid(uuid : UUID.UUID) : async Result.Result<Types.ShareableBlock, { #blockNotFound }> {
-        switch (state.data.getBlockByUuid(uuid)) {
-            case (#err(err)) {
-                #err(err);
-            };
-            case (#ok(block)) {
-                #ok(BlocksModels.Block.toShareable(block));
-            };
-        };
-    };
+    /*************************************************************************
+     * Queries
+     *************************************************************************/
 
-    public query func page(id : Types.PrimaryKey) : async Result.Result<Types.ShareablePage, { #pageNotFound }> {
-        switch (state.data.getPage(id)) {
-            case (#err(err)) {
-                #err(err);
-            };
-            case (#ok(block)) {
-                #ok(BlocksModels.Block.toShareable(block));
-            };
-        };
-    };
-
-    public query func pageByUuid(uuid : UUID.UUID) : async Result.Result<Types.ShareablePage, { #pageNotFound }> {
-        switch (state.data.getPageByUuid(uuid)) {
-            case (#err(err)) {
-                #err(err);
-            };
-            case (#ok(block)) {
-                #ok(BlocksModels.Block.toShareable(block));
-            };
-        };
-    };
-
-    public query func pages(
+    public query ({ caller }) func pages(
         options : {
-            cursor : ?Types.PrimaryKey;
+            cursor : ?PrimaryKey;
             limit : ?Nat;
             order : ?CoreTypes.SortOrder;
         }
-    ) : async CoreTypes.PaginatedResults<Types.ShareablePage> {
+    ) : async CoreTypes.PaginatedResults<ShareableBlock> {
+        if (caller != initArgs.ownerPrincipal) {
+            return { edges = [] };
+        };
+
         let { cursor; limit; order } = options;
         let pages = state.data.getPages(cursor, limit, order);
         let result = {
-            edges = List.toArray<CoreTypes.Edge<Types.ShareableBlock>>(
-                List.map<Types.Block, CoreTypes.Edge<Types.ShareableBlock>>(
+            edges = List.toArray<CoreTypes.Edge<ShareableBlock>>(
+                List.map<BlocksTypes.Block, CoreTypes.Edge<ShareableBlock>>(
                     pages,
-                    func(page) {
-                        { node = BlocksModels.Block.toShareable(page) };
+                    func(block) {
+                        { node = BlocksModels.Block.toShareable(block) };
                     },
                 )
             );
@@ -88,28 +82,55 @@ actor Documents {
         return result;
     };
 
-    public shared ({ caller }) func createPage(input : Types.CreatePageUpdateInput) : async Types.CreatePageUpdateOutput {
-        await CreatePage.execute(state, caller, input);
+    /*************************************************************************
+     * Updates
+     *************************************************************************/
+
+    public shared ({ caller }) func addBlock(input : Types.Updates.AddBlockUpdate.AddBlockUpdateInput) : async Types.Updates.AddBlockUpdate.AddBlockUpdateOutput {
+        var block_id = state.data.addBlock(BlocksModels.Block.fromShareableUnsaved(input));
+
+        switch (block_id) {
+            case (#err(#keyAlreadyExists)) {
+                #err;
+            };
+            case (#ok(id, block)) {
+                #ok(block);
+            };
+        };
     };
 
-    let eventStream = Events.EventStream<Types.BlockEvent>();
+    public shared ({ caller }) func updateBlock(input : Types.Updates.UpdateBlockUpdate.UpdateBlockUpdateInput) : async Types.Updates.UpdateBlockUpdate.UpdateBlockUpdateOutput {
+        let result = state.data.updateBlock(BlocksModels.Block.fromShareable(input));
 
-    public shared ({ caller }) func saveEvent(input : Types.SaveEventUpdateInput) : async Types.SaveEventUpdateOutput {
-        Debug.print("saveEvent");
+        switch (result) {
+            case (#err(err)) {
+                #err(err);
+            };
+            case (#ok(pk, block)) {
+                #ok(BlocksModels.Block.toShareable(block));
+            };
+        };
+    };
+
+    public shared ({ caller }) func removeBlock(input : Types.Updates.RemoveBlockUpdate.RemoveBlockUpdateInput) : async Types.Updates.RemoveBlockUpdate.RemoveBlockUpdateOutput {
+        return #ok(state.data.deleteBlockByUuid(input.uuid));
+    };
+
+    public shared ({ caller }) func saveEvent(input : Types.Updates.SaveEventUpdate.SaveEventUpdateInput) : async Types.Updates.SaveEventUpdate.SaveEventUpdateOutput {
         switch (input) {
             case (#blockCreated(input)) {
                 let title = switch (input.payload.block.properties.title) {
                     case (null) {
-                        Tree.Tree(null);
+                        LseqTree.Tree(null);
                     };
                     case (?title) {
-                        Tree.fromShareableTree(title);
+                        LseqTree.fromShareableTree(title);
                     };
                 };
 
                 let block = BlocksModels.Block.fromShareableUnsaved(input.payload.block);
 
-                let event : { #blockCreated : Types.BlockCreatedEvent } = #blockCreated({
+                let event : { #blockCreated : BlocksTypes.BlockCreatedEvent } = #blockCreated({
                     uuid = await Source.Source().new();
                     eventType = input.eventType;
                     data = {
@@ -122,7 +143,7 @@ actor Documents {
                 return #ok();
             };
             case (#blockUpdated(input)) {
-                let event : { #blockUpdated : Types.BlockUpdatedEvent } = #blockUpdated({
+                let event : { #blockUpdated : BlocksTypes.BlockUpdatedEvent } = #blockUpdated({
                     uuid = await Source.Source().new();
                     eventType = input.eventType;
                     data = input.payload;
@@ -132,7 +153,7 @@ actor Documents {
                 return #ok();
             };
             case (#blockRemoved(input)) {
-                let event : { #blockRemoved : Types.BlockRemovedEvent } = #blockRemoved({
+                let event : { #blockRemoved : BlocksTypes.BlockRemovedEvent } = #blockRemoved({
                     uuid = await Source.Source().new();
                     eventType = input.eventType;
                     data = input.payload;
@@ -149,33 +170,11 @@ actor Documents {
         Debug.trap("Unknown event type");
     };
 
-    public shared ({ caller }) func addBlock(input : Types.AddBlockUpdateInput) : async Types.AddBlockUpdateOutput {
-        var block_id = state.data.addBlock(BlocksModels.Block.fromShareableUnsaved(input));
+    /*************************************************************************
+     * Event Handling
+     *************************************************************************/
 
-        switch (block_id) {
-            case (#err(#keyAlreadyExists)) {
-                #err;
-            };
-            case (#ok(id, block)) {
-                #ok(block);
-            };
-        };
-    };
-
-    public shared ({ caller }) func updateBlock(input : Types.UpdateBlockUpdateInput) : async Types.UpdateBlockUpdateOutput {
-        let result = state.data.updateBlock(BlocksModels.Block.fromShareable(input));
-
-        switch (result) {
-            case (#err(err)) {
-                #err(err);
-            };
-            case (#ok(pk, block)) {
-                #ok(BlocksModels.Block.toShareable(block));
-            };
-        };
-    };
-
-    func logEvent(event : Types.BlockEvent) : () {
+    func logEvent(event : BlocksTypes.BlockEvent) : () {
         Debug.print("");
         Debug.print("Logging event");
         switch (event) {
@@ -239,13 +238,17 @@ actor Documents {
         );
     };
 
-    let timer = setTimer(
+    let timer = Timer.setTimer(
         #nanoseconds(0),
         processEvents,
     );
 
+    /*************************************************************************
+     * System Functions
+     *************************************************************************/
+
     system func preupgrade() {
-        let transformedData = RBTree.RBTree<Nat, Types.ShareableBlock>(Nat.compare);
+        let transformedData = RBTree.RBTree<Nat, BlocksTypes.ShareableBlock>(Nat.compare);
 
         for (block in state.data.Block.objects.data.entries()) {
             transformedData.put(block.0, BlocksModels.Block.toShareable(block.1));

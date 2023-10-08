@@ -68,6 +68,7 @@
     "postcss-preset-mantine": "1.6.0",
     "postcss-simple-vars": "^7.0.1",
     "prettier": "^2.8.8",
+    "prettier-plugin-motoko": "^0.8.1",
     "prop-types": "^15.8.1",
     "storybook": "^7.0.18",
     "storybook-dark-mode": "^3.0.0",

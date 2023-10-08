@@ -1,77 +1,24 @@
 import Array "mo:base/Array";
+import Char "mo:base/Char";
+import Principal "mo:base/Principal";
 import Result "mo:base/Result";
 import UUID "mo:uuid/UUID";
-import Principal "mo:base/Principal";
+import BlocksTypes "../../lib/blocks/types";
 import Tree "../../utils/data/lseq/Tree";
 import TreeTypes "../../utils/data/lseq/types";
-import Char "mo:base/Char";
 
 module Types {
-    public type PrimaryKey = Nat;
-    public type BlockText = Tree.Tree;
-    public type ShareableBlockText = TreeTypes.ShareableTree;
-    public type BlockContent = [UUID.UUID]; // TODO: Should be a tree
-    public type BlockProperties = {
-        title : ?BlockText;
-        checked : ?Bool;
-    };
-    public type ShareableBlockProperties = {
-        title : ?ShareableBlockText;
-        checked : ?Bool;
-    };
-    public type BlockType = {
-        #heading1;
-        #heading2;
-        #heading3;
-        #page;
-        #paragraph;
-    };
-    public type UnsavedBlock = {
-        uuid : UUID.UUID;
-        blockType : BlockType;
-        var content : BlockContent;
-        parent : ?UUID.UUID;
-        properties : BlockProperties;
-    };
-    public type Block = UnsavedBlock and {
-        id : PrimaryKey;
-    };
-    public type ShareableUnsavedBlock = {
-        uuid : UUID.UUID;
-        blockType : BlockType;
-        content : BlockContent;
-        parent : ?UUID.UUID;
-        properties : ShareableBlockProperties;
-    };
-    public type ShareableBlock = ShareableUnsavedBlock and {
-        id : PrimaryKey;
-    };
+    public type Block = BlocksTypes.Block;
+    public type BlockContent = BlocksTypes.BlockContent;
+    public type BlockProperties = BlocksTypes.BlockProperties;
+    public type BlockType = BlocksTypes.BlockType;
+    public type ShareableBlock = BlocksTypes.ShareableBlock;
+    public type ShareableBlockProperties = BlocksTypes.ShareableBlockProperties;
+    public type ShareablePage = BlocksTypes.ShareableBlock;
+    public type UnsavedBlock = BlocksTypes.UnsavedBlock;
+    public type UnsavedPage = BlocksTypes.UnsavedBlock;
 
-    public type UnsavedPage = {
-        uuid : UUID.UUID;
-        blockType : BlockType;
-        var content : BlockContent;
-        parent : ?UUID.UUID;
-        properties : BlockProperties;
-    };
-    public type Page = UnsavedPage and {
-        id : PrimaryKey;
-    };
-    public type ShareablePage = {
-        id : PrimaryKey;
-        uuid : UUID.UUID;
-        blockType : BlockType;
-        content : BlockContent;
-        parent : ?UUID.UUID;
-        properties : ShareableBlockProperties;
-    };
-    public type BlockAttr = {
-        #id;
-        #blockType;
-        #parent;
-        #content;
-        #properties;
-    };
+    public type PrimaryKey = Nat;
 
     public type BlockCreatedEvent = {
         uuid : UUID.UUID;
@@ -164,6 +111,7 @@ module Types {
             properties : ShareableBlockProperties;
         };
     };
+
     public type Transaction = {
         #insert : {
             transactionType : { #insert };
@@ -175,6 +123,7 @@ module Types {
             position : TreeTypes.NodeIdentifier;
         };
     };
+
     public type SaveEventUpdateInput = {
         #blockCreated : {
             eventType : { #blockCreated };
