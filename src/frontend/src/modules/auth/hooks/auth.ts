@@ -19,7 +19,9 @@ export const useAuthState = () => {
   const [isHydrating, setIsHydrating] = useState(false);
   const [userId, setUserId] = useState<Principal>(Principal.anonymous());
   const [identity, setIdentity] = useState<Identity>(new AnonymousIdentity());
-  const [profile, setProfile] = useState<UserProfile>(new AnonymousUserProfile());
+  const [profile, setProfile] = useState<UserProfile>(
+    new AnonymousUserProfile()
+  );
   const { hydrate } = useHydrate();
 
   const login = async (options: { identityProvider: string }) => {
@@ -69,7 +71,8 @@ export const useAuthState = () => {
 
   return {
     identity,
-    isAuthenticated: identity instanceof DelegationIdentity && !userId.isAnonymous(),
+    isAuthenticated:
+      identity instanceof DelegationIdentity && !userId.isAnonymous(),
     isLoading: isLoading || isHydrating,
     profile,
     userId,

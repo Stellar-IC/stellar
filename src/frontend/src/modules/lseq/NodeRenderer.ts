@@ -38,12 +38,20 @@ export class NodeRenderer {
     this.ctx.fillText(this.node.value, this.x + radius, this.y + radius);
 
     this.ctx.fillStyle = 'red';
-    this.ctx.fillText(nodeIdentifier, this.x + radius, this.y + radius + lineHeight);
+    this.ctx.fillText(
+      nodeIdentifier,
+      this.x + radius,
+      this.y + radius + lineHeight
+    );
 
     this.ctx.fillStyle = '#000';
 
     if (!this.node.deletedAt) {
-      this.ctx.fillText(`${this.nodePosition}`, this.x + radius, this.y + radius + lineHeight * 3);
+      this.ctx.fillText(
+        `${this.nodePosition}`,
+        this.x + radius,
+        this.y + radius + lineHeight * 3
+      );
     }
   }
 }

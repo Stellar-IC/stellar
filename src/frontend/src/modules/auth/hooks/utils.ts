@@ -21,7 +21,9 @@ const createAuthenticatedUserIndexActor = (identity: DelegationIdentity) =>
  * @param identity
  * @returns Principal - user id
  */
-export const registerUser = async (identity: DelegationIdentity): Promise<Principal> => {
+export const registerUser = async (
+  identity: DelegationIdentity
+): Promise<Principal> => {
   const logger = baseLogger.getLogger('auth');
   const userIndex = createAuthenticatedUserIndexActor(identity);
 
@@ -37,7 +39,10 @@ export const registerUser = async (identity: DelegationIdentity): Promise<Princi
   return result.ok;
 };
 
-export const getUserProfile = async (args: { userId: Principal; identity: DelegationIdentity }) => {
+export const getUserProfile = async (args: {
+  userId: Principal;
+  identity: DelegationIdentity;
+}) => {
   const logger = baseLogger.getLogger('auth');
 
   const { userId, identity } = args;
@@ -48,7 +53,8 @@ export const getUserProfile = async (args: { userId: Principal; identity: Delega
   });
   const result = await userActor.profile();
 
-  if (!('ok' in result)) throw new Error("There was an error getting user's profile");
+  if (!('ok' in result))
+    throw new Error("There was an error getting user's profile");
 
   logger.info('Retrieved profile for user:', result.ok.username[0]);
 

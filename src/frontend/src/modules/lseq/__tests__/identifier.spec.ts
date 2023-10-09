@@ -12,7 +12,9 @@ describe('Identifier', () => {
   describe('#subtract', () => {
     test('throws if identifier is empty', () => {
       const identifier = new Identifier.Identifier([]);
-      expect(() => Identifier.subtract(identifier, 1)).toThrow('Identifier must not be empty');
+      expect(() => Identifier.subtract(identifier, 1)).toThrow(
+        'Identifier must not be empty'
+      );
     });
 
     test('throws if constant is greater than base at deepest level', () => {

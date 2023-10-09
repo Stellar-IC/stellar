@@ -11,7 +11,9 @@ import { useUpdate } from '../../useUpdate';
 export const useCreatePage = (
   options: { identity?: Identity } = {}
 ): [
-  (input: Omit<CreatePageUpdateInput, 'uuid'>) => Promise<CreatePageUpdateOutput>,
+  (
+    input: Omit<CreatePageUpdateInput, 'uuid'>
+  ) => Promise<CreatePageUpdateOutput>,
   { data: CreatePageUpdateOutput | null; isLoading: boolean }
 ] => {
   const { actor, canisterId } = useDocumentsActor(options);

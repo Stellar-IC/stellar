@@ -26,19 +26,31 @@ describe('Interval', () => {
     test('returns an interval with the right value', () => {
       let interval: Interval.Interval;
 
-      interval = Interval.between(new Identifier([1, 2, 3]), new Identifier([1, 2, 3]));
+      interval = Interval.between(
+        new Identifier([1, 2, 3]),
+        new Identifier([1, 2, 3])
+      );
       expect(interval.value).toEqual([0, 0, 0]);
 
-      interval = Interval.between(new Identifier([1, 2, 3]), new Identifier([1, 2, 4]));
+      interval = Interval.between(
+        new Identifier([1, 2, 3]),
+        new Identifier([1, 2, 4])
+      );
       expect(interval.value).toEqual([0, 0, 0]);
 
-      interval = Interval.between(new Identifier([1, 2, 3]), new Identifier([1, 2, 5]));
+      interval = Interval.between(
+        new Identifier([1, 2, 3]),
+        new Identifier([1, 2, 5])
+      );
       expect(interval.value).toEqual([0, 0, 1]);
 
       interval = Interval.between(new Identifier([1]), new Identifier([2]));
       expect(interval.value).toEqual([0]);
 
-      interval = Interval.between(new Identifier([1, 0]), new Identifier([2, 0]));
+      interval = Interval.between(
+        new Identifier([1, 0]),
+        new Identifier([2, 0])
+      );
       expect(interval.value).toEqual(new Identifier([0, 31]));
 
       // Note:
@@ -46,10 +58,16 @@ describe('Interval', () => {
       // In the example, the only acceptable insertion point is [14, 31, 0]. Instead, the algorithm
       // was returning [14, 31, 0, 2] as the insertion point. This caused an error because there is
       // no node at [14, 31, 0].
-      interval = Interval.between(new Identifier([14, 31, 0, 0]), new Identifier([14, 31, 1, 0]));
+      interval = Interval.between(
+        new Identifier([14, 31, 0, 0]),
+        new Identifier([14, 31, 1, 0])
+      );
       expect(interval.value).toEqual([0, 0, 0, 127]);
 
-      interval = Interval.between(new Identifier([12, 0]), new Identifier([13, 0]));
+      interval = Interval.between(
+        new Identifier([12, 0]),
+        new Identifier([13, 0])
+      );
       expect(interval.value).toEqual([0, 31]);
     });
   });

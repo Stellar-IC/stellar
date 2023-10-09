@@ -9,7 +9,13 @@ import {
   Tooltip,
   rem,
 } from '@mantine/core';
-import { IconBulb, IconUser, IconCheckbox, IconSearch, IconPlus } from '@tabler/icons-react';
+import {
+  IconBulb,
+  IconUser,
+  IconCheckbox,
+  IconSearch,
+  IconPlus,
+} from '@tabler/icons-react';
 import { AuthButton } from '../AuthButton/AuthButton';
 import classes from './NavbarSearch.module.css';
 
@@ -53,7 +59,9 @@ export function NavbarSearch() {
       key={collection.label}
       className={classes.collectionLink}
     >
-      <span style={{ marginRight: rem(9), fontSize: rem(16) }}>{collection.emoji}</span>{' '}
+      <span style={{ marginRight: rem(9), fontSize: rem(16) }}>
+        {collection.emoji}
+      </span>{' '}
       {collection.label}
     </a>
   ));
@@ -67,7 +75,12 @@ export function NavbarSearch() {
       <TextInput
         placeholder="Search"
         size="xs"
-        leftSection={<IconSearch style={{ width: rem(12), height: rem(12) }} stroke={1.5} />}
+        leftSection={
+          <IconSearch
+            style={{ width: rem(12), height: rem(12) }}
+            stroke={1.5}
+          />
+        }
         rightSectionWidth={70}
         rightSection={<Code className={classes.searchCode}>Ctrl + K</Code>}
         styles={{ section: { pointerEvents: 'none' } }}
@@ -85,7 +98,10 @@ export function NavbarSearch() {
           </Text>
           <Tooltip label="Create collection" withArrow position="right">
             <ActionIcon variant="default" size={18}>
-              <IconPlus style={{ width: rem(12), height: rem(12) }} stroke={1.5} />
+              <IconPlus
+                style={{ width: rem(12), height: rem(12) }}
+                stroke={1.5}
+              />
             </ActionIcon>
           </Tooltip>
         </Group>

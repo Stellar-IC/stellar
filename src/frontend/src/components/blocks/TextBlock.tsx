@@ -73,7 +73,8 @@ export const TextBlock = ({
           if (e.key.match(/^[\w\W]$/g)) {
             const cursorPosition = window.getSelection()?.anchorOffset;
 
-            if (cursorPosition === undefined) throw new Error('No cursor position');
+            if (cursorPosition === undefined)
+              throw new Error('No cursor position');
 
             onInsert(cursorPosition, e.key);
           }

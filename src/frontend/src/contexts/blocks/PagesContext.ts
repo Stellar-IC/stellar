@@ -21,5 +21,9 @@ export const PagesContext = createContext<{
   };
   addBlock: (pageexternalId: UUID, blockType: BlockType, index: number) => void;
   removeBlock: (pageexternalId: UUID, blockExternalId: UUID) => void;
-  updateBlock: (pageexternalId: UUID, blockExternalId: UUID, transactions: Transaction[]) => void;
+  updateBlock: (
+    pageexternalId: UUID,
+    blockExternalId: UUID,
+    transactions: Transaction[]
+  ) => void;
 } | null>(null);

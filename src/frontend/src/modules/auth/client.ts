@@ -1,4 +1,8 @@
-import { DelegationIdentity, DelegationChain, Ed25519KeyIdentity } from '@dfinity/identity';
+import {
+  DelegationIdentity,
+  DelegationChain,
+  Ed25519KeyIdentity,
+} from '@dfinity/identity';
 
 import { AuthClient, IdbStorage } from '@dfinity/auth-client';
 import { AnonymousIdentity, Identity, SignIdentity } from '@dfinity/agent';
@@ -14,7 +18,10 @@ export async function getIdentity() {
   const chain: DelegationChain = DelegationChain.fromJSON(delegationChain!);
   const key: Ed25519KeyIdentity = Ed25519KeyIdentity.fromJSON(identityKey!);
 
-  const identity: DelegationIdentity = DelegationIdentity.fromDelegation(key, chain);
+  const identity: DelegationIdentity = DelegationIdentity.fromDelegation(
+    key,
+    chain
+  );
   return identity;
 }
 

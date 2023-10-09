@@ -7,10 +7,14 @@ export function useUpdate<ArgsT extends unknown[], DataT>(
   canisterId: CanisterId,
   query: ActorMethod<ArgsT, DataT>,
   options?: { arguments?: ArgsT }
-): [(input: ArgsT) => Promise<DataT>, { data: DataT | null; isLoading: boolean }] {
+): [
+  (input: ArgsT) => Promise<DataT>,
+  { data: DataT | null; isLoading: boolean }
+] {
   const context = useQueryContext();
 
-  if (!context) throw new Error('useUpdate must be used within a QueryContextProvider');
+  if (!context)
+    throw new Error('useUpdate must be used within a QueryContextProvider');
 
   const { send } = context;
   const [data, setData] = useState<DataT | null>(null);

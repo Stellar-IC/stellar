@@ -1,7 +1,11 @@
 import { Container, Stack } from '@mantine/core';
 import { useParams } from 'react-router-dom';
 import { Blocks } from '@/components/blocks/Blocks';
-import { Page, PageNavigation, PageSection } from '@/components/layout/page/Page';
+import {
+  Page,
+  PageNavigation,
+  PageSection,
+} from '@/components/layout/page/Page';
 import { useEffect } from 'react';
 import { parse } from 'uuid';
 import { usePagesContext } from '@/contexts/blocks/usePagesContext';

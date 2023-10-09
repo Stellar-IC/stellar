@@ -28,7 +28,8 @@ export const useAuthContext = () => {
 };
 
 export const AuthContextProvider = ({ children }: PropsWithChildren) => {
-  const { login, identity, isAuthenticated, isLoading, userId, profile } = useAuthState();
+  const { login, identity, isAuthenticated, isLoading, userId, profile } =
+    useAuthState();
 
   const serializedProfile: SerializedUserProfile = {
     ...profile,

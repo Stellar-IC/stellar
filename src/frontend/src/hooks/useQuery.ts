@@ -2,14 +2,23 @@ import { useCallback, useState } from 'react';
 import { stringify } from 'uuid';
 import { UUID } from '../../../declarations/documents/documents.did';
 
-export function useQuery<ArgsT extends unknown[], ReturnT extends object, DataT, StorageDataT>(
+export function useQuery<
+  ArgsT extends unknown[],
+  ReturnT extends object,
+  DataT,
+  StorageDataT
+>(
   queryName: string,
   queryFn: (...args: ArgsT) => Promise<ReturnT>,
   options: {
     initialData?: Record<string, DataT>;
     serialize: (data: ReturnT) => DataT | null;
-    prepareForStorage: (data: Record<string, DataT>) => Record<string, StorageDataT>;
-    prepareFromStorage: (data: Record<string, StorageDataT>) => Record<string, DataT>;
+    prepareForStorage: (
+      data: Record<string, DataT>
+    ) => Record<string, StorageDataT>;
+    prepareFromStorage: (
+      data: Record<string, StorageDataT>
+    ) => Record<string, DataT>;
     onSuccess?: (result: ReturnT) => void;
     getExternalId: (result: ReturnT) => UUID | null;
   }
@@ -39,8 +48,10 @@ export function useQuery<ArgsT extends unknown[], ReturnT extends object, DataT,
   );
 
   const loadFromLocalStorage = useCallback(
-    // eslint-disable-next-line @typescript-eslint/no-shadow
-    (queryName: string, options: { onSuccess: (result: Record<string, DataT>) => void }) => {
+    (
+      queryName: string,
+      options: { onSuccess: (result: Record<string, DataT>) => void }
+    ) => {
       // eslint-disable-next-line @typescript-eslint/no-shadow
       const { onSuccess } = options;
       const storageData = localStorage.getItem(`data.${queryName}`);
@@ -75,7 +86,10 @@ export function useQuery<ArgsT extends unknown[], ReturnT extends object, DataT,
             };
             const dataForStorage = prepareForStorage(updatedData);
 
-            localStorage.setItem(`data.${queryName}`, JSON.stringify(dataForStorage));
+            localStorage.setItem(
+              `data.${queryName}`,
+              JSON.stringify(dataForStorage)
+            );
 
             return { ..._data, ...updatedData };
           });
@@ -97,7 +111,14 @@ export function useQuery<ArgsT extends unknown[], ReturnT extends object, DataT,
 
       return loadFromRemote();
     },
-    [loadFromIC, loadFromLocalStorage, queryName, serialize, getExternalId, prepareForStorage]
+    [
+      loadFromIC,
+      loadFromLocalStorage,
+      queryName,
+      serialize,
+      getExternalId,
+      prepareForStorage,
+    ]
   );
 
   const updateLocal = useCallback(

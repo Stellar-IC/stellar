@@ -9,7 +9,13 @@ import { BlockWithActions } from './BlockWithActions';
 import { HeadingBlock } from './HeadingBlock';
 import { TextBlock } from './TextBlock';
 
-export const BlockRenderer = ({ externalId, index }: { externalId: string; index: number }) => {
+export const BlockRenderer = ({
+  externalId,
+  index,
+}: {
+  externalId: string;
+  index: number;
+}) => {
   const { identity } = useAuthContext();
   const { addBlock, blocks } = usePagesContext();
   const { query, insertCharacter, removeCharacter } = useBlockByUuid({
@@ -50,14 +56,18 @@ export const BlockRenderer = ({ externalId, index }: { externalId: string; index
               const blocksDiv = document.querySelector('.Blocks');
               if (!blocksDiv) return;
               const blockToFocus =
-                blocksDiv.querySelectorAll<HTMLDivElement>('.TextBlock')[index + 1];
+                blocksDiv.querySelectorAll<HTMLDivElement>('.TextBlock')[
+                  index + 1
+                ];
               blockToFocus.querySelector('span')?.focus();
             }, 0);
           }}
           onInsert={(cursorPosition, character) =>
             insertCharacter(block.uuid, cursorPosition, character)
           }
-          onRemove={(cursorPosition) => removeCharacter(block.uuid, cursorPosition)}
+          onRemove={(cursorPosition) =>
+            removeCharacter(block.uuid, cursorPosition)
+          }
         />
       </BlockWithActions>
     );
@@ -69,7 +79,11 @@ export const BlockRenderer = ({ externalId, index }: { externalId: string; index
     'heading3' in block.blockType
   ) {
     return (
-      <BlockWithActions key={String(block.uuid)} blockIndex={index} block={block}>
+      <BlockWithActions
+        key={String(block.uuid)}
+        blockIndex={index}
+        block={block}
+      >
         <HeadingBlock key={String(block.uuid)} block={block} />
       </BlockWithActions>
     );
@@ -81,7 +95,11 @@ export const BlockRenderer = ({ externalId, index }: { externalId: string; index
 export const Blocks = ({ page }: { page: Page }) => (
   <Stack className="Blocks" w="100%" gap={0}>
     {page.content?.map((blockUuid, index) => (
-      <BlockRenderer key={String(blockUuid)} index={index} externalId={blockUuid} />
+      <BlockRenderer
+        key={String(blockUuid)}
+        index={index}
+        externalId={blockUuid}
+      />
     ))}
   </Stack>
 );

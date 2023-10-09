@@ -18,7 +18,12 @@ type AddBlockModalProps = {
   onItemSelected: (item: BlockType) => void;
 } & Pick<ModalProps, 'size'>;
 
-export const AddBlockModal = ({ size, isOpen, onClose, onItemSelected }: AddBlockModalProps) => {
+export const AddBlockModal = ({
+  size,
+  isOpen,
+  onClose,
+  onItemSelected,
+}: AddBlockModalProps) => {
   const menuItems = [
     {
       label: 'Text',

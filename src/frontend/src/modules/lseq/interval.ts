@@ -19,8 +19,12 @@ export class Interval {
   }
 }
 
-export function between(prefixA: Identifier.Identifier, prefixB: Identifier.Identifier): Interval {
-  if (prefixA.length != prefixB.length) throw new Error('Prefixes must be of equal length');
+export function between(
+  prefixA: Identifier.Identifier,
+  prefixB: Identifier.Identifier
+): Interval {
+  if (prefixA.length != prefixB.length)
+    throw new Error('Prefixes must be of equal length');
 
   const updatedIntervalValue: NodeIndex[] = [];
   let borrowedAmount = 0;
@@ -31,32 +35,45 @@ export function between(prefixA: Identifier.Identifier, prefixB: Identifier.Iden
       b: prefixB.value[i],
     };
 
-    if (borrowedAmount < 0) throw new Error('Borrowed amount cannot be less than 0');
+    if (borrowedAmount < 0)
+      throw new Error('Borrowed amount cannot be less than 0');
 
     // Handle borrowing
     if (borrowedAmount > 0) {
       valueAtIndex.b -= borrowedAmount;
       borrowedAmount = 0;
 
-      calculateValueAtIndex(i, valueAtIndex, borrowedAmount, (newValue, borrowed) => {
-        updatedIntervalValue.unshift(newValue);
-        borrowedAmount = borrowed;
-      });
+      calculateValueAtIndex(
+        i,
+        valueAtIndex,
+        borrowedAmount,
+        (newValue, borrowed) => {
+          updatedIntervalValue.unshift(newValue);
+          borrowedAmount = borrowed;
+        }
+      );
 
       continue;
     }
 
-    calculateValueAtIndex(i, valueAtIndex, borrowedAmount, (newValue, borrowed) => {
-      updatedIntervalValue.unshift(newValue);
-      borrowedAmount = borrowed;
-    });
+    calculateValueAtIndex(
+      i,
+      valueAtIndex,
+      borrowedAmount,
+      (newValue, borrowed) => {
+        updatedIntervalValue.unshift(newValue);
+        borrowedAmount = borrowed;
+      }
+    );
   }
 
   let final = new Interval(updatedIntervalValue);
 
   if (final.isAllZeros()) return final;
 
-  final = new Interval(Identifier.subtract(new Identifier.Identifier(final.value), 1).value);
+  final = new Interval(
+    Identifier.subtract(new Identifier.Identifier(final.value), 1).value
+  );
 
   return final;
 }

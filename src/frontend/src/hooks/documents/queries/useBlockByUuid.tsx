@@ -63,10 +63,8 @@ export const useBlockByUuid = (props?: {
       const isAtEnd = position == Tree.size(title);
 
       if (isAtStart) {
-        const { node, deletedNode, replacementNode } = Tree.insertCharacterAtStart(
-          title,
-          character
-        );
+        const { node, deletedNode, replacementNode } =
+          Tree.insertCharacterAtStart(title, character);
         const transactions: Transaction[] = [
           {
             insert: {
@@ -152,7 +150,11 @@ export const useBlockByUuid = (props?: {
         return;
       }
 
-      const insertedNode = Tree.insertCharacterAtPosition(title, character, position);
+      const insertedNode = Tree.insertCharacterAtPosition(
+        title,
+        character,
+        position
+      );
       const transactions: Transaction[] = [
         {
           insert: {
@@ -194,7 +196,9 @@ export const useBlockByUuid = (props?: {
       const nodeBeforeCursor = Tree.getNodeAtPosition(title, position - 1);
 
       if (!nodeBeforeCursor) {
-        throw new Error('There was an error finding the node before the cursor');
+        throw new Error(
+          'There was an error finding the node before the cursor'
+        );
       }
 
       title.delete(nodeBeforeCursor.identifier);

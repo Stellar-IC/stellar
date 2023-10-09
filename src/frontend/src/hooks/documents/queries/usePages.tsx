@@ -58,13 +58,17 @@ export const usePages = (props: {
     data: pages,
     query,
     updateLocal,
-  } = useQuery<[UUID], PageByUuidResult, Page, LocalStoragePage>('pageByUUid', actor.pageByUuid, {
-    serialize,
-    getExternalId,
-    onSuccess,
-    prepareForStorage: toLocalStorageBulk,
-    prepareFromStorage: fromLocalStorageBulk,
-  });
+  } = useQuery<[UUID], PageByUuidResult, Page, LocalStoragePage>(
+    'pageByUUid',
+    actor.pageByUuid,
+    {
+      serialize,
+      getExternalId,
+      onSuccess,
+      prepareForStorage: toLocalStorageBulk,
+      prepareFromStorage: fromLocalStorageBulk,
+    }
+  );
 
   console.log({ pages });
 
@@ -99,7 +103,11 @@ export const usePages = (props: {
         console.log({ index });
 
         const newContent = [...currentPage.content];
-        newContent.splice(Number(index), 0, stringify(input.blockCreated.payload.block.uuid));
+        newContent.splice(
+          Number(index),
+          0,
+          stringify(input.blockCreated.payload.block.uuid)
+        );
 
         // update page locally
         updateLocal(pageExternalId, {

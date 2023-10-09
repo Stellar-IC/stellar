@@ -44,6 +44,8 @@ export function QueryContextProvider({ children }: PropsWithChildren) {
   );
 
   return (
-    <QueryContext.Provider value={{ cache, getCacheKey, send }}>{children}</QueryContext.Provider>
+    <QueryContext.Provider value={{ cache, getCacheKey, send }}>
+      {children}
+    </QueryContext.Provider>
   );
 }

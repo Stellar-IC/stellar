@@ -25,7 +25,10 @@ export function treefromShareable(tree: ShareableBlockText): Tree.Tree {
 }
 
 export function nodefromShareable(shareable: ShareableNode): Node.Node {
-  const node = new Node.Node(new Identifier.Identifier(shareable.identifier), shareable.value);
+  const node = new Node.Node(
+    new Identifier.Identifier(shareable.identifier),
+    shareable.value
+  );
 
   for (const [index, childNode] of shareable.children) {
     node.children.set(index, nodefromShareable(childNode));
@@ -33,7 +36,9 @@ export function nodefromShareable(shareable: ShareableNode): Node.Node {
 
   node.base = shareable.base;
   node.deletedAt =
-    shareable.deletedAt.length > 0 ? new Date(Number(shareable.deletedAt[0]) / 1000) : null;
+    shareable.deletedAt.length > 0
+      ? new Date(Number(shareable.deletedAt[0]) / 1000)
+      : null;
 
   return node;
 }
@@ -45,9 +50,12 @@ export function fromShareable(block: ShareableBlock): Block {
   };
 }
 
-export function serializeBlock(block: Omit<ShareableBlock, 'id'>): Omit<Block, 'id'> {
+export function serializeBlock(
+  block: Omit<ShareableBlock, 'id'>
+): Omit<Block, 'id'> {
   const parent = block.parent.length > 0 ? block.parent[0] : null;
-  const title = block.properties.title.length > 0 ? block.properties.title[0] : null;
+  const title =
+    block.properties.title.length > 0 ? block.properties.title[0] : null;
   const defaultTitle = new Tree.Tree({
     rootNode: new Node.Node(new Identifier.Identifier(new Uint16Array()), ''),
     boundary: DEFAULT_BOUNDARY,
@@ -59,7 +67,10 @@ export function serializeBlock(block: Omit<ShareableBlock, 'id'>): Omit<Block, '
     properties: {
       ...block.properties,
       title: title ? treefromShareable(title) : defaultTitle,
-      checked: block.properties.checked.length > 0 ? block.properties.checked[0] : null,
+      checked:
+        block.properties.checked.length > 0
+          ? block.properties.checked[0]
+          : null,
     },
     content: block.content.map((blockExternalId) => stringify(blockExternalId)),
     parent: parent ? stringify(parent) : null,

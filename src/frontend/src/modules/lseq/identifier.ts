@@ -15,7 +15,10 @@ export class Identifier {
   }
 }
 
-export function compare(identifierA: Identifier, identifierB: Identifier): -1 | 0 | 1 {
+export function compare(
+  identifierA: Identifier,
+  identifierB: Identifier
+): -1 | 0 | 1 {
   const identifierALength = identifierA.length;
   const identifierBLength = identifierB.length;
 
@@ -31,7 +34,8 @@ export function compare(identifierA: Identifier, identifierB: Identifier): -1 | 
 
   const isNode1LongestNode = identifierALength > identifierBLength;
   const areNodesEqualLength = identifierALength === identifierBLength;
-  const shorterNodeLength = (isNode1LongestNode ? identifierBLength : identifierALength) - 1;
+  const shorterNodeLength =
+    (isNode1LongestNode ? identifierBLength : identifierALength) - 1;
 
   for (let i = 0; i <= shorterNodeLength; i++) {
     const identifierAPart = identifierA.value[i];
@@ -57,7 +61,10 @@ export function compare(identifierA: Identifier, identifierB: Identifier): -1 | 
   return -1;
 }
 
-export function subtract(identifier: Identifier, constant: NodeIndex): Identifier {
+export function subtract(
+  identifier: Identifier,
+  constant: NodeIndex
+): Identifier {
   const identifierValue = identifier.value;
   const identifierLength = identifier.length;
 
@@ -66,7 +73,9 @@ export function subtract(identifier: Identifier, constant: NodeIndex): Identifie
   }
 
   if (constant > Base.at(identifierLength - 1)) {
-    throw new Error('Constant must be less than or equal to base at deepest level');
+    throw new Error(
+      'Constant must be less than or equal to base at deepest level'
+    );
   }
 
   if (identifierLength == 1) {
@@ -83,7 +92,8 @@ export function subtract(identifier: Identifier, constant: NodeIndex): Identifie
     let valueAtIndex = identifierValue[i];
     const base = Base.at(i);
 
-    if (borrowedAmount < 0) throw new Error('Borrowed amount cannot be less than 0');
+    if (borrowedAmount < 0)
+      throw new Error('Borrowed amount cannot be less than 0');
 
     // Handle borrowing
     if (borrowedAmount > 0) {

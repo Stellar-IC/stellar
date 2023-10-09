@@ -20,4 +20,6 @@ export type ShareableNode = {
   children: [[NodeIndex, ShareableNode]];
 };
 
-export type AllocationStrategy = { boundaryPlus: null } | { boundaryMinus: null };
+export type AllocationStrategy =
+  | { boundaryPlus: null }
+  | { boundaryMinus: null };

@@ -39,7 +39,10 @@ export function isEdgeNode(node: Node) {
   );
 }
 
-export function hasChildren(node: Node, options: { shouldSkipDeleted?: boolean } = {}): boolean {
+export function hasChildren(
+  node: Node,
+  options: { shouldSkipDeleted?: boolean } = {}
+): boolean {
   const { shouldSkipDeleted = true } = options;
 
   if (isEdgeNode(node)) return false;
@@ -92,7 +95,8 @@ export function getShallowInsertDepth(
     interval = Interval.between(nodeAPrefix, nodeBPrefix);
     i++;
 
-    if (i == maxLoopCount) throw new Error('Unable to determine depth for node identifier');
+    if (i == maxLoopCount)
+      throw new Error('Unable to determine depth for node identifier');
   }
 
   return depth;
@@ -105,7 +109,10 @@ export function getShallowInsertDepth(
  * @param depth The depth to calculate the prefix at.
  * @return The prefix of the node identifier at the given depth.
  */
-export function prefix(identifier: Identifier.Identifier, depth: NodeDepth): Identifier.Identifier {
+export function prefix(
+  identifier: Identifier.Identifier,
+  depth: NodeDepth
+): Identifier.Identifier {
   const finalValue = [];
 
   for (let i = 0; i < depth; i++) {

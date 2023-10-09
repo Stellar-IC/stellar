@@ -1,5 +1,9 @@
 import { Principal } from '@dfinity/principal';
-import { BlockType, Transaction, UUID } from '../../declarations/documents/documents.did';
+import {
+  BlockType,
+  Transaction,
+  UUID,
+} from '../../declarations/documents/documents.did';
 import * as Lseq from './modules/lseq';
 
 export type CanisterId = string | Principal;

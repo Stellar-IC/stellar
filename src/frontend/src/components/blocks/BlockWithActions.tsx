@@ -22,7 +22,11 @@ type BlockWithActionsProps = PropsWithChildren<{
   block: Block;
 }>;
 
-export const BlockWithActions = ({ children, blockIndex, block }: BlockWithActionsProps) => {
+export const BlockWithActions = ({
+  children,
+  blockIndex,
+  block,
+}: BlockWithActionsProps) => {
   const { addBlock, removeBlock } = usePagesContext();
   const [isOpen, { open, close }] = useDisclosure();
   const shouldShowMobileModal = false;
@@ -30,9 +34,12 @@ export const BlockWithActions = ({ children, blockIndex, block }: BlockWithActio
   //     base: true,
   //     md: false,
   // });
-  const [isAddModalOpen, { open: onAddModalOpen, close: onAddModalClose }] = useDisclosure();
-  const [isTransformModalOpen, { open: onTransformModalOpen, close: onTransformModalClose }] =
+  const [isAddModalOpen, { open: onAddModalOpen, close: onAddModalClose }] =
     useDisclosure();
+  const [
+    isTransformModalOpen,
+    { open: onTransformModalOpen, close: onTransformModalClose },
+  ] = useDisclosure();
 
   const parentExternalId = block.parent;
 
@@ -59,7 +66,11 @@ export const BlockWithActions = ({ children, blockIndex, block }: BlockWithActio
           aria-label="Add block"
           leftSection={<IconPlus />}
           onClick={() => {
-            addBlock(parse(parentExternalId), { paragraph: null }, blockIndex + 1);
+            addBlock(
+              parse(parentExternalId),
+              { paragraph: null },
+              blockIndex + 1
+            );
           }}
         />
         <Button
@@ -114,7 +125,11 @@ export const BlockWithActions = ({ children, blockIndex, block }: BlockWithActio
           <Button
             color="inherit"
             onClick={() => {
-              addBlock(parse(parentExternalId), { paragraph: null }, blockIndex + 1);
+              addBlock(
+                parse(parentExternalId),
+                { paragraph: null },
+                blockIndex + 1
+              );
             }}
           >
             +
