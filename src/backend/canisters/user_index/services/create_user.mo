@@ -18,25 +18,31 @@ module {
         state : State.State,
         user_principal : Principal,
         user_index_principal : Principal,
-    ) : async Result.Result<Principal, { #anonymousUser; #insufficientCycles }> {
+    ) : async Result.Result<{ #created : (Principal, User.User); #existing : (Principal, User.User) }, { #anonymousUser; #insufficientCycles; #missingUserCanister }> {
         let USER_CANISTER_INITIAL_CYCLES_BALANCE = CYCLES_REQUIRED_FOR_UPGRADE + USER_CANISTER_TOP_UP_AMOUNT; // 0.18T cycles
         let balance = Cycles.balance();
 
         if (balance < USER_CANISTER_INITIAL_CYCLES_BALANCE) {
-            // Debug.print("Not enough Cycles to create new user");
             return #err(#insufficientCycles);
         };
 
         if (Principal.isAnonymous(user_principal)) {
-            // Debug.print("Unexpected anonymous caller");
             return #err(#anonymousUser);
         };
 
         switch (state.data.getUserIdByPrincipal(user_principal)) {
             case null {};
-            case (?user_id) {
-                // Debug.print("User has already been created");
-                return #ok(user_id);
+            case (?userId) {
+                let user_canister = state.data.getUserByUserId(userId);
+
+                switch (user_canister) {
+                    case null {
+                        return #err(#missingUserCanister);
+                    };
+                    case (?user_canister) {
+                        return #ok(#existing(userId, user_canister));
+                    };
+                };
             };
         };
 
@@ -63,6 +69,6 @@ module {
             principal = user_principal;
         });
 
-        #ok(user_canister_principal);
+        #ok(#created(user_canister_principal, user_canister));
     };
 };

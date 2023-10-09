@@ -1,8 +1,8 @@
 export const idlFactory = ({ IDL }) => {
   const ShareableNode = IDL.Rec();
   const UUID = IDL.Vec(IDL.Nat8);
-  const BlockContent = IDL.Vec(UUID);
-  const BlockType = IDL.Variant({
+  const BlockContent__1 = IDL.Vec(UUID);
+  const BlockType__1 = IDL.Variant({
     heading1: IDL.Null,
     heading2: IDL.Null,
     heading3: IDL.Null,
@@ -34,23 +34,36 @@ export const idlFactory = ({ IDL }) => {
     allocationStrategies: IDL.Vec(IDL.Tuple(NodeDepth, AllocationStrategy)),
     rootNode: ShareableNode,
   });
-  const ShareableBlockProperties = IDL.Record({
+  const ShareableBlockProperties__1 = IDL.Record({
     title: IDL.Opt(ShareableBlockText),
     checked: IDL.Opt(IDL.Bool),
   });
   const AddBlockUpdateInput = IDL.Record({
-    content: BlockContent,
+    content: BlockContent__1,
     uuid: UUID,
-    blockType: BlockType,
-    properties: ShareableBlockProperties,
+    blockType: BlockType__1,
+    properties: ShareableBlockProperties__1,
     parent: IDL.Opt(UUID),
   });
-  const PrimaryKey = IDL.Nat;
-  const AddBlockUpdateOutputResult = IDL.Record({ id: PrimaryKey });
+  const PrimaryKey__1 = IDL.Nat;
+  const AddBlockUpdateOutputResult = IDL.Record({ id: PrimaryKey__1 });
   const AddBlockUpdateOutputError = IDL.Null;
   const AddBlockUpdateOutput = IDL.Variant({
     ok: AddBlockUpdateOutputResult,
     err: AddBlockUpdateOutputError,
+  });
+  const PrimaryKey = IDL.Nat;
+  const BlockContent = IDL.Vec(UUID);
+  const BlockType = IDL.Variant({
+    heading1: IDL.Null,
+    heading2: IDL.Null,
+    heading3: IDL.Null,
+    page: IDL.Null,
+    paragraph: IDL.Null,
+  });
+  const ShareableBlockProperties = IDL.Record({
+    title: IDL.Opt(ShareableBlockText),
+    checked: IDL.Opt(IDL.Bool),
   });
   const ShareableBlock = IDL.Record({
     id: PrimaryKey,
@@ -65,9 +78,9 @@ export const idlFactory = ({ IDL }) => {
     err: IDL.Variant({ blockNotFound: IDL.Null }),
   });
   const CreatePageUpdateInput = IDL.Record({
-    content: BlockContent,
+    content: BlockContent__1,
     uuid: UUID,
-    properties: ShareableBlockProperties,
+    properties: ShareableBlockProperties__1,
     parent: IDL.Opt(UUID),
   });
   const CreatePageUpdateOutputResult = IDL.Record({
@@ -110,10 +123,10 @@ export const idlFactory = ({ IDL }) => {
   const PaginatedResults = IDL.Record({ edges: IDL.Vec(Edge) });
   const SaveEventUpdateInputPayload = IDL.Record({
     block: IDL.Record({
-      content: BlockContent,
+      content: BlockContent__1,
       uuid: UUID,
-      blockType: BlockType,
-      properties: ShareableBlockProperties,
+      blockType: BlockType__1,
+      properties: ShareableBlockProperties__1,
       parent: IDL.Opt(UUID),
     }),
     index: IDL.Nat,
@@ -140,7 +153,7 @@ export const idlFactory = ({ IDL }) => {
     }),
     blockTypeChanged: IDL.Record({
       payload: IDL.Record({
-        blockType: BlockType,
+        blockType: BlockType__1,
         blockExternalId: UUID,
       }),
       eventType: IDL.Variant({ blockTypeChanged: IDL.Null }),
@@ -189,13 +202,13 @@ export const idlFactory = ({ IDL }) => {
     addBlock: IDL.Func([AddBlockUpdateInput], [AddBlockUpdateOutput], []),
     blockByUuid: IDL.Func([UUID], [Result_1], ['query']),
     createPage: IDL.Func([CreatePageUpdateInput], [CreatePageUpdateOutput], []),
-    page: IDL.Func([PrimaryKey], [Result], ['query']),
+    page: IDL.Func([PrimaryKey__1], [Result], ['query']),
     pageByUuid: IDL.Func([UUID], [Result], ['query']),
     pages: IDL.Func(
       [
         IDL.Record({
           order: IDL.Opt(SortOrder),
-          cursor: IDL.Opt(PrimaryKey),
+          cursor: IDL.Opt(PrimaryKey__1),
           limit: IDL.Opt(IDL.Nat),
         }),
       ],
@@ -203,7 +216,11 @@ export const idlFactory = ({ IDL }) => {
       ['query']
     ),
     saveEvent: IDL.Func([SaveEventUpdateInput], [SaveEventUpdateOutput], []),
-    updateBlock: IDL.Func([UpdateBlockUpdateInput], [UpdateBlockUpdateOutput], []),
+    updateBlock: IDL.Func(
+      [UpdateBlockUpdateInput],
+      [UpdateBlockUpdateOutput],
+      []
+    ),
   });
 };
 export const init = ({ IDL }) => {

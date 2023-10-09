@@ -222,7 +222,11 @@ export const idlFactory = ({ IDL }) => {
   return IDL.Service({
     acknowledge_entries: IDL.Func([IDL.Nat64], [], []),
     add: IDL.Func([UserNumber, DeviceData], [], []),
-    add_tentative_device: IDL.Func([UserNumber, DeviceData], [AddTentativeDeviceResponse], []),
+    add_tentative_device: IDL.Func(
+      [UserNumber, DeviceData],
+      [AddTentativeDeviceResponse],
+      []
+    ),
     authn_method_add: IDL.Func(
       [IdentityNumber, AuthnMethodData],
       [IDL.Opt(AuthnMethodAddResponse)],
@@ -238,17 +242,29 @@ export const idlFactory = ({ IDL }) => {
     enter_device_registration_mode: IDL.Func([UserNumber], [Timestamp], []),
     exit_device_registration_mode: IDL.Func([UserNumber], [], []),
     fetch_entries: IDL.Func([], [IDL.Vec(BufferedArchiveEntry)], []),
-    get_anchor_credentials: IDL.Func([UserNumber], [AnchorCredentials], ['query']),
+    get_anchor_credentials: IDL.Func(
+      [UserNumber],
+      [AnchorCredentials],
+      ['query']
+    ),
     get_anchor_info: IDL.Func([UserNumber], [IdentityAnchorInfo], []),
     get_delegation: IDL.Func(
       [UserNumber, FrontendHostname, SessionKey, Timestamp],
       [GetDelegationResponse],
       ['query']
     ),
-    get_principal: IDL.Func([UserNumber, FrontendHostname], [IDL.Principal], ['query']),
+    get_principal: IDL.Func(
+      [UserNumber, FrontendHostname],
+      [IDL.Principal],
+      ['query']
+    ),
     http_request: IDL.Func([HttpRequest], [HttpResponse], ['query']),
     http_request_update: IDL.Func([HttpRequest], [HttpResponse], []),
-    identity_info: IDL.Func([IdentityNumber], [IDL.Opt(IdentityInfoResponse)], []),
+    identity_info: IDL.Func(
+      [IdentityNumber],
+      [IDL.Opt(IdentityInfoResponse)],
+      []
+    ),
     identity_metadata_replace: IDL.Func(
       [IdentityNumber, MetadataMap],
       [IDL.Opt(IdentityMetadataReplaceResponse)],
@@ -270,7 +286,11 @@ export const idlFactory = ({ IDL }) => {
     replace: IDL.Func([UserNumber, DeviceKey, DeviceData], [], []),
     stats: IDL.Func([], [InternetIdentityStats], ['query']),
     update: IDL.Func([UserNumber, DeviceKey, DeviceData], [], []),
-    verify_tentative_device: IDL.Func([UserNumber, IDL.Text], [VerifyTentativeDeviceResponse], []),
+    verify_tentative_device: IDL.Func(
+      [UserNumber, IDL.Text],
+      [VerifyTentativeDeviceResponse],
+      []
+    ),
   });
 };
 export const init = ({ IDL }) => {

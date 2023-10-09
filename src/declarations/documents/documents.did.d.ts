@@ -2,10 +2,10 @@ import type { Principal } from '@dfinity/principal';
 import type { ActorMethod } from '@dfinity/agent';
 
 export interface AddBlockUpdateInput {
-  content: BlockContent;
+  content: BlockContent__1;
   uuid: UUID;
-  blockType: BlockType;
-  properties: ShareableBlockProperties;
+  blockType: BlockType__1;
+  properties: ShareableBlockProperties__1;
   parent: [] | [UUID];
 }
 export type AddBlockUpdateOutput =
@@ -13,20 +13,29 @@ export type AddBlockUpdateOutput =
   | { err: AddBlockUpdateOutputError };
 export type AddBlockUpdateOutputError = null;
 export interface AddBlockUpdateOutputResult {
-  id: PrimaryKey;
+  id: PrimaryKey__1;
 }
-export type AllocationStrategy = { boundaryPlus: null } | { boundaryMinus: null };
+export type AllocationStrategy =
+  | { boundaryPlus: null }
+  | { boundaryMinus: null };
 export type BlockContent = Array<UUID>;
+export type BlockContent__1 = Array<UUID>;
 export type BlockType =
   | { heading1: null }
   | { heading2: null }
   | { heading3: null }
   | { page: null }
   | { paragraph: null };
+export type BlockType__1 =
+  | { heading1: null }
+  | { heading2: null }
+  | { heading3: null }
+  | { page: null }
+  | { paragraph: null };
 export interface CreatePageUpdateInput {
-  content: BlockContent;
+  content: BlockContent__1;
   uuid: UUID;
-  properties: ShareableBlockProperties;
+  properties: ShareableBlockProperties__1;
   parent: [] | [UUID];
 }
 export type CreatePageUpdateOutput =
@@ -59,8 +68,11 @@ export interface PaginatedResults {
   edges: Array<Edge>;
 }
 export type PrimaryKey = bigint;
+export type PrimaryKey__1 = bigint;
 export type Result = { ok: ShareablePage } | { err: { pageNotFound: null } };
-export type Result_1 = { ok: ShareableBlock } | { err: { blockNotFound: null } };
+export type Result_1 =
+  | { ok: ShareableBlock }
+  | { err: { blockNotFound: null } };
 export type SaveEventUpdateInput =
   | {
       blockRemoved: {
@@ -76,7 +88,7 @@ export type SaveEventUpdateInput =
     }
   | {
       blockTypeChanged: {
-        payload: { blockType: BlockType; blockExternalId: UUID };
+        payload: { blockType: BlockType__1; blockExternalId: UUID };
         eventType: { blockTypeChanged: null };
       };
     }
@@ -91,10 +103,10 @@ export type SaveEventUpdateInput =
     };
 export interface SaveEventUpdateInputPayload {
   block: {
-    content: BlockContent;
+    content: BlockContent__1;
     uuid: UUID;
-    blockType: BlockType;
-    properties: ShareableBlockProperties;
+    blockType: BlockType__1;
+    properties: ShareableBlockProperties__1;
     parent: [] | [UUID];
   };
   index: bigint;
@@ -102,7 +114,9 @@ export interface SaveEventUpdateInputPayload {
 export type SaveEventUpdateOutput =
   | { ok: SaveEventUpdateOutputResult }
   | { err: SaveEventUpdateOutputError };
-export type SaveEventUpdateOutputError = { anonymousUser: null } | { insufficientCycles: null };
+export type SaveEventUpdateOutputError =
+  | { anonymousUser: null }
+  | { insufficientCycles: null };
 export type SaveEventUpdateOutputResult = null;
 export interface ShareableBlock {
   id: PrimaryKey;
@@ -113,6 +127,10 @@ export interface ShareableBlock {
   parent: [] | [UUID];
 }
 export interface ShareableBlockProperties {
+  title: [] | [ShareableBlockText];
+  checked: [] | [boolean];
+}
+export interface ShareableBlockProperties__1 {
   title: [] | [ShareableBlockText];
   checked: [] | [boolean];
 }
@@ -181,13 +199,13 @@ export interface _SERVICE {
   addBlock: ActorMethod<[AddBlockUpdateInput], AddBlockUpdateOutput>;
   blockByUuid: ActorMethod<[UUID], Result_1>;
   createPage: ActorMethod<[CreatePageUpdateInput], CreatePageUpdateOutput>;
-  page: ActorMethod<[PrimaryKey], Result>;
+  page: ActorMethod<[PrimaryKey__1], Result>;
   pageByUuid: ActorMethod<[UUID], Result>;
   pages: ActorMethod<
     [
       {
         order: [] | [SortOrder];
-        cursor: [] | [PrimaryKey];
+        cursor: [] | [PrimaryKey__1];
         limit: [] | [bigint];
       }
     ],

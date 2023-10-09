@@ -3,7 +3,7 @@ module.exports = {
   bracketSpacing: true,
   printWidth: 80,
   semi: true,
-  tabWidth: 4,
+  tabWidth: 2,
   trailingComma: 'es5',
   useTabs: false,
   overrides: [
@@ -11,6 +11,7 @@ module.exports = {
       files: '*.mo',
       options: {
         bracketSpacing: true,
+        tabWidth: 4,
       },
     },
   ],

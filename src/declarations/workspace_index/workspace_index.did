@@ -1,0 +1,30 @@
+type WorkspaceOwner = principal;
+type WorkspaceName = text;
+type WorkspaceId = principal;
+type WorkspaceDescription = text;
+type Workspace = record {
+  createdAt : Time;
+  description : WorkspaceDescription;
+  id : WorkspaceId;
+  name : WorkspaceName;
+  owner : WorkspaceOwner;
+  updatedAt : Time;
+  uuid : UUID;
+};
+type UUID = vec nat8;
+type Time = int;
+type Result = variant {
+  err : variant {
+    anonymousCaller;
+    anonymousOwner;
+    anonymousWorkspaceIndex;
+    insufficientCycles;
+    unauthorizedCaller;
+  };
+  ok : principal;
+};
+service : {
+  createWorkspace : (record { owner : principal }) -> (Result);
+  walletBalance : () -> (nat);
+  workspaceByUuid : (UUID) -> (opt Workspace) query;
+};

@@ -7,7 +7,9 @@ import Nat "mo:base/Nat";
 import Result "mo:base/Result";
 import Time "mo:base/Time";
 
-import Types "../../types"
+import Types "../../types";
+import Workspace "../workspace/main";
+import WorkspacesTypes "../../lib/workspaces/types";
 
 actor class User(
     initArgs : {
@@ -16,6 +18,7 @@ actor class User(
     }
 ) {
     type Username = Text;
+    type WorkspaceId = Principal;
 
     module UserProfile {
         public type UserProfile = {
@@ -59,7 +62,8 @@ actor class User(
     var capacity = initArgs.capacity;
     var principal = initArgs.principal;
     var created_at = Time.now();
-    var delivery_account : ?DeliveryAgentAccount.DeliveryAgentAccount = null;
+
+    var personalWorkspace : ?WorkspaceId = null;
 
     var _profile : UserProfile.MutableUserProfile = {
         var username = null;
@@ -75,6 +79,11 @@ actor class User(
         return #ok(UserProfile.fromMutableUserProfile(_profile));
     };
 
+    // Define a function that returns the user's personal workspace
+    public query func getPersonalWorkspace() : async ?WorkspaceId {
+        return personalWorkspace;
+    };
+
     public shared ({ caller }) func updateProfile(profile_input : ProfileInput) : async Result.Result<UserProfile.UserProfile, { #notAuthorized }> {
         if (caller != principal) {
             return #err(#notAuthorized);
@@ -86,21 +95,9 @@ actor class User(
         return #ok(UserProfile.fromMutableUserProfile(_profile));
     };
 
-    public shared ({ caller }) func createDeliveryAgentAccount(profile_input : ProfileInput) : async Result.Result<DeliveryAgentAccount.DeliveryAgentAccount, { #alreadyExists; #notAuthorized; #unknownError }> {
-        if (caller != principal) {
-            return #err(#notAuthorized);
-        };
-
-        if (delivery_account != null) {
-            return #err(#alreadyExists);
-        };
-
-        delivery_account := ?DeliveryAgentAccount.DeliveryAgentAccount(principal);
-
-        switch (delivery_account) {
-            case (null) { return #err(#unknownError) };
-            case (?val) { return #ok(val) };
-        };
+    // Define a function for setting the user's personal workspace
+    public func setPersonalWorkspace(workspaceId : WorkspaceId) {
+        personalWorkspace := ?workspaceId;
     };
 
     // Returns the cycles received up to the capacity allowed

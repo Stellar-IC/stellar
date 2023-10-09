@@ -1,21 +1,16 @@
-type Result = 
- variant {
-   err;
-   ok: vec principal;
- };
-type RegisterUserResult = 
- variant {
-   err: RegisterUserError;
-   ok: principal;
- };
-type RegisterUserError = 
- variant {
-   anonymousUser;
-   insufficientCycles;
-   userNotFound;
- };
+type RegisterUserResult = variant {
+  err : RegisterUserError;
+  ok : principal;
+};
+type RegisterUserError = variant {
+  anonymousUser;
+  failedToCreateWorkspace;
+  insufficientCycles;
+  missingUserCanister;
+  userNotFound;
+};
 service : {
-  registerUser: () -> (RegisterUserResult);
-  users: () -> (Result) query;
-  walletBalance: () -> (nat);
-}
+  registerUser : () -> (RegisterUserResult);
+  upgradeUserCanisters : () -> () oneway;
+  walletBalance : () -> (nat);
+};

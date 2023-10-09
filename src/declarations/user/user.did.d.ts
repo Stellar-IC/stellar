@@ -9,7 +9,10 @@ export type Result = { ok: UserProfile } | { err: { notAuthorized: null } };
 export type Result_1 =
   | { ok: DeliveryAgentAccount }
   | {
-      err: { notAuthorized: null } | { alreadyExists: null } | { unknownError: null };
+      err:
+        | { notAuthorized: null }
+        | { alreadyExists: null }
+        | { unknownError: null };
     };
 export type Time = bigint;
 export interface User {

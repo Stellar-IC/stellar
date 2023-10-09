@@ -1,36 +1,34 @@
 type Username = text;
-type UserProfile = 
- record {
-   created_at: Time;
-   updated_at: Time;
-   username: opt Username;
- };
-type User = 
- service {
-   createDeliveryAgentAccount: (ProfileInput) -> (Result_1);
-   profile: () -> (Result) query;
-   updateProfile: (ProfileInput) -> (Result);
-   wallet_balance: () -> (nat);
-   wallet_receive: () -> (record {accepted: nat64;});
- };
+type UserProfile = record {
+  created_at : Time;
+  updated_at : Time;
+  username : opt Username;
+};
+type User = service {
+  createDeliveryAgentAccount : (ProfileInput) -> (Result_1);
+  profile : () -> (Result) query;
+  updateProfile : (ProfileInput) -> (Result);
+  wallet_balance : () -> (nat);
+  wallet_receive : () -> (record { accepted : nat64 });
+};
 type Time = int;
-type Result_1 = 
- variant {
-   err: variant {
-          alreadyExists;
-          notAuthorized;
-          unknownError;
-        };
-   ok: DeliveryAgentAccount;
- };
-type Result = 
- variant {
-   err: variant {notAuthorized;};
-   ok: UserProfile;
- };
-type ProfileInput = record {username: Username;};
+type Result_1 = variant {
+  err : variant {
+    alreadyExists;
+    notAuthorized;
+    unknownError;
+  };
+  ok : DeliveryAgentAccount;
+};
+type Result = variant {
+  err : variant { notAuthorized };
+  ok : UserProfile;
+};
+type ProfileInput = record { username : Username };
 type DeliveryAgentAccount = record {};
-service : (record {
-             capacity: nat;
-             "principal": principal;
-           }) -> User
+service : (
+  record {
+    capacity : nat;
+    "principal" : principal;
+  }
+) -> User;

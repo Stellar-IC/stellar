@@ -28,7 +28,9 @@ export interface ArchiveInfo {
   archive_canister: [] | [Principal];
 }
 export type AuthnMethod = { webauthn: WebAuthn } | { pubkey: PublicKeyAuthn };
-export type AuthnMethodAddResponse = { ok: null } | { invalid_metadata: string };
+export type AuthnMethodAddResponse =
+  | { ok: null }
+  | { invalid_metadata: string };
 export interface AuthnMethodData {
   metadata: MetadataMap;
   protection: AuthnMethodProtection;
@@ -149,7 +151,10 @@ export type KeyType =
   | { unknown: null }
   | { browser_storage_key: null };
 export type MetadataMap = Array<
-  [string, { map: MetadataMap } | { string: string } | { bytes: Uint8Array | number[] }]
+  [
+    string,
+    { map: MetadataMap } | { string: string } | { bytes: Uint8Array | number[] }
+  ]
 >;
 export type PublicKey = Uint8Array | number[];
 export interface PublicKeyAuthn {
@@ -198,9 +203,18 @@ export interface WebAuthnCredential {
 export interface _SERVICE {
   acknowledge_entries: ActorMethod<[bigint], undefined>;
   add: ActorMethod<[UserNumber, DeviceData], undefined>;
-  add_tentative_device: ActorMethod<[UserNumber, DeviceData], AddTentativeDeviceResponse>;
-  authn_method_add: ActorMethod<[IdentityNumber, AuthnMethodData], [] | [AuthnMethodAddResponse]>;
-  authn_method_remove: ActorMethod<[IdentityNumber, PublicKey], [] | [AuthnMethodRemoveResponse]>;
+  add_tentative_device: ActorMethod<
+    [UserNumber, DeviceData],
+    AddTentativeDeviceResponse
+  >;
+  authn_method_add: ActorMethod<
+    [IdentityNumber, AuthnMethodData],
+    [] | [AuthnMethodAddResponse]
+  >;
+  authn_method_remove: ActorMethod<
+    [IdentityNumber, PublicKey],
+    [] | [AuthnMethodRemoveResponse]
+  >;
   create_challenge: ActorMethod<[], Challenge>;
   deploy_archive: ActorMethod<[Uint8Array | number[]], DeployArchiveResult>;
   enter_device_registration_mode: ActorMethod<[UserNumber], Timestamp>;
@@ -226,10 +240,16 @@ export interface _SERVICE {
     [UserNumber, FrontendHostname, SessionKey, [] | [bigint]],
     [UserKey, Timestamp]
   >;
-  register: ActorMethod<[DeviceData, ChallengeResult, [] | [Principal]], RegisterResponse>;
+  register: ActorMethod<
+    [DeviceData, ChallengeResult, [] | [Principal]],
+    RegisterResponse
+  >;
   remove: ActorMethod<[UserNumber, DeviceKey], undefined>;
   replace: ActorMethod<[UserNumber, DeviceKey, DeviceData], undefined>;
   stats: ActorMethod<[], InternetIdentityStats>;
   update: ActorMethod<[UserNumber, DeviceKey, DeviceData], undefined>;
-  verify_tentative_device: ActorMethod<[UserNumber, string], VerifyTentativeDeviceResponse>;
+  verify_tentative_device: ActorMethod<
+    [UserNumber, string],
+    VerifyTentativeDeviceResponse
+  >;
 }

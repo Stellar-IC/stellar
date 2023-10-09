@@ -17,6 +17,7 @@
       "type": "motoko"
     },
     "user_index": {
+      "dependencies": ["workspace_index"],
       "main": "src/backend/canisters/user_index/main.mo",
       "type": "motoko"
     },

@@ -7,7 +7,7 @@ import UUID "mo:uuid/UUID";
 
 module {
     public type PrimaryKey = Nat;
-    public type WorkspaceId = PrimaryKey;
+    public type WorkspaceId = Nat;
     public type WorkspaceName = Text;
     public type WorkspaceDescription = Text;
     public type WorkspaceOwner = Principal;

@@ -126,10 +126,18 @@ export const idlFactory = ({ IDL }) => {
     clear: IDL.Func([ClearArguments], [], []),
     commit_batch: IDL.Func([CommitBatchArguments], [], []),
     commit_proposed_batch: IDL.Func([CommitProposedBatchArguments], [], []),
-    compute_evidence: IDL.Func([ComputeEvidenceArguments], [IDL.Opt(IDL.Vec(IDL.Nat8))], []),
+    compute_evidence: IDL.Func(
+      [ComputeEvidenceArguments],
+      [IDL.Opt(IDL.Vec(IDL.Nat8))],
+      []
+    ),
     configure: IDL.Func([ConfigureArguments], [], []),
     create_asset: IDL.Func([CreateAssetArguments], [], []),
-    create_batch: IDL.Func([IDL.Record({})], [IDL.Record({ batch_id: BatchId })], []),
+    create_batch: IDL.Func(
+      [IDL.Record({})],
+      [IDL.Record({ batch_id: BatchId })],
+      []
+    ),
     create_chunk: IDL.Func(
       [IDL.Record({ content: IDL.Vec(IDL.Nat8), batch_id: BatchId })],
       [IDL.Record({ chunk_id: ChunkId })],
@@ -204,7 +212,11 @@ export const idlFactory = ({ IDL }) => {
       ['query']
     ),
     list_authorized: IDL.Func([], [IDL.Vec(IDL.Principal)], ['query']),
-    list_permitted: IDL.Func([ListPermitted], [IDL.Vec(IDL.Principal)], ['query']),
+    list_permitted: IDL.Func(
+      [ListPermitted],
+      [IDL.Vec(IDL.Principal)],
+      ['query']
+    ),
     propose_commit_batch: IDL.Func([CommitBatchArguments], [], []),
     revoke_permission: IDL.Func([RevokePermission], [], []),
     set_asset_content: IDL.Func([SetAssetContentArguments], [], []),
@@ -230,8 +242,16 @@ export const idlFactory = ({ IDL }) => {
       []
     ),
     validate_configure: IDL.Func([ConfigureArguments], [ValidationResult], []),
-    validate_grant_permission: IDL.Func([GrantPermission], [ValidationResult], []),
-    validate_revoke_permission: IDL.Func([RevokePermission], [ValidationResult], []),
+    validate_grant_permission: IDL.Func(
+      [GrantPermission],
+      [ValidationResult],
+      []
+    ),
+    validate_revoke_permission: IDL.Func(
+      [RevokePermission],
+      [ValidationResult],
+      []
+    ),
     validate_take_ownership: IDL.Func([], [ValidationResult], []),
   });
 };

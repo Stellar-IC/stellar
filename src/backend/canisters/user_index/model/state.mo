@@ -1,9 +1,5 @@
 import Array "mo:base/Array";
 import Debug "mo:base/Debug";
-import Iter "mo:base/Iter";
-import Hash "mo:base/Hash";
-import List "mo:base/List";
-import Nat "mo:base/Nat";
 import Principal "mo:base/Principal";
 import RBTree "mo:base/RBTree";
 import Text "mo:base/Text";
@@ -22,15 +18,18 @@ module {
             username_to_user_id : RBTree.Tree<Text, Types.UserId>;
             principal_to_user_id : RBTree.Tree<Principal, Types.UserId>;
             user_id_to_principal : RBTree.Tree<Types.UserId, Principal>;
+            user_id_to_user_canister : RBTree.Tree<Types.UserId, User.User>;
         }
     ) {
         public let username_to_user_id = RBTree.RBTree<Text, Types.UserId>(Text.compare);
         public let principal_to_user_id = RBTree.RBTree<Principal, Types.UserId>(Principal.compare);
         public let user_id_to_principal = RBTree.RBTree<Types.UserId, Principal>(Principal.compare);
+        public let user_id_to_user_canister = RBTree.RBTree<Types.UserId, User.User>(Principal.compare);
 
         principal_to_user_id.unshare(stable_data.principal_to_user_id);
         username_to_user_id.unshare(stable_data.username_to_user_id);
         user_id_to_principal.unshare(stable_data.user_id_to_principal);
+        user_id_to_user_canister.unshare(stable_data.user_id_to_user_canister);
 
         public func addUser(
             args : {
@@ -40,6 +39,7 @@ module {
             }
         ) : async () {
             var principal = args.principal;
+            var user_canister = args.user;
             var user_id = args.user_id;
             var existing_user_id : ?Types.UserId = getUserIdByPrincipal(principal);
 
@@ -51,6 +51,7 @@ module {
             };
             principal_to_user_id.put((principal, user_id));
             user_id_to_principal.put((user_id, principal));
+            user_id_to_user_canister.put((user_id, user_canister));
 
             return;
         };
@@ -63,14 +64,8 @@ module {
             return user_id_to_principal.get(user_id);
         };
 
-        public func getUsers() : [Principal] {
-            var users : List.List<Principal> = List.nil<Principal>();
-
-            for (entry in user_id_to_principal.entries()) {
-                users := List.push<Principal>(entry.1, users);
-            };
-
-            return List.toArray(users);
+        public func getUserByUserId(user_id : Types.UserId) : ?User.User {
+            return user_id_to_user_canister.get(user_id);
         };
     };
 };

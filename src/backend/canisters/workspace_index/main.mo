@@ -5,6 +5,7 @@ import Result "mo:base/Result";
 import RBTree "mo:base/RBTree";
 import UUID "mo:uuid/UUID";
 
+import Workspace "./model/models/workspace";
 import State "./model/state";
 import CreateWorkspace "./services/create_workspace";
 import Types "./types";
@@ -48,16 +49,32 @@ actor WorkspaceIndex {
     /*
      * Add a workspace to the index.
      */
-    public shared ({ caller }) func addWorkspace() : async Result.Result<Principal, { #anonymousUser; #anonymousWorkspaceIndex; #insufficientCycles }> {
-        if (Principal.isAnonymous(caller)) {
-            Debug.print("Anonymous caller not allowed");
-            return #err(#anonymousUser);
-        };
-
+    public shared ({ caller }) func createWorkspace(
+        input : {
+            owner : Principal;
+        }
+    ) : async Result.Result<Principal, { #anonymousCaller; #anonymousOwner; #anonymousWorkspaceIndex; #unauthorizedCaller; #insufficientCycles }> {
         let workspace_index_principal = Principal.fromActor(WorkspaceIndex);
-        let result = await CreateWorkspace.createWorkspace(state, caller, workspace_index_principal);
+        let result = await CreateWorkspace.createWorkspace(
+            state,
+            input.owner,
+            workspace_index_principal,
+        );
 
-        return result;
+        switch (result) {
+            case (#err(#anonymousUser)) {
+                return #err(#anonymousOwner);
+            };
+            case (#err(#anonymousWorkspaceIndex)) {
+                return #err(#anonymousWorkspaceIndex);
+            };
+            case (#err(#insufficientCycles)) {
+                return #err(#insufficientCycles);
+            };
+            case (#ok(workspace)) {
+                return #ok(workspace);
+            };
+        };
     };
 
     /*

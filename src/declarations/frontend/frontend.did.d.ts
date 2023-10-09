@@ -71,7 +71,10 @@ export type Key = string;
 export interface ListPermitted {
   permission: Permission;
 }
-export type Permission = { Prepare: null } | { ManagePermissions: null } | { Commit: null };
+export type Permission =
+  | { Prepare: null }
+  | { ManagePermissions: null }
+  | { Commit: null };
 export interface RevokePermission {
   permission: Permission;
   of_principal: Principal;
@@ -121,7 +124,10 @@ export interface _SERVICE {
   clear: ActorMethod<[ClearArguments], undefined>;
   commit_batch: ActorMethod<[CommitBatchArguments], undefined>;
   commit_proposed_batch: ActorMethod<[CommitProposedBatchArguments], undefined>;
-  compute_evidence: ActorMethod<[ComputeEvidenceArguments], [] | [Uint8Array | number[]]>;
+  compute_evidence: ActorMethod<
+    [ComputeEvidenceArguments],
+    [] | [Uint8Array | number[]]
+  >;
   configure: ActorMethod<[ConfigureArguments], undefined>;
   create_asset: ActorMethod<[CreateAssetArguments], undefined>;
   create_batch: ActorMethod<[{}], { batch_id: BatchId }>;
@@ -202,7 +208,10 @@ export interface _SERVICE {
   >;
   take_ownership: ActorMethod<[], undefined>;
   unset_asset_content: ActorMethod<[UnsetAssetContentArguments], undefined>;
-  validate_commit_proposed_batch: ActorMethod<[CommitProposedBatchArguments], ValidationResult>;
+  validate_commit_proposed_batch: ActorMethod<
+    [CommitProposedBatchArguments],
+    ValidationResult
+  >;
   validate_configure: ActorMethod<[ConfigureArguments], ValidationResult>;
   validate_grant_permission: ActorMethod<[GrantPermission], ValidationResult>;
   validate_revoke_permission: ActorMethod<[RevokePermission], ValidationResult>;
