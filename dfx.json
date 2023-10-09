@@ -1,16 +1,12 @@
 {
   "canisters": {
     "frontend": {
-      "dependencies": ["documents", "user_index"],
+      "dependencies": ["internet_identity", "user_index"],
       "frontend": {
         "entrypoint": "src/frontend/src/index.html"
       },
       "source": ["src/frontend/dist"],
       "type": "assets"
-    },
-    "documents": {
-      "main": "src/backend/canisters/documents/main.mo",
-      "type": "motoko"
     },
     "workspace_index": {
       "main": "src/backend/canisters/workspace_index/main.mo",

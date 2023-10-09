@@ -28,6 +28,7 @@ export type WorkspaceName = string;
 export type WorkspaceOwner = Principal;
 export interface _SERVICE {
   createWorkspace: ActorMethod<[{ owner: Principal }], Result>;
+  upgradeWorkspaceCanister: ActorMethod<[Principal], undefined>;
   walletBalance: ActorMethod<[], bigint>;
   workspaceByUuid: ActorMethod<[UUID], [] | [Workspace]>;
 }

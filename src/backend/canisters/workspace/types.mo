@@ -89,6 +89,24 @@ module {
             public type AddBlockUpdateOutput = Result.Result<AddBlockUpdateOutputResult, AddBlockUpdateOutputError>;
         };
 
+        public module CreatePageUpdate {
+            public type CreatePageUpdateInput = {
+                uuid : UUID.UUID;
+                content : BlocksTypes.BlockContent;
+                parent : ?UUID.UUID;
+                properties : ShareableBlockProperties;
+            };
+            public type CreatePageUpdateOutputError = {
+                #anonymousUser;
+                #failedToCreate;
+                #inputTooLong;
+                #invalidBlockType;
+                #insufficientCycles;
+            };
+            public type CreatePageUpdateOutputResult = BlocksTypes.ShareableBlock;
+            public type CreatePageUpdateOutput = Result.Result<CreatePageUpdateOutputResult, CreatePageUpdateOutputError>;
+        };
+
         public module UpdateBlockUpdate {
             public type UpdateBlockUpdateInput = BlocksTypes.ShareableBlock;
             public type UpdateBlockUpdateOutputError = {
@@ -108,19 +126,21 @@ module {
         };
 
         public module SaveEventUpdate {
+            public type SaveEventUpdateInputBlockCreatedPaylaod = {
+                index : Nat;
+                block : {
+                    uuid : UUID.UUID;
+                    blockType : BlocksTypes.BlockType;
+                    content : BlocksTypes.BlockContent;
+                    parent : ?UUID.UUID;
+                    properties : BlocksTypes.ShareableBlockProperties;
+                };
+            };
+
             public type SaveEventUpdateInput = {
                 #blockCreated : {
                     eventType : { #blockCreated };
-                    payload : {
-                        index : Nat;
-                        block : {
-                            uuid : UUID.UUID;
-                            blockType : BlocksTypes.BlockType;
-                            content : BlocksTypes.BlockContent;
-                            parent : ?UUID.UUID;
-                            properties : BlocksTypes.ShareableBlockProperties;
-                        };
-                    };
+                    payload : SaveEventUpdateInputBlockCreatedPaylaod;
                 };
                 #blockUpdated : {
                     eventType : { #blockUpdated };

@@ -1,7 +1,7 @@
 import { useCallback, useState } from 'react';
 import { serializeBlock } from '@/modules/domain/block/serializers';
 import { Block } from '@/types';
-import { SaveEventUpdateInput } from '../../../../../declarations/documents/documents.did';
+import { SaveEventUpdateInput } from '../../../../../declarations/workspace/workspace.did';
 
 type SerializedSaveEventUpdateInput = {
   blockCreated: {

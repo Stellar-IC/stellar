@@ -3,26 +3,27 @@ import { useCallback } from 'react';
 import { parse } from 'uuid';
 import { usePagesContext } from '@/contexts/blocks/usePagesContext';
 
-import { useDocumentsActor } from '@/hooks/ic/actors/useDocumentsActor';
+import { useWorkspaceActor } from '@/hooks/ic/actors/useWorkspaceActor';
 import { useUpdate } from '@/hooks/useUpdate';
 import { fromShareable } from '@/modules/domain/block/serializers';
 import { Tree } from '@/modules/lseq';
-import { Block } from '@/types';
-import { canisterId } from '../../../../../declarations/documents';
+import { Block, CanisterId } from '@/types';
+import { canisterId } from '../../../../../declarations/workspace';
 
 import {
   SaveEventUpdateInput,
   SaveEventUpdateOutput,
   ShareableBlock,
-  Transaction,
-} from '../../../../../declarations/documents/documents.did';
+  BlockUpdatedEventTransaction,
+} from '../../../../../declarations/workspace/workspace.did';
 
-export const useBlockByUuid = (props?: {
-  identity?: Identity;
+export const useBlockByUuid = (props: {
+  workspaceId: CanisterId;
+  identity: Identity;
   onSuccess?: (result: ShareableBlock) => void;
 }) => {
-  const { onSuccess: onSuccessFromProps, identity } = props || {};
-  const { actor } = useDocumentsActor({ identity });
+  const { onSuccess: onSuccessFromProps, identity, workspaceId } = props || {};
+  const { actor } = useWorkspaceActor({ identity, workspaceId });
 
   const { blocks: blocksContext } = usePagesContext();
   const { data: blocks, query, updateLocal } = blocksContext;
@@ -59,13 +60,13 @@ export const useBlockByUuid = (props?: {
 
       const block = await getBlockByUuid(blockExternalId);
       const { title } = block.properties;
-      const isAtStart = position == 0;
-      const isAtEnd = position == Tree.size(title);
+      const isAtStart = position === 0;
+      const isAtEnd = position === Tree.size(title);
 
       if (isAtStart) {
         const { node, deletedNode, replacementNode } =
           Tree.insertCharacterAtStart(title, character);
-        const transactions: Transaction[] = [
+        const transactions: BlockUpdatedEventTransaction[] = [
           {
             insert: {
               position: node.identifier.value,
@@ -121,7 +122,7 @@ export const useBlockByUuid = (props?: {
 
       if (isAtEnd) {
         const insertedNode = Tree.insertCharacterAtEnd(title, character);
-        const transactions: Transaction[] = [
+        const transactions: BlockUpdatedEventTransaction[] = [
           {
             insert: {
               position: insertedNode.identifier.value,
@@ -155,7 +156,7 @@ export const useBlockByUuid = (props?: {
         character,
         position
       );
-      const transactions: Transaction[] = [
+      const transactions: BlockUpdatedEventTransaction[] = [
         {
           insert: {
             position: insertedNode.identifier.value,
@@ -189,7 +190,7 @@ export const useBlockByUuid = (props?: {
     async (blockExternalId: string, position: number) => {
       const block = await getBlockByUuid(blockExternalId);
       const { title } = block.properties;
-      const isAtStart = position == 0;
+      const isAtStart = position === 0;
 
       if (isAtStart) return;
 
@@ -203,7 +204,7 @@ export const useBlockByUuid = (props?: {
 
       title.delete(nodeBeforeCursor.identifier);
 
-      const transactions: Transaction[] = [
+      const transactions: BlockUpdatedEventTransaction[] = [
         {
           delete: {
             position: nodeBeforeCursor.identifier.value,

@@ -1,8 +1,8 @@
 export const idlFactory = ({ IDL }) => {
   const ShareableNode = IDL.Rec();
   const UUID = IDL.Vec(IDL.Nat8);
-  const BlockContent__1 = IDL.Vec(UUID);
-  const BlockType__1 = IDL.Variant({
+  const BlockContent = IDL.Vec(UUID);
+  const BlockType = IDL.Variant({
     heading1: IDL.Null,
     heading2: IDL.Null,
     heading3: IDL.Null,
@@ -34,37 +34,25 @@ export const idlFactory = ({ IDL }) => {
     allocationStrategies: IDL.Vec(IDL.Tuple(NodeDepth, AllocationStrategy)),
     rootNode: ShareableNode,
   });
-  const ShareableBlockProperties__1 = IDL.Record({
+  const ShareableBlockProperties = IDL.Record({
     title: IDL.Opt(ShareableBlockText),
     checked: IDL.Opt(IDL.Bool),
   });
   const AddBlockUpdateInput = IDL.Record({
-    content: BlockContent__1,
+    content: BlockContent,
     uuid: UUID,
-    blockType: BlockType__1,
-    properties: ShareableBlockProperties__1,
+    blockType: BlockType,
+    properties: ShareableBlockProperties,
     parent: IDL.Opt(UUID),
   });
-  const PrimaryKey__1 = IDL.Nat;
-  const AddBlockUpdateOutputResult = IDL.Record({ id: PrimaryKey__1 });
+  const PrimaryKey__2 = IDL.Nat;
+  const AddBlockUpdateOutputResult = IDL.Record({ id: PrimaryKey__2 });
   const AddBlockUpdateOutputError = IDL.Null;
   const AddBlockUpdateOutput = IDL.Variant({
     ok: AddBlockUpdateOutputResult,
     err: AddBlockUpdateOutputError,
   });
   const PrimaryKey = IDL.Nat;
-  const BlockContent = IDL.Vec(UUID);
-  const BlockType = IDL.Variant({
-    heading1: IDL.Null,
-    heading2: IDL.Null,
-    heading3: IDL.Null,
-    page: IDL.Null,
-    paragraph: IDL.Null,
-  });
-  const ShareableBlockProperties = IDL.Record({
-    title: IDL.Opt(ShareableBlockText),
-    checked: IDL.Opt(IDL.Bool),
-  });
   const ShareableBlock = IDL.Record({
     id: PrimaryKey,
     content: BlockContent,
@@ -77,8 +65,12 @@ export const idlFactory = ({ IDL }) => {
     ok: ShareableBlock,
     err: IDL.Variant({ blockNotFound: IDL.Null }),
   });
+  const ShareableBlockProperties__1 = IDL.Record({
+    title: IDL.Opt(ShareableBlockText),
+    checked: IDL.Opt(IDL.Bool),
+  });
   const CreatePageUpdateInput = IDL.Record({
-    content: BlockContent__1,
+    content: BlockContent,
     uuid: UUID,
     properties: ShareableBlockProperties__1,
     parent: IDL.Opt(UUID),
@@ -102,16 +94,8 @@ export const idlFactory = ({ IDL }) => {
     ok: CreatePageUpdateOutputResult,
     err: CreatePageUpdateOutputError,
   });
-  const ShareablePage = IDL.Record({
-    id: PrimaryKey,
-    content: BlockContent,
-    uuid: UUID,
-    blockType: BlockType,
-    properties: ShareableBlockProperties,
-    parent: IDL.Opt(UUID),
-  });
   const Result = IDL.Variant({
-    ok: ShareablePage,
+    ok: ShareableBlock,
     err: IDL.Variant({ pageNotFound: IDL.Null }),
   });
   const SortDirection = IDL.Variant({ asc: IDL.Null, desc: IDL.Null });
@@ -119,19 +103,27 @@ export const idlFactory = ({ IDL }) => {
     direction: SortDirection,
     fieldName: IDL.Text,
   });
-  const Edge = IDL.Record({ node: ShareablePage });
+  const PrimaryKey__1 = IDL.Nat;
+  const Edge = IDL.Record({ node: ShareableBlock });
   const PaginatedResults = IDL.Record({ edges: IDL.Vec(Edge) });
-  const SaveEventUpdateInputPayload = IDL.Record({
+  const RemoveBlockUpdateInput = IDL.Record({ uuid: UUID });
+  const RemoveBlockUpdateOutputResult = IDL.Null;
+  const RemoveBlockUpdateOutputError = IDL.Null;
+  const RemoveBlockUpdateOutput = IDL.Variant({
+    ok: RemoveBlockUpdateOutputResult,
+    err: RemoveBlockUpdateOutputError,
+  });
+  const SaveEventUpdateInputBlockCreatedPaylaod = IDL.Record({
     block: IDL.Record({
-      content: BlockContent__1,
+      content: BlockContent,
       uuid: UUID,
-      blockType: BlockType__1,
-      properties: ShareableBlockProperties__1,
+      blockType: BlockType,
+      properties: ShareableBlockProperties,
       parent: IDL.Opt(UUID),
     }),
     index: IDL.Nat,
   });
-  const Transaction = IDL.Variant({
+  const BlockUpdatedEventTransaction = IDL.Variant({
     delete: IDL.Record({
       transactionType: IDL.Variant({ delete: IDL.Null }),
       position: NodeIdentifier,
@@ -148,19 +140,19 @@ export const idlFactory = ({ IDL }) => {
       eventType: IDL.Variant({ blockRemoved: IDL.Null }),
     }),
     blockCreated: IDL.Record({
-      payload: SaveEventUpdateInputPayload,
+      payload: SaveEventUpdateInputBlockCreatedPaylaod,
       eventType: IDL.Variant({ blockCreated: IDL.Null }),
     }),
     blockTypeChanged: IDL.Record({
       payload: IDL.Record({
-        blockType: BlockType__1,
+        blockType: BlockType,
         blockExternalId: UUID,
       }),
       eventType: IDL.Variant({ blockTypeChanged: IDL.Null }),
     }),
     blockUpdated: IDL.Record({
       payload: IDL.Record({
-        transactions: IDL.Vec(Transaction),
+        transactions: IDL.Vec(BlockUpdatedEventTransaction),
         blockExternalId: UUID,
       }),
       eventType: IDL.Variant({ blockUpdated: IDL.Null }),
@@ -198,11 +190,21 @@ export const idlFactory = ({ IDL }) => {
     ok: UpdateBlockUpdateOutputResult,
     err: UpdateBlockUpdateOutputError,
   });
-  return IDL.Service({
+  const Workspace = IDL.Service({
     addBlock: IDL.Func([AddBlockUpdateInput], [AddBlockUpdateOutput], []),
     blockByUuid: IDL.Func([UUID], [Result_1], ['query']),
     createPage: IDL.Func([CreatePageUpdateInput], [CreatePageUpdateOutput], []),
-    page: IDL.Func([PrimaryKey__1], [Result], ['query']),
+    getInitArgs: IDL.Func(
+      [],
+      [
+        IDL.Record({
+          ownerPrincipal: IDL.Principal,
+          workspaceIndexPrincipal: IDL.Principal,
+          capacity: IDL.Nat,
+        }),
+      ],
+      []
+    ),
     pageByUuid: IDL.Func([UUID], [Result], ['query']),
     pages: IDL.Func(
       [
@@ -215,6 +217,11 @@ export const idlFactory = ({ IDL }) => {
       [PaginatedResults],
       ['query']
     ),
+    removeBlock: IDL.Func(
+      [RemoveBlockUpdateInput],
+      [RemoveBlockUpdateOutput],
+      []
+    ),
     saveEvent: IDL.Func([SaveEventUpdateInput], [SaveEventUpdateOutput], []),
     updateBlock: IDL.Func(
       [UpdateBlockUpdateInput],
@@ -222,7 +229,14 @@ export const idlFactory = ({ IDL }) => {
       []
     ),
   });
+  return Workspace;
 };
 export const init = ({ IDL }) => {
-  return [];
+  return [
+    IDL.Record({
+      ownerPrincipal: IDL.Principal,
+      workspaceIndexPrincipal: IDL.Principal,
+      capacity: IDL.Nat,
+    }),
+  ];
 };

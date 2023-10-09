@@ -9,7 +9,7 @@ import {
   ShareableBlock,
   ShareableBlockText,
   ShareableNode,
-} from '../../../../../declarations/documents/documents.did';
+} from '../../../../../declarations/workspace/workspace.did';
 
 export interface BlockText {
   rootNode: Node.Node;

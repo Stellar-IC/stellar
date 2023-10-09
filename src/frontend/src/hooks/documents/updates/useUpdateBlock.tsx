@@ -1,18 +1,20 @@
 import { Identity } from '@dfinity/agent';
-import { useDocumentsActor } from '@/hooks/ic/actors/useDocumentsActor';
+import { useWorkspaceActor } from '@/hooks/ic/actors/useWorkspaceActor';
+import { CanisterId } from '@/types';
 import {
   UpdateBlockUpdateInput,
   UpdateBlockUpdateOutput,
-} from '../../../../../declarations/documents/documents.did';
+} from '../../../../../declarations/workspace/workspace.did';
 import { useUpdate } from '../../useUpdate';
 
 export const useUpdateBlock = (options: {
+  workspaceId: CanisterId;
   identity: Identity;
 }): [
   (input: [UpdateBlockUpdateInput]) => Promise<UpdateBlockUpdateOutput>,
   { data: UpdateBlockUpdateOutput | null; isLoading: boolean }
 ] => {
-  const { actor, canisterId } = useDocumentsActor(options);
+  const { actor, canisterId } = useWorkspaceActor(options);
 
   return useUpdate(canisterId, actor.updateBlock);
 };

@@ -19,6 +19,7 @@ import BlockCreatedConsumer "./consumers/BlockCreatedConsumer";
 import BlockRemovedConsumer "./consumers/BlockRemovedConsumer";
 import BlockUpdatedConsumer "./consumers/BlockUpdatedConsumer";
 import State "./model/state";
+import CreatePage "./services/create_page";
 import Types "./types";
 
 actor class Workspace(
@@ -52,8 +53,41 @@ actor class Workspace(
     let eventStream = LseqEvents.EventStream<BlocksTypes.BlockEvent>();
 
     /*************************************************************************
+     * Initialization
+     *************************************************************************/
+    public func getInitArgs() : async {
+        capacity : Nat;
+        ownerPrincipal : Principal;
+        workspaceIndexPrincipal : Principal;
+    } {
+        return initArgs;
+    };
+
+    /*************************************************************************
      * Queries
      *************************************************************************/
+
+    public query func blockByUuid(uuid : UUID.UUID) : async Result.Result<ShareableBlock, { #blockNotFound }> {
+        switch (state.data.getBlockByUuid(uuid)) {
+            case (#err(err)) {
+                #err(err);
+            };
+            case (#ok(block)) {
+                #ok(BlocksModels.Block.toShareable(block));
+            };
+        };
+    };
+
+    public query func pageByUuid(uuid : UUID.UUID) : async Result.Result<ShareableBlock, { #pageNotFound }> {
+        switch (state.data.getPageByUuid(uuid)) {
+            case (#err(err)) {
+                #err(err);
+            };
+            case (#ok(block)) {
+                #ok(BlocksModels.Block.toShareable(block));
+            };
+        };
+    };
 
     public query ({ caller }) func pages(
         options : {
@@ -62,6 +96,10 @@ actor class Workspace(
             order : ?CoreTypes.SortOrder;
         }
     ) : async CoreTypes.PaginatedResults<ShareableBlock> {
+        Debug.print("Getting pages");
+        Debug.print(debug_show caller);
+        Debug.print(debug_show initArgs.ownerPrincipal);
+
         if (caller != initArgs.ownerPrincipal) {
             return { edges = [] };
         };
@@ -85,6 +123,10 @@ actor class Workspace(
     /*************************************************************************
      * Updates
      *************************************************************************/
+
+    public shared ({ caller }) func createPage(input : Types.Updates.CreatePageUpdate.CreatePageUpdateInput) : async Types.Updates.CreatePageUpdate.CreatePageUpdateOutput {
+        await CreatePage.execute(state, caller, input);
+    };
 
     public shared ({ caller }) func addBlock(input : Types.Updates.AddBlockUpdate.AddBlockUpdateInput) : async Types.Updates.AddBlockUpdate.AddBlockUpdateOutput {
         var block_id = state.data.addBlock(BlocksModels.Block.fromShareableUnsaved(input));

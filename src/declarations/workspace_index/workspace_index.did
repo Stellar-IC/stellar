@@ -25,6 +25,7 @@ type Result = variant {
 };
 service : {
   createWorkspace : (record { owner : principal }) -> (Result);
+  upgradeWorkspaceCanister : (principal) -> () oneway;
   walletBalance : () -> (nat);
   workspaceByUuid : (UUID) -> (opt Workspace) query;
 };

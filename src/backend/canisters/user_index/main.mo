@@ -50,7 +50,7 @@ actor UserIndex {
                 return #ok(principal);
             };
             case (#ok(#created(principal, user))) {
-                let workspaceResult = await createPrivateWorkspaceForUser(principal);
+                let workspaceResult = await createPrivateWorkspaceForUser(caller);
 
                 switch (workspaceResult) {
                     case (#err(#anonymousCaller)) {
@@ -96,9 +96,9 @@ actor UserIndex {
         return balance;
     };
 
-    private func createPrivateWorkspaceForUser(userId : UserId) : async Result.Result<Principal, { #anonymousCaller; #anonymousOwner; #anonymousWorkspaceIndex; #unauthorizedCaller; #insufficientCycles }> {
+    private func createPrivateWorkspaceForUser(owner : Principal) : async Result.Result<Principal, { #anonymousCaller; #anonymousOwner; #anonymousWorkspaceIndex; #unauthorizedCaller; #insufficientCycles }> {
         return await WorkspaceIndex.createWorkspace({
-            owner = userId;
+            owner = owner;
         });
     };
 

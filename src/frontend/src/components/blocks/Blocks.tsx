@@ -5,6 +5,7 @@ import { usePagesContext } from '@/contexts/blocks/usePagesContext';
 import { useBlockByUuid } from '@/hooks/documents/queries/useBlockByUuid';
 import { useAuthContext } from '@/modules/auth/contexts/AuthContext';
 import { Page } from '@/types';
+import { useWorkspaceContext } from '@/contexts/WorkspaceContext/useWorkspaceContext';
 import { BlockWithActions } from './BlockWithActions';
 import { HeadingBlock } from './HeadingBlock';
 import { TextBlock } from './TextBlock';
@@ -18,8 +19,10 @@ export const BlockRenderer = ({
 }) => {
   const { identity } = useAuthContext();
   const { addBlock, blocks } = usePagesContext();
+  const { workspaceId } = useWorkspaceContext();
   const { query, insertCharacter, removeCharacter } = useBlockByUuid({
     identity,
+    workspaceId,
   });
   const block = blocks.data[externalId];
 
@@ -52,7 +55,6 @@ export const BlockRenderer = ({
           onEnterPressed={() => {
             addBlock(parse(parentExternalId), { paragraph: null }, index + 1);
             setTimeout(() => {
-              console.log(document.querySelectorAll('.Blocks>.TextBlock'));
               const blocksDiv = document.querySelector('.Blocks');
               if (!blocksDiv) return;
               const blockToFocus =
@@ -92,14 +94,55 @@ export const BlockRenderer = ({
   return <>Unknown Block Type</>;
 };
 
-export const Blocks = ({ page }: { page: Page }) => (
-  <Stack className="Blocks" w="100%" gap={0}>
-    {page.content?.map((blockUuid, index) => (
-      <BlockRenderer
-        key={String(blockUuid)}
-        index={index}
-        externalId={blockUuid}
-      />
-    ))}
-  </Stack>
-);
+export const Blocks = ({ page }: { page: Page }) => {
+  const { identity } = useAuthContext();
+  const { workspaceId } = useWorkspaceContext();
+  const { query, insertCharacter, removeCharacter } = useBlockByUuid({
+    identity,
+    workspaceId,
+  });
+  const { addBlock, blocks } = usePagesContext();
+
+  const block = blocks.data[page.uuid];
+
+  useEffect(() => {
+    query(parse(page.uuid));
+  }, [query, page.uuid]);
+
+  console.log({ block });
+
+  return (
+    <Stack className="Blocks" w="100%" gap={0}>
+      <div style={{ padding: '1rem 0' }}>
+        <TextBlock
+          value={page.properties.title}
+          blockExternalId={page.uuid}
+          // onEnterPressed={() => {
+          //   addBlock(parse(parentExternalId), { paragraph: null }, index + 1);
+          //   setTimeout(() => {
+          //     const blocksDiv = document.querySelector('.Blocks');
+          //     if (!blocksDiv) return;
+          //     const blockToFocus =
+          //       blocksDiv.querySelectorAll<HTMLDivElement>('.TextBlock')[index + 1];
+          //     blockToFocus.querySelector('span')?.focus();
+          //   }, 0);
+          // }}
+          onInsert={(cursorPosition, character) =>
+            insertCharacter(page.uuid, cursorPosition, character)
+          }
+          onRemove={(cursorPosition) =>
+            removeCharacter(page.uuid, cursorPosition)
+          }
+        />
+      </div>
+
+      {page.content?.map((blockUuid, index) => (
+        <BlockRenderer
+          key={String(blockUuid)}
+          index={index}
+          externalId={blockUuid}
+        />
+      ))}
+    </Stack>
+  );
+};

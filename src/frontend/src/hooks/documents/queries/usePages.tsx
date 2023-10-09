@@ -2,7 +2,6 @@ import { Identity } from '@dfinity/agent';
 import { useCallback } from 'react';
 import { parse, stringify, v4 } from 'uuid';
 
-import { useDocumentsActor } from '@/hooks/ic/actors/useDocumentsActor';
 import { useUpdate } from '@/hooks/useUpdate';
 import {
   fromLocalStorageBulk,
@@ -17,17 +16,19 @@ import {
   BlockEvent,
   RemoveBlockEvent,
   Block,
+  CanisterId,
 } from '@/types';
 
+import { useWorkspaceActor } from '@/hooks/ic/actors/useWorkspaceActor';
 import {
   Result as PageByUuidResult,
   SaveEventUpdateInput,
-  SaveEventUpdateInputPayload,
+  SaveEventUpdateInputBlockCreatedPaylaod,
   SaveEventUpdateOutput,
-  ShareablePage,
+  ShareableBlock,
   UUID,
-} from '../../../../../declarations/documents/documents.did';
-import { canisterId } from '../../../../../declarations/documents';
+} from '../../../../../declarations/workspace/workspace.did';
+import { canisterId } from '../../../../../declarations/workspace';
 import { useQuery } from '../../useQuery';
 import { usePageEvents } from './usePageEvents';
 
@@ -35,12 +36,18 @@ const getExternalId = (result: PageByUuidResult): UUID | null =>
   'ok' in result ? result.ok.uuid : null;
 
 export const usePages = (props: {
-  identity?: Identity;
+  workspaceId: CanisterId;
+  identity: Identity;
   updateLocalBlock: (externalId: string, updatedData: Block) => void;
-  onSuccess?: (result: ShareablePage) => void;
+  onSuccess?: (result: ShareableBlock) => void;
 }) => {
-  const { onSuccess: onSuccessFromProps, identity, updateLocalBlock } = props;
-  const { actor } = useDocumentsActor({ identity });
+  const {
+    onSuccess: onSuccessFromProps,
+    identity,
+    updateLocalBlock,
+    workspaceId,
+  } = props;
+  const { actor } = useWorkspaceActor({ identity, workspaceId });
 
   const onSuccess = useCallback(
     (result: PageByUuidResult) => {
@@ -70,8 +77,6 @@ export const usePages = (props: {
     }
   );
 
-  console.log({ pages });
-
   const { addEvent } = usePageEvents();
 
   const [sendUpdate] = useUpdate<[SaveEventUpdateInput], SaveEventUpdateOutput>(
@@ -96,12 +101,6 @@ export const usePages = (props: {
         });
 
         const currentPage = pages[pageExternalId];
-
-        // Save block to local block storage
-        // pass
-
-        console.log({ index });
-
         const newContent = [...currentPage.content];
         newContent.splice(
           Number(index),
@@ -161,7 +160,7 @@ export const usePages = (props: {
       const { data: eventData } = event;
       const uuid = parse(v4());
 
-      const newBlock: SaveEventUpdateInputPayload['block'] = {
+      const newBlock: SaveEventUpdateInputBlockCreatedPaylaod['block'] = {
         content: [],
         parent: [parse(page.uuid)],
         uuid,

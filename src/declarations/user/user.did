@@ -1,3 +1,4 @@
+type WorkspaceId = principal;
 type Username = text;
 type UserProfile = record {
   created_at : Time;
@@ -5,27 +6,19 @@ type UserProfile = record {
   username : opt Username;
 };
 type User = service {
-  createDeliveryAgentAccount : (ProfileInput) -> (Result_1);
+  getPersonalWorkspace : () -> (opt WorkspaceId) query;
   profile : () -> (Result) query;
+  setPersonalWorkspace : (WorkspaceId) -> () oneway;
   updateProfile : (ProfileInput) -> (Result);
   wallet_balance : () -> (nat);
   wallet_receive : () -> (record { accepted : nat64 });
 };
 type Time = int;
-type Result_1 = variant {
-  err : variant {
-    alreadyExists;
-    notAuthorized;
-    unknownError;
-  };
-  ok : DeliveryAgentAccount;
-};
 type Result = variant {
   err : variant { notAuthorized };
   ok : UserProfile;
 };
 type ProfileInput = record { username : Username };
-type DeliveryAgentAccount = record {};
 service : (
   record {
     capacity : nat;

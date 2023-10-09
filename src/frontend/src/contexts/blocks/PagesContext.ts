@@ -4,9 +4,9 @@ import {
   BlockType,
   Result as PageByUuidQueryResult,
   Result_1 as BlockByUuidQueryResult,
-  Transaction,
+  BlockUpdatedEventTransaction,
   UUID,
-} from '../../../../declarations/documents/documents.did';
+} from '../../../../declarations/workspace/workspace.did';
 
 export const PagesContext = createContext<{
   pages: {
@@ -24,6 +24,6 @@ export const PagesContext = createContext<{
   updateBlock: (
     pageexternalId: UUID,
     blockExternalId: UUID,
-    transactions: Transaction[]
+    transactions: BlockUpdatedEventTransaction[]
   ) => void;
 } | null>(null);

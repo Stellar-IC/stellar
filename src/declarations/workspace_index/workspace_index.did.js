@@ -30,6 +30,7 @@ export const idlFactory = ({ IDL }) => {
       [Result],
       []
     ),
+    upgradeWorkspaceCanister: IDL.Func([IDL.Principal], [], ['oneway']),
     walletBalance: IDL.Func([], [IDL.Nat], []),
     workspaceByUuid: IDL.Func([UUID], [IDL.Opt(Workspace)], ['query']),
   });

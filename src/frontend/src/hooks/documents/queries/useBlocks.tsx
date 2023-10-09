@@ -1,30 +1,31 @@
 import { Identity } from '@dfinity/agent';
 import { useCallback } from 'react';
 
-import { useDocumentsActor } from '@/hooks/ic/actors/useDocumentsActor';
 import {
   fromLocalStorageBulk,
   fromShareable,
   toLocalStorageBulk,
 } from '@/modules/domain/block/serializers';
-import { Block, LocalStorageBlock } from '@/types';
+import { Block, CanisterId, LocalStorageBlock } from '@/types';
 
+import { useWorkspaceActor } from '@/hooks/ic/actors/useWorkspaceActor';
 import {
   Result_1 as BlockByUuidResult,
   ShareableBlock,
   UUID,
-} from '../../../../../declarations/documents/documents.did';
+} from '../../../../../declarations/workspace/workspace.did';
 import { useQuery } from '../../useQuery';
 
 const getExternalId = (result: BlockByUuidResult): UUID | null =>
   'ok' in result ? result.ok.uuid : null;
 
-export const useBlocks = (props?: {
-  identity?: Identity;
+export const useBlocks = (props: {
+  workspaceId: CanisterId;
+  identity: Identity;
   onSuccess?: (result: ShareableBlock) => void;
 }) => {
-  const { onSuccess: onSuccessFromProps, identity } = props || {};
-  const { actor } = useDocumentsActor({ identity });
+  const { onSuccess: onSuccessFromProps, identity, workspaceId } = props;
+  const { actor } = useWorkspaceActor({ identity, workspaceId });
 
   const onSuccess = useCallback(
     (result: BlockByUuidResult) => {
@@ -50,8 +51,6 @@ export const useBlocks = (props?: {
     prepareForStorage: toLocalStorageBulk,
     prepareFromStorage: fromLocalStorageBulk,
   });
-
-  console.log({ blocks: data });
 
   return { data, query, updateLocal };
 };

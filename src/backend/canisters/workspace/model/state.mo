@@ -3,6 +3,9 @@ import RBTree "mo:base/RBTree";
 import Result "mo:base/Result";
 import Text "mo:base/Text";
 import Order "mo:base/Order";
+import Debug "mo:base/Debug";
+import Iter "mo:base/Iter";
+import Array "mo:base/Array";
 import UUID "mo:uuid/UUID";
 
 import { Workspace = WorkspaceModel } "../../../lib/workspaces/models";

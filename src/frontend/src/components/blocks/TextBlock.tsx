@@ -8,7 +8,7 @@ import { ExternalId } from '@/types';
 
 type TextBlockProps = {
   blockExternalId: ExternalId;
-  pageExternalId: ExternalId;
+  pageExternalId?: ExternalId;
   value: Tree.Tree;
   onEnterPressed?: () => void;
   onInsert: (cursorPosition: number, character: string) => void;
@@ -43,6 +43,7 @@ export const TextBlock = ({
       className="TextBlock"
       pos="relative"
       mih="24px"
+      bg="#eee"
       h="100%"
       w="100%"
       style={{ border: '1px solid #fff' }}
@@ -62,7 +63,7 @@ export const TextBlock = ({
             return false;
           }
           if (e.key === 'Backspace') {
-            if (e.currentTarget.innerText === '') {
+            if (pageExternalId && e.currentTarget.innerText === '') {
               removeBlock(parse(pageExternalId), parse(blockExternalId));
               return false;
             }
@@ -73,8 +74,9 @@ export const TextBlock = ({
           if (e.key.match(/^[\w\W]$/g)) {
             const cursorPosition = window.getSelection()?.anchorOffset;
 
-            if (cursorPosition === undefined)
+            if (cursorPosition === undefined) {
               throw new Error('No cursor position');
+            }
 
             onInsert(cursorPosition, e.key);
           }

@@ -1,9 +1,9 @@
 import { Principal } from '@dfinity/principal';
 import {
   BlockType,
-  Transaction,
+  BlockUpdatedEventTransaction,
   UUID,
-} from '../../declarations/documents/documents.did';
+} from '../../declarations/workspace/workspace.did';
 import * as Lseq from './modules/lseq';
 
 export type CanisterId = string | Principal;
@@ -25,7 +25,7 @@ export interface AddBlockEvent {
 
 export interface UpdateBlockEvent {
   type: 'updateBlock';
-  data: { blockExternalId: UUID; transactions: Transaction[] };
+  data: { blockExternalId: UUID; transactions: BlockUpdatedEventTransaction[] };
 }
 
 export type RemoveBlockEvent = {

@@ -23,8 +23,6 @@ export function PageDetailPage() {
 
   const page = data[pageId];
 
-  console.log({ data, page });
-
   if (!page) return <Page />;
 
   return (

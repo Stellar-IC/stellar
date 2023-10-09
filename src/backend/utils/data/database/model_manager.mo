@@ -82,12 +82,12 @@ module ModelManager {
          */
         public func all() : QuerySet.QuerySet<DataT> {
             let entries = data.entries();
-            let instances = List.fromArray<DataT>([]);
+            var instances = List.fromArray<DataT>([]);
 
             for (entry in entries) {
                 let pk = entry.0;
                 let instance = entry.1;
-                ignore List.push<DataT>(instance, instances);
+                instances := List.push<DataT>(instance, instances);
             };
 
             return QuerySet.QuerySet<DataT>(?List.toArray<DataT>(instances));

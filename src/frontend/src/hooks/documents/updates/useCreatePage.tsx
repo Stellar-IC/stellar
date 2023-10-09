@@ -1,22 +1,24 @@
 import { Identity } from '@dfinity/agent';
 import { useCallback } from 'react';
 import { v4 as uuidv4, parse as uuidParse } from 'uuid';
-import { useDocumentsActor } from '@/hooks/ic/actors/useDocumentsActor';
+import { useWorkspaceActor } from '@/hooks/ic/actors/useWorkspaceActor';
+import { CanisterId } from '@/types';
 import {
   CreatePageUpdateInput,
   CreatePageUpdateOutput,
-} from '../../../../../declarations/documents/documents.did';
+} from '../../../../../declarations/workspace/workspace.did';
 import { useUpdate } from '../../useUpdate';
 
-export const useCreatePage = (
-  options: { identity?: Identity } = {}
-): [
+export const useCreatePage = (options: {
+  identity: Identity;
+  workspaceId: CanisterId;
+}): [
   (
     input: Omit<CreatePageUpdateInput, 'uuid'>
   ) => Promise<CreatePageUpdateOutput>,
   { data: CreatePageUpdateOutput | null; isLoading: boolean }
 ] => {
-  const { actor, canisterId } = useDocumentsActor(options);
+  const { actor, canisterId } = useWorkspaceActor(options);
   const [_createPage, ...other] = useUpdate(canisterId, actor.createPage);
   const createPage = useCallback(
     (input: Omit<CreatePageUpdateInput, 'uuid'>) => {

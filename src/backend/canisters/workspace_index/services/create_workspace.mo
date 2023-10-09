@@ -63,6 +63,7 @@ module {
                 createdAt = Time.now();
                 updatedAt = Time.now();
             },
+            workspaceCanister,
         );
 
         #ok(workspaceCanisterPrincipal);

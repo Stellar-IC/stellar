@@ -1,6 +1,6 @@
 import { useCallback, useState } from 'react';
 import { stringify } from 'uuid';
-import { UUID } from '../../../declarations/documents/documents.did';
+import { UUID } from '../../../declarations/workspace/workspace.did';
 
 export function useQuery<
   ArgsT extends unknown[],
@@ -123,7 +123,6 @@ export function useQuery<
 
   const updateLocal = useCallback(
     (externalId: string, updatedData: DataT) => {
-      console.log(queryName, { updatedData });
       setData((prev) => ({
         ...prev,
         [externalId]: updatedData,

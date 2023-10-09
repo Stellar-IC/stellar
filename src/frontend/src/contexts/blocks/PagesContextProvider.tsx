@@ -4,22 +4,24 @@ import { usePages } from '@/hooks/documents/queries/usePages';
 import { useAuthContext } from '@/modules/auth/contexts/AuthContext';
 
 import { PagesContext } from './PagesContext';
+import { useWorkspaceContext } from '../WorkspaceContext/useWorkspaceContext';
 
 export function PagesContextProvider({ children }: PropsWithChildren<{}>) {
   const { identity } = useAuthContext();
+  const { workspaceId } = useWorkspaceContext();
 
   const {
     data: blocks,
     query: queryBlock,
     updateLocal: updateLocalBlock,
-  } = useBlocks({ identity });
+  } = useBlocks({ identity, workspaceId });
 
   const {
     pages,
     query: queryPage,
     updateLocal: updateLocalPage,
     handleBlockEvent,
-  } = usePages({ identity, updateLocalBlock });
+  } = usePages({ identity, workspaceId, updateLocalBlock });
 
   return (
     <PagesContext.Provider

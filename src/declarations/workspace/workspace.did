@@ -1,3 +1,26 @@
+type Workspace = service {
+  addBlock : (AddBlockUpdateInput) -> (AddBlockUpdateOutput);
+  blockByUuid : (UUID) -> (Result_1) query;
+  createPage : (CreatePageUpdateInput) -> (CreatePageUpdateOutput);
+  getInitArgs : () -> (
+    record {
+      capacity : nat;
+      ownerPrincipal : principal;
+      workspaceIndexPrincipal : principal;
+    }
+  );
+  pageByUuid : (UUID) -> (Result) query;
+  pages : (
+    record {
+      cursor : opt PrimaryKey__1;
+      limit : opt nat;
+      order : opt SortOrder;
+    }
+  ) -> (PaginatedResults) query;
+  removeBlock : (RemoveBlockUpdateInput) -> (RemoveBlockUpdateOutput);
+  saveEvent : (SaveEventUpdateInput) -> (SaveEventUpdateOutput);
+  updateBlock : (UpdateBlockUpdateInput) -> (UpdateBlockUpdateOutput);
+};
 type UpdateBlockUpdateOutputResult = record {
   blockType : BlockType;
   content : BlockContent;
@@ -20,17 +43,6 @@ type UpdateBlockUpdateInput = record {
   uuid : UUID;
 };
 type UUID = vec nat8;
-type Transaction = variant {
-  delete : record {
-    position : NodeIdentifier;
-    transactionType : variant { delete };
-  };
-  insert : record {
-    position : NodeIdentifier;
-    transactionType : variant { insert };
-    value : NodeValue;
-  };
-};
 type Time = int;
 type SortOrder = record {
   direction : SortDirection;
@@ -39,14 +51,6 @@ type SortOrder = record {
 type SortDirection = variant {
   asc;
   desc;
-};
-type ShareablePage = record {
-  blockType : BlockType;
-  content : BlockContent;
-  id : PrimaryKey;
-  parent : opt UUID;
-  properties : ShareableBlockProperties;
-  uuid : UUID;
 };
 type ShareableNode = record {
   base : NodeBase;
@@ -91,12 +95,12 @@ type SaveEventUpdateOutput = variant {
   err : SaveEventUpdateOutputError;
   ok : SaveEventUpdateOutputResult;
 };
-type SaveEventUpdateInputPayload = record {
+type SaveEventUpdateInputBlockCreatedPaylaod = record {
   block : record {
-    blockType : BlockType__1;
-    content : BlockContent__1;
+    blockType : BlockType;
+    content : BlockContent;
     parent : opt UUID;
-    properties : ShareableBlockProperties__1;
+    properties : ShareableBlockProperties;
     uuid : UUID;
   };
   index : nat;
@@ -104,7 +108,7 @@ type SaveEventUpdateInputPayload = record {
 type SaveEventUpdateInput = variant {
   blockCreated : record {
     eventType : variant { blockCreated };
-    payload : SaveEventUpdateInputPayload;
+    payload : SaveEventUpdateInputBlockCreatedPaylaod;
   };
   blockRemoved : record {
     eventType : variant { blockRemoved };
@@ -117,14 +121,14 @@ type SaveEventUpdateInput = variant {
     eventType : variant { blockTypeChanged };
     payload : record {
       blockExternalId : UUID;
-      blockType : BlockType__1;
+      blockType : BlockType;
     };
   };
   blockUpdated : record {
     eventType : variant { blockUpdated };
     payload : record {
       blockExternalId : UUID;
-      transactions : vec Transaction;
+      transactions : vec BlockUpdatedEventTransaction;
     };
   };
 };
@@ -134,8 +138,16 @@ type Result_1 = variant {
 };
 type Result = variant {
   err : variant { pageNotFound };
-  ok : ShareablePage;
+  ok : ShareableBlock;
 };
+type RemoveBlockUpdateOutputResult = null;
+type RemoveBlockUpdateOutputError = null;
+type RemoveBlockUpdateOutput = variant {
+  err : RemoveBlockUpdateOutputError;
+  ok : RemoveBlockUpdateOutputResult;
+};
+type RemoveBlockUpdateInput = record { uuid : UUID };
+type PrimaryKey__2 = nat;
 type PrimaryKey__1 = nat;
 type PrimaryKey = nat;
 type PaginatedResults = record { edges : vec Edge };
@@ -145,7 +157,7 @@ type NodeIdentifier = vec NodeIndex;
 type NodeDepth = nat16;
 type NodeBoundary = nat16;
 type NodeBase = nat16;
-type Edge = record { node : ShareablePage };
+type Edge = record { node : ShareableBlock };
 type CreatePageUpdateOutputResult = record {
   blockType : BlockType;
   content : BlockContent;
@@ -166,17 +178,21 @@ type CreatePageUpdateOutput = variant {
   ok : CreatePageUpdateOutputResult;
 };
 type CreatePageUpdateInput = record {
-  content : BlockContent__1;
+  content : BlockContent;
   parent : opt UUID;
   properties : ShareableBlockProperties__1;
   uuid : UUID;
 };
-type BlockType__1 = variant {
-  heading1;
-  heading2;
-  heading3;
-  page;
-  paragraph;
+type BlockUpdatedEventTransaction = variant {
+  delete : record {
+    position : NodeIdentifier;
+    transactionType : variant { delete };
+  };
+  insert : record {
+    position : NodeIdentifier;
+    transactionType : variant { insert };
+    value : NodeValue;
+  };
 };
 type BlockType = variant {
   heading1;
@@ -185,38 +201,28 @@ type BlockType = variant {
   page;
   paragraph;
 };
-type BlockContent__1 = vec UUID;
 type BlockContent = vec UUID;
 type AllocationStrategy = variant {
   boundaryMinus;
   boundaryPlus;
 };
-type AddBlockUpdateOutputResult = record { id : PrimaryKey__1 };
+type AddBlockUpdateOutputResult = record { id : PrimaryKey__2 };
 type AddBlockUpdateOutputError = null;
 type AddBlockUpdateOutput = variant {
   err : AddBlockUpdateOutputError;
   ok : AddBlockUpdateOutputResult;
 };
 type AddBlockUpdateInput = record {
-  blockType : BlockType__1;
-  content : BlockContent__1;
+  blockType : BlockType;
+  content : BlockContent;
   parent : opt UUID;
-  properties : ShareableBlockProperties__1;
+  properties : ShareableBlockProperties;
   uuid : UUID;
 };
-service : {
-  addBlock : (AddBlockUpdateInput) -> (AddBlockUpdateOutput);
-  blockByUuid : (UUID) -> (Result_1) query;
-  createPage : (CreatePageUpdateInput) -> (CreatePageUpdateOutput);
-  page : (PrimaryKey__1) -> (Result) query;
-  pageByUuid : (UUID) -> (Result) query;
-  pages : (
-    record {
-      cursor : opt PrimaryKey__1;
-      limit : opt nat;
-      order : opt SortOrder;
-    }
-  ) -> (PaginatedResults) query;
-  saveEvent : (SaveEventUpdateInput) -> (SaveEventUpdateOutput);
-  updateBlock : (UpdateBlockUpdateInput) -> (UpdateBlockUpdateOutput);
-};
+service : (
+  record {
+    capacity : nat;
+    ownerPrincipal : principal;
+    workspaceIndexPrincipal : principal;
+  }
+) -> Workspace;

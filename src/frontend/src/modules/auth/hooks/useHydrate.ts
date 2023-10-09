@@ -1,7 +1,8 @@
 import { AnonymousIdentity } from '@dfinity/agent';
 import { DelegationIdentity } from '@dfinity/identity';
-import { useCallback, useState } from 'react';
+import { useUserActor } from '@/hooks/ic/actors/useUserActor';
 import { logger as baseLogger } from '@/modules/logger';
+import { useCallback, useState } from 'react';
 import { getAuthClient } from '../client';
 
 import { getUserProfile, registerUser } from './utils';

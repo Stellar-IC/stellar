@@ -2,10 +2,10 @@ import type { Principal } from '@dfinity/principal';
 import type { ActorMethod } from '@dfinity/agent';
 
 export interface AddBlockUpdateInput {
-  content: BlockContent__1;
+  content: BlockContent;
   uuid: UUID;
-  blockType: BlockType__1;
-  properties: ShareableBlockProperties__1;
+  blockType: BlockType;
+  properties: ShareableBlockProperties;
   parent: [] | [UUID];
 }
 export type AddBlockUpdateOutput =
@@ -13,27 +13,34 @@ export type AddBlockUpdateOutput =
   | { err: AddBlockUpdateOutputError };
 export type AddBlockUpdateOutputError = null;
 export interface AddBlockUpdateOutputResult {
-  id: PrimaryKey__1;
+  id: PrimaryKey__2;
 }
 export type AllocationStrategy =
   | { boundaryPlus: null }
   | { boundaryMinus: null };
 export type BlockContent = Array<UUID>;
-export type BlockContent__1 = Array<UUID>;
 export type BlockType =
   | { heading1: null }
   | { heading2: null }
   | { heading3: null }
   | { page: null }
   | { paragraph: null };
-export type BlockType__1 =
-  | { heading1: null }
-  | { heading2: null }
-  | { heading3: null }
-  | { page: null }
-  | { paragraph: null };
+export type BlockUpdatedEventTransaction =
+  | {
+      delete: {
+        transactionType: { delete: null };
+        position: NodeIdentifier;
+      };
+    }
+  | {
+      insert: {
+        transactionType: { insert: null };
+        value: NodeValue;
+        position: NodeIdentifier;
+      };
+    };
 export interface CreatePageUpdateInput {
-  content: BlockContent__1;
+  content: BlockContent;
   uuid: UUID;
   properties: ShareableBlockProperties__1;
   parent: [] | [UUID];
@@ -56,7 +63,7 @@ export interface CreatePageUpdateOutputResult {
   parent: [] | [UUID];
 }
 export interface Edge {
-  node: ShareablePage;
+  node: ShareableBlock;
 }
 export type NodeBase = number;
 export type NodeBoundary = number;
@@ -69,7 +76,16 @@ export interface PaginatedResults {
 }
 export type PrimaryKey = bigint;
 export type PrimaryKey__1 = bigint;
-export type Result = { ok: ShareablePage } | { err: { pageNotFound: null } };
+export type PrimaryKey__2 = bigint;
+export interface RemoveBlockUpdateInput {
+  uuid: UUID;
+}
+export type RemoveBlockUpdateOutput =
+  | { ok: RemoveBlockUpdateOutputResult }
+  | { err: RemoveBlockUpdateOutputError };
+export type RemoveBlockUpdateOutputError = null;
+export type RemoveBlockUpdateOutputResult = null;
+export type Result = { ok: ShareableBlock } | { err: { pageNotFound: null } };
 export type Result_1 =
   | { ok: ShareableBlock }
   | { err: { blockNotFound: null } };
@@ -82,31 +98,31 @@ export type SaveEventUpdateInput =
     }
   | {
       blockCreated: {
-        payload: SaveEventUpdateInputPayload;
+        payload: SaveEventUpdateInputBlockCreatedPaylaod;
         eventType: { blockCreated: null };
       };
     }
   | {
       blockTypeChanged: {
-        payload: { blockType: BlockType__1; blockExternalId: UUID };
+        payload: { blockType: BlockType; blockExternalId: UUID };
         eventType: { blockTypeChanged: null };
       };
     }
   | {
       blockUpdated: {
         payload: {
-          transactions: Array<Transaction>;
+          transactions: Array<BlockUpdatedEventTransaction>;
           blockExternalId: UUID;
         };
         eventType: { blockUpdated: null };
       };
     };
-export interface SaveEventUpdateInputPayload {
+export interface SaveEventUpdateInputBlockCreatedPaylaod {
   block: {
-    content: BlockContent__1;
+    content: BlockContent;
     uuid: UUID;
-    blockType: BlockType__1;
-    properties: ShareableBlockProperties__1;
+    blockType: BlockType;
+    properties: ShareableBlockProperties;
     parent: [] | [UUID];
   };
   index: bigint;
@@ -146,34 +162,12 @@ export interface ShareableNode {
   identifier: NodeIdentifier;
   deletedAt: [] | [Time];
 }
-export interface ShareablePage {
-  id: PrimaryKey;
-  content: BlockContent;
-  uuid: UUID;
-  blockType: BlockType;
-  properties: ShareableBlockProperties;
-  parent: [] | [UUID];
-}
 export type SortDirection = { asc: null } | { desc: null };
 export interface SortOrder {
   direction: SortDirection;
   fieldName: string;
 }
 export type Time = bigint;
-export type Transaction =
-  | {
-      delete: {
-        transactionType: { delete: null };
-        position: NodeIdentifier;
-      };
-    }
-  | {
-      insert: {
-        transactionType: { insert: null };
-        value: NodeValue;
-        position: NodeIdentifier;
-      };
-    };
 export type UUID = Uint8Array | number[];
 export interface UpdateBlockUpdateInput {
   id: PrimaryKey;
@@ -195,11 +189,18 @@ export interface UpdateBlockUpdateOutputResult {
   properties: ShareableBlockProperties;
   parent: [] | [UUID];
 }
-export interface _SERVICE {
+export interface Workspace {
   addBlock: ActorMethod<[AddBlockUpdateInput], AddBlockUpdateOutput>;
   blockByUuid: ActorMethod<[UUID], Result_1>;
   createPage: ActorMethod<[CreatePageUpdateInput], CreatePageUpdateOutput>;
-  page: ActorMethod<[PrimaryKey__1], Result>;
+  getInitArgs: ActorMethod<
+    [],
+    {
+      ownerPrincipal: Principal;
+      workspaceIndexPrincipal: Principal;
+      capacity: bigint;
+    }
+  >;
   pageByUuid: ActorMethod<[UUID], Result>;
   pages: ActorMethod<
     [
@@ -211,6 +212,8 @@ export interface _SERVICE {
     ],
     PaginatedResults
   >;
+  removeBlock: ActorMethod<[RemoveBlockUpdateInput], RemoveBlockUpdateOutput>;
   saveEvent: ActorMethod<[SaveEventUpdateInput], SaveEventUpdateOutput>;
   updateBlock: ActorMethod<[UpdateBlockUpdateInput], UpdateBlockUpdateOutput>;
 }
+export interface _SERVICE extends Workspace {}

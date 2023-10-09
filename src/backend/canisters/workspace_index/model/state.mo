@@ -8,9 +8,11 @@ import Nat8 "mo:base/Nat8";
 import UUID "mo:uuid/UUID";
 
 import IdManager "../../../utils/data/id_manager";
+import WorkspaceActor "../../workspace/main";
 
 import Types "../types";
 import { Workspace = WorkspaceModel } "./models/workspace";
+import Workspace "models/workspace";
 
 module {
     type WorkspaceId = Types.WorkspaceId;
@@ -33,6 +35,7 @@ module {
             workspaces : RBTree.Tree<WorkspaceId, Workspace>;
             principal_to_workspace_uuid : RBTree.Tree<WorkspaceId, UUID.UUID>;
             workspace_uuid_to_principal : RBTree.Tree<UUID.UUID, WorkspaceId>;
+            workspace_id_to_canister : RBTree.Tree<WorkspaceId, WorkspaceActor.Workspace>;
         }
     ) {
         // Set up models
@@ -44,6 +47,9 @@ module {
 
         public var workspace_uuid_to_principal = RBTree.RBTree<UUID.UUID, WorkspaceId>(compareUUIDs);
         workspace_uuid_to_principal.unshare(initial_value.workspace_uuid_to_principal);
+
+        public var workspace_id_to_canister = RBTree.RBTree<WorkspaceId, WorkspaceActor.Workspace>(Principal.compare);
+        workspace_id_to_canister.unshare(initial_value.workspace_id_to_canister);
 
         /*************************************************************************
          * CRUD Operations
@@ -59,8 +65,13 @@ module {
         public func addWorkspace(
             principal : Principal,
             input : UnsavedWorkspace,
+            canister : WorkspaceActor.Workspace,
         ) : Result.Result<(WorkspaceId, Workspace), { #keyAlreadyExists }> {
-            // TODO: Store principal
+            workspace_id_to_canister.put(
+                principal,
+                canister,
+            );
+
             return Workspace.objects.insert(input);
         };
 
@@ -72,6 +83,10 @@ module {
          */
         public func getWorkspace(id : WorkspaceId) : ?Workspace {
             return Workspace.objects.get(id);
+        };
+
+        public func getWorkspaceActor(id : WorkspaceId) : ?WorkspaceActor.Workspace {
+            return workspace_id_to_canister.get(id);
         };
 
         /**

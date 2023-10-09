@@ -7,7 +7,7 @@ import type {
 import type { Principal } from '@dfinity/principal';
 import type { IDL } from '@dfinity/candid';
 
-import { _SERVICE } from './documents.did';
+import { _SERVICE } from './workspace.did';
 
 export declare const idlFactory: IDL.InterfaceFactory;
 export declare const canisterId: string;
@@ -43,8 +43,8 @@ export declare const createActor: (
   options?: CreateActorOptions
 ) => ActorSubclass<_SERVICE>;
 
-/**
- * Intialized Actor using default settings, ready to talk to a canister using its candid interface
- * @constructs {@link ActorSubClass}
- */
-export declare const documents: ActorSubclass<_SERVICE>;
+// /**
+//  * Intialized Actor using default settings, ready to talk to a canister using its candid interface
+//  * @constructs {@link ActorSubClass}
+//  */
+// export declare const workspace: ActorSubclass<_SERVICE>;

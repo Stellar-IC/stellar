@@ -1,16 +1,7 @@
 export const idlFactory = ({ IDL }) => {
-  const Username = IDL.Text;
-  const ProfileInput = IDL.Record({ username: Username });
-  const DeliveryAgentAccount = IDL.Record({});
-  const Result_1 = IDL.Variant({
-    ok: DeliveryAgentAccount,
-    err: IDL.Variant({
-      notAuthorized: IDL.Null,
-      alreadyExists: IDL.Null,
-      unknownError: IDL.Null,
-    }),
-  });
+  const WorkspaceId = IDL.Principal;
   const Time = IDL.Int;
+  const Username = IDL.Text;
   const UserProfile = IDL.Record({
     updated_at: Time,
     username: IDL.Opt(Username),
@@ -20,9 +11,11 @@ export const idlFactory = ({ IDL }) => {
     ok: UserProfile,
     err: IDL.Variant({ notAuthorized: IDL.Null }),
   });
+  const ProfileInput = IDL.Record({ username: Username });
   const User = IDL.Service({
-    createDeliveryAgentAccount: IDL.Func([ProfileInput], [Result_1], []),
+    getPersonalWorkspace: IDL.Func([], [IDL.Opt(WorkspaceId)], ['query']),
     profile: IDL.Func([], [Result], ['query']),
+    setPersonalWorkspace: IDL.Func([WorkspaceId], [], ['oneway']),
     updateProfile: IDL.Func([ProfileInput], [Result], []),
     wallet_balance: IDL.Func([], [IDL.Nat], []),
     wallet_receive: IDL.Func([], [IDL.Record({ accepted: IDL.Nat64 })], []),
