@@ -71,17 +71,17 @@ export function useQuery<
 
       function loadFromRemote() {
         return loadFromIC(...args).then((result) => {
-          setData((_data) => {
-            if (!('ok' in result)) return _data;
+          setData((prevData) => {
+            if (!('ok' in result)) return prevData;
 
             const externalId = getExternalId(result);
-            if (!externalId) return _data;
+            if (!externalId) return prevData;
 
             const resultBody = serialize(result);
-            if (!resultBody) return _data;
+            if (!resultBody) return prevData;
 
             const updatedData: Record<string, DataT> = {
-              ..._data,
+              ...prevData,
               [stringify(externalId)]: resultBody,
             };
             const dataForStorage = prepareForStorage(updatedData);
@@ -91,7 +91,7 @@ export function useQuery<
               JSON.stringify(dataForStorage)
             );
 
-            return { ..._data, ...updatedData };
+            return { ...prevData, ...updatedData };
           });
 
           return result;
@@ -123,12 +123,25 @@ export function useQuery<
 
   const updateLocal = useCallback(
     (externalId: string, updatedData: DataT) => {
+      loadFromLocalStorage(queryName, {
+        onSuccess: (storageData) => {
+          const dataForStorage = prepareForStorage({
+            ...storageData,
+            [externalId]: updatedData,
+          });
+          localStorage.setItem(
+            `data.${queryName}`,
+            JSON.stringify(dataForStorage)
+          );
+        },
+      });
+
       setData((prev) => ({
         ...prev,
         [externalId]: updatedData,
       }));
     },
-    [setData]
+    [loadFromLocalStorage, prepareForStorage, queryName, setData]
   );
 
   return { data, query, isLoading: false, updateLocal };

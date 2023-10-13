@@ -103,7 +103,7 @@ module {
         ) : Result.Result<(Types.PrimaryKey, BlocksTypes.Block), { #keyAlreadyExists }> {
             Block.objects.insert({
                 uuid = input.uuid;
-                blockType = #page;
+                var blockType = #page;
                 parent = input.parent;
                 var content = input.content;
                 properties = input.properties;

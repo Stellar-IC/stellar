@@ -1,11 +1,8 @@
 import { Box, Stack } from '@mantine/core';
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import { parse } from 'uuid';
 import { usePagesContext } from '@/contexts/blocks/usePagesContext';
-import { useBlockByUuid } from '@/hooks/documents/queries/useBlockByUuid';
-import { useAuthContext } from '@/modules/auth/contexts/AuthContext';
 import { Page } from '@/types';
-import { useWorkspaceContext } from '@/contexts/WorkspaceContext/useWorkspaceContext';
 import { BlockWithActions } from './BlockWithActions';
 import { HeadingBlock } from './HeadingBlock';
 import { TextBlock } from './TextBlock';
@@ -17,14 +14,14 @@ export const BlockRenderer = ({
   externalId: string;
   index: number;
 }) => {
-  const { identity } = useAuthContext();
-  const { addBlock, blocks } = usePagesContext();
-  const { workspaceId } = useWorkspaceContext();
-  const { query, insertCharacter, removeCharacter } = useBlockByUuid({
-    identity,
-    workspaceId,
-  });
-  const block = blocks.data[externalId];
+  const {
+    addBlock,
+    blocks: { data, query },
+    insertCharacter,
+    removeCharacter,
+  } = usePagesContext();
+
+  const block = useMemo(() => data[externalId], [data, externalId]);
 
   useEffect(() => {
     query(parse(externalId));
@@ -39,7 +36,7 @@ export const BlockRenderer = ({
     return (
       <>
         <Box ml="112px" mb="1rem" w="100%">
-          <HeadingBlock key={String(block.uuid)} block={block} />
+          {/* <HeadingBlock key={String(block.uuid)} block={block} /> */}
         </Box>
       </>
     );
@@ -52,6 +49,7 @@ export const BlockRenderer = ({
           pageExternalId={parentExternalId}
           value={block.properties.title}
           blockExternalId={block.uuid}
+          blockType={block.blockType}
           onEnterPressed={() => {
             addBlock(parse(parentExternalId), { paragraph: null }, index + 1);
             setTimeout(() => {
@@ -86,7 +84,18 @@ export const BlockRenderer = ({
         blockIndex={index}
         block={block}
       >
-        <HeadingBlock key={String(block.uuid)} block={block} />
+        <HeadingBlock
+          key={String(block.uuid)}
+          blockExternalId={block.uuid}
+          blockType={block.blockType}
+          value={block.properties.title}
+          onInsert={(cursorPosition, character) =>
+            insertCharacter(block.uuid, cursorPosition, character)
+          }
+          onRemove={(cursorPosition) =>
+            removeCharacter(block.uuid, cursorPosition)
+          }
+        />
       </BlockWithActions>
     );
   }
@@ -95,21 +104,15 @@ export const BlockRenderer = ({
 };
 
 export const Blocks = ({ page }: { page: Page }) => {
-  const { identity } = useAuthContext();
-  const { workspaceId } = useWorkspaceContext();
-  const { query, insertCharacter, removeCharacter } = useBlockByUuid({
-    identity,
-    workspaceId,
-  });
-  const { addBlock, blocks } = usePagesContext();
-
-  const block = blocks.data[page.uuid];
+  const {
+    blocks: { query },
+    insertCharacter,
+    removeCharacter,
+  } = usePagesContext();
 
   useEffect(() => {
     query(parse(page.uuid));
   }, [query, page.uuid]);
-
-  console.log({ block });
 
   return (
     <Stack className="Blocks" w="100%" gap={0}>
@@ -117,16 +120,7 @@ export const Blocks = ({ page }: { page: Page }) => {
         <TextBlock
           value={page.properties.title}
           blockExternalId={page.uuid}
-          // onEnterPressed={() => {
-          //   addBlock(parse(parentExternalId), { paragraph: null }, index + 1);
-          //   setTimeout(() => {
-          //     const blocksDiv = document.querySelector('.Blocks');
-          //     if (!blocksDiv) return;
-          //     const blockToFocus =
-          //       blocksDiv.querySelectorAll<HTMLDivElement>('.TextBlock')[index + 1];
-          //     blockToFocus.querySelector('span')?.focus();
-          //   }, 0);
-          // }}
+          blockType={{ heading1: null }}
           onInsert={(cursorPosition, character) =>
             insertCharacter(page.uuid, cursorPosition, character)
           }
@@ -137,11 +131,7 @@ export const Blocks = ({ page }: { page: Page }) => {
       </div>
 
       {page.content?.map((blockUuid, index) => (
-        <BlockRenderer
-          key={String(blockUuid)}
-          index={index}
-          externalId={blockUuid}
-        />
+        <BlockRenderer key={blockUuid} index={index} externalId={blockUuid} />
       ))}
     </Stack>
   );

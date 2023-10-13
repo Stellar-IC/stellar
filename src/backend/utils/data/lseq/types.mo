@@ -36,4 +36,18 @@ module Types {
         boundary : NodeBoundary;
         rootNode : ShareableNode;
     };
+
+    public type TreeEvent = {
+        #insert : {
+            transactionType : { #insert };
+            position : NodeIdentifier;
+            value : NodeValue;
+        };
+        #delete : {
+            transactionType : { #delete };
+            position : NodeIdentifier;
+        };
+    };
+
+    public type TreeEventTransaction = [TreeEvent];
 };

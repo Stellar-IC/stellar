@@ -2,12 +2,13 @@ import {
   Box,
   Button,
   Flex,
+  useMantineTheme,
   // IconButton,
   // useDisclosure,
   // useBreakpointValue,
 } from '@mantine/core';
-import { useDisclosure } from '@mantine/hooks';
-import { PropsWithChildren } from 'react';
+import { useDisclosure, useMediaQuery } from '@mantine/hooks';
+import { PropsWithChildren, useCallback } from 'react';
 import { IconPlus, IconDotsVertical } from '@tabler/icons-react';
 import { parse } from 'uuid';
 
@@ -16,6 +17,7 @@ import { usePagesContext } from '@/contexts/blocks/usePagesContext';
 import { Block } from '@/types';
 
 import { TransformBlockModal } from './TransformBlockModal';
+import { BlockType } from '../../../../declarations/workspace/workspace.did';
 
 type BlockWithActionsProps = PropsWithChildren<{
   blockIndex: number;
@@ -27,23 +29,38 @@ export const BlockWithActions = ({
   blockIndex,
   block,
 }: BlockWithActionsProps) => {
-  const { addBlock, removeBlock } = usePagesContext();
+  const { addBlock, removeBlock, updateBlock } = usePagesContext();
   const [isOpen, { open, close }] = useDisclosure();
+  const theme = useMantineTheme();
+  // const shouldShowMobileModal = useMediaQuery(
+  //   `(max-width: ${theme.breakpoints.sm})`
+  // );
   const shouldShowMobileModal = false;
-  // const shouldShowMobileModal = useBreakpointValue({
-  //     base: true,
-  //     md: false,
-  // });
   const [isAddModalOpen, { open: onAddModalOpen, close: onAddModalClose }] =
     useDisclosure();
   const [
     isTransformModalOpen,
     { open: onTransformModalOpen, close: onTransformModalClose },
   ] = useDisclosure();
-
   const parentExternalId = block.parent;
 
   if (!parentExternalId) return <div />;
+
+  const parsedParentExternalId = parse(parentExternalId);
+
+  const onBlockTypeChange = useCallback(
+    (item: BlockType) => {
+      updateBlock(parsedParentExternalId, parse(block.uuid), {
+        updateBlockType: {
+          data: {
+            blockExternalId: parse(block.uuid),
+            blockType: item,
+          },
+        },
+      });
+    },
+    [updateBlock, parsedParentExternalId, block.uuid]
+  );
 
   return (
     <Box pos="relative" w="100%">
@@ -66,11 +83,15 @@ export const BlockWithActions = ({
           aria-label="Add block"
           leftSection={<IconPlus />}
           onClick={() => {
-            addBlock(
-              parse(parentExternalId),
-              { paragraph: null },
-              blockIndex + 1
-            );
+            if (shouldShowMobileModal) {
+              onAddModalOpen();
+            } else {
+              addBlock(
+                parse(parentExternalId),
+                { paragraph: null },
+                blockIndex + 1
+              );
+            }
           }}
         />
         <Button
@@ -89,25 +110,14 @@ export const BlockWithActions = ({
           onAddModalClose();
         }}
         onItemSelected={(item) => {
-          // handleBlockEvent({
-          //     type: "addBlock",
-          //     data: {
-          //         blockType: { paragraph: null },
-          //         index: blockIndex + 1,
-          //     },
-          // });
+          addBlock(parse(parentExternalId), item, blockIndex + 1);
         }}
       />
 
       <TransformBlockModal
         isOpen={isTransformModalOpen}
         onClose={onTransformModalClose}
-        onItemSelected={(item) => {
-          // updateBlock({
-          //     ...block,
-          //     blockType: item,
-          // });
-        }}
+        onItemSelected={onBlockTypeChange}
       />
 
       {shouldShowMobileModal && (
@@ -126,7 +136,7 @@ export const BlockWithActions = ({
             color="inherit"
             onClick={() => {
               addBlock(
-                parse(parentExternalId),
+                parsedParentExternalId,
                 { paragraph: null },
                 blockIndex + 1
               );
@@ -145,7 +155,7 @@ export const BlockWithActions = ({
           <Button
             color="inherit"
             onClick={() => {
-              removeBlock(parse(parentExternalId), parse(block.uuid));
+              removeBlock(parsedParentExternalId, parse(block.uuid));
             }}
           >
             Delete
@@ -160,7 +170,7 @@ export const BlockWithActions = ({
             onAddModalClose();
           }}
           onItemSelected={(item) => {
-            // addBlock(item, blockIndex + 1);
+            addBlock(parsedParentExternalId, item, blockIndex + 1);
           }}
           size="full"
         />
@@ -171,12 +181,7 @@ export const BlockWithActions = ({
           onClose={() => {
             onTransformModalClose();
           }}
-          onItemSelected={(item) => {
-            // updateBlock(block.id, {
-            //     ...block,
-            //     type: item,
-            // });
-          }}
+          onItemSelected={onBlockTypeChange}
           size="full"
         />
       )}

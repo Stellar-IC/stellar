@@ -3,10 +3,12 @@ module.exports = {
   parserOptions: {
     project: './tsconfig.json',
   },
+  plugins: ['react', 'react-hooks'],
   rules: {
     'consistent-return': 'off',
     'react/jsx-indent-props': 'off',
     'react/react-in-jsx-scope': 'off',
+    'react-hooks/exhaustive-deps': 'warn',
     '@typescript-eslint/no-shadow': 'off',
   },
   settings: {

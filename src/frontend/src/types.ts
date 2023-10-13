@@ -1,39 +1,8 @@
 import { Principal } from '@dfinity/principal';
-import {
-  BlockType,
-  BlockUpdatedEventTransaction,
-  UUID,
-} from '../../declarations/workspace/workspace.did';
+import { BlockType } from '../../declarations/workspace/workspace.did';
 import * as Lseq from './modules/lseq';
 
 export type CanisterId = string | Principal;
-
-export type BlockEventType =
-  // this event is fired when a block has text added to it.
-  | 'insertText'
-  // this event is fired when a block has text removed from it.
-  | 'deleteText'
-  // this event is fired when a block is moved to a page.
-  | 'addBlock'
-  // this event is fired when a block is removed from the page.
-  | 'removeBlock';
-
-export interface AddBlockEvent {
-  type: 'addBlock';
-  data: { index: number; blockType: BlockType };
-}
-
-export interface UpdateBlockEvent {
-  type: 'updateBlock';
-  data: { blockExternalId: UUID; transactions: BlockUpdatedEventTransaction[] };
-}
-
-export type RemoveBlockEvent = {
-  type: 'removeBlock';
-  data: { blockExternalId: UUID };
-};
-
-export type BlockEvent = AddBlockEvent | UpdateBlockEvent | RemoveBlockEvent;
 
 export type ExternalId = string;
 

@@ -46,16 +46,18 @@ export const TransformBlockModal = ({
   ] as const;
 
   return (
-    <Modal opened={isOpen} onClose={onClose} size={size}>
-      <ModalOverlay />
-      <ModalContent>
-        <ModalHeader>Turn into...</ModalHeader>
-        <ModalCloseButton />
-        <ModalBody>
+    <Modal.Root opened={isOpen} onClose={onClose} size={size}>
+      <Modal.Overlay />
+      <Modal.Content>
+        <Modal.Header>
+          <Modal.Title>Turn into...</Modal.Title>
+          <Modal.CloseButton />
+        </Modal.Header>
+        <Modal.Body>
           {menuItems.map((menuItem) => (
             <Box
               key={menuItem.label}
-              h="32px"
+              h="2rem"
               // fontSize="100"
               // fontWeight="semibold"
               onClick={() => {
@@ -66,8 +68,8 @@ export const TransformBlockModal = ({
               {menuItem.label}
             </Box>
           ))}
-        </ModalBody>
-      </ModalContent>
-    </Modal>
+        </Modal.Body>
+      </Modal.Content>
+    </Modal.Root>
   );
 };

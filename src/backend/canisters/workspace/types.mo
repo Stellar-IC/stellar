@@ -125,51 +125,17 @@ module {
             public type RemoveBlockUpdateOutput = Result.Result<RemoveBlockUpdateOutputResult, RemoveBlockUpdateOutputError>;
         };
 
-        public module SaveEventUpdate {
-            public type SaveEventUpdateInputBlockCreatedPaylaod = {
-                index : Nat;
-                block : {
-                    uuid : UUID.UUID;
-                    blockType : BlocksTypes.BlockType;
-                    content : BlocksTypes.BlockContent;
-                    parent : ?UUID.UUID;
-                    properties : BlocksTypes.ShareableBlockProperties;
-                };
+        public module SaveEventTransactionUpdate {
+            public type SaveEventTransactionUpdateInput = {
+                transaction : BlocksTypes.BlockEventTransaction;
             };
 
-            public type SaveEventUpdateInput = {
-                #blockCreated : {
-                    eventType : { #blockCreated };
-                    payload : SaveEventUpdateInputBlockCreatedPaylaod;
-                };
-                #blockUpdated : {
-                    eventType : { #blockUpdated };
-                    payload : {
-                        blockExternalId : UUID.UUID;
-                        transactions : [BlocksTypes.BlockUpdatedEventTransaction];
-                    };
-                };
-                #blockRemoved : {
-                    eventType : { #blockRemoved };
-                    payload : {
-                        blockExternalId : UUID.UUID;
-                        parent : UUID.UUID;
-                    };
-                };
-                #blockTypeChanged : {
-                    eventType : { #blockTypeChanged };
-                    payload : {
-                        blockExternalId : UUID.UUID;
-                        blockType : BlocksTypes.BlockType;
-                    };
-                };
-            };
-            public type SaveEventUpdateOutputError = {
+            public type SaveEventTransactionUpdateOutputError = {
                 #anonymousUser;
                 #insufficientCycles;
             };
-            public type SaveEventUpdateOutputResult = ();
-            public type SaveEventUpdateOutput = Result.Result<SaveEventUpdateOutputResult, SaveEventUpdateOutputError>;
+            public type SaveEventTransactionUpdateOutputResult = ();
+            public type SaveEventTransactionUpdateOutput = Result.Result<SaveEventTransactionUpdateOutputResult, SaveEventTransactionUpdateOutputError>;
         };
     };
 };

@@ -26,7 +26,7 @@ module {
     };
     public type UnsavedBlock = {
         uuid : UUID.UUID;
-        blockType : BlockType;
+        var blockType : BlockType;
         var content : BlockContent;
         parent : ?UUID.UUID;
         properties : BlockProperties;
@@ -47,15 +47,12 @@ module {
 
     public type BlockCreatedEvent = {
         uuid : UUID.UUID;
-        eventType : { #blockCreated };
         data : {
             index : Nat;
             block : {
                 uuid : UUID.UUID;
                 blockType : BlockType;
-                content : BlockContent;
                 parent : ?UUID.UUID;
-                properties : BlockProperties;
             };
         };
         user : Principal;
@@ -63,7 +60,6 @@ module {
 
     public type BlockRemovedEvent = {
         uuid : UUID.UUID;
-        eventType : { #blockRemoved };
         data : {
             blockExternalId : UUID.UUID;
             parent : UUID.UUID;
@@ -71,26 +67,23 @@ module {
         user : Principal;
     };
 
-    public type BlockUpdatedEventTransaction = {
-        #insert : {
-            transactionType : { #insert };
-            position : LseqTypes.NodeIdentifier;
-            value : LseqTypes.NodeValue;
-        };
-        #delete : {
-            transactionType : { #delete };
-            position : LseqTypes.NodeIdentifier;
-        };
-    };
-
     public type BlockUpdatedEvent = {
-        uuid : UUID.UUID;
-        eventType : { #blockUpdated };
-        data : {
-            blockExternalId : UUID.UUID;
-            transactions : [BlockUpdatedEventTransaction];
+        #updatePropertyTitle : {
+            uuid : UUID.UUID;
+            data : {
+                blockExternalId : UUID.UUID;
+                event : LseqTypes.TreeEvent;
+            };
+            user : Principal;
         };
-        user : Principal;
+        #updateBlockType : {
+            uuid : UUID.UUID;
+            data : {
+                blockExternalId : UUID.UUID;
+                blockType : BlockType;
+            };
+            user : Principal;
+        };
     };
 
     public type BlockEvent = {
@@ -99,4 +92,7 @@ module {
         #blockUpdated : BlockUpdatedEvent;
         #blockRemoved : BlockRemovedEvent;
     };
+
+    public type BlockEventTransaction = [BlockEvent];
+
 };

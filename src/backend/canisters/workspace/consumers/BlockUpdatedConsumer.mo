@@ -24,46 +24,62 @@ module BlockUpdatedConsumer {
     };
 
     public func execute(event : BlocksTypes.BlockUpdatedEvent, state : State.State) : Result.Result<BlocksTypes.Block, { #blockNotFound; #insufficientCycles; #inputTooLong; #invalidBlockType; #failedToUpdate; #anonymousUser }> {
-        let currentBlock = _blockByUuid(state, event.data.blockExternalId);
+        switch (event) {
+            case (#updateBlockType(event)) {
+                let blockExternalId = event.data.blockExternalId;
+                let currentBlock = _blockByUuid(state, blockExternalId);
 
-        switch (currentBlock) {
-            case (#err(#blockNotFound)) {
-                Debug.print("Failed to update block. Block not found with uuid:" # UUID.toText(event.data.blockExternalId));
-                return #err(#blockNotFound);
+                switch (currentBlock) {
+                    case (#err(#blockNotFound)) {
+                        Debug.print("Failed to update block. Block not found with uuid:" # UUID.toText(blockExternalId));
+                        return #err(#blockNotFound);
+                    };
+                    case (#ok(currentBlock)) {
+                        currentBlock.blockType := event.data.blockType;
+                        return #ok(currentBlock);
+                    };
+                };
             };
-            case (#ok(currentBlock)) {
-                // Process transactions
-                let transactions = event.data.transactions;
-                for (transaction in transactions.vals()) {
-                    let title = currentBlock.properties.title;
-                    switch (transaction) {
-                        case (#insert(transaction)) {
-                            switch (title) {
-                                case (null) {
-                                    Debug.print("Failed to update the block. Title is null");
+            case (#updatePropertyTitle(event)) {
+                let blockExternalId = event.data.blockExternalId;
+                let currentBlock = _blockByUuid(state, blockExternalId);
+
+                switch (currentBlock) {
+                    case (#err(#blockNotFound)) {
+                        Debug.print("Failed to update block. Block not found with uuid:" # UUID.toText(blockExternalId));
+                        return #err(#blockNotFound);
+                    };
+                    case (#ok(currentBlock)) {
+                        let title = currentBlock.properties.title;
+                        switch (event.data.event) {
+                            case (#insert(treeEvent)) {
+                                switch (title) {
+                                    case (null) {
+                                        Debug.print("Failed to update the block. Title is null");
+                                    };
+                                    case (?title) {
+                                        ignore title.insert({
+                                            identifier = treeEvent.position;
+                                            value = treeEvent.value;
+                                        });
+                                    };
                                 };
-                                case (?title) {
-                                    ignore title.insert({
-                                        identifier = transaction.position;
-                                        value = transaction.value;
-                                    });
-                                };
+                                return #ok(currentBlock);
                             };
-                        };
-                        case (#delete(transaction)) {
-                            switch (title) {
-                                case (null) {
-                                    Debug.print("Failed to update the block. Title is null");
+                            case (#delete(treeEvent)) {
+                                switch (title) {
+                                    case (null) {
+                                        Debug.print("Failed to update the block. Title is null");
+                                    };
+                                    case (?title) {
+                                        title.deleteNode(treeEvent.position);
+                                    };
                                 };
-                                case (?title) {
-                                    title.deleteNode(transaction.position);
-                                };
+                                return #ok(currentBlock);
                             };
                         };
                     };
                 };
-
-                return #ok(currentBlock);
             };
         };
     };

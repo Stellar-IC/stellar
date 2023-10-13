@@ -1,11 +1,10 @@
 import { useCallback, useState } from 'react';
 import { serializeBlock } from '@/modules/domain/block/serializers';
 import { Block } from '@/types';
-import { SaveEventUpdateInput } from '../../../../../declarations/workspace/workspace.did';
+import { BlockEvent } from '../../../../../declarations/workspace/workspace.did';
 
-type SerializedSaveEventUpdateInput = {
+type SerializedBlockEvent = {
   blockCreated: {
-    eventType: { blockCreated: null };
     payload: {
       block: Omit<Block, 'id'>;
       index: number;
@@ -14,22 +13,28 @@ type SerializedSaveEventUpdateInput = {
 };
 
 export const usePageEvents = () => {
-  const [events, setEvents] = useState<
-    Record<string, SerializedSaveEventUpdateInput[]>
-  >({});
+  const [events, setEvents] = useState<Record<string, SerializedBlockEvent[]>>(
+    {}
+  );
 
-  const addEvent = useCallback(
-    (pageExternalId: string, event: SaveEventUpdateInput) => {
+  const serializeAndStoreEventLocally = useCallback(
+    (pageExternalId: string, event: BlockEvent) => {
       setEvents((prev) => {
         if ('blockCreated' in event) {
-          const serializedEvent: SerializedSaveEventUpdateInput = {
+          const serializedEvent: SerializedBlockEvent = {
             ...event,
             blockCreated: {
-              eventType: { blockCreated: null },
               payload: {
-                ...event.blockCreated.payload,
-                block: serializeBlock(event.blockCreated.payload.block),
-                index: Number(event.blockCreated.payload.index),
+                ...event.blockCreated.data,
+                block: serializeBlock({
+                  ...event.blockCreated.data.block,
+                  content: [],
+                  properties: {
+                    title: [],
+                    checked: [],
+                  },
+                }),
+                index: Number(event.blockCreated.data.index),
               },
             },
           };
@@ -37,11 +42,11 @@ export const usePageEvents = () => {
 
           if (pageExternalId in updatedData) {
             updatedData[pageExternalId].push(serializedEvent);
-            return updatedData;
+          } else {
+            updatedData[pageExternalId] = [serializedEvent];
           }
 
-          updatedData[pageExternalId] = [serializedEvent];
-
+          // Store event in local storage
           localStorage.setItem(
             `events.${pageExternalId}`,
             JSON.stringify({
@@ -68,7 +73,7 @@ export const usePageEvents = () => {
   //         queryName: string,
   //         options: {
   //             onSuccess: (
-  //                 result: Record<string, SaveEventUpdateInput>
+  //                 result: Record<string, SaveEventTransactionUpdateInput>
   //             ) => void;
   //         }
   //     ) => {
@@ -84,5 +89,5 @@ export const usePageEvents = () => {
   //     [prepareFromStorage]
   // );
 
-  return { events, addEvent, clearEvents };
+  return { events, addEvent: serializeAndStoreEventLocally, clearEvents };
 };

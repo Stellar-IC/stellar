@@ -19,7 +19,7 @@ export function PageDetailPage() {
 
   useEffect(() => {
     queryPage(parse(pageId));
-  }, [queryPage]);
+  }, [queryPage, pageId]);
 
   const page = data[pageId];
 

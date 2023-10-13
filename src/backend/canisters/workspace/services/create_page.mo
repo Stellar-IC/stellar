@@ -24,7 +24,7 @@ module {
 
         let content_block_uuid = await Source.Source().new();
         let content_block : BlocksTypes.UnsavedBlock = {
-            blockType = #paragraph;
+            var blockType = #paragraph;
             uuid = content_block_uuid;
             var content = [];
             properties = {
@@ -35,7 +35,7 @@ module {
         };
 
         let page_to_create : BlocksTypes.UnsavedBlock = {
-            blockType = #page;
+            var blockType = #page;
             uuid = input.uuid;
             var content = [content_block.uuid];
             properties = {
@@ -82,6 +82,7 @@ module {
                 return #ok({
                     block with properties = shareableProperties;
                     content = block.content;
+                    blockType = block.blockType;
                 });
             };
             case (#err(#keyAlreadyExists)) {

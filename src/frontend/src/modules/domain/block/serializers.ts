@@ -16,23 +16,15 @@ export interface BlockText {
   boundary: NodeBoundary;
 }
 
-export function treefromShareable(tree: ShareableBlockText): Tree.Tree {
-  return new Tree.Tree({
-    allocationStrategies: new Map(),
-    boundary: tree.boundary,
-    rootNode: nodefromShareable(tree.rootNode),
-  });
-}
-
 export function nodefromShareable(shareable: ShareableNode): Node.Node {
   const node = new Node.Node(
     new Identifier.Identifier(shareable.identifier),
     shareable.value
   );
 
-  for (const [index, childNode] of shareable.children) {
+  shareable.children.forEach(([index, childNode]) => {
     node.children.set(index, nodefromShareable(childNode));
-  }
+  });
 
   node.base = shareable.base;
   node.deletedAt =
@@ -43,11 +35,12 @@ export function nodefromShareable(shareable: ShareableNode): Node.Node {
   return node;
 }
 
-export function fromShareable(block: ShareableBlock): Block {
-  return {
-    ...serializeBlock(block),
-    id: block.id.toString(),
-  };
+export function treefromShareable(tree: ShareableBlockText): Tree.Tree {
+  return new Tree.Tree({
+    allocationStrategies: new Map(),
+    boundary: tree.boundary,
+    rootNode: nodefromShareable(tree.rootNode),
+  });
 }
 
 export function serializeBlock(
@@ -74,6 +67,13 @@ export function serializeBlock(
     },
     content: block.content.map((blockExternalId) => stringify(blockExternalId)),
     parent: parent ? stringify(parent) : null,
+  };
+}
+
+export function fromShareable(block: ShareableBlock): Block {
+  return {
+    ...serializeBlock(block),
+    id: block.id.toString(),
   };
 }
 
@@ -107,10 +107,10 @@ export function fromLocalStorageBulk(
 ): Record<string, Block> {
   const prepared: Record<string, Block> = {};
 
-  for (const externalId of Object.keys(blocks)) {
+  Object.keys(blocks).forEach((externalId) => {
     const block = blocks[externalId];
     if (block) prepared[externalId] = fromLocalStorage(block);
-  }
+  });
 
   return prepared;
 }
@@ -124,10 +124,10 @@ export function toLocalStorageBulk(
 ): Record<string, LocalStorageBlock> {
   const prepared: Record<string, LocalStorageBlock> = {};
 
-  for (const externalId of Object.keys(blocks)) {
+  Object.keys(blocks).forEach((externalId) => {
     const block = blocks[externalId];
     if (block) prepared[externalId] = toLocalStorage(block);
-  }
+  });
 
   return prepared;
 }

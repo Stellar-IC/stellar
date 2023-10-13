@@ -158,58 +158,60 @@ actor class Workspace(
         return #ok(state.data.deleteBlockByUuid(input.uuid));
     };
 
-    public shared ({ caller }) func saveEvent(input : Types.Updates.SaveEventUpdate.SaveEventUpdateInput) : async Types.Updates.SaveEventUpdate.SaveEventUpdateOutput {
-        switch (input) {
-            case (#blockCreated(input)) {
-                let title = switch (input.payload.block.properties.title) {
-                    case (null) {
-                        LseqTree.Tree(null);
-                    };
-                    case (?title) {
-                        LseqTree.fromShareableTree(title);
-                    };
+    public shared ({ caller }) func saveEvents(input : Types.Updates.SaveEventTransactionUpdate.SaveEventTransactionUpdateInput) : async Types.Updates.SaveEventTransactionUpdate.SaveEventTransactionUpdateOutput {
+        for (event in input.transaction.vals()) {
+            switch (event) {
+                case (#empty) {};
+                case (#blockCreated(event)) {
+                    let block = BlocksModels.Block.fromShareableUnsaved({
+                        event.data.block and {} with content = [];
+                        properties = {
+                            title = ?LseqTree.toShareableTree(LseqTree.Tree(null));
+                            checked = ?false;
+                        };
+                    });
+
+                    let eventToPublish : {
+                        #blockCreated : BlocksTypes.BlockCreatedEvent;
+                    } = #blockCreated({
+                        uuid = await Source.Source().new();
+                        data = {
+                            block = {
+                                block and {} with
+                                content = block.content;
+                                blockType = block.blockType;
+                                properties = {
+                                    block.properties and {} with
+                                    title = switch (block.properties.title) {
+                                        case (null) {
+                                            ?LseqTree.toShareableTree(LseqTree.Tree(null));
+                                        };
+                                        case (?title) {
+                                            ?LseqTree.toShareableTree(title);
+                                        };
+                                    };
+                                };
+                            };
+                            index = event.data.index;
+                        };
+                        user = caller;
+                    });
+                    eventStream.publish(eventToPublish);
+                    return #ok();
                 };
-
-                let block = BlocksModels.Block.fromShareableUnsaved(input.payload.block);
-
-                let event : { #blockCreated : BlocksTypes.BlockCreatedEvent } = #blockCreated({
-                    uuid = await Source.Source().new();
-                    eventType = input.eventType;
-                    data = {
-                        block = { block and {} with content = block.content };
-                        index = input.payload.index;
-                    };
-                    user = caller;
-                });
-                eventStream.publish(event);
-                return #ok();
+                case (#blockUpdated(event)) {
+                    eventStream.publish(#blockUpdated(event));
+                    return #ok();
+                };
+                case (#blockRemoved(event)) {
+                    eventStream.publish(#blockRemoved(event));
+                    return #ok();
+                };
             };
-            case (#blockUpdated(input)) {
-                let event : { #blockUpdated : BlocksTypes.BlockUpdatedEvent } = #blockUpdated({
-                    uuid = await Source.Source().new();
-                    eventType = input.eventType;
-                    data = input.payload;
-                    user = caller;
-                });
-                eventStream.publish(event);
-                return #ok();
-            };
-            case (#blockRemoved(input)) {
-                let event : { #blockRemoved : BlocksTypes.BlockRemovedEvent } = #blockRemoved({
-                    uuid = await Source.Source().new();
-                    eventType = input.eventType;
-                    data = input.payload;
-                    user = caller;
-                });
-                eventStream.publish(event);
-                return #ok();
-            };
-            case (#blockTypeChanged(input)) {
-                // pass
-            };
+            // Debug.trap("Unknown event type");
         };
 
-        Debug.trap("Unknown event type");
+        #ok();
     };
 
     /*************************************************************************
@@ -227,7 +229,14 @@ actor class Workspace(
             };
             case (#blockUpdated(event)) {
                 Debug.print("TYPE: Block Updated");
-                Debug.print("UUID: " # UUID.toText(event.uuid));
+                switch (event) {
+                    case (#updateBlockType(event)) {
+                        Debug.print("UUID: " # UUID.toText(event.uuid));
+                    };
+                    case (#updatePropertyTitle(event)) {
+                        Debug.print("UUID: " # UUID.toText(event.uuid));
+                    };
+                };
             };
             case (#blockRemoved(event)) {
                 Debug.print("TYPE: Block Removed");
@@ -253,12 +262,17 @@ actor class Workspace(
                     case (#blockUpdated(event)) {
                         Debug.print("Processing `blockUpdated` event");
                         let res = BlockUpdatedConsumer.execute(event, state);
+                        let uuid = switch (event) {
+                            case (#updateBlockType(event)) { event.uuid };
+                            case (#updatePropertyTitle(event)) { event.uuid };
+                        };
+
                         switch (res) {
                             case (#err(err)) {
-                                Debug.print("Failed to process `blockUpdated` event: " # UUID.toText(event.uuid));
+                                Debug.print("Failed to process `blockUpdated` event: " # UUID.toText(uuid));
                             };
                             case (#ok(_)) {
-                                Debug.print("Successfully processed `blockUpdated` event: " # UUID.toText(event.uuid));
+                                Debug.print("Successfully processed `blockUpdated` event: " # UUID.toText(uuid));
                             };
                         };
                     };

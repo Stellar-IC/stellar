@@ -11,6 +11,7 @@ import Array "mo:base/Array";
 
 import BlocksTypes "../../../lib/blocks/types";
 import UpdateBlock "../services/update_block";
+import Tree "../../../utils/data/lseq/Tree";
 
 module BlockCreatedConsumer {
     func _blockByUuid(state : State.State, uuid : UUID.UUID) : Result.Result<BlocksTypes.Block, { #blockNotFound }> {
@@ -23,10 +24,13 @@ module BlockCreatedConsumer {
             event.user,
             {
                 uuid = event.data.block.uuid;
-                blockType = event.data.block.blockType;
-                var content = event.data.block.content;
+                var blockType = event.data.block.blockType;
+                var content = [];
                 parent = event.data.block.parent;
-                properties = event.data.block.properties;
+                properties = {
+                    title = ?Tree.Tree(null);
+                    checked = ?false;
+                };
             },
         );
 
@@ -73,7 +77,7 @@ module BlockCreatedConsumer {
                                     event.user,
                                     {
                                         uuid = parentBlock.uuid;
-                                        blockType = parentBlock.blockType;
+                                        var blockType = parentBlock.blockType;
                                         var content = Buffer.toArray(updatedContent);
                                         id = parentBlock.id;
                                         parent = parentBlock.parent;

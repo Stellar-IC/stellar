@@ -1,4 +1,4 @@
-import { Box } from '@mantine/core';
+import { Box, useMantineTheme } from '@mantine/core';
 import { createRef, useEffect, useMemo, useState } from 'react';
 import { parse } from 'uuid';
 
@@ -8,6 +8,11 @@ import { ExternalId } from '@/types';
 
 type TextBlockProps = {
   blockExternalId: ExternalId;
+  blockType:
+    | { paragraph: null }
+    | { heading1: null }
+    | { heading2: null }
+    | { heading3: null };
   pageExternalId?: ExternalId;
   value: Tree.Tree;
   onEnterPressed?: () => void;
@@ -16,6 +21,7 @@ type TextBlockProps = {
 };
 
 export const TextBlock = ({
+  blockType,
   blockExternalId,
   pageExternalId,
   value,
@@ -24,6 +30,7 @@ export const TextBlock = ({
   onRemove,
 }: TextBlockProps) => {
   const { removeBlock } = usePagesContext();
+  const theme = useMantineTheme();
   const [initialText] = useState(Tree.toText(value));
 
   // A transaction is a change to a block. It is a list of operations that
@@ -32,6 +39,13 @@ export const TextBlock = ({
   // change the text of the paragraph.
 
   const textBoxRef = useMemo(() => createRef<HTMLSpanElement>(), []);
+
+  const fontSize = useMemo(() => {
+    if ('paragraph' in blockType) return theme.fontSizes.sm;
+    if ('heading3' in blockType) return theme.fontSizes.md;
+    if ('heading2' in blockType) return theme.fontSizes.lg;
+    return theme.fontSizes.xl;
+  }, [blockType, theme.fontSizes]);
 
   useEffect(() => {
     if (!textBoxRef.current) return;
@@ -46,7 +60,7 @@ export const TextBlock = ({
       bg="#eee"
       h="100%"
       w="100%"
-      style={{ border: '1px solid #fff' }}
+      style={{ border: '1px solid #fff', fontSize }}
     >
       <span
         tabIndex={0}

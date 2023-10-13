@@ -37,7 +37,7 @@ module Models {
                 prepare_obj_for_insert = func(pk : Nat, obj : Types.UnsavedBlock) : Types.Block {
                     return {
                         id = pk;
-                        blockType = obj.blockType;
+                        var blockType = obj.blockType;
                         parent = obj.parent;
                         var content = obj.content;
                         properties = obj.properties;
@@ -86,6 +86,7 @@ module Models {
             return {
                 input with properties = properties;
                 var content = input.content;
+                var blockType = input.blockType;
             };
         };
 
@@ -103,6 +104,7 @@ module Models {
             return {
                 input with properties = properties;
                 var content = input.content;
+                var blockType = input.blockType;
             };
         };
 
@@ -122,6 +124,7 @@ module Models {
             return {
                 input with properties = shareableProperties;
                 content = input.content;
+                blockType = input.blockType;
             };
         };
 
