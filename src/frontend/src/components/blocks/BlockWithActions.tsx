@@ -1,13 +1,5 @@
-import {
-  Box,
-  Button,
-  Flex,
-  useMantineTheme,
-  // IconButton,
-  // useDisclosure,
-  // useBreakpointValue,
-} from '@mantine/core';
-import { useDisclosure, useMediaQuery } from '@mantine/hooks';
+import { Box, Button, Flex, Group, useMantineTheme } from '@mantine/core';
+import { useDisclosure } from '@mantine/hooks';
 import { PropsWithChildren, useCallback } from 'react';
 import { IconPlus, IconDotsVertical } from '@tabler/icons-react';
 import { parse } from 'uuid';
@@ -42,6 +34,9 @@ export const BlockWithActions = ({
     isTransformModalOpen,
     { open: onTransformModalOpen, close: onTransformModalClose },
   ] = useDisclosure();
+  const [isShowingActions, { open: showActions, close: hideActions }] =
+    useDisclosure();
+
   const parentExternalId = block.parent;
 
   if (!parentExternalId) return <div />;
@@ -75,32 +70,49 @@ export const BlockWithActions = ({
             close();
           }, 100);
         }}
-        gap="50"
+        gap={theme.spacing.md}
         justify="flex-start"
         w="100%"
+        onMouseEnter={() => {
+          showActions();
+        }}
+        onMouseLeave={() => {
+          hideActions();
+        }}
       >
-        <Button
-          aria-label="Add block"
-          leftSection={<IconPlus />}
-          onClick={() => {
-            if (shouldShowMobileModal) {
-              onAddModalOpen();
-            } else {
-              addBlock(
-                parse(parentExternalId),
-                { paragraph: null },
-                blockIndex + 1
-              );
-            }
-          }}
-        />
-        <Button
-          aria-label="View actions"
-          leftSection={<IconDotsVertical />}
-          onClick={() => {
-            onTransformModalOpen();
-          }}
-        />
+        <Group
+          style={{ flexShrink: 0, opacity: isShowingActions ? 1 : 0 }}
+          ml="-6rem"
+          gap="2px"
+        >
+          <Button
+            aria-label="Add block"
+            onClick={() => {
+              if (shouldShowMobileModal) {
+                onAddModalOpen();
+              } else {
+                addBlock(
+                  parse(parentExternalId),
+                  { paragraph: null },
+                  blockIndex + 1
+                );
+              }
+            }}
+            size="xs"
+          >
+            <IconPlus size="12px" />
+          </Button>
+          <Button
+            aria-label="View actions"
+            onClick={() => {
+              onTransformModalOpen();
+            }}
+            size="xs"
+          >
+            <IconDotsVertical size="12px" />
+          </Button>
+        </Group>
+
         <Box w="100%">{children}</Box>
       </Flex>
 

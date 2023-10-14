@@ -27,7 +27,10 @@ export const registerUser = async (
   const logger = baseLogger.getLogger('auth');
   const userIndex = createAuthenticatedUserIndexActor(identity);
 
-  logger.info('Getting user canister prinipal');
+  logger.info(
+    'Getting user canister prinipal for identity:',
+    identity.getPrincipal().toString()
+  );
   const result = await userIndex.registerUser();
 
   if (!('ok' in result)) {
@@ -53,8 +56,9 @@ export const getUserProfile = async (args: {
   });
   const result = await userActor.profile();
 
-  if (!('ok' in result))
+  if (!('ok' in result)) {
     throw new Error("There was an error getting user's profile");
+  }
 
   logger.info('Retrieved profile for user:', result.ok.username[0]);
 

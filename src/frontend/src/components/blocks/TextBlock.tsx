@@ -1,4 +1,4 @@
-import { Box, useMantineTheme } from '@mantine/core';
+import { Box } from '@mantine/core';
 import { createRef, useEffect, useMemo, useState } from 'react';
 import { parse } from 'uuid';
 
@@ -30,7 +30,6 @@ export const TextBlock = ({
   onRemove,
 }: TextBlockProps) => {
   const { removeBlock } = usePagesContext();
-  const theme = useMantineTheme();
   const [initialText] = useState(Tree.toText(value));
 
   // A transaction is a change to a block. It is a list of operations that
@@ -40,12 +39,35 @@ export const TextBlock = ({
 
   const textBoxRef = useMemo(() => createRef<HTMLSpanElement>(), []);
 
-  const fontSize = useMemo(() => {
-    if ('paragraph' in blockType) return theme.fontSizes.sm;
-    if ('heading3' in blockType) return theme.fontSizes.md;
-    if ('heading2' in blockType) return theme.fontSizes.lg;
-    return theme.fontSizes.xl;
-  }, [blockType, theme.fontSizes]);
+  const textStyles = useMemo(() => {
+    if ('paragraph' in blockType) {
+      return {
+        fontSize: '1rem',
+      };
+    }
+
+    if ('heading3' in blockType) {
+      return {
+        fontWeight: 600,
+        fontSize: '1.25em',
+        lineHeight: 1.3,
+      };
+    }
+
+    if ('heading2' in blockType) {
+      return {
+        fontWeight: 600,
+        fontSize: '1.5em',
+        lineHeight: 1.3,
+      };
+    }
+
+    return {
+      fontWeight: 600,
+      fontSize: '1.875em',
+      lineHeight: 1.3,
+    };
+  }, [blockType]);
 
   useEffect(() => {
     if (!textBoxRef.current) return;
@@ -56,18 +78,15 @@ export const TextBlock = ({
     <Box
       className="TextBlock"
       pos="relative"
-      mih="24px"
-      bg="#eee"
-      h="100%"
       w="100%"
-      style={{ border: '1px solid #fff', fontSize }}
+      style={{ border: '1px solid #fff', ...textStyles }}
     >
       <span
         tabIndex={0}
         ref={textBoxRef}
         role="textbox"
         contentEditable
-        style={{ outline: 'none' }}
+        style={{ outline: 'none', display: 'block', minHeight: '24px' }}
         suppressContentEditableWarning
         onKeyDown={(e) => {
           if (e.metaKey || e.ctrlKey) return false;
@@ -84,8 +103,7 @@ export const TextBlock = ({
             const cursorPosition = window.getSelection()?.anchorOffset;
 
             if (cursorPosition) onRemove(cursorPosition);
-          }
-          if (e.key.match(/^[\w\W]$/g)) {
+          } else if (e.key.match(/^[\w\W]$/g)) {
             const cursorPosition = window.getSelection()?.anchorOffset;
 
             if (cursorPosition === undefined) {
@@ -96,7 +114,6 @@ export const TextBlock = ({
           }
         }}
       />
-      {/* <TreeViewer tree={value} /> */}
     </Box>
   );
 };

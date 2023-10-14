@@ -1,13 +1,4 @@
-import {
-  Box,
-  Modal,
-  ModalBody,
-  ModalCloseButton,
-  ModalContent,
-  ModalHeader,
-  ModalOverlay,
-  ModalProps,
-} from '@mantine/core';
+import { Box, Modal, ModalProps } from '@mantine/core';
 import { BlockType } from '../../../../declarations/workspace/workspace.did';
 
 type TransformBlockModalProps = {
@@ -39,6 +30,10 @@ export const TransformBlockModal = ({
       label: 'Heading 3',
       value: { heading3: null },
     },
+    // {
+    //   label: 'Checkbox',
+    //   value: { checkbox: null },
+    // },
     // {
     //     label: "Image",
     //     value: "image",

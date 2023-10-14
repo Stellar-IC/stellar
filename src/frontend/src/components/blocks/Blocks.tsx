@@ -1,10 +1,9 @@
-import { Box, Stack } from '@mantine/core';
+import { Box, Divider, Stack } from '@mantine/core';
 import { useEffect, useMemo } from 'react';
 import { parse } from 'uuid';
 import { usePagesContext } from '@/contexts/blocks/usePagesContext';
 import { Page } from '@/types';
 import { BlockWithActions } from './BlockWithActions';
-import { HeadingBlock } from './HeadingBlock';
 import { TextBlock } from './TextBlock';
 
 export const BlockRenderer = ({
@@ -42,7 +41,12 @@ export const BlockRenderer = ({
     );
   }
 
-  if ('paragraph' in block.blockType) {
+  if (
+    'heading1' in block.blockType ||
+    'heading2' in block.blockType ||
+    'heading3' in block.blockType ||
+    'paragraph' in block.blockType
+  ) {
     return (
       <BlockWithActions key={block.uuid} blockIndex={index} block={block}>
         <TextBlock
@@ -57,38 +61,11 @@ export const BlockRenderer = ({
               if (!blocksDiv) return;
               const blockToFocus =
                 blocksDiv.querySelectorAll<HTMLDivElement>('.TextBlock')[
-                  index + 1
+                  index + 2
                 ];
               blockToFocus.querySelector('span')?.focus();
-            }, 0);
+            }, 50);
           }}
-          onInsert={(cursorPosition, character) =>
-            insertCharacter(block.uuid, cursorPosition, character)
-          }
-          onRemove={(cursorPosition) =>
-            removeCharacter(block.uuid, cursorPosition)
-          }
-        />
-      </BlockWithActions>
-    );
-  }
-
-  if (
-    'heading1' in block.blockType ||
-    'heading2' in block.blockType ||
-    'heading3' in block.blockType
-  ) {
-    return (
-      <BlockWithActions
-        key={String(block.uuid)}
-        blockIndex={index}
-        block={block}
-      >
-        <HeadingBlock
-          key={String(block.uuid)}
-          blockExternalId={block.uuid}
-          blockType={block.blockType}
-          value={block.properties.title}
           onInsert={(cursorPosition, character) =>
             insertCharacter(block.uuid, cursorPosition, character)
           }
@@ -130,9 +107,13 @@ export const Blocks = ({ page }: { page: Page }) => {
         />
       </div>
 
-      {page.content?.map((blockUuid, index) => (
-        <BlockRenderer key={blockUuid} index={index} externalId={blockUuid} />
-      ))}
+      <Divider mb="xl" />
+
+      <div>
+        {page.content?.map((blockUuid, index) => (
+          <BlockRenderer key={blockUuid} index={index} externalId={blockUuid} />
+        ))}
+      </div>
     </Stack>
   );
 };

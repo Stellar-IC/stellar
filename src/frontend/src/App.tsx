@@ -23,19 +23,27 @@ function AppBody({ children }: PropsWithChildren) {
 
 function PageWrapper({ children }: PropsWithChildren) {
   const { isLoading, identity, userId } = useAuthContext();
-  const { actor: userActor } = useUserActor({ identity, userId });
+  const { actor: userActor, canisterId } = useUserActor({ identity, userId });
 
   const [workspaceId, setWorkspaceId] = useState<Principal | null>(null);
 
   useEffect(() => {
-    userActor.getPersonalWorkspace().then((res) => {
-      if (res.length === 0) {
-        throw new Error('No default workspace found');
-      }
+    const timeout = setTimeout(() => {
+      if (identity instanceof DelegationIdentity && !canisterId.isAnonymous()) {
+        userActor.getPersonalWorkspace().then((res) => {
+          if (res.length === 0) {
+            throw new Error('No default workspace found');
+          }
 
-      setWorkspaceId(res[0]);
-    });
-  }, [userActor]);
+          setWorkspaceId(res[0]);
+        });
+      }
+    }, 0);
+
+    return () => {
+      clearTimeout(timeout);
+    };
+  }, [userActor, identity, canisterId]);
 
   if (isLoading) {
     return (
@@ -109,7 +117,7 @@ function PageWrapper({ children }: PropsWithChildren) {
       <PagesContextProvider>
         <AppBody>
           <Flex>
-            <NavbarSearch />
+            <NavbarSearch workspaceId={workspaceId} />
             <div
               style={{
                 display: 'flex',

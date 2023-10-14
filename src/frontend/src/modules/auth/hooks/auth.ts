@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { DelegationIdentity } from '@dfinity/identity';
 import { Principal } from '@dfinity/principal';
 import { AnonymousIdentity, Identity } from '@dfinity/agent';
@@ -33,8 +33,9 @@ export const useAuthState = () => {
         .then(async (identity) => {
           if (identity instanceof DelegationIdentity) {
             setIdentity(identity);
-            setUserId(await registerUser(identity));
-            setProfile(await getUserProfile({ userId, identity }));
+            const newUserId = await registerUser(identity);
+            setUserId(newUserId);
+            setProfile(await getUserProfile({ userId: newUserId, identity }));
           }
         })
         .catch((err) => {

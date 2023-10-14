@@ -30,19 +30,7 @@ export function PageDetailPage() {
       <PageNavigation />
       <Container maw="container.sm">
         <PageSection>
-          <Stack mt="100" gap="xs">
-            {/* <Heading>
-                      <TextBlock
-                        blockExternalId={page.uuid}
-                        value={page.properties.title}
-                        onInsert={() => {
-                          // noop
-                        }}
-                        onRemove={() => {
-                          // noop
-                        }}
-                      />
-                    </Heading> */}
+          <Stack mt="100" gap="xs" px="10rem">
             <Blocks page={page} />
           </Stack>
         </PageSection>

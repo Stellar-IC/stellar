@@ -15,7 +15,7 @@ export const useUserActor = (options: {
           identity,
         },
       }),
-    [identity]
+    [identity, userId]
   );
 
   return { actor, canisterId: userId };

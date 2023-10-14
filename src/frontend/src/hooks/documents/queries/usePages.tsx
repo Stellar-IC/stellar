@@ -1,5 +1,5 @@
 import { Identity } from '@dfinity/agent';
-import { useCallback } from 'react';
+import { useCallback, useEffect } from 'react';
 import { parse, stringify } from 'uuid';
 
 import { useUpdate } from '@/hooks/useUpdate';
@@ -91,6 +91,20 @@ export const usePages = (props: {
       prepareFromStorage: fromLocalStorageBulk,
     }
   );
+
+  useEffect(() => {
+    actor
+      .pages({
+        order: [],
+        cursor: [],
+        limit: [],
+      })
+      .then((res) => {
+        res.edges.forEach((edge) => {
+          updateLocalPage(stringify(edge.node.uuid), fromShareable(edge.node));
+        });
+      });
+  }, [actor, updateLocalPage]);
 
   const { addEvent } = usePageEvents();
 
