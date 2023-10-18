@@ -5,6 +5,7 @@ import Result "mo:base/Result";
 import RBTree "mo:base/RBTree";
 import Nat "mo:base/Nat";
 import Principal "mo:base/Principal";
+import Time = "mo:base/Time";
 import Timer = "mo:base/Timer";
 import UUID "mo:uuid/UUID";
 import Source "mo:uuid/async/SourceV4";
@@ -27,7 +28,14 @@ actor class Workspace(
         capacity : Nat;
         ownerPrincipal : Principal;
         workspaceIndexPrincipal : Principal;
-    }
+    },
+    initData : {
+        uuid : UUID.UUID;
+        name : CoreTypes.Workspaces.WorkspaceName;
+        description : CoreTypes.Workspaces.WorkspaceDescription;
+        createdAt : Time.Time;
+        updatedAt : Time.Time;
+    },
 ) {
     /*************************************************************************
      * Types
@@ -43,6 +51,14 @@ actor class Workspace(
 
     stable var stable_blocks : RBTree.Tree<PrimaryKey, ShareableBlock> = #leaf;
     stable var stable_blocks_id_counter = 0;
+
+    stable var owner : CoreTypes.Workspaces.WorkspaceOwner = initArgs.ownerPrincipal;
+
+    stable var uuid : UUID.UUID = initData.uuid;
+    stable var name : CoreTypes.Workspaces.WorkspaceName = initData.name;
+    stable var description : CoreTypes.Workspaces.WorkspaceDescription = initData.name;
+    stable var createdAt : Time.Time = initData.createdAt;
+    stable var updatedAt : Time.Time = initData.updatedAt;
 
     /*************************************************************************
      * Transient Data
@@ -63,9 +79,30 @@ actor class Workspace(
         return initArgs;
     };
 
+    public func getInitData() : async {
+        uuid : UUID.UUID;
+        name : CoreTypes.Workspaces.WorkspaceName;
+        description : CoreTypes.Workspaces.WorkspaceDescription;
+        createdAt : Time.Time;
+        updatedAt : Time.Time;
+    } {
+        return initData;
+    };
+
     /*************************************************************************
      * Queries
      *************************************************************************/
+
+    public query func toObject() : async CoreTypes.Workspaces.Workspace {
+        return {
+            uuid = uuid;
+            name = name;
+            description = description;
+            owner = owner;
+            createdAt = createdAt;
+            updatedAt = updatedAt;
+        };
+    };
 
     public query func blockByUuid(uuid : UUID.UUID) : async Result.Result<ShareableBlock, { #blockNotFound }> {
         switch (state.data.getBlockByUuid(uuid)) {
@@ -100,7 +137,7 @@ actor class Workspace(
         Debug.print(debug_show caller);
         Debug.print(debug_show initArgs.ownerPrincipal);
 
-        if (caller != initArgs.ownerPrincipal) {
+        if (caller != owner) {
             return { edges = [] };
         };
 

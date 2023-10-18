@@ -19,6 +19,7 @@ actor UserIndex {
     stable var stable_principal_to_user_id : RBTree.Tree<Principal, UserId> = #leaf;
     stable var stable_user_id_to_principal : RBTree.Tree<UserId, Principal> = #leaf;
     stable var stable_user_id_to_user_canister : RBTree.Tree<UserId, User.User> = #leaf;
+
     var stable_data = {
         username_to_user_id = stable_username_to_user_id;
         principal_to_user_id = stable_principal_to_user_id;
@@ -34,7 +35,7 @@ actor UserIndex {
         };
 
         let user_index_principal = Principal.fromActor(UserIndex);
-        let result = await CreateUser.createUser(state, caller, user_index_principal);
+        let result = await CreateUser.execute(state, caller, user_index_principal);
 
         switch (result) {
             case (#err(#anonymousUser)) {
@@ -50,7 +51,9 @@ actor UserIndex {
                 return #ok(principal);
             };
             case (#ok(#created(principal, user))) {
-                let workspaceResult = await createPrivateWorkspaceForUser(caller);
+                let workspaceResult = await createPrivateWorkspaceForUser({
+                    owner = caller;
+                });
 
                 switch (workspaceResult) {
                     case (#err(#anonymousCaller)) {
@@ -96,9 +99,9 @@ actor UserIndex {
         return balance;
     };
 
-    private func createPrivateWorkspaceForUser(owner : Principal) : async Result.Result<Principal, { #anonymousCaller; #anonymousOwner; #anonymousWorkspaceIndex; #unauthorizedCaller; #insufficientCycles }> {
+    private func createPrivateWorkspaceForUser(args : { owner : Principal }) : async Result.Result<Principal, { #anonymousCaller; #anonymousOwner; #anonymousWorkspaceIndex; #unauthorizedCaller; #insufficientCycles }> {
         return await WorkspaceIndex.createWorkspace({
-            owner = owner;
+            owner = args.owner;
         });
     };
 

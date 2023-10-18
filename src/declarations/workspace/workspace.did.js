@@ -1,6 +1,9 @@
 export const idlFactory = ({ IDL }) => {
   const ShareableNode = IDL.Rec();
+  const WorkspaceName = IDL.Text;
+  const Time = IDL.Int;
   const UUID = IDL.Vec(IDL.Nat8);
+  const WorkspaceDescription = IDL.Text;
   const BlockContent = IDL.Vec(UUID);
   const BlockType = IDL.Variant({
     'heading1' : IDL.Null,
@@ -19,7 +22,6 @@ export const idlFactory = ({ IDL }) => {
   const NodeBase = IDL.Nat16;
   const NodeIndex = IDL.Nat16;
   const NodeIdentifier = IDL.Vec(NodeIndex);
-  const Time = IDL.Int;
   ShareableNode.fill(
     IDL.Record({
       'value' : NodeValue,
@@ -175,6 +177,15 @@ export const idlFactory = ({ IDL }) => {
     'ok' : SaveEventTransactionUpdateOutputResult,
     'err' : SaveEventTransactionUpdateOutputError,
   });
+  const WorkspaceOwner = IDL.Principal;
+  const Workspace__1 = IDL.Record({
+    'owner' : WorkspaceOwner,
+    'name' : WorkspaceName,
+    'createdAt' : Time,
+    'uuid' : UUID,
+    'description' : WorkspaceDescription,
+    'updatedAt' : Time,
+  });
   const UpdateBlockUpdateInput = IDL.Record({
     'id' : PrimaryKey,
     'content' : BlockContent,
@@ -217,6 +228,19 @@ export const idlFactory = ({ IDL }) => {
         ],
         [],
       ),
+    'getInitData' : IDL.Func(
+        [],
+        [
+          IDL.Record({
+            'name' : WorkspaceName,
+            'createdAt' : Time,
+            'uuid' : UUID,
+            'description' : WorkspaceDescription,
+            'updatedAt' : Time,
+          }),
+        ],
+        [],
+      ),
     'pageByUuid' : IDL.Func([UUID], [Result], ['query']),
     'pages' : IDL.Func(
         [
@@ -239,6 +263,7 @@ export const idlFactory = ({ IDL }) => {
         [SaveEventTransactionUpdateOutput],
         [],
       ),
+    'toObject' : IDL.Func([], [Workspace__1], ['query']),
     'updateBlock' : IDL.Func(
         [UpdateBlockUpdateInput],
         [UpdateBlockUpdateOutput],
@@ -248,11 +273,22 @@ export const idlFactory = ({ IDL }) => {
   return Workspace;
 };
 export const init = ({ IDL }) => {
+  const WorkspaceName = IDL.Text;
+  const Time = IDL.Int;
+  const UUID = IDL.Vec(IDL.Nat8);
+  const WorkspaceDescription = IDL.Text;
   return [
     IDL.Record({
       'ownerPrincipal' : IDL.Principal,
       'workspaceIndexPrincipal' : IDL.Principal,
       'capacity' : IDL.Nat,
+    }),
+    IDL.Record({
+      'name' : WorkspaceName,
+      'createdAt' : Time,
+      'uuid' : UUID,
+      'description' : WorkspaceDescription,
+      'updatedAt' : Time,
     }),
   ];
 };

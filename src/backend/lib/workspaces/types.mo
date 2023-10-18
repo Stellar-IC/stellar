@@ -7,22 +7,17 @@ import UUID "mo:uuid/UUID";
 
 module {
     public type PrimaryKey = Nat;
-    public type WorkspaceId = Nat;
     public type WorkspaceName = Text;
     public type WorkspaceDescription = Text;
     public type WorkspaceOwner = Principal;
     public type WorkspaceMember = Principal;
 
-    public type UnsavedWorkspace = {
+    public type Workspace = {
         uuid : UUID.UUID;
         name : WorkspaceName;
         description : WorkspaceDescription;
         owner : WorkspaceOwner;
         createdAt : Time.Time;
         updatedAt : Time.Time;
-    };
-
-    public type Workspace = UnsavedWorkspace and {
-        id : WorkspaceId;
     };
 };

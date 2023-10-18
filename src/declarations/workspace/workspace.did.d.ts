@@ -184,6 +184,16 @@ export interface Workspace {
       'capacity' : bigint,
     }
   >,
+  'getInitData' : ActorMethod<
+    [],
+    {
+      'name' : WorkspaceName,
+      'createdAt' : Time,
+      'uuid' : UUID,
+      'description' : WorkspaceDescription,
+      'updatedAt' : Time,
+    }
+  >,
   'pageByUuid' : ActorMethod<[UUID], Result>,
   'pages' : ActorMethod<
     [
@@ -203,9 +213,21 @@ export interface Workspace {
     [SaveEventTransactionUpdateInput],
     SaveEventTransactionUpdateOutput
   >,
+  'toObject' : ActorMethod<[], Workspace__1>,
   'updateBlock' : ActorMethod<
     [UpdateBlockUpdateInput],
     UpdateBlockUpdateOutput
   >,
+}
+export type WorkspaceDescription = string;
+export type WorkspaceName = string;
+export type WorkspaceOwner = Principal;
+export interface Workspace__1 {
+  'owner' : WorkspaceOwner,
+  'name' : WorkspaceName,
+  'createdAt' : Time,
+  'uuid' : UUID,
+  'description' : WorkspaceDescription,
+  'updatedAt' : Time,
 }
 export interface _SERVICE extends Workspace {}

@@ -11,7 +11,7 @@ import Types "../../types";
 import Workspace "../workspace/main";
 import WorkspacesTypes "../../lib/workspaces/types";
 
-actor class User(
+shared actor class User(
     initArgs : {
         capacity : Nat;
         principal : Principal;

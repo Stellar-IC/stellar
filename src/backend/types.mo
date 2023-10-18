@@ -1,3 +1,6 @@
+import UUID "mo:uuid/UUID";
+import Time "mo:base/Time";
+
 module {
     public type UserId = Principal;
 
@@ -17,5 +20,23 @@ module {
     public type SortOrder = {
         fieldName : Text;
         direction : SortDirection;
+    };
+
+    public module Workspaces {
+        public type WorkspaceId = Principal;
+        public type WorkspaceName = Text;
+        public type WorkspaceDescription = Text;
+        public type WorkspaceOwner = Principal;
+        public type WorkspaceMember = Principal;
+
+        public type Workspace = {
+            uuid : UUID.UUID;
+            name : WorkspaceName;
+            description : WorkspaceDescription;
+            owner : WorkspaceOwner;
+            createdAt : Time.Time;
+            updatedAt : Time.Time;
+        };
+
     };
 };

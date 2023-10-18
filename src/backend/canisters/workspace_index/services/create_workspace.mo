@@ -10,17 +10,14 @@ import Source "mo:uuid/async/SourceV4";
 
 import Workspace "../../workspace/main";
 
-import State "../model/state";
-
-module {
+module CreateWorkspace {
     let CYCLES_REQUIRED_FOR_UPGRADE = 80_000_000_000; // 0.08T cycles
     let TOP_UP_AMOUNT = 100_000_000_000; // 0.1T cycles
 
-    public func createWorkspace(
-        state : State.State,
+    public func execute(
         ownerPrincipal : Principal,
         workspaceIndexPrincipal : Principal,
-    ) : async Result.Result<Principal, { #anonymousUser; #anonymousWorkspaceIndex; #insufficientCycles }> {
+    ) : async Result.Result<Workspace.Workspace, { #anonymousUser; #anonymousWorkspaceIndex; #insufficientCycles }> {
         let INITIAL_CYCLES_BALANCE = CYCLES_REQUIRED_FOR_UPGRADE + TOP_UP_AMOUNT; // 0.18T cycles
 
         if (Cycles.balance() < INITIAL_CYCLES_BALANCE) {
@@ -35,8 +32,6 @@ module {
             return #err(#anonymousWorkspaceIndex);
         };
 
-        Cycles.add(INITIAL_CYCLES_BALANCE);
-
         let workspaceCanisterInitSettings = ?{
             controllers = ?[ownerPrincipal, workspaceIndexPrincipal];
             compute_allocation = ?5;
@@ -48,24 +43,19 @@ module {
             ownerPrincipal = ownerPrincipal;
             workspaceIndexPrincipal = workspaceIndexPrincipal;
         };
+        let workspaceCanisterInitDate = {
+            uuid = await Source.Source().new();
+            name = "Untitled";
+            description = "";
+            owner = ownerPrincipal;
+            createdAt = Time.now();
+            updatedAt = Time.now();
+        };
+        Cycles.add(INITIAL_CYCLES_BALANCE);
         let workspaceCanister = await (system Workspace.Workspace)(
             #new { settings = workspaceCanisterInitSettings }
-        )(workspaceCanisterInitArgs);
-        let workspaceCanisterPrincipal = Principal.fromActor(workspaceCanister);
+        )(workspaceCanisterInitArgs, workspaceCanisterInitDate);
 
-        let result = state.data.addWorkspace(
-            workspaceCanisterPrincipal,
-            {
-                uuid = await Source.Source().new();
-                name = "Untitled";
-                description = "";
-                owner = ownerPrincipal;
-                createdAt = Time.now();
-                updatedAt = Time.now();
-            },
-            workspaceCanister,
-        );
-
-        #ok(workspaceCanisterPrincipal);
+        #ok(workspaceCanister);
     };
 };

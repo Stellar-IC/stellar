@@ -1,3 +1,15 @@
+type Workspace__1 = 
+ record {
+   createdAt: Time;
+   description: WorkspaceDescription;
+   name: WorkspaceName;
+   owner: WorkspaceOwner;
+   updatedAt: Time;
+   uuid: UUID;
+ };
+type WorkspaceOwner = principal;
+type WorkspaceName = text;
+type WorkspaceDescription = text;
 type Workspace = 
  service {
    addBlock: (AddBlockUpdateInput) -> (AddBlockUpdateOutput);
@@ -9,6 +21,14 @@ type Workspace =
        ownerPrincipal: principal;
        workspaceIndexPrincipal: principal;
      });
+   getInitData: () ->
+    (record {
+       createdAt: Time;
+       description: WorkspaceDescription;
+       name: WorkspaceName;
+       updatedAt: Time;
+       uuid: UUID;
+     });
    pageByUuid: (UUID) -> (Result) query;
    pages:
     (record {
@@ -19,6 +39,7 @@ type Workspace =
    removeBlock: (RemoveBlockUpdateInput) -> (RemoveBlockUpdateOutput);
    saveEvents: (SaveEventTransactionUpdateInput) ->
     (SaveEventTransactionUpdateOutput);
+   toObject: () -> (Workspace__1) query;
    updateBlock: (UpdateBlockUpdateInput) -> (UpdateBlockUpdateOutput);
  };
 type UpdateBlockUpdateOutputResult = 
@@ -266,4 +287,10 @@ service : (record {
              capacity: nat;
              ownerPrincipal: principal;
              workspaceIndexPrincipal: principal;
-           }) -> Workspace
+           }, record {
+                createdAt: Time;
+                description: WorkspaceDescription;
+                name: WorkspaceName;
+                updatedAt: Time;
+                uuid: UUID;
+              }) -> Workspace

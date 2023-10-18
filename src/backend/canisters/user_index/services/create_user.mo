@@ -10,17 +10,17 @@ import User "../../user/main";
 
 import State "../model/state";
 
-module {
+module CreateUser {
     let CYCLES_REQUIRED_FOR_UPGRADE = 80_000_000_000; // 0.08T cycles
     let USER_CANISTER_TOP_UP_AMOUNT = 100_000_000_000; // 0.1T cycles
 
-    public func createUser(
+    public func execute(
         state : State.State,
         user_principal : Principal,
         user_index_principal : Principal,
     ) : async Result.Result<{ #created : (Principal, User.User); #existing : (Principal, User.User) }, { #anonymousUser; #insufficientCycles; #missingUserCanister }> {
         let USER_CANISTER_INITIAL_CYCLES_BALANCE = CYCLES_REQUIRED_FOR_UPGRADE + USER_CANISTER_TOP_UP_AMOUNT; // 0.18T cycles
-        let balance = Cycles.balance();
+        var balance = Cycles.balance();
 
         if (balance < USER_CANISTER_INITIAL_CYCLES_BALANCE) {
             return #err(#insufficientCycles);
@@ -40,13 +40,12 @@ module {
                         return #err(#missingUserCanister);
                     };
                     case (?user_canister) {
+                        Debug.print("[create_user] Exising user canister found");
                         return #ok(#existing(userId, user_canister));
                     };
                 };
             };
         };
-
-        Cycles.add(USER_CANISTER_INITIAL_CYCLES_BALANCE);
 
         let user_canister_init_settings = ?{
             controllers = ?[user_principal, user_index_principal];
@@ -58,6 +57,9 @@ module {
             capacity = 100_000_000_000_000;
             principal = user_principal;
         };
+
+        Cycles.add(USER_CANISTER_INITIAL_CYCLES_BALANCE);
+
         let user_canister = await (system User.User)(
             #new { settings = user_canister_init_settings }
         )(user_canister_init_args);

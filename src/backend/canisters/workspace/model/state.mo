@@ -8,7 +8,6 @@ import Iter "mo:base/Iter";
 import Array "mo:base/Array";
 import UUID "mo:uuid/UUID";
 
-import { Workspace = WorkspaceModel } "../../../lib/workspaces/models";
 import BlocksModels "../../../lib/blocks/models";
 import WorkspacesTypes "../../../lib/workspaces/types";
 import BlocksTypes "../../../lib/blocks/types";
@@ -19,7 +18,7 @@ import Types "../types";
 
 module {
     type PrimaryKey = Types.PrimaryKey;
-    type UnsavedWorkspace = WorkspacesTypes.UnsavedWorkspace;
+    type Workspace = WorkspacesTypes.Workspace;
 
     public class State(_data : Data) {
         public var data = _data;
