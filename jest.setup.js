@@ -24,3 +24,6 @@ class ResizeObserver {
 }
 
 window.ResizeObserver = ResizeObserver;
+
+window.Uint8Array = Uint8Array;
+window.Buffer = Buffer;

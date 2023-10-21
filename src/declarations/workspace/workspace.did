@@ -225,11 +225,21 @@ type BlockUpdatedEvent =
  };
 type BlockType = 
  variant {
+   bulletedList;
+   callout;
+   code;
    heading1;
    heading2;
    heading3;
+   numberedList;
    page;
    paragraph;
+   quote;
+   todoList;
+   toggleHeading1;
+   toggleHeading2;
+   toggleHeading3;
+   toggleList;
  };
 type BlockRemovedEvent = 
  record {

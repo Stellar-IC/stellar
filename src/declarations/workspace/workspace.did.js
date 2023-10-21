@@ -6,11 +6,21 @@ export const idlFactory = ({ IDL }) => {
   const WorkspaceDescription = IDL.Text;
   const BlockContent = IDL.Vec(UUID);
   const BlockType = IDL.Variant({
+    'numberedList' : IDL.Null,
+    'todoList' : IDL.Null,
+    'toggleHeading1' : IDL.Null,
+    'toggleHeading2' : IDL.Null,
+    'toggleHeading3' : IDL.Null,
+    'code' : IDL.Null,
     'heading1' : IDL.Null,
     'heading2' : IDL.Null,
     'heading3' : IDL.Null,
     'page' : IDL.Null,
+    'callout' : IDL.Null,
+    'quote' : IDL.Null,
+    'bulletedList' : IDL.Null,
     'paragraph' : IDL.Null,
+    'toggleList' : IDL.Null,
   });
   const NodeBoundary = IDL.Nat16;
   const NodeDepth = IDL.Nat16;

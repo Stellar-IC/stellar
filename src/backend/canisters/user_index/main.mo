@@ -38,47 +38,9 @@ actor UserIndex {
         let result = await CreateUser.execute(state, caller, user_index_principal);
 
         switch (result) {
-            case (#err(#anonymousUser)) {
-                return #err(#anonymousUser);
-            };
-            case (#err(#insufficientCycles)) {
-                return #err(#insufficientCycles);
-            };
-            case (#err(#missingUserCanister)) {
-                return #err(#missingUserCanister);
-            };
-            case (#ok(#existing(principal, user))) {
-                return #ok(principal);
-            };
-            case (#ok(#created(principal, user))) {
-                let workspaceResult = await createPrivateWorkspaceForUser({
-                    owner = caller;
-                });
-
-                switch (workspaceResult) {
-                    case (#err(#anonymousCaller)) {
-                        return #err(#failedToCreateWorkspace);
-                    };
-                    case (#err(#anonymousOwner)) {
-                        return #err(#failedToCreateWorkspace);
-                    };
-                    case (#err(#anonymousWorkspaceIndex)) {
-                        return #err(#failedToCreateWorkspace);
-                    };
-                    case (#err(#unauthorizedCaller)) {
-                        return #err(#failedToCreateWorkspace);
-                    };
-                    case (#err(#insufficientCycles)) {
-                        return #err(#failedToCreateWorkspace);
-                    };
-                    case (#ok(workspacePrincipal)) {
-                        user.setPersonalWorkspace(workspacePrincipal);
-                        return #ok(principal);
-                    };
-                };
-
-                return #ok(principal);
-            };
+            case (#err(error)) { #err(error) };
+            case (#ok(#existing(principal, user))) { #ok(principal) };
+            case (#ok(#created(principal, user))) { #ok(principal) };
         };
     };
 
@@ -89,7 +51,7 @@ actor UserIndex {
                 #upgrade(entry.1)
             )({
                 capacity = 100_000_000_000_000;
-                principal = userId;
+                owner = userId;
             });
         };
     };
@@ -97,12 +59,6 @@ actor UserIndex {
     public shared func walletBalance() : async Nat {
         let balance = Cycles.balance();
         return balance;
-    };
-
-    private func createPrivateWorkspaceForUser(args : { owner : Principal }) : async Result.Result<Principal, { #anonymousCaller; #anonymousOwner; #anonymousWorkspaceIndex; #unauthorizedCaller; #insufficientCycles }> {
-        return await WorkspaceIndex.createWorkspace({
-            owner = args.owner;
-        });
     };
 
     system func preupgrade() {

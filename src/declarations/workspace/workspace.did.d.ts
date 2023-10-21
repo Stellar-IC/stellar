@@ -37,11 +37,21 @@ export interface BlockRemovedEvent {
   'user' : Principal,
   'uuid' : UUID,
 }
-export type BlockType = { 'heading1' : null } |
+export type BlockType = { 'numberedList' : null } |
+  { 'todoList' : null } |
+  { 'toggleHeading1' : null } |
+  { 'toggleHeading2' : null } |
+  { 'toggleHeading3' : null } |
+  { 'code' : null } |
+  { 'heading1' : null } |
   { 'heading2' : null } |
   { 'heading3' : null } |
   { 'page' : null } |
-  { 'paragraph' : null };
+  { 'callout' : null } |
+  { 'quote' : null } |
+  { 'bulletedList' : null } |
+  { 'paragraph' : null } |
+  { 'toggleList' : null };
 export type BlockUpdatedEvent = {
     'updateBlockType' : {
       'data' : { 'blockType' : BlockType, 'blockExternalId' : UUID },

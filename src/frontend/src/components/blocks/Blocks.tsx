@@ -5,6 +5,8 @@ import { usePagesContext } from '@/contexts/blocks/usePagesContext';
 import { Page } from '@/types';
 import { BlockWithActions } from './BlockWithActions';
 import { TextBlock } from './TextBlock';
+import { BulletedListBlock } from './BulletedListBlock';
+import { TodoListBlock } from './TodoListBlock';
 
 export const BlockRenderer = ({
   externalId,
@@ -73,6 +75,22 @@ export const BlockRenderer = ({
             removeCharacter(block.uuid, cursorPosition)
           }
         />
+      </BlockWithActions>
+    );
+  }
+
+  if ('bulletedList' in block.blockType) {
+    return (
+      <BlockWithActions key={block.uuid} blockIndex={index} block={block}>
+        <BulletedListBlock externalId={block.uuid} index={index} />
+      </BlockWithActions>
+    );
+  }
+
+  if ('todoList' in block.blockType) {
+    return (
+      <BlockWithActions key={block.uuid} blockIndex={index} block={block}>
+        <TodoListBlock externalId={block.uuid} index={index} />
       </BlockWithActions>
     );
   }

@@ -10,15 +10,14 @@ import Iter "mo:base/Iter";
 import Array "mo:base/Array";
 import UUID "mo:uuid/UUID";
 
+import CreateWorkspace "../../lib/workspaces/services/create_workspace";
 import Types "../../lib/workspaces/types";
 import CoreTypes "../../types";
 
 import Workspace "../workspace/main";
 
-import CreateWorkspace "./services/create_workspace";
-
 actor WorkspaceIndex {
-    type WorkspaceId = Principal;
+    type WorkspaceId = Types.WorkspaceId;
     type WorkspaceExternalId = UUID.UUID;
 
     // TODO: Move this to a library
@@ -100,26 +99,12 @@ actor WorkspaceIndex {
      * Add a workspace to the index.
      */
     public shared ({ caller }) func createWorkspace(
-        input : {
-            owner : Principal;
-        }
-    ) : async Result.Result<Principal, { #anonymousCaller; #anonymousOwner; #anonymousWorkspaceIndex; #unauthorizedCaller; #insufficientCycles }> {
-        let workspace_index_principal = Principal.fromActor(WorkspaceIndex);
-        let result = await CreateWorkspace.execute(
-            input.owner,
-            workspace_index_principal,
-        );
+        input : { owner : Principal }
+    ) : async Result.Result<Principal, { #anonymousCaller; #anonymousUser; #unauthorizedCaller; #insufficientCycles }> {
+        let result = await CreateWorkspace.execute({ owner = input.owner });
 
         switch (result) {
-            case (#err(#anonymousUser)) {
-                return #err(#anonymousOwner);
-            };
-            case (#err(#anonymousWorkspaceIndex)) {
-                return #err(#anonymousWorkspaceIndex);
-            };
-            case (#err(#insufficientCycles)) {
-                return #err(#insufficientCycles);
-            };
+            case (#err(error)) { #err(error) };
             case (#ok(workspace)) {
                 let workspaceId = Principal.fromActor(workspace);
                 let workspaceData = await workspace.toObject();
@@ -128,7 +113,7 @@ actor WorkspaceIndex {
                 workspace_uuid_to_workspace_id.put(workspaceData.uuid, workspaceId);
                 workspace_id_to_canister.put(workspaceId, workspace);
 
-                return #ok(workspaceId);
+                #ok(workspaceId);
             };
         };
     };

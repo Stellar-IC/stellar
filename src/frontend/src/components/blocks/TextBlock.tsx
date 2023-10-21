@@ -12,7 +12,14 @@ type TextBlockProps = {
     | { paragraph: null }
     | { heading1: null }
     | { heading2: null }
-    | { heading3: null };
+    | { heading3: null }
+    | { todoList: null }
+    | { bulletedList: null }
+    | { numberedList: null }
+    | { toggleList: null }
+    | { code: null }
+    | { quote: null }
+    | { callout: null };
   pageExternalId?: ExternalId;
   value: Tree.Tree;
   onEnterPressed?: () => void;
@@ -40,7 +47,16 @@ export const TextBlock = ({
   const textBoxRef = useMemo(() => createRef<HTMLSpanElement>(), []);
 
   const textStyles = useMemo(() => {
-    if ('paragraph' in blockType) {
+    if (
+      'paragraph' in blockType ||
+      'todoList' in blockType ||
+      'bulletedList' in blockType ||
+      'numberedList' in blockType ||
+      'toggleList' in blockType ||
+      'code' in blockType ||
+      'quote' in blockType ||
+      'callout' in blockType
+    ) {
       return {
         fontSize: '1rem',
       };

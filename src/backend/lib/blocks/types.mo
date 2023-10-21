@@ -23,6 +23,16 @@ module {
         #heading3;
         #page;
         #paragraph;
+        #todoList;
+        #bulletedList;
+        #numberedList;
+        #toggleList;
+        #code;
+        #quote;
+        #callout;
+        #toggleHeading1;
+        #toggleHeading2;
+        #toggleHeading3;
     };
     public type UnsavedBlock = {
         uuid : UUID.UUID;

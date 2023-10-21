@@ -30,14 +30,34 @@ export const TransformBlockModal = ({
       label: 'Heading 3',
       value: { heading3: null },
     },
-    // {
-    //   label: 'Checkbox',
-    //   value: { checkbox: null },
-    // },
-    // {
-    //     label: "Image",
-    //     value: "image",
-    // },
+    {
+      label: 'To-do List',
+      value: { todoList: null },
+    },
+    {
+      label: 'Bulleted List',
+      value: { bulletedList: null },
+    },
+    {
+      label: 'Numbered List',
+      value: { numberedList: null },
+    },
+    {
+      label: 'Toggle List',
+      value: { toggleList: null },
+    },
+    {
+      label: 'Code',
+      value: { code: null },
+    },
+    {
+      label: 'Quote',
+      value: { quote: null },
+    },
+    {
+      label: 'Callout',
+      value: { callout: null },
+    },
   ] as const;
 
   return (

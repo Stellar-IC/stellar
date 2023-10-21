@@ -26,8 +26,7 @@ import Types "./types";
 actor class Workspace(
     initArgs : {
         capacity : Nat;
-        ownerPrincipal : Principal;
-        workspaceIndexPrincipal : Principal;
+        owner : Principal;
     },
     initData : {
         uuid : UUID.UUID;
@@ -52,7 +51,7 @@ actor class Workspace(
     stable var stable_blocks : RBTree.Tree<PrimaryKey, ShareableBlock> = #leaf;
     stable var stable_blocks_id_counter = 0;
 
-    stable var owner : CoreTypes.Workspaces.WorkspaceOwner = initArgs.ownerPrincipal;
+    stable var owner : CoreTypes.Workspaces.WorkspaceOwner = initArgs.owner;
 
     stable var uuid : UUID.UUID = initData.uuid;
     stable var name : CoreTypes.Workspaces.WorkspaceName = initData.name;
@@ -73,8 +72,7 @@ actor class Workspace(
      *************************************************************************/
     public func getInitArgs() : async {
         capacity : Nat;
-        ownerPrincipal : Principal;
-        workspaceIndexPrincipal : Principal;
+        owner : Principal;
     } {
         return initArgs;
     };
@@ -133,10 +131,6 @@ actor class Workspace(
             order : ?CoreTypes.SortOrder;
         }
     ) : async CoreTypes.PaginatedResults<ShareableBlock> {
-        Debug.print("Getting pages");
-        Debug.print(debug_show caller);
-        Debug.print(debug_show initArgs.ownerPrincipal);
-
         if (caller != owner) {
             return { edges = [] };
         };

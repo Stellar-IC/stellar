@@ -55,7 +55,7 @@ module CreateUser {
         };
         let user_canister_init_args = {
             capacity = 100_000_000_000_000;
-            principal = user_principal;
+            owner = user_principal;
         };
 
         Cycles.add(USER_CANISTER_INITIAL_CYCLES_BALANCE);

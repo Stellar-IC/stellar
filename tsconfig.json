@@ -21,6 +21,11 @@
       "@test-utils": ["./src/frontend//test-utils"]
     }
   },
-  "include": ["./src/frontend/src", "./src/declarations", "./src/frontend/test-utils"],
+  "include": [
+    "./src/e2e",
+    "./src/declarations",
+    "./src/frontend/src",
+    "./src/frontend/test-utils"
+  ],
   "references": [{ "path": "./tsconfig.node.json" }]
 }

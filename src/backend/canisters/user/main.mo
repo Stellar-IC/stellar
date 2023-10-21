@@ -7,112 +7,96 @@ import Nat "mo:base/Nat";
 import Result "mo:base/Result";
 import Time "mo:base/Time";
 
-import Types "../../types";
-import Workspace "../workspace/main";
+import CoreTypes "../../types";
+import UserProfile "../../lib/users/UserProfile";
+import UsersTypes "../../lib/users/types";
+import CreateWorkspace "../../lib/workspaces/services/create_workspace";
 import WorkspacesTypes "../../lib/workspaces/types";
 
-shared actor class User(
+import Workspace "../workspace/main";
+
+shared ({ caller = initializer }) actor class User(
     initArgs : {
         capacity : Nat;
-        principal : Principal;
+        owner : Principal;
     }
 ) {
-    type Username = Text;
-    type WorkspaceId = Principal;
+    stable var stable_balance = 0;
+    stable var stable_capacity = initArgs.capacity;
+    stable var stable_owner = initArgs.owner;
+    stable var stable_personalWorkspaceId : ?WorkspacesTypes.WorkspaceId = null;
 
-    module UserProfile {
-        public type UserProfile = {
-            username : ?Username;
-            created_at : Time.Time;
-            updated_at : Time.Time;
-        };
-
-        public type MutableUserProfile = {
-            var username : ?Username;
-            var created_at : Time.Time;
-            var updated_at : Time.Time;
-        };
-
-        public func fromMutableUserProfile(profile : MutableUserProfile) : UserProfile {
-            return {
-                username = profile.username;
-                created_at = profile.created_at;
-                updated_at = profile.updated_at;
-            };
-        };
-    };
-
-    module DeliveryAgentAccount {
-        type Suspension = {
-            created_at : Time.Time;
-            ends_at : Time.Time;
-        };
-
-        public class DeliveryAgentAccount(_user_id : Types.UserId) {
-            let user_id : Types.UserId = _user_id;
-            let suspensions : List.List<Suspension> = List.nil<Suspension>();
-        };
-    };
-
-    type ProfileInput = {
-        username : Username;
-    };
-
-    var balance = 0;
-    var capacity = initArgs.capacity;
-    var principal = initArgs.principal;
-    var created_at = Time.now();
-
-    var personalWorkspace : ?WorkspaceId = null;
-
-    var _profile : UserProfile.MutableUserProfile = {
-        var username = null;
+    stable var stable_profile : UserProfile.MutableUserProfile = {
+        var username = "";
         var created_at = Time.now();
         var updated_at = Time.now();
     };
 
-    public query ({ caller }) func profile() : async Result.Result<UserProfile.UserProfile, { #notAuthorized }> {
-        if (caller != principal) {
-            return #err(#notAuthorized);
+    private func _assertIsNotAnonymous(principal : Principal) {
+        if (Principal.isAnonymous(principal)) {
+            Debug.trap("Anonymous access not allowed");
         };
-
-        return #ok(UserProfile.fromMutableUserProfile(_profile));
     };
 
-    // Define a function that returns the user's personal workspace
-    public query func getPersonalWorkspace() : async ?WorkspaceId {
-        return personalWorkspace;
-    };
-
-    public shared ({ caller }) func updateProfile(profile_input : ProfileInput) : async Result.Result<UserProfile.UserProfile, { #notAuthorized }> {
-        if (caller != principal) {
-            return #err(#notAuthorized);
+    private func _assertIsOwner(principal : Principal) {
+        if (principal != stable_owner) {
+            Debug.trap("Unauthorized access not allowed");
         };
-
-        _profile.username := ?profile_input.username;
-        _profile.updated_at := Time.now();
-
-        return #ok(UserProfile.fromMutableUserProfile(_profile));
     };
 
-    // Define a function for setting the user's personal workspace
-    public func setPersonalWorkspace(workspaceId : WorkspaceId) {
-        personalWorkspace := ?workspaceId;
+    public query ({ caller }) func profile() : async UserProfile.UserProfile {
+        _assertIsNotAnonymous(caller);
+        _assertIsOwner(caller);
+
+        return UserProfile.fromMutableUserProfile(stable_profile);
+    };
+
+    public shared ({ caller }) func personalWorkspace() : async Result.Result<WorkspacesTypes.WorkspaceId, { #anonymousUser; #insufficientCycles }> {
+        _assertIsNotAnonymous(caller);
+        _assertIsOwner(caller);
+
+        switch (stable_personalWorkspaceId) {
+            case (null) {
+                let result = await CreateWorkspace.execute({ owner = caller });
+                switch (result) {
+                    case (#err(error)) { #err(error) };
+                    case (#ok(workspace)) {
+                        let workspaceId = Principal.fromActor(workspace);
+                        stable_personalWorkspaceId := ?workspaceId;
+                        #ok(workspaceId);
+                    };
+                };
+            };
+            case (?workspaceId) { #ok(workspaceId) };
+        };
+    };
+
+    public shared ({ caller }) func updateProfile(
+        input : UsersTypes.ProfileInput
+    ) : async UserProfile.UserProfile {
+        _assertIsNotAnonymous(caller);
+        _assertIsOwner(caller);
+
+        stable_profile.username := input.username;
+        stable_profile.updated_at := Time.now();
+
+        return UserProfile.fromMutableUserProfile(stable_profile);
     };
 
     // Returns the cycles received up to the capacity allowed
     public func wallet_receive() : async { accepted : Nat64 } {
         let amount = Cycles.available();
-        let limit : Nat = capacity - balance;
+        let limit : Nat = stable_capacity - stable_balance;
         let accepted = if (amount <= limit) amount else limit;
         let deposit = Cycles.accept(accepted);
         assert (deposit == accepted);
-        balance += accepted;
-        { accepted = Nat64.fromNat(accepted) };
+        stable_balance += accepted;
+
+        return { accepted = Nat64.fromNat(accepted) };
     };
 
     // Return the current cycle balance
     public func wallet_balance() : async Nat {
-        return balance;
+        return stable_balance;
     };
 };

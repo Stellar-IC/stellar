@@ -320,23 +320,36 @@ export const usePages = (props: {
   const saveEvent = useCallback(
     async (pageExternalId: string, event: BlockEvent) => {
       if ('blockCreated' in event) {
-        const { index } = event.blockCreated.data;
+        const { index, block } = event.blockCreated.data;
+        const blockUuid = stringify(block.uuid);
 
         // store event locally
         addEvent(pageExternalId, event);
 
         const currentPage = pages[pageExternalId];
         const newContent = [...currentPage.content];
-        newContent.splice(
-          Number(index),
-          0,
-          stringify(event.blockCreated.data.block.uuid)
-        );
+        newContent.splice(Number(index), 0, blockUuid);
 
         // update page locally
         updateLocalPage(pageExternalId, {
           ...currentPage,
           content: newContent,
+        });
+
+        console.log({
+          blockType: block.blockType,
+        });
+
+        updateLocalBlock(blockUuid, {
+          id: '',
+          content: [],
+          ...block,
+          parent: pageExternalId,
+          properties: {
+            title: new Tree.Tree(),
+            checked: false,
+          },
+          uuid: blockUuid,
         });
 
         // send event to IC
