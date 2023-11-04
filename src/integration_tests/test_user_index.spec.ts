@@ -1,5 +1,6 @@
 import { expect, test } from 'vitest';
 import { canisterId, createActor } from '../declarations/user_index/index';
+import { assertResultOk } from './helpers';
 import { identity } from './indentity';
 
 test('should handle a basic greeting', async () => {
@@ -10,12 +11,6 @@ test('should handle a basic greeting', async () => {
     },
   });
 
-  const result1 = await userIndex.registerUser();
-  if (!('ok' in result1)) {
-    throw new Error(
-      `Error calling registerUser: ${JSON.stringify(result1.err)}`
-    );
-  }
-
-  expect(result1.ok.toText()).toBe('ctiya-peaaa-aaaaa-qaaja-cai');
+  const result = assertResultOk(await userIndex.registerUser());
+  expect(result.ok.toText()).toBe('ctiya-peaaa-aaaaa-qaaja-cai');
 });

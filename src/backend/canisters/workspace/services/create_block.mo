@@ -14,10 +14,10 @@ module {
 
     public func execute(
         state : State.State,
-        user_principal : Principal,
+        userPrincipal : Principal,
         input : Types.Services.CreateBlockService.CreateBlockServiceInput,
     ) : Types.Services.CreateBlockService.CreateBlockServiceOutput {
-        if (Principal.isAnonymous(user_principal)) {
+        if (Principal.isAnonymous(userPrincipal)) {
             return #err(#anonymousUser);
         };
 

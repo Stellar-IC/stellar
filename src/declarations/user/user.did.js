@@ -1,27 +1,29 @@
 export const idlFactory = ({ IDL }) => {
   const WorkspaceId = IDL.Principal;
+  const Result = IDL.Variant({
+    ok: WorkspaceId,
+    err: IDL.Variant({
+      anonymousUser: IDL.Null,
+      insufficientCycles: IDL.Null,
+    }),
+  });
   const Time = IDL.Int;
-  const Username = IDL.Text;
+  const Username__1 = IDL.Text;
   const UserProfile = IDL.Record({
-    updated_at: Time,
-    username: IDL.Opt(Username),
+    updatedAt: Time,
+    username: Username__1,
     created_at: Time,
   });
-  const Result = IDL.Variant({
-    ok: UserProfile,
-    err: IDL.Variant({ notAuthorized: IDL.Null }),
-  });
+  const Username = IDL.Text;
   const ProfileInput = IDL.Record({ username: Username });
   const User = IDL.Service({
-    getPersonalWorkspace: IDL.Func([], [IDL.Opt(WorkspaceId)], ['query']),
-    profile: IDL.Func([], [Result], ['query']),
-    setPersonalWorkspace: IDL.Func([WorkspaceId], [], ['oneway']),
-    updateProfile: IDL.Func([ProfileInput], [Result], []),
-    wallet_balance: IDL.Func([], [IDL.Nat], []),
-    wallet_receive: IDL.Func([], [IDL.Record({ accepted: IDL.Nat64 })], []),
+    personalWorkspace: IDL.Func([], [Result], []),
+    profile: IDL.Func([], [UserProfile], ['query']),
+    updateProfile: IDL.Func([ProfileInput], [UserProfile], []),
+    walletReceive: IDL.Func([], [IDL.Record({ accepted: IDL.Nat64 })], []),
   });
   return User;
 };
 export const init = ({ IDL }) => {
-  return [IDL.Record({ principal: IDL.Principal, capacity: IDL.Nat })];
+  return [IDL.Record({ owner: IDL.Principal, capacity: IDL.Nat })];
 };

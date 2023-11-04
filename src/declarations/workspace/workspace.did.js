@@ -227,15 +227,14 @@ export const idlFactory = ({ IDL }) => {
         [CreatePageUpdateOutput],
         [],
       ),
+    'cyclesInformation' : IDL.Func(
+        [],
+        [IDL.Record({ 'balance' : IDL.Nat, 'capacity' : IDL.Nat })],
+        [],
+      ),
     'getInitArgs' : IDL.Func(
         [],
-        [
-          IDL.Record({
-            'ownerPrincipal' : IDL.Principal,
-            'workspaceIndexPrincipal' : IDL.Principal,
-            'capacity' : IDL.Nat,
-          }),
-        ],
+        [IDL.Record({ 'owner' : IDL.Principal, 'capacity' : IDL.Nat })],
         [],
       ),
     'getInitData' : IDL.Func(
@@ -279,6 +278,11 @@ export const idlFactory = ({ IDL }) => {
         [UpdateBlockUpdateOutput],
         [],
       ),
+    'walletReceive' : IDL.Func(
+        [],
+        [IDL.Record({ 'accepted' : IDL.Nat64 })],
+        [],
+      ),
   });
   return Workspace;
 };
@@ -288,11 +292,7 @@ export const init = ({ IDL }) => {
   const UUID = IDL.Vec(IDL.Nat8);
   const WorkspaceDescription = IDL.Text;
   return [
-    IDL.Record({
-      'ownerPrincipal' : IDL.Principal,
-      'workspaceIndexPrincipal' : IDL.Principal,
-      'capacity' : IDL.Nat,
-    }),
+    IDL.Record({ 'owner' : IDL.Principal, 'capacity' : IDL.Nat }),
     IDL.Record({
       'name' : WorkspaceName,
       'createdAt' : Time,

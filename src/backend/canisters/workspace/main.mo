@@ -7,6 +7,9 @@ import Nat "mo:base/Nat";
 import Principal "mo:base/Principal";
 import Time = "mo:base/Time";
 import Timer = "mo:base/Timer";
+import ExperimentalCycles "mo:base/ExperimentalCycles";
+import Nat64 "mo:base/Nat64";
+import Error "mo:base/Error";
 import UUID "mo:uuid/UUID";
 import Source "mo:uuid/async/SourceV4";
 
@@ -23,18 +26,9 @@ import State "./model/state";
 import CreatePage "./services/create_page";
 import Types "./types";
 
-actor class Workspace(
-    initArgs : {
-        capacity : Nat;
-        owner : Principal;
-    },
-    initData : {
-        uuid : UUID.UUID;
-        name : CoreTypes.Workspaces.WorkspaceName;
-        description : CoreTypes.Workspaces.WorkspaceDescription;
-        createdAt : Time.Time;
-        updatedAt : Time.Time;
-    },
+shared ({ caller = initializer }) actor class Workspace(
+    initArgs : CoreTypes.Workspaces.WorkspaceInitArgs,
+    initData : CoreTypes.Workspaces.WorkspaceInitData,
 ) {
     /*************************************************************************
      * Types
@@ -48,44 +42,30 @@ actor class Workspace(
      * Stable Data
      *************************************************************************/
 
-    stable var stable_blocks : RBTree.Tree<PrimaryKey, ShareableBlock> = #leaf;
-    stable var stable_blocks_id_counter = 0;
-
+    stable var blocks : RBTree.Tree<PrimaryKey, ShareableBlock> = #leaf;
+    stable var blocksIdCounter : Nat = 0;
     stable var owner : CoreTypes.Workspaces.WorkspaceOwner = initArgs.owner;
-
     stable var uuid : UUID.UUID = initData.uuid;
     stable var name : CoreTypes.Workspaces.WorkspaceName = initData.name;
     stable var description : CoreTypes.Workspaces.WorkspaceDescription = initData.name;
     stable var createdAt : Time.Time = initData.createdAt;
     stable var updatedAt : Time.Time = initData.updatedAt;
+    stable let workspaceIndexCanisterId = initializer;
+    stable let capacity : Nat = initArgs.capacity;
+    stable var balance : Nat = ExperimentalCycles.balance();
 
     /*************************************************************************
      * Transient Data
      *************************************************************************/
 
-    var state = State.State(State.Data({ blocks = { id = stable_blocks_id_counter; data = stable_blocks } }));
-
+    var data = State.Data({
+        blocks = {
+            id = blocksIdCounter;
+            data = blocks;
+        };
+    });
+    var state = State.State(data);
     let eventStream = LseqEvents.EventStream<BlocksTypes.BlockEvent>();
-
-    /*************************************************************************
-     * Initialization
-     *************************************************************************/
-    public func getInitArgs() : async {
-        capacity : Nat;
-        owner : Principal;
-    } {
-        return initArgs;
-    };
-
-    public func getInitData() : async {
-        uuid : UUID.UUID;
-        name : CoreTypes.Workspaces.WorkspaceName;
-        description : CoreTypes.Workspaces.WorkspaceDescription;
-        createdAt : Time.Time;
-        updatedAt : Time.Time;
-    } {
-        return initData;
-    };
 
     /*************************************************************************
      * Queries
@@ -131,10 +111,6 @@ actor class Workspace(
             order : ?CoreTypes.SortOrder;
         }
     ) : async CoreTypes.PaginatedResults<ShareableBlock> {
-        if (caller != owner) {
-            return { edges = [] };
-        };
-
         let { cursor; limit; order } = options;
         let pages = state.data.getPages(cursor, limit, order);
         let result = {
@@ -221,6 +197,7 @@ actor class Workspace(
                                             ?LseqTree.toShareableTree(title);
                                         };
                                     };
+                                    checked = block.properties.checked;
                                 };
                             };
                             index = event.data.index;
@@ -245,6 +222,28 @@ actor class Workspace(
         #ok();
     };
 
+    // Returns the cycles received up to the capacity allowed
+    public shared func walletReceive() : async { accepted : Nat64 } {
+        let amount = ExperimentalCycles.available();
+        let limit : Nat = capacity - ExperimentalCycles.balance();
+        let accepted = if (amount <= limit) amount else limit;
+        let deposit = ExperimentalCycles.accept(accepted);
+        assert (deposit == accepted);
+        balance += accepted;
+        return { accepted = Nat64.fromNat(0) };
+    };
+
+    // Return the current cycle balance
+    public shared func cyclesInformation() : async {
+        balance : Nat;
+        capacity : Nat;
+    } {
+        return {
+            balance = ExperimentalCycles.balance();
+            capacity = capacity;
+        };
+    };
+
     /*************************************************************************
      * Event Handling
      *************************************************************************/
@@ -267,6 +266,9 @@ actor class Workspace(
                     case (#updatePropertyTitle(event)) {
                         Debug.print("UUID: " # UUID.toText(event.uuid));
                     };
+                    case (#updatePropertyChecked(event)) {
+                        Debug.print("UUID: " # UUID.toText(event.uuid));
+                    };
                 };
             };
             case (#blockRemoved(event)) {
@@ -276,7 +278,7 @@ actor class Workspace(
         };
     };
 
-    func processEvents() : async () {
+    func startListeningForEvents() : async () {
         eventStream.addEventListener(
             "test",
             func(event) {
@@ -296,6 +298,7 @@ actor class Workspace(
                         let uuid = switch (event) {
                             case (#updateBlockType(event)) { event.uuid };
                             case (#updatePropertyTitle(event)) { event.uuid };
+                            case (#updatePropertyChecked(event)) { event.uuid };
                         };
 
                         switch (res) {
@@ -325,10 +328,17 @@ actor class Workspace(
         );
     };
 
-    let timer = Timer.setTimer(
-        #nanoseconds(0),
-        processEvents,
-    );
+    /*************************************************************************
+     * Timers
+     *************************************************************************/
+    private func startTimers() {
+        ignore Timer.setTimer(
+            #nanoseconds(0),
+            startListeningForEvents,
+        );
+    };
+
+    startTimers();
 
     /*************************************************************************
      * System Functions
@@ -341,20 +351,22 @@ actor class Workspace(
             transformedData.put(block.0, BlocksModels.Block.toShareable(block.1));
         };
 
-        stable_blocks := transformedData.share();
-        stable_blocks_id_counter := state.data.Block.id_manager.current();
+        blocks := transformedData.share();
+        blocksIdCounter := state.data.Block.id_manager.current();
     };
 
     system func postupgrade() {
-        // let refreshData = RBTree.RBTree<Nat, Types.ShareableBlock>(Nat.compare);
-        // refreshData.unshare(stable_blocks);
+        let refreshData = RBTree.RBTree<Nat, BlocksTypes.ShareableBlock>(Nat.compare);
+        refreshData.unshare(blocks);
 
-        // for (entry in refreshData.entries()) {
-        //     state.data.Block.objects.data.put(entry.0, Block.fromShareable(entry.1));
-        // };
+        for (entry in refreshData.entries()) {
+            state.data.Block.objects.data.put(entry.0, BlocksModels.Block.fromShareable(entry.1));
+        };
 
-        stable_blocks := #leaf;
-        stable_blocks_id_counter := 0;
+        blocks := #leaf;
+        blocksIdCounter := 0;
 
+        // Restart timers
+        startTimers();
     };
 };

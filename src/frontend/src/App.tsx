@@ -30,13 +30,18 @@ function PageWrapper({ children }: PropsWithChildren) {
   useEffect(() => {
     const timeout = setTimeout(() => {
       if (identity instanceof DelegationIdentity && !canisterId.isAnonymous()) {
-        userActor.getPersonalWorkspace().then((res) => {
-          if (res.length === 0) {
-            throw new Error('No default workspace found');
-          }
-
-          setWorkspaceId(res[0]);
-        });
+        userActor
+          .personalWorkspace()
+          .then((result) => {
+            console.log(result);
+            if (!('ok' in result)) {
+              throw new Error('No default workspace found');
+            }
+            setWorkspaceId(result.ok);
+          })
+          .catch((err) => {
+            console.log(err);
+          });
       }
     }, 0);
 

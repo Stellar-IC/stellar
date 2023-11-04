@@ -8,6 +8,11 @@
       "source": ["src/frontend/dist"],
       "type": "assets"
     },
+    "cycles_dispenser": {
+      "dependencies": ["user_index", "workspace_index"],
+      "main": "src/backend/canisters/cycles_dispenser/main.mo",
+      "type": "motoko"
+    },
     "workspace_index": {
       "main": "src/backend/canisters/workspace_index/main.mo",
       "type": "motoko"

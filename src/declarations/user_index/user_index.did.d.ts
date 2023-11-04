@@ -3,13 +3,17 @@ import type { ActorMethod } from '@dfinity/agent';
 
 export type RegisterUserError = { 'userNotFound' : null } |
   { 'anonymousUser' : null } |
-  { 'failedToCreateWorkspace' : null } |
   { 'insufficientCycles' : null } |
   { 'missingUserCanister' : null };
 export type RegisterUserResult = { 'ok' : Principal } |
   { 'err' : RegisterUserError };
 export interface _SERVICE {
+  'cyclesInformation' : ActorMethod<
+    [],
+    { 'balance' : bigint, 'capacity' : bigint }
+  >,
   'registerUser' : ActorMethod<[], RegisterUserResult>,
+  'requestCycles' : ActorMethod<[bigint], { 'accepted' : bigint }>,
   'upgradeUserCanisters' : ActorMethod<[], undefined>,
-  'walletBalance' : ActorMethod<[], bigint>,
+  'walletReceive' : ActorMethod<[], { 'accepted' : bigint }>,
 }

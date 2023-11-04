@@ -38,5 +38,17 @@ module {
             updatedAt : Time.Time;
         };
 
+        public type WorkspaceInitArgs = {
+            capacity : Nat;
+            owner : Principal;
+        };
+
+        public type WorkspaceInitData = {
+            uuid : UUID.UUID;
+            name : WorkspaceName;
+            description : WorkspaceDescription;
+            createdAt : Time.Time;
+            updatedAt : Time.Time;
+        };
     };
 };

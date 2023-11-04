@@ -33,7 +33,7 @@ export const AuthContextProvider = ({ children }: PropsWithChildren) => {
 
   const serializedProfile: SerializedUserProfile = {
     ...profile,
-    username: profile.username[0] || '',
+    username: profile.username || '',
   };
 
   return (

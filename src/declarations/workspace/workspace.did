@@ -15,12 +15,14 @@ type Workspace =
    addBlock: (AddBlockUpdateInput) -> (AddBlockUpdateOutput);
    blockByUuid: (UUID) -> (Result_1) query;
    createPage: (CreatePageUpdateInput) -> (CreatePageUpdateOutput);
-   getInitArgs: () ->
-    (record {
-       capacity: nat;
-       ownerPrincipal: principal;
-       workspaceIndexPrincipal: principal;
-     });
+   cyclesInformation: () -> (record {
+                               balance: nat;
+                               capacity: nat;
+                             });
+   getInitArgs: () -> (record {
+                         capacity: nat;
+                         owner: principal;
+                       });
    getInitData: () ->
     (record {
        createdAt: Time;
@@ -41,6 +43,7 @@ type Workspace =
     (SaveEventTransactionUpdateOutput);
    toObject: () -> (Workspace__1) query;
    updateBlock: (UpdateBlockUpdateInput) -> (UpdateBlockUpdateOutput);
+   walletReceive: () -> (record {accepted: nat64;});
  };
 type UpdateBlockUpdateOutputResult = 
  record {
@@ -295,8 +298,7 @@ type AddBlockUpdateInput =
  };
 service : (record {
              capacity: nat;
-             ownerPrincipal: principal;
-             workspaceIndexPrincipal: principal;
+             owner: principal;
            }, record {
                 createdAt: Time;
                 description: WorkspaceDescription;

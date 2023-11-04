@@ -25,13 +25,13 @@ module TestCreateUser {
                     "should fail when given user is anonymous ",
                     func() : async Test.TestResult {
                         let state = State.State(State.Data(mock_stable_data));
-                        let user_canister_principal = await CreateUser.createUser(
+                        let userPrincipal = await CreateUser.createUser(
                             state,
                             Principal.fromText("2vxsx-fae"),
                             caller,
                         );
 
-                        switch (user_canister_principal) {
+                        switch (userPrincipal) {
                             case (#err(#anonymousUser)) {
                                 return #ok;
                             };
@@ -50,13 +50,13 @@ module TestCreateUser {
                     func() : async Test.TestResult {
                         let state = State.State(State.Data(mock_stable_data));
                         let mockCanisterId = "okk5z-p6mlp-svktn-fn5oe-brauj-i3mno-3oiy6-gaeh6-i6gga-6p7v5-hae";
-                        let user_canister_principal = await CreateUser.createUser(
+                        let userPrincipal = await CreateUser.createUser(
                             state,
                             Principal.fromText(mockCanisterId),
                             caller,
                         );
 
-                        switch (user_canister_principal) {
+                        switch (userPrincipal) {
                             case (#err(#anonymousUser)) {
                                 return #err(#failedTest(?"Should not fail with anonymous user"));
                             };

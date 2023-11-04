@@ -11,9 +11,11 @@ import { TodoListBlock } from './TodoListBlock';
 export const BlockRenderer = ({
   externalId,
   index,
+  placeholder,
 }: {
   externalId: string;
   index: number;
+  placeholder?: string;
 }) => {
   const {
     addBlock,
@@ -56,6 +58,7 @@ export const BlockRenderer = ({
           value={block.properties.title}
           blockExternalId={block.uuid}
           blockType={block.blockType}
+          placeholder={placeholder}
           onEnterPressed={() => {
             addBlock(parse(parentExternalId), { paragraph: null }, index + 1);
             setTimeout(() => {
@@ -122,6 +125,7 @@ export const Blocks = ({ page }: { page: Page }) => {
           onRemove={(cursorPosition) =>
             removeCharacter(page.uuid, cursorPosition)
           }
+          placeholder="Untitled"
         />
       </div>
 
@@ -129,7 +133,12 @@ export const Blocks = ({ page }: { page: Page }) => {
 
       <div>
         {page.content?.map((blockUuid, index) => (
-          <BlockRenderer key={blockUuid} index={index} externalId={blockUuid} />
+          <BlockRenderer
+            key={blockUuid}
+            index={index}
+            externalId={blockUuid}
+            placeholder={index === 0 ? 'Start typing here' : undefined}
+          />
         ))}
       </div>
     </Stack>

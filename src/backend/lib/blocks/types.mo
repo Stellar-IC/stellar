@@ -11,7 +11,7 @@ module {
     public type BlockContent = [UUID.UUID];
     public type BlockProperties = {
         title : ?BlockText;
-        checked : ?Bool;
+        var checked : ?Bool;
     };
     public type ShareableBlockProperties = {
         title : ?ShareableBlockText;
@@ -77,23 +77,56 @@ module {
         user : Principal;
     };
 
+    // public type BlockProperyUpdatedEvent = {
+    //     #title : {
+    //         uuid : UUID.UUID;
+    //         data : {
+    //             blockExternalId : UUID.UUID;
+    //             event : LseqTypes.TreeEvent;
+    //         };
+    //         user : Principal;
+    //     };
+    //     #checked : {
+    //         uuid : UUID.UUID;
+    //         data : {
+    //             blockExternalId : UUID.UUID;
+    //             checked : Bool;
+    //         };
+    //         user : Principal;
+    //     };
+    // };
+
+    public type BlockProperyCheckedUpdatedEvent = {
+        uuid : UUID.UUID;
+        data : {
+            blockExternalId : UUID.UUID;
+            checked : Bool;
+        };
+        user : Principal;
+    };
+
+    public type BlockProperyTitleUpdatedEvent = {
+        uuid : UUID.UUID;
+        data : {
+            blockExternalId : UUID.UUID;
+            event : LseqTypes.TreeEvent;
+        };
+        user : Principal;
+    };
+
+    public type BlockTypeUpdatedEvent = {
+        uuid : UUID.UUID;
+        data : {
+            blockExternalId : UUID.UUID;
+            blockType : BlockType;
+        };
+        user : Principal;
+    };
+
     public type BlockUpdatedEvent = {
-        #updatePropertyTitle : {
-            uuid : UUID.UUID;
-            data : {
-                blockExternalId : UUID.UUID;
-                event : LseqTypes.TreeEvent;
-            };
-            user : Principal;
-        };
-        #updateBlockType : {
-            uuid : UUID.UUID;
-            data : {
-                blockExternalId : UUID.UUID;
-                blockType : BlockType;
-            };
-            user : Principal;
-        };
+        #updatePropertyChecked : BlockProperyCheckedUpdatedEvent;
+        #updatePropertyTitle : BlockProperyTitleUpdatedEvent;
+        #updateBlockType : BlockTypeUpdatedEvent;
     };
 
     public type BlockEvent = {

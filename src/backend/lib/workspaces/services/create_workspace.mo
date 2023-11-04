@@ -2,18 +2,22 @@ import Cycles "mo:base/ExperimentalCycles";
 import Principal "mo:base/Principal";
 import Result "mo:base/Result";
 import Time "mo:base/Time";
+import Debug "mo:base/Debug";
 import Source "mo:uuid/async/SourceV4";
 
 import Workspace "../../../canisters/workspace/main";
+import Constants "../../../constants";
+
+import Types "../types";
 
 module CreateWorkspace {
-    let CYCLES_REQUIRED_FOR_UPGRADE = 80_000_000_000; // 0.08T cycles
-    let TOP_UP_AMOUNT = 100_000_000_000; // 0.1T cycles
+    type Input = Types.Services.CreateWorkspace.CreateWorkspaceInput;
+    type Result = Types.Services.CreateWorkspace.CreateWorkspaceResult;
 
-    public func execute({ owner : Principal }) : async Result.Result<Workspace.Workspace, { #anonymousUser; #insufficientCycles }> {
-        let INITIAL_CYCLES_BALANCE = CYCLES_REQUIRED_FOR_UPGRADE + TOP_UP_AMOUNT; // 0.18T cycles
+    public func execute({ owner } : Input) : async Result {
+        let initialWorkspaceCycles = Constants.WORKSPACE__INITIAL_CYCLES_BALANCE;
 
-        if (Cycles.balance() < INITIAL_CYCLES_BALANCE) {
+        if (Cycles.balance() < initialWorkspaceCycles) {
             return #err(#insufficientCycles);
         };
 
@@ -21,29 +25,32 @@ module CreateWorkspace {
             return #err(#anonymousUser);
         };
 
-        let workspaceCanisterInitSettings = ?{
-            controllers = ?[owner];
-            compute_allocation = ?5;
-            memory_allocation = ?5_000_000; // minimum amount needed is 2_360_338
-            freezing_threshold = ?1_000;
-        };
-        let workspaceCanisterInitArgs = {
-            capacity = 100_000_000_000_000;
+        let workspaceInitArgs = {
+            capacity = Constants.WORKSPACE__CAPACITY;
             owner = owner;
         };
-        let workspaceCanisterInitData = {
+        let now = Time.now();
+        let workspaceInitData = {
             uuid = await Source.Source().new();
-            name = "Untitled";
+            name = "";
             description = "";
-            owner = owner;
-            createdAt = Time.now();
-            updatedAt = Time.now();
+            createdAt = now;
+            updatedAt = now;
         };
-        Cycles.add(INITIAL_CYCLES_BALANCE);
-        let workspaceCanister = await (system Workspace.Workspace)(
-            #new { settings = workspaceCanisterInitSettings }
-        )(workspaceCanisterInitArgs, workspaceCanisterInitData);
 
-        #ok(workspaceCanister);
+        Cycles.add(initialWorkspaceCycles);
+
+        let workspace = await (system Workspace.Workspace)(
+            #new {
+                settings = ?{
+                    controllers = ?[owner];
+                    compute_allocation = ?Constants.WORKSPACE__COMPUTE_ALLOCATION;
+                    memory_allocation = ?Constants.WORKSPACE__MEMORY_ALLOCATION;
+                    freezing_threshold = ?Constants.WORKSPACE__FREEZING_THRESHOLD;
+                };
+            }
+        )(workspaceInitArgs, workspaceInitData);
+
+        #ok(workspace);
     };
 };

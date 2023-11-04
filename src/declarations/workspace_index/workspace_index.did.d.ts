@@ -5,11 +5,10 @@ export interface Edge { 'node' : Workspace }
 export interface PaginatedResults { 'edges' : Array<Edge> }
 export type Result = { 'ok' : Principal } |
   {
-    'err' : { 'anonymousWorkspaceIndex' : null } |
+    'err' : { 'anonymousUser' : null } |
       { 'anonymousCaller' : null } |
       { 'insufficientCycles' : null } |
-      { 'unauthorizedCaller' : null } |
-      { 'anonymousOwner' : null }
+      { 'unauthorizedCaller' : null }
   };
 export type Time = bigint;
 export type UUID = Uint8Array | number[];
@@ -26,8 +25,13 @@ export type WorkspaceName = string;
 export type WorkspaceOwner = Principal;
 export interface _SERVICE {
   'createWorkspace' : ActorMethod<[{ 'owner' : Principal }], Result>,
+  'cyclesInformation' : ActorMethod<
+    [],
+    { 'balance' : bigint, 'capacity' : bigint }
+  >,
+  'requestCycles' : ActorMethod<[bigint], { 'accepted' : bigint }>,
   'upgradeWorkspaceCanister' : ActorMethod<[Principal], undefined>,
-  'walletBalance' : ActorMethod<[], bigint>,
+  'walletReceive' : ActorMethod<[], { 'accepted' : bigint }>,
   'workspaceByUuid' : ActorMethod<[UUID], Workspace>,
   'workspaces' : ActorMethod<[{}], PaginatedResults>,
 }

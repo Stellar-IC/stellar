@@ -186,14 +186,11 @@ export interface Workspace {
   'addBlock' : ActorMethod<[AddBlockUpdateInput], AddBlockUpdateOutput>,
   'blockByUuid' : ActorMethod<[UUID], Result_1>,
   'createPage' : ActorMethod<[CreatePageUpdateInput], CreatePageUpdateOutput>,
-  'getInitArgs' : ActorMethod<
+  'cyclesInformation' : ActorMethod<
     [],
-    {
-      'ownerPrincipal' : Principal,
-      'workspaceIndexPrincipal' : Principal,
-      'capacity' : bigint,
-    }
+    { 'balance' : bigint, 'capacity' : bigint }
   >,
+  'getInitArgs' : ActorMethod<[], { 'owner' : Principal, 'capacity' : bigint }>,
   'getInitData' : ActorMethod<
     [],
     {
@@ -228,6 +225,7 @@ export interface Workspace {
     [UpdateBlockUpdateInput],
     UpdateBlockUpdateOutput
   >,
+  'walletReceive' : ActorMethod<[], { 'accepted' : bigint }>,
 }
 export type WorkspaceDescription = string;
 export type WorkspaceName = string;

@@ -1,6 +1,7 @@
 import Nat "mo:base/Nat";
 import Result "mo:base/Result";
 import Text "mo:base/Text";
+import Time "mo:base/Time";
 import UUID "mo:uuid/UUID";
 
 import BlocksTypes "../../lib/blocks/types";

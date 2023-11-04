@@ -5,6 +5,7 @@ import { parse } from 'uuid';
 import { usePagesContext } from '@/contexts/blocks/usePagesContext';
 import { Tree } from '@/modules/lseq';
 import { ExternalId } from '@/types';
+import { useDisclosure } from '@mantine/hooks';
 
 type TextBlockProps = {
   blockExternalId: ExternalId;
@@ -21,6 +22,7 @@ type TextBlockProps = {
     | { quote: null }
     | { callout: null };
   pageExternalId?: ExternalId;
+  placeholder?: string;
   value: Tree.Tree;
   onEnterPressed?: () => void;
   onInsert: (cursorPosition: number, character: string) => void;
@@ -31,6 +33,7 @@ export const TextBlock = ({
   blockType,
   blockExternalId,
   pageExternalId,
+  placeholder,
   value,
   onEnterPressed,
   onInsert,
@@ -38,6 +41,10 @@ export const TextBlock = ({
 }: TextBlockProps) => {
   const { removeBlock } = usePagesContext();
   const [initialText] = useState(Tree.toText(value));
+  const [
+    isShowingPlaceholder,
+    { close: hidePlaceholder, open: showPlaceholder },
+  ] = useDisclosure(!initialText);
 
   // A transaction is a change to a block. It is a list of operations that
   // are applied to the block. For example, if you change the text of a
@@ -90,6 +97,27 @@ export const TextBlock = ({
     textBoxRef.current.innerText = initialText;
   }, [initialText, textBoxRef]);
 
+  // useEffect(() => {
+  //   const interval = setInterval(() => {
+  //     if (!textBoxRef.current) return;
+  //     if (textBoxRef.current.innerText !== '' && isShowingPlaceholder) {
+  //       hidePlaceholder();
+  //     } else if (textBoxRef.current.innerText === '' && !isShowingPlaceholder) {
+  //       showPlaceholder();
+  //     }
+  //   }, 0);
+
+  //   return () => {
+  //     clearInterval(interval);
+  //   };
+  // }, [
+  //   initialText,
+  //   textBoxRef,
+  //   isShowingPlaceholder,
+  //   hidePlaceholder,
+  //   showPlaceholder,
+  // ]);
+
   return (
     <Box
       className="TextBlock"
@@ -97,6 +125,18 @@ export const TextBlock = ({
       w="100%"
       style={{ border: '1px solid #fff', ...textStyles }}
     >
+      {placeholder && isShowingPlaceholder && (
+        <Box
+          pos="absolute"
+          top={0}
+          left={0}
+          w="100%"
+          h="100%"
+          style={{ pointerEvents: 'none', color: '#999', zIndex: 1 }}
+        >
+          {placeholder}
+        </Box>
+      )}
       <span
         tabIndex={0}
         ref={textBoxRef}
@@ -112,18 +152,35 @@ export const TextBlock = ({
             return false;
           }
           if (e.key === 'Backspace') {
+            // If the block is empty, remove it
             if (pageExternalId && e.currentTarget.innerText === '') {
               removeBlock(parse(pageExternalId), parse(blockExternalId));
               return false;
             }
-            const cursorPosition = window.getSelection()?.anchorOffset;
 
+            // Handle backspace
+            const cursorPosition = window.getSelection()?.anchorOffset;
             if (cursorPosition) onRemove(cursorPosition);
+
+            // If the block will be empty, show the placeholder
+            if (
+              e.currentTarget.innerText.length === 1 &&
+              cursorPosition === 1
+            ) {
+              showPlaceholder();
+            }
           } else if (e.key.match(/^[\w\W]$/g)) {
             const cursorPosition = window.getSelection()?.anchorOffset;
 
             if (cursorPosition === undefined) {
               throw new Error('No cursor position');
+            }
+
+            if (
+              cursorPosition === 0 &&
+              e.currentTarget.innerText.length === 0
+            ) {
+              hidePlaceholder();
             }
 
             onInsert(cursorPosition, e.key);

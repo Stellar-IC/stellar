@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { DelegationIdentity } from '@dfinity/identity';
 import { Principal } from '@dfinity/principal';
 import { AnonymousIdentity, Identity } from '@dfinity/agent';
@@ -9,9 +9,9 @@ import { getUserProfile, registerUser } from './utils';
 import { UserProfile } from '../../../../../declarations/user/user.did';
 
 class AnonymousUserProfile implements UserProfile {
-  username: ['Anonymous'] = ['Anonymous'];
+  username = 'Anonymous';
   created_at = 1000000000000000000n;
-  updated_at = 1000000000000000000n;
+  updatedAt = 1000000000000000000n;
 }
 
 export const useAuthState = () => {

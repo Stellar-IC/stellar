@@ -1,0 +1,9 @@
+type RegisterableCanister = 
+ service {
+   walletReceive: () -> (record {accepted: nat64;});
+ };
+service : {
+  register: (RegisterableCanister) -> () oneway;
+  registerSelf: () -> () oneway;
+  requestCycles: (nat) -> (record {accepted: nat64;});
+}

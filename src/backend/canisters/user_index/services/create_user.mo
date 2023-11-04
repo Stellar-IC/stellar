@@ -6,71 +6,73 @@ import Option "mo:base/Option";
 import Principal "mo:base/Principal";
 import Result "mo:base/Result";
 
+import Constants "../../../constants";
+
 import User "../../user/main";
 
 import State "../model/state";
 
 module CreateUser {
-    let CYCLES_REQUIRED_FOR_UPGRADE = 80_000_000_000; // 0.08T cycles
-    let USER_CANISTER_TOP_UP_AMOUNT = 100_000_000_000; // 0.1T cycles
+    let intialUserCycles = Constants.USER__INITIAL_CYCLES_BALANCE;
+    let userCapacity = Constants.USER__CAPACITY;
 
     public func execute(
         state : State.State,
-        user_principal : Principal,
-        user_index_principal : Principal,
+        owner : Principal,
+        userIndexPrincipal : Principal,
     ) : async Result.Result<{ #created : (Principal, User.User); #existing : (Principal, User.User) }, { #anonymousUser; #insufficientCycles; #missingUserCanister }> {
-        let USER_CANISTER_INITIAL_CYCLES_BALANCE = CYCLES_REQUIRED_FOR_UPGRADE + USER_CANISTER_TOP_UP_AMOUNT; // 0.18T cycles
         var balance = Cycles.balance();
 
-        if (balance < USER_CANISTER_INITIAL_CYCLES_BALANCE) {
+        if (balance < intialUserCycles) {
             return #err(#insufficientCycles);
         };
 
-        if (Principal.isAnonymous(user_principal)) {
+        if (Principal.isAnonymous(owner)) {
             return #err(#anonymousUser);
         };
 
-        switch (state.data.getUserIdByPrincipal(user_principal)) {
+        switch (state.data.getUserIdByPrincipal(owner)) {
             case null {};
             case (?userId) {
-                let user_canister = state.data.getUserByUserId(userId);
+                let user = state.data.getUserByUserId(userId);
 
-                switch (user_canister) {
+                switch (user) {
                     case null {
                         return #err(#missingUserCanister);
                     };
-                    case (?user_canister) {
-                        Debug.print("[create_user] Exising user canister found");
-                        return #ok(#existing(userId, user_canister));
+                    case (?user) {
+                        return #ok(#existing(userId, user));
                     };
                 };
             };
         };
 
-        let user_canister_init_settings = ?{
-            controllers = ?[user_principal, user_index_principal];
-            compute_allocation = ?5;
-            memory_allocation = ?5_000_000; // minimum amount needed is 2_360_338
-            freezing_threshold = ?1_000;
-        };
-        let user_canister_init_args = {
-            capacity = 100_000_000_000_000;
-            owner = user_principal;
+        let userInitArgs = {
+            capacity = userCapacity;
+            owner = owner;
         };
 
-        Cycles.add(USER_CANISTER_INITIAL_CYCLES_BALANCE);
+        Cycles.add(intialUserCycles);
 
-        let user_canister = await (system User.User)(
-            #new { settings = user_canister_init_settings }
-        )(user_canister_init_args);
-        let user_canister_principal = Principal.fromActor(user_canister);
+        let user = await (system User.User)(
+            #new {
+                settings = ?{
+                    controllers = ?[owner, userIndexPrincipal];
+                    compute_allocation = ?Constants.USER__COMPUTE_ALLOCATION;
+                    memory_allocation = ?Constants.USER__MEMORY_ALLOCATION;
+                    freezing_threshold = ?Constants.USER__FREEZING_THRESHOLD;
+                };
+            }
+        )(userInitArgs);
+
+        let userPrincipal = Principal.fromActor(user);
 
         await state.data.addUser({
-            user = user_canister;
-            user_id = user_canister_principal;
-            principal = user_principal;
+            user = user;
+            user_id = userPrincipal;
+            principal = owner;
         });
 
-        #ok(#created(user_canister_principal, user_canister));
+        #ok(#created(userPrincipal, user));
     };
 };

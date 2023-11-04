@@ -14,7 +14,7 @@ import User "../main";
 actor TestProfile {
     private var _user : ?User.User = null;
 
-    private func getCanister() : async (User.User) {
+    private func getCanister() : async User.User {
         switch (_user) {
             case (null) {
                 let user = await User.User({

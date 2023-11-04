@@ -80,7 +80,8 @@ module Models {
                 };
             };
             let properties : Types.BlockProperties = {
-                input.properties with title = ?title;
+                title = ?title;
+                var checked = input.properties.checked;
             };
 
             return {
@@ -98,7 +99,8 @@ module Models {
                 };
             };
             let properties : Types.BlockProperties = {
-                input.properties with title = ?title;
+                title = ?title;
+                var checked = input.properties.checked;
             };
 
             return {
@@ -118,7 +120,8 @@ module Models {
                 };
             };
             let shareableProperties : Types.ShareableBlockProperties = {
-                input.properties with title = ?shareableTitle;
+                title = ?shareableTitle;
+                checked = input.properties.checked;
             };
 
             return {

@@ -29,7 +29,7 @@ module BlockCreatedConsumer {
                 parent = event.data.block.parent;
                 properties = {
                     title = ?Tree.Tree(null);
-                    checked = ?false;
+                    var checked = ?false;
                 };
             },
         );

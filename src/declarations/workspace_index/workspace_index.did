@@ -17,8 +17,7 @@ type Result =
    err:
     variant {
       anonymousCaller;
-      anonymousOwner;
-      anonymousWorkspaceIndex;
+      anonymousUser;
       insufficientCycles;
       unauthorizedCaller;
     };
@@ -28,8 +27,13 @@ type PaginatedResults = record {edges: vec Edge;};
 type Edge = record {node: Workspace;};
 service : {
   createWorkspace: (record {owner: principal;}) -> (Result);
+  cyclesInformation: () -> (record {
+                              balance: nat;
+                              capacity: nat;
+                            });
+  requestCycles: (nat) -> (record {accepted: nat64;});
   upgradeWorkspaceCanister: (principal) -> () oneway;
-  walletBalance: () -> (nat);
+  walletReceive: () -> (record {accepted: nat64;});
   workspaceByUuid: (UUID) -> (Workspace);
   workspaces: (record {}) -> (PaginatedResults);
 }

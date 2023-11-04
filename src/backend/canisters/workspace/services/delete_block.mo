@@ -10,10 +10,10 @@ module {
 
     public func execute(
         state : State.State,
-        user_principal : Principal,
+        userPrincipal : Principal,
         input : Types.Services.DeleteBlockService.DeleteBlockServiceInput,
     ) : Types.Services.DeleteBlockService.DeleteBlockServiceOutput {
-        if (Principal.isAnonymous(user_principal)) {
+        if (Principal.isAnonymous(userPrincipal)) {
             return #err(#anonymousUser);
         };
         // TODO: check if user is allowed to delete block

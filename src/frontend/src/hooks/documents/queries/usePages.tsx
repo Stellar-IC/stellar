@@ -100,6 +100,7 @@ export const usePages = (props: {
         limit: [],
       })
       .then((res) => {
+        console.log(res);
         res.edges.forEach((edge) => {
           updateLocalPage(stringify(edge.node.uuid), fromShareable(edge.node));
         });

@@ -29,7 +29,7 @@ export function nodefromShareable(shareable: ShareableNode): Node.Node {
   node.base = shareable.base;
   node.deletedAt =
     shareable.deletedAt.length > 0
-      ? new Date(Number(shareable.deletedAt[0]) / 1000)
+      ? new Date(Number(shareable.deletedAt[0]) / 1000000)
       : null;
 
   return node;

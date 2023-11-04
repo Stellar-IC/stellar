@@ -6,13 +6,17 @@ type RegisterUserResult =
 type RegisterUserError = 
  variant {
    anonymousUser;
-   failedToCreateWorkspace;
    insufficientCycles;
    missingUserCanister;
    userNotFound;
  };
 service : {
+  cyclesInformation: () -> (record {
+                              balance: nat;
+                              capacity: nat;
+                            });
   registerUser: () -> (RegisterUserResult);
+  requestCycles: (nat) -> (record {accepted: nat64;});
   upgradeUserCanisters: () -> () oneway;
-  walletBalance: () -> (nat);
+  walletReceive: () -> (record {accepted: nat64;});
 }

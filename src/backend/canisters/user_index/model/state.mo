@@ -39,7 +39,7 @@ module {
             }
         ) : async () {
             var principal = args.principal;
-            var user_canister = args.user;
+            var user = args.user;
             var user_id = args.user_id;
             var existing_user_id : ?Types.UserId = getUserIdByPrincipal(principal);
 
@@ -51,7 +51,7 @@ module {
             };
             principal_to_user_id.put((principal, user_id));
             user_id_to_principal.put((user_id, principal));
-            user_id_to_user_canister.put((user_id, user_canister));
+            user_id_to_user_canister.put((user_id, user));
 
             return;
         };

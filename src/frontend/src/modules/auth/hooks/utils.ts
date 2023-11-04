@@ -56,11 +56,7 @@ export const getUserProfile = async (args: {
   });
   const result = await userActor.profile();
 
-  if (!('ok' in result)) {
-    throw new Error("There was an error getting user's profile");
-  }
+  logger.info('Retrieved profile for user:', result.username[0]);
 
-  logger.info('Retrieved profile for user:', result.ok.username[0]);
-
-  return result.ok;
+  return result;
 };

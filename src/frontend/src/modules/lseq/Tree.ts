@@ -74,8 +74,9 @@ export class Tree {
       const currentNodeBase = currentNode.base;
       const currentNodeBaseMinusOne = currentNodeBase - 1;
 
-      if (identifierPart > currentNodeBaseMinusOne || identifierLength < 1)
+      if (identifierPart > currentNodeBaseMinusOne || identifierLength < 1) {
         throw new Error('Invalid Identifier');
+      }
 
       if (i == identifierLength - 1) {
         if (childNode) {
@@ -218,7 +219,7 @@ function getAvailableIdentifierBetween(
   identifierB: Identifier.Identifier
 ) {
   let newIdentifier = getIdentifierBetween(tree, identifierA, identifierB);
-  const maxLoopCount = 20;
+  const maxLoopCount = 100;
   let loopCounter = 0;
 
   while (checkNodeAvailable(tree, newIdentifier) === false) {
@@ -363,8 +364,9 @@ export function buildNodeForMiddleInsert(
   }
 
   const nodeAfterCursor = getNodeAtPosition(tree, position);
-  if (!nodeAfterCursor)
+  if (!nodeAfterCursor) {
     throw new Error('There was an error finding the node after the cursor');
+  }
 
   return new Node.Node(
     getAvailableIdentifierBetween(

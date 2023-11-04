@@ -1,24 +1,26 @@
+import Array "mo:base/Array";
 import Debug "mo:base/Debug";
 import List "mo:base/List";
 import Principal "mo:base/Principal";
 import Result "mo:base/Result";
 import UUID "mo:uuid/UUID";
 import Source "mo:uuid/async/SourceV4";
+
+import BlocksTypes "../../../lib/blocks/types";
+import Tree "../../../utils/data/lseq/Tree";
+
 import State "../model/state";
 import Types "../types";
-import Array "mo:base/Array";
-import Tree "../../../utils/data/lseq/Tree";
-import BlocksTypes "../../../lib/blocks/types";
 
 module {
     let MAX_CONTENT_SIZE = 2000;
 
     public func execute(
         state : State.State,
-        user_principal : Principal,
+        userPrincipal : Principal,
         input : Types.Services.CreatePageService.CreatePageServiceInput,
     ) : async Types.Services.CreatePageService.CreatePageServiceOutput {
-        if (Principal.isAnonymous(user_principal)) {
+        if (Principal.isAnonymous(userPrincipal)) {
             return #err(#anonymousUser);
         };
 
@@ -29,7 +31,7 @@ module {
             var content = [];
             properties = {
                 title = ?Tree.Tree(null);
-                checked = ?false;
+                var checked = ?false;
             };
             parent = ?input.uuid;
         };
@@ -49,7 +51,7 @@ module {
                         };
                     }
                 );
-                checked = input.properties.checked;
+                var checked = input.properties.checked;
             };
             parent = input.parent;
         };
@@ -77,6 +79,7 @@ module {
                 };
                 let shareableProperties : BlocksTypes.ShareableBlockProperties = {
                     block.properties with title = ?shareableTitle;
+                    checked = block.properties.checked;
                 };
 
                 return #ok({
