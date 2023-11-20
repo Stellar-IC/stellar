@@ -9,25 +9,29 @@ import UUID "mo:uuid/UUID";
 import BlocksTypes "../../../lib/blocks/types";
 
 import State "../model/state";
-import Types "../types";
 import UpdateBlock "../services/update_block";
+import Types "../types";
+import Tree "../../../utils/data/lseq/Tree";
 
 module BlockRemovedConsumer {
-    func _blockByUuid(state : State.State, uuid : UUID.UUID) : Result.Result<BlocksTypes.Block, { #blockNotFound }> {
+    type Block = BlocksTypes.Block_v2;
+    type BlockRemovedEvent = BlocksTypes.BlockRemovedEvent;
+
+    func _blockByUuid(state : State.State, uuid : UUID.UUID) : Result.Result<Block, { #blockNotFound }> {
         state.data.getBlockByUuid(uuid);
     };
 
-    public func execute(event : BlocksTypes.BlockRemovedEvent, state : State.State) : Result.Result<(), { #blockNotFound; #insufficientCycles; #inputTooLong; #invalidBlockType; #failedToRemove; #anonymousUser }> {
-        let parentBlock = _blockByUuid(state, event.data.parent);
+    public func execute(event : BlockRemovedEvent, state : State.State) : Result.Result<(), { #blockNotFound; #insufficientCycles; #inputTooLong; #invalidBlockType; #failedToRemove; #anonymousUser }> {
+        let parentBlock = _blockByUuid(state, event.data.block.parent);
 
         switch (parentBlock) {
             case (#err(#blockNotFound)) {
-                Debug.print("Failed to remove block. Block not found with uuid:" # UUID.toText(event.data.blockExternalId));
+                Debug.print("Failed to remove block. Block not found with uuid:" # UUID.toText(event.data.block.uuid));
                 return #err(#blockNotFound);
             };
             case (#ok(parentBlock)) {
-                let newContent = Array.filter<UUID.UUID>(parentBlock.content, func x = x != event.data.blockExternalId);
-                parentBlock.content := newContent;
+                let nodeToRemove = Tree.getNodeAtPosition(parentBlock.content, event.data.index);
+                parentBlock.content.delete(nodeToRemove.identifier);
                 return #ok();
             };
         };

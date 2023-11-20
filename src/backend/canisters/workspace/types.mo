@@ -7,9 +7,10 @@ import UUID "mo:uuid/UUID";
 import BlocksTypes "../../lib/blocks/types";
 
 module {
-    type Block = BlocksTypes.Block;
-    type UnsavedBlock = BlocksTypes.UnsavedBlock;
-    type ShareableBlock = BlocksTypes.ShareableBlock;
+    type Block = BlocksTypes.Block_v2;
+    type UnsavedBlock = BlocksTypes.UnsavedBlock_v2;
+    type ShareableBlock = BlocksTypes.ShareableBlock_v2;
+    type ShareableBlockContent = BlocksTypes.ShareableBlockContent;
     type ShareableBlockProperties = BlocksTypes.ShareableBlockProperties;
 
     public type PrimaryKey = Nat;
@@ -54,7 +55,7 @@ module {
         public module CreatePageService {
             public type CreatePageServiceInput = {
                 uuid : UUID.UUID;
-                content : [UUID.UUID];
+                content : ShareableBlockContent;
                 parent : ?UUID.UUID;
                 properties : ShareableBlockProperties;
             };
@@ -72,7 +73,7 @@ module {
 
     public module Queries {
         public module BlockByUuid {
-            public type BlockByUuidResult = Result.Result<BlocksTypes.ShareableBlock, { #blockNotFound }>;
+            public type BlockByUuidResult = Result.Result<ShareableBlock, { #blockNotFound }>;
         };
     };
 
@@ -81,7 +82,7 @@ module {
             public type AddBlockUpdateInput = {
                 uuid : UUID.UUID;
                 blockType : BlocksTypes.BlockType;
-                content : BlocksTypes.BlockContent;
+                content : BlocksTypes.ShareableBlockContent;
                 parent : ?UUID.UUID;
                 properties : BlocksTypes.ShareableBlockProperties;
             };
@@ -93,7 +94,7 @@ module {
         public module CreatePageUpdate {
             public type CreatePageUpdateInput = {
                 uuid : UUID.UUID;
-                content : BlocksTypes.BlockContent;
+                content : BlocksTypes.ShareableBlockContent;
                 parent : ?UUID.UUID;
                 properties : ShareableBlockProperties;
             };
@@ -104,16 +105,16 @@ module {
                 #invalidBlockType;
                 #insufficientCycles;
             };
-            public type CreatePageUpdateOutputResult = BlocksTypes.ShareableBlock;
+            public type CreatePageUpdateOutputResult = ShareableBlock;
             public type CreatePageUpdateOutput = Result.Result<CreatePageUpdateOutputResult, CreatePageUpdateOutputError>;
         };
 
         public module UpdateBlockUpdate {
-            public type UpdateBlockUpdateInput = BlocksTypes.ShareableBlock;
+            public type UpdateBlockUpdateInput = ShareableBlock;
             public type UpdateBlockUpdateOutputError = {
                 #primaryKeyAttrNotFound;
             };
-            public type UpdateBlockUpdateOutputResult = BlocksTypes.ShareableBlock;
+            public type UpdateBlockUpdateOutputResult = ShareableBlock;
             public type UpdateBlockUpdateOutput = Result.Result<UpdateBlockUpdateOutputResult, UpdateBlockUpdateOutputError>;
         };
 

@@ -13,8 +13,9 @@ export function useUpdate<ArgsT extends unknown[], DataT>(
 ] {
   const context = useQueryContext();
 
-  if (!context)
+  if (!context) {
     throw new Error('useUpdate must be used within a QueryContextProvider');
+  }
 
   const { send } = context;
   const [data, setData] = useState<DataT | null>(null);

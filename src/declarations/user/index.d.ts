@@ -10,7 +10,7 @@ import type { IDL } from '@dfinity/candid';
 import { _SERVICE } from './user.did';
 
 export declare const idlFactory: IDL.InterfaceFactory;
-export declare const canisterId: string;
+// export declare const canisterId: string;
 
 export declare interface CreateActorOptions {
   /**

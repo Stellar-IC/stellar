@@ -30,7 +30,7 @@ export function PageDetailPage() {
       <PageNavigation />
       <Container maw="container.sm">
         <PageSection>
-          <Stack mt="100" gap="xs" px="10rem">
+          <Stack mt="100" gap="xs" pl="10rem">
             <Blocks page={page} />
           </Stack>
         </PageSection>

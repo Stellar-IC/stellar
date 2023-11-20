@@ -1,11 +1,15 @@
 import { Box, Divider, Stack } from '@mantine/core';
 import { useEffect, useMemo } from 'react';
 import { parse } from 'uuid';
+
 import { usePagesContext } from '@/contexts/blocks/usePagesContext';
+import { useSuccessHandlers } from '@/hooks/documents/hooks/useSuccessHandlers';
+import { Tree } from '@/modules/lseq';
 import { Page } from '@/types';
+
 import { BlockWithActions } from './BlockWithActions';
-import { TextBlock } from './TextBlock';
 import { BulletedListBlock } from './BulletedListBlock';
+import { TextBlock } from './TextBlock';
 import { TodoListBlock } from './TodoListBlock';
 
 export const BlockRenderer = ({
@@ -19,18 +23,19 @@ export const BlockRenderer = ({
 }) => {
   const {
     addBlock,
-    blocks: { data, query },
-    insertCharacter,
-    removeCharacter,
+    blocks: { data, query, updateLocal: updateLocalBlock },
   } = usePagesContext();
-
   const block = useMemo(() => data[externalId], [data, externalId]);
+  const parentExternalId = block?.parent;
 
   useEffect(() => {
     query(parse(externalId));
   }, [query, externalId]);
 
-  const parentExternalId = block?.parent;
+  const { onInsertSuccess, onRemoveSuccess } = useSuccessHandlers({
+    block,
+    updateLocalBlock,
+  });
 
   if (!block) return <div />;
   if (!parentExternalId) return <div />;
@@ -56,7 +61,7 @@ export const BlockRenderer = ({
         <TextBlock
           pageExternalId={parentExternalId}
           value={block.properties.title}
-          blockExternalId={block.uuid}
+          blockIndex={index}
           blockType={block.blockType}
           placeholder={placeholder}
           onEnterPressed={() => {
@@ -72,10 +77,19 @@ export const BlockRenderer = ({
             }, 50);
           }}
           onInsert={(cursorPosition, character) =>
-            insertCharacter(block.uuid, cursorPosition, character)
+            Tree.insertCharacter(
+              block.properties.title,
+              cursorPosition,
+              character,
+              onInsertSuccess
+            )
           }
           onRemove={(cursorPosition) =>
-            removeCharacter(block.uuid, cursorPosition)
+            Tree.removeCharacter(
+              block.properties.title,
+              cursorPosition,
+              onRemoveSuccess
+            )
           }
         />
       </BlockWithActions>
@@ -98,15 +112,21 @@ export const BlockRenderer = ({
     );
   }
 
-  return <>Unknown Block Type</>;
+  return (
+    <BlockWithActions key={block.uuid} blockIndex={index} block={block}>
+      Unknown Block Type
+    </BlockWithActions>
+  );
 };
 
 export const Blocks = ({ page }: { page: Page }) => {
   const {
-    blocks: { query },
-    insertCharacter,
-    removeCharacter,
+    blocks: { query, updateLocal },
   } = usePagesContext();
+  const { onInsertSuccess, onRemoveSuccess } = useSuccessHandlers({
+    block: page,
+    updateLocalBlock: updateLocal,
+  });
 
   useEffect(() => {
     query(parse(page.uuid));
@@ -116,14 +136,23 @@ export const Blocks = ({ page }: { page: Page }) => {
     <Stack className="Blocks" w="100%" gap={0}>
       <div style={{ padding: '1rem 0' }}>
         <TextBlock
+          blockIndex={0}
           value={page.properties.title}
-          blockExternalId={page.uuid}
           blockType={{ heading1: null }}
           onInsert={(cursorPosition, character) =>
-            insertCharacter(page.uuid, cursorPosition, character)
+            Tree.insertCharacter(
+              page.properties.title,
+              cursorPosition,
+              character,
+              onInsertSuccess
+            )
           }
           onRemove={(cursorPosition) =>
-            removeCharacter(page.uuid, cursorPosition)
+            Tree.removeCharacter(
+              page.properties.title,
+              cursorPosition,
+              onRemoveSuccess
+            )
           }
           placeholder="Untitled"
         />
@@ -132,7 +161,7 @@ export const Blocks = ({ page }: { page: Page }) => {
       <Divider mb="xl" />
 
       <div>
-        {page.content?.map((blockUuid, index) => (
+        {Tree.toArray(page.content).map((blockUuid, index) => (
           <BlockRenderer
             key={blockUuid}
             index={index}

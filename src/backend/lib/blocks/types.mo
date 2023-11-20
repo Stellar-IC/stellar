@@ -7,8 +7,10 @@ module {
     public type PrimaryKey = Nat;
     public type BlockText = Tree.Tree;
     public type ShareableBlockText = LseqTypes.ShareableTree;
-    // public type BlockContent = Tree.Tree;
     public type BlockContent = [UUID.UUID];
+    public type BlockContent_v2 = Tree.Tree;
+    public type ShareableBlockContent = LseqTypes.ShareableTree;
+
     public type BlockProperties = {
         title : ?BlockText;
         var checked : ?Bool;
@@ -37,11 +39,21 @@ module {
     public type UnsavedBlock = {
         uuid : UUID.UUID;
         var blockType : BlockType;
-        var content : BlockContent;
+        content : BlockContent;
+        parent : ?UUID.UUID;
+        properties : BlockProperties;
+    };
+    public type UnsavedBlock_v2 = {
+        uuid : UUID.UUID;
+        var blockType : BlockType;
+        content : BlockContent_v2;
         parent : ?UUID.UUID;
         properties : BlockProperties;
     };
     public type Block = UnsavedBlock and {
+        id : PrimaryKey;
+    };
+    public type Block_v2 = UnsavedBlock_v2 and {
         id : PrimaryKey;
     };
     public type ShareableUnsavedBlock = {
@@ -51,7 +63,17 @@ module {
         parent : ?UUID.UUID;
         properties : ShareableBlockProperties;
     };
+    public type ShareableUnsavedBlock_v2 = {
+        uuid : UUID.UUID;
+        blockType : BlockType;
+        content : ShareableBlockContent;
+        parent : ?UUID.UUID;
+        properties : ShareableBlockProperties;
+    };
     public type ShareableBlock = ShareableUnsavedBlock and {
+        id : PrimaryKey;
+    };
+    public type ShareableBlock_v2 = ShareableUnsavedBlock_v2 and {
         id : PrimaryKey;
     };
 
@@ -71,30 +93,22 @@ module {
     public type BlockRemovedEvent = {
         uuid : UUID.UUID;
         data : {
-            blockExternalId : UUID.UUID;
-            parent : UUID.UUID;
+            index : Nat;
+            block : {
+                uuid : UUID.UUID;
+                parent : UUID.UUID;
+            };
         };
         user : Principal;
     };
 
-    // public type BlockProperyUpdatedEvent = {
-    //     #title : {
-    //         uuid : UUID.UUID;
-    //         data : {
-    //             blockExternalId : UUID.UUID;
-    //             event : LseqTypes.TreeEvent;
-    //         };
-    //         user : Principal;
-    //     };
-    //     #checked : {
-    //         uuid : UUID.UUID;
-    //         data : {
-    //             blockExternalId : UUID.UUID;
-    //             checked : Bool;
-    //         };
-    //         user : Principal;
-    //     };
-    // };
+    public type BlockContentUpdatedEvent = {
+        uuid : UUID.UUID;
+        data : {
+            transaction : [LseqTypes.TreeEvent];
+        };
+        user : Principal;
+    };
 
     public type BlockProperyCheckedUpdatedEvent = {
         uuid : UUID.UUID;
@@ -109,7 +123,7 @@ module {
         uuid : UUID.UUID;
         data : {
             blockExternalId : UUID.UUID;
-            event : LseqTypes.TreeEvent;
+            transaction : [LseqTypes.TreeEvent];
         };
         user : Principal;
     };
@@ -127,6 +141,7 @@ module {
         #updatePropertyChecked : BlockProperyCheckedUpdatedEvent;
         #updatePropertyTitle : BlockProperyTitleUpdatedEvent;
         #updateBlockType : BlockTypeUpdatedEvent;
+        #updateContent : BlockContentUpdatedEvent;
     };
 
     public type BlockEvent = {

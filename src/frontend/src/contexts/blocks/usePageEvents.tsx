@@ -1,7 +1,9 @@
 import { useCallback, useState } from 'react';
 import { serializeBlock } from '@/modules/domain/block/serializers';
 import { Block } from '@/types';
-import { BlockEvent } from '../../../../../declarations/workspace/workspace.did';
+import { DEFAULT_BOUNDARY } from '@/modules/lseq/constants';
+import { base } from '@/modules/lseq/utils';
+import { BlockEvent } from '../../../../declarations/workspace/workspace.did';
 
 type SerializedBlockEvent = {
   blockCreated: {
@@ -28,7 +30,17 @@ export const usePageEvents = () => {
                 ...event.blockCreated.data,
                 block: serializeBlock({
                   ...event.blockCreated.data.block,
-                  content: [],
+                  content: {
+                    allocationStrategies: [],
+                    boundary: DEFAULT_BOUNDARY,
+                    rootNode: {
+                      base: base(0),
+                      children: [],
+                      deletedAt: [],
+                      identifier: [],
+                      value: '',
+                    },
+                  },
                   properties: {
                     title: [],
                     checked: [],

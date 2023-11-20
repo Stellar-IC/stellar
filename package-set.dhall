@@ -13,8 +13,8 @@ let
         , dependencies = [ "base-0.7.3" ] : List Text
         },
         { name = "uuid"
-        , version = "v0.2.1"
-        , repo = "https://github.com/aviate-labs/uuid.mo"
+        , version = "v0.2.0"
+        , repo = "https://github.com/fury02/uuid.mo"
         , dependencies = [] : List Text
         },
         { name = "encoding"

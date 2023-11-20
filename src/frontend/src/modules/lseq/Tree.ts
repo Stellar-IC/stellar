@@ -8,7 +8,8 @@ import {
 import * as Identifier from './identifier';
 import * as Interval from './interval';
 import * as Types from './types';
-import { base, getRandomNumberBetween } from './utils';
+import { getRandomNumberBetween } from './utils';
+import { TreeEvent } from '../../../../declarations/workspace/workspace.did';
 
 type NodeBoundary = Types.NodeBoundary;
 type NodeDepth = Types.NodeDepth;
@@ -64,11 +65,11 @@ export class Tree {
   insert(node: { identifier: Identifier.Identifier; value: NodeValue }) {
     const { identifier, value } = node;
     const identifierLength = identifier.length;
-    if (identifierLength == 0) throw new Error('Invalid Identifier');
+    if (identifierLength === 0) throw new Error('Invalid Identifier');
 
     let currentNode = this.rootNode;
 
-    for (let i = 0; i < identifierLength; i++) {
+    for (let i = 0; i < identifierLength; i += 1) {
       const identifierPart = identifier.value[i];
       const childNode = currentNode.children.get(identifierPart);
       const currentNodeBase = currentNode.base;
@@ -78,7 +79,7 @@ export class Tree {
         throw new Error('Invalid Identifier');
       }
 
-      if (i == identifierLength - 1) {
+      if (i === identifierLength - 1) {
         if (childNode) {
           throw new IdentifierCollisionError('Identifier already in use');
         }
@@ -156,13 +157,13 @@ export class Tree {
     ): Node.Node | null | undefined {
       const identifierLength = identifier.length;
 
-      if (identifierLength == 0) {
+      if (identifierLength === 0) {
         return root;
       }
 
       const { base } = root;
 
-      for (let i = 0; i < base; i++) {
+      for (let i = 0; i < base; i += 1) {
         const childNode = root.children.get(i);
 
         if (!childNode) continue;
@@ -172,7 +173,7 @@ export class Tree {
           identifier.value.slice(1, identifierLength)
         );
 
-        if (i == identifier.value[0]) {
+        if (i === identifier.value[0]) {
           return doRecursiveFind(childNode, newIdentifier);
         }
         continue;
@@ -193,7 +194,7 @@ export class Tree {
       let final = 0;
       const childCount = rootNode.base;
 
-      for (let i = 0; i < childCount; i++) {
+      for (let i = 0; i < childCount; i += 1) {
         const childNode = rootNode.children.get(i);
         if (!childNode) continue;
         final += calculateSize(childNode);
@@ -209,8 +210,79 @@ export class Tree {
   }
 }
 
+function _calculateStep(
+  tree: Tree,
+  prefixA: Identifier.Identifier,
+  prefixB: Identifier.Identifier
+): NodeIndex {
+  const { boundary } = tree;
+  const interval = Interval.between(prefixA, prefixB);
+  const intervalAsInt = interval.value[interval.value.length - 1]; // TODO: fix this
+  const minimumStep = 1;
+  const maximumStep = boundary > intervalAsInt ? intervalAsInt : boundary;
+
+  return getRandomNumberBetween(minimumStep, maximumStep);
+}
+
+function _getFirstChild(rootNode: Node.Node): Node.Node | null {
+  if (rootNode.children.size > 0) {
+    return rootNode.children.values().next().value;
+  }
+  return null;
+}
+
+function _getFirstChildAfterIndex(
+  rootNode: Node.Node,
+  index: number
+): Node.Node | null | undefined {
+  for (let i = index + 1; i < rootNode.base; i += 1) {
+    const childNode = rootNode.children.get(i);
+
+    if (!childNode) {
+      continue;
+    }
+
+    return childNode;
+  }
+}
+
 function checkNodeAvailable(tree: Tree, identifier: Identifier.Identifier) {
   return !tree.get(identifier);
+}
+
+/**
+ * Get a list of available node identifiers in the tree between two given nodes.
+ *
+ * @param rootNode The root node of the tree.
+ * @param nodeA The first node to get the available node identifiers between.
+ * @param nodeB The second node to get the available node identifiers between.
+ * @return A list of available node identifiers in the tree between two given nodes.
+ */
+export function getIdentifierBetween(
+  tree: Tree,
+  nodeAIdentifier: Identifier.Identifier,
+  nodeBIdentifier: Identifier.Identifier
+): Identifier.Identifier {
+  const depth = Node.getShallowInsertDepth(nodeAIdentifier, nodeBIdentifier);
+  const nodeAPrefix = Node.prefix(nodeAIdentifier, depth);
+  const nodeBPrefix = Node.prefix(nodeBIdentifier, depth);
+  const step = _calculateStep(tree, nodeAPrefix, nodeBPrefix);
+
+  const allocationStrategy = tree.allocationStrategy(depth);
+
+  if ('boundaryPlus' in allocationStrategy) {
+    const idIndexToUpdate = depth - 1;
+    const identifier = nodeAPrefix;
+    identifier.value[idIndexToUpdate] += step;
+
+    return nodeAPrefix;
+  }
+
+  if ('boundaryMinus' in allocationStrategy) {
+    return Identifier.subtract(nodeBPrefix, step);
+  }
+
+  throw new Error('Unrecognized allocation strategy');
 }
 
 function getAvailableIdentifierBetween(
@@ -228,10 +300,207 @@ function getAvailableIdentifierBetween(
     }
 
     newIdentifier = getIdentifierBetween(tree, newIdentifier, identifierB);
-    loopCounter++;
+    loopCounter += 1;
   }
 
   return newIdentifier;
+}
+
+export function getNodeAtPosition(
+  tree: Tree,
+  position: number,
+  options: { shouldSkipDeleted?: boolean } = {}
+): Node.Node {
+  let counter = 0;
+  const { shouldSkipDeleted = true } = options;
+
+  function shouldReturnNode(currentPosition: number, node: Node.Node) {
+    const isTargetPositionReached = currentPosition === position;
+    const shouldSkip = shouldSkipNode(node);
+
+    if (isTargetPositionReached && !shouldSkipDeleted) return true;
+
+    if (isTargetPositionReached && !shouldSkip) return true;
+
+    return false;
+  }
+
+  function doRecursiveFind(rootNode: Node.Node): Node.Node | null | undefined {
+    if (shouldReturnNode(counter, rootNode)) return rootNode;
+    if (!shouldSkipNode(rootNode)) counter += 1;
+
+    for (const node of Array.from(rootNode.children.values()).sort(
+      (nodeA, nodeB) => Node.compare(nodeA, nodeB)
+    )) {
+      const foundNode = doRecursiveFind(node);
+      if (foundNode) return foundNode;
+    }
+  }
+
+  const node = doRecursiveFind(tree.rootNode);
+
+  if (!node) throw new Error(`Node at postion ${position} not found`);
+  return node;
+}
+
+/**
+ * Get the size of the tree.
+ *
+ * @param tree
+ * @return size of the tree
+ */
+export function size(tree: Tree): number {
+  return tree.size();
+}
+
+export function findNextNode(
+  tree: Tree,
+  identifier: Identifier.Identifier
+): Node.Node | null {
+  const originalIdentifier = identifier;
+  const originalIdentifierLength = originalIdentifier.length;
+  const originalIdentifierLengthMinusOne = originalIdentifierLength - 1;
+
+  function doRecursiveFind(
+    rootNode: Node.Node,
+    identifier: Identifier.Identifier,
+    after: number
+  ): Node.Node | null {
+    const firstChild = _getFirstChildAfterIndex(rootNode, after);
+
+    if (!firstChild) {
+      const parentNodeIdentifier = new Identifier.Identifier(
+        identifier.value.slice(0, originalIdentifierLengthMinusOne)
+      );
+      const parentNode = tree.get(parentNodeIdentifier);
+
+      if (!parentNode) {
+        throw new Error('This node has no children or parent node');
+      }
+
+      return doRecursiveFind(
+        parentNode,
+        parentNodeIdentifier,
+        identifier.value[identifier.length - 1]
+      );
+    }
+
+    return firstChild;
+  }
+
+  const currentNode = tree.get(identifier);
+
+  if (!currentNode) {
+    throw new Error('Unable to get current node');
+  }
+
+  const firstChild = _getFirstChild(currentNode);
+
+  if (!firstChild) {
+    const parentNodeIdentifier = new Identifier.Identifier(
+      identifier.value.slice(0, originalIdentifierLengthMinusOne)
+    );
+    const parentNode = tree.get(parentNodeIdentifier);
+
+    if (!parentNode) {
+      throw new Error('This node has no children or parent node');
+    }
+
+    return doRecursiveFind(
+      parentNode,
+      parentNodeIdentifier,
+      originalIdentifier.value[originalIdentifierLengthMinusOne]
+    );
+  }
+
+  return firstChild;
+}
+
+export function findPreviousNode(
+  tree: Tree,
+  identifier: Identifier.Identifier
+): Node.Node | null {
+  const { rootNode } = tree;
+  const originalIdentifier = identifier;
+  const originalIdentifierLength = originalIdentifier.length;
+  const originalIdentifierLengthMinusOne = originalIdentifier.length - 1;
+  const originalIndex = identifier.value[originalIdentifierLength - 1];
+  const parentNodeIdentifier = new Identifier.Identifier(
+    identifier.value.slice(0, originalIdentifierLengthMinusOne)
+  );
+  const parentNode = tree.get(parentNodeIdentifier);
+
+  function doRecursiveFind(node: Node.Node, range: number[]): Node.Node | null {
+    for (const i of range) {
+      const childNode = node.children.get(i);
+      if (!childNode) continue;
+
+      const childNodeBase = childNode.base;
+      const childNodeRange = Array.from({ length: childNodeBase }, (_, i) => i);
+
+      const foundNode = doRecursiveFind(childNode, childNodeRange.reverse());
+
+      if (foundNode) {
+        return foundNode;
+      }
+    }
+
+    if (Node.compare(node, rootNode) === 0) {
+      return null;
+    }
+
+    return node;
+  }
+
+  if (originalIndex === 0) {
+    return null;
+  }
+
+  if (!parentNode) {
+    throw new Error('Unable to get parent node');
+  }
+
+  const range = Array.from(
+    { length: originalIndex },
+    (_, i) => originalIndex - 1 - i
+  );
+  return doRecursiveFind(parentNode, range);
+}
+
+export function getNodeAtPositionFromEnd(
+  tree: Tree,
+  position: number,
+  options: { shouldSkipDeleted?: boolean } = {}
+): Node.Node | null {
+  let counter = 0;
+  const { shouldSkipDeleted = true } = options;
+
+  function shouldReturnNode(currentPosition: number, node: Node.Node) {
+    const isTargetPositionReached = currentPosition === position;
+    const shouldSkip = shouldSkipNode(node);
+
+    if (isTargetPositionReached && !shouldSkipDeleted) return true;
+
+    if (isTargetPositionReached && !shouldSkip) return true;
+
+    return false;
+  }
+
+  const lastNode = findPreviousNode(tree, END_NODE_ID);
+  if (!lastNode) return null;
+  if (shouldReturnNode(counter, lastNode)) return lastNode;
+
+  let prevNode: Node.Node | null = lastNode;
+
+  while (counter <= position) {
+    const node = findPreviousNode(tree, prevNode.identifier);
+    if (!node) return null;
+    if (shouldReturnNode(counter, node)) return node;
+    prevNode = node;
+    if (!shouldSkipNode(node, shouldSkipDeleted)) counter += 1;
+  }
+
+  return null;
 }
 
 export function buildNodesForFrontInsert(
@@ -409,13 +678,13 @@ export function insertCharacterAtPosition(
 
 export function toText(tree: Tree): string {
   function buildText(rootNode: Node.Node): string {
-    let final = rootNode.deletedAt ? '' : rootNode.value;
+    let final = shouldSkipNode(rootNode, true) ? '' : rootNode.value;
 
     if (rootNode.children.size === 0) {
       return final;
     }
 
-    for (let i = 0; i < rootNode.base; i++) {
+    for (let i = 0; i < rootNode.base; i += 1) {
       const childNode = rootNode.children.get(i);
       if (!childNode) continue;
       final += buildText(childNode);
@@ -427,186 +696,26 @@ export function toText(tree: Tree): string {
   return buildText(tree.rootNode);
 }
 
-/**
- * Get the size of the tree.
- *
- * @param tree
- * @return size of the tree
- */
-export function size(tree: Tree): number {
-  return tree.size();
-}
+export function toArray(tree: Tree): string[] {
+  function buildArray(rootNode: Node.Node): string[] {
+    let final: string[] = shouldSkipNode(rootNode, true)
+      ? []
+      : [rootNode.value];
 
-/**
- * Get a list of available node identifiers in the tree between two given nodes.
- *
- * @param rootNode The root node of the tree.
- * @param nodeA The first node to get the available node identifiers between.
- * @param nodeB The second node to get the available node identifiers between.
- * @return A list of available node identifiers in the tree between two given nodes.
- */
-export function getIdentifierBetween(
-  tree: Tree,
-  nodeAIdentifier: Identifier.Identifier,
-  nodeBIdentifier: Identifier.Identifier
-): Identifier.Identifier {
-  const depth = Node.getShallowInsertDepth(nodeAIdentifier, nodeBIdentifier);
-  const nodeAPrefix = Node.prefix(nodeAIdentifier, depth);
-  const nodeBPrefix = Node.prefix(nodeBIdentifier, depth);
-  const step = _calculateStep(tree, nodeAPrefix, nodeBPrefix);
-
-  const allocationStrategy = tree.allocationStrategy(depth);
-
-  if ('boundaryPlus' in allocationStrategy) {
-    const idIndexToUpdate = depth - 1;
-    const identifier = nodeAPrefix;
-    identifier.value[idIndexToUpdate] =
-      identifier.value[idIndexToUpdate] + step;
-
-    return nodeAPrefix;
-  }
-
-  if ('boundaryMinus' in allocationStrategy) {
-    return Identifier.subtract(nodeBPrefix, step);
-  }
-
-  throw new Error('Unrecognized allocation strategy');
-}
-
-export function getNodeAtPosition(
-  tree: Tree,
-  position: number,
-  options: { shouldSkipDeleted?: boolean } = {}
-): Node.Node {
-  let counter = 0;
-  const { shouldSkipDeleted = true } = options;
-
-  function shouldReturnNode(currentPosition: number, node: Node.Node) {
-    const isTargetPositionReached = currentPosition === position;
-    const shouldSkip = shouldSkipNode(node);
-
-    if (isTargetPositionReached && !shouldSkipDeleted) return true;
-
-    if (isTargetPositionReached && !shouldSkip) return true;
-
-    return false;
-  }
-
-  function doRecursiveFind(rootNode: Node.Node): Node.Node | null | undefined {
-    if (shouldReturnNode(counter, rootNode)) return rootNode;
-    if (!shouldSkipNode(rootNode)) counter++;
-
-    for (const node of Array.from(rootNode.children.values()).sort(
-      (nodeA, nodeB) => Node.compare(nodeA, nodeB)
-    )) {
-      const foundNode = doRecursiveFind(node);
-      if (foundNode) return foundNode;
-    }
-  }
-
-  const node = doRecursiveFind(tree.rootNode);
-
-  if (!node) throw new Error(`Node at postion ${position} not found`);
-  return node;
-}
-
-export function getNodeAtPositionFromEnd(
-  tree: Tree,
-  position: number,
-  options: { shouldSkipDeleted?: boolean } = {}
-): Node.Node | null {
-  let counter = 0;
-  const { shouldSkipDeleted = true } = options;
-
-  function shouldReturnNode(currentPosition: number, node: Node.Node) {
-    const isTargetPositionReached = currentPosition === position;
-    const shouldSkip = shouldSkipNode(node);
-
-    if (isTargetPositionReached && !shouldSkipDeleted) return true;
-
-    if (isTargetPositionReached && !shouldSkip) return true;
-
-    return false;
-  }
-
-  const lastNode = findPreviousNode(tree, END_NODE_ID);
-  if (!lastNode) return null;
-  if (shouldReturnNode(counter, lastNode)) return lastNode;
-
-  let prevNode: Node.Node | null = lastNode;
-
-  while (counter <= position) {
-    const node = findPreviousNode(tree, prevNode.identifier);
-    if (!node) return null;
-    if (shouldReturnNode(counter, node)) return node;
-    prevNode = node;
-    if (!shouldSkipNode(node, shouldSkipDeleted)) counter++;
-  }
-
-  return null;
-}
-
-export function findNextNode(
-  tree: Tree,
-  identifier: Identifier.Identifier
-): Node.Node | null {
-  const originalIdentifier = identifier;
-  const originalIdentifierLength = originalIdentifier.length;
-  const originalIdentifierLengthMinusOne = originalIdentifierLength - 1;
-
-  function doRecursiveFind(
-    rootNode: Node.Node,
-    identifier: Identifier.Identifier,
-    after: number
-  ): Node.Node | null {
-    const firstChild = _getFirstChildAfterIndex(rootNode, after);
-
-    if (!firstChild) {
-      const parentNodeIdentifier = new Identifier.Identifier(
-        identifier.value.slice(0, originalIdentifierLengthMinusOne)
-      );
-      const parentNode = tree.get(parentNodeIdentifier);
-
-      if (!parentNode) {
-        throw new Error('This node has no children or parent node');
-      }
-
-      return doRecursiveFind(
-        parentNode,
-        parentNodeIdentifier,
-        identifier.value[identifier.length - 1]
-      );
+    if (rootNode.children.size === 0) {
+      return final;
     }
 
-    return firstChild;
-  }
-
-  const currentNode = tree.get(identifier);
-
-  if (!currentNode) {
-    throw new Error('Unable to get current node');
-  }
-
-  const firstChild = _getFirstChild(currentNode);
-
-  if (!firstChild) {
-    const parentNodeIdentifier = new Identifier.Identifier(
-      identifier.value.slice(0, originalIdentifierLengthMinusOne)
-    );
-    const parentNode = tree.get(parentNodeIdentifier);
-
-    if (!parentNode) {
-      throw new Error('This node has no children or parent node');
+    for (let i = 0; i < rootNode.base; i += 1) {
+      const childNode = rootNode.children.get(i);
+      if (!childNode) continue;
+      final = [...final, ...buildArray(childNode)];
     }
 
-    return doRecursiveFind(
-      parentNode,
-      parentNodeIdentifier,
-      originalIdentifier.value[originalIdentifierLengthMinusOne]
-    );
+    return final;
   }
 
-  return firstChild;
+  return buildArray(tree.rootNode);
 }
 
 export function last(rootNode: Node.Node): Node.Node | null {
@@ -619,89 +728,115 @@ export function last(rootNode: Node.Node): Node.Node | null {
   return last(reversedChildren[0]);
 }
 
-export function findPreviousNode(
+export function insertCharacter(
   tree: Tree,
-  identifier: Identifier.Identifier
-): Node.Node | null {
-  const { rootNode } = tree;
-  const originalIdentifier = identifier;
-  const originalIdentifierLength = originalIdentifier.length;
-  const originalIdentifierLengthMinusOne = originalIdentifier.length - 1;
-  const originalIndex = identifier.value[originalIdentifierLength - 1];
-  const parentNodeIdentifier = new Identifier.Identifier(
-    identifier.value.slice(0, originalIdentifierLengthMinusOne)
-  );
-  const parentNode = tree.get(parentNodeIdentifier);
+  position: number,
+  character: string,
+  onSuccess: (events: TreeEvent[]) => void
+) {
+  const isAtStart = position === 0;
+  const isAtEnd = position === size(tree);
 
-  function doRecursiveFind(node: Node.Node, range: number[]): Node.Node | null {
-    for (const i of range) {
-      const childNode = node.children.get(i);
-      if (!childNode) continue;
+  if (isAtStart) {
+    const { node, deletedNode, replacementNode } = insertCharacterAtStart(
+      tree,
+      character
+    );
+    const events: TreeEvent[] = [
+      {
+        insert: {
+          position: node.identifier.value,
+          value: node.value,
+          transactionType: {
+            insert: null,
+          },
+        },
+      },
+    ];
 
-      const childNodeBase = childNode.base;
-      const childNodeRange = Array.from({ length: childNodeBase }, (_, i) => i);
-
-      const foundNode = doRecursiveFind(childNode, childNodeRange.reverse());
-
-      if (foundNode) {
-        return foundNode;
-      }
+    if (deletedNode) {
+      events.push({
+        delete: {
+          position: deletedNode.identifier.value,
+          transactionType: {
+            delete: null,
+          },
+        },
+      });
     }
 
-    if (Node.compare(node, rootNode) === 0) {
-      return null;
+    if (replacementNode) {
+      events.push({
+        insert: {
+          position: replacementNode.identifier.value,
+          value: replacementNode.value,
+          transactionType: {
+            insert: null,
+          },
+        },
+      });
     }
 
-    return node;
+    onSuccess(events);
+    return;
   }
 
-  if (originalIndex === 0) {
-    return null;
+  if (isAtEnd) {
+    const insertedNode = insertCharacterAtEnd(tree, character);
+    const events: TreeEvent[] = [
+      {
+        insert: {
+          position: insertedNode.identifier.value,
+          value: insertedNode.value,
+          transactionType: {
+            insert: null,
+          },
+        },
+      },
+    ];
+    onSuccess(events);
+    return;
   }
 
-  if (!parentNode) {
-    throw new Error('Unable to get parent node');
-  }
+  const insertedNode = insertCharacterAtPosition(tree, character, position);
+  const event: TreeEvent = {
+    insert: {
+      position: insertedNode.identifier.value,
+      value: insertedNode.value,
+      transactionType: {
+        insert: null,
+      },
+    },
+  };
 
-  const range = Array.from(
-    { length: originalIndex },
-    (_, i) => originalIndex - 1 - i
-  );
-  return doRecursiveFind(parentNode, range);
+  onSuccess([event]);
 }
 
-function _calculateStep(
+export function removeCharacter(
   tree: Tree,
-  prefixA: Identifier.Identifier,
-  prefixB: Identifier.Identifier
-): NodeIndex {
-  const { boundary } = tree;
-  const interval = Interval.between(prefixA, prefixB);
-  const intervalAsInt = interval.value[interval.value.length - 1]; // TODO: fix this
-  const minimumStep = 1;
-  const maximumStep = boundary > intervalAsInt ? intervalAsInt : boundary;
+  position: number,
+  onSuccess: (event: TreeEvent) => void
+) {
+  const isAtStart = position === 0;
 
-  return getRandomNumberBetween(minimumStep, maximumStep);
-}
+  if (isAtStart) return;
 
-function _getFirstChild(rootNode: Node.Node): Node.Node | null {
-  for (const childNode of rootNode.children.values()) {
-    return childNode;
+  const nodeBeforeCursor = getNodeAtPosition(tree, position - 1);
+
+  if (!nodeBeforeCursor) {
+    throw new Error('There was an error finding the node before the cursor');
   }
-  return null;
-}
 
-function _getFirstChildAfterIndex(
-  rootNode: Node.Node,
-  index: number
-): Node.Node | null | undefined {
-  for (let i = index + 1; i < rootNode.base; i++) {
-    const childNode = rootNode.children.get(i);
+  tree.delete(nodeBeforeCursor.identifier);
 
-    if (!childNode) {
-      continue;
-    }
+  const event: TreeEvent = {
+    delete: {
+      position: nodeBeforeCursor.identifier.value,
+      transactionType: {
+        delete: null,
+      },
+    },
+  };
 
-    return childNode;
-  }
+  onSuccess(event);
 }

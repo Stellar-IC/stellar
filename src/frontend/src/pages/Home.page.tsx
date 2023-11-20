@@ -7,6 +7,8 @@ import { stringify } from 'uuid';
 import { useWorkspaceContext } from '@/contexts/WorkspaceContext/useWorkspaceContext';
 import { toText } from '@/modules/lseq/Tree';
 import { fromShareable } from '@/modules/domain/block/serializers';
+import { DEFAULT_BOUNDARY } from '@/modules/lseq/constants';
+import { base } from '@/modules/lseq/utils';
 import { Edge } from '../../../declarations/workspace/workspace.did';
 
 function WorkspaceContent() {
@@ -34,7 +36,17 @@ function WorkspaceContent() {
   const navigate = useNavigate();
   const createPageAndRedirect = useCallback(() => {
     createPage({
-      content: [],
+      content: {
+        allocationStrategies: [],
+        boundary: DEFAULT_BOUNDARY,
+        rootNode: {
+          base: base(0),
+          children: [],
+          deletedAt: [],
+          identifier: [],
+          value: '',
+        },
+      },
       parent: [],
       properties: {
         title: [],

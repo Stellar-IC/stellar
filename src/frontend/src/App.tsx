@@ -33,7 +33,6 @@ function PageWrapper({ children }: PropsWithChildren) {
         userActor
           .personalWorkspace()
           .then((result) => {
-            console.log(result);
             if (!('ok' in result)) {
               throw new Error('No default workspace found');
             }
@@ -167,7 +166,7 @@ function AppRouter() {
 
 export default function App() {
   return (
-    <MantineProvider theme={theme}>
+    <MantineProvider theme={theme} defaultColorScheme="dark">
       <QueryContextProvider>
         <AuthContextProvider>
           <AppRouter />

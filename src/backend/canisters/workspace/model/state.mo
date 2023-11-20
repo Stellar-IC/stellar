@@ -15,10 +15,17 @@ import IdManager "../../../utils/data/id_manager";
 import CoreTypes "../../../types";
 
 import Types "../types";
+import Tree "../../../utils/data/lseq/Tree";
 
 module {
-    type PrimaryKey = Types.PrimaryKey;
     type Workspace = WorkspacesTypes.Workspace;
+
+    type PrimaryKey = BlocksTypes.PrimaryKey;
+    type ShareableBlock = BlocksTypes.ShareableBlock_v2;
+    type Block = BlocksTypes.Block_v2;
+    type UnsavedBlock = BlocksTypes.UnsavedBlock_v2;
+    type BlockContent = BlocksTypes.BlockContent;
+    type BlockProperties = BlocksTypes.BlockProperties;
 
     public class State(_data : Data) {
         public var data = _data;
@@ -28,17 +35,22 @@ module {
         initial_value : {
             blocks : {
                 id : Nat;
-                data : RBTree.Tree<BlocksTypes.PrimaryKey, BlocksTypes.ShareableBlock>;
+                data : RBTree.Tree<PrimaryKey, BlocksTypes.ShareableBlock>;
+            };
+            blocks_v2 : {
+                id : Nat;
+                data : RBTree.Tree<PrimaryKey, ShareableBlock>;
             };
         }
     ) {
-        public var Block = BlocksModels.Block.Block(initial_value.blocks.id, initial_value.blocks.data);
+        public var Block = BlocksModels.Block.Model(initial_value.blocks.id, initial_value.blocks.data);
+        public var Block_v2 = BlocksModels.Block_v2.Model(initial_value.blocks_v2.id, initial_value.blocks_v2.data);
 
         // Red-black trees to index orders by product ID and products by order ID
-        var blocks_by_parent_uuid = RBTree.RBTree<Text, List.List<BlocksTypes.PrimaryKey>>(Text.compare);
+        var blocks_by_parent_uuid = RBTree.RBTree<Text, List.List<PrimaryKey>>(Text.compare);
 
-        public func addBlock(input : BlocksTypes.UnsavedBlock) : Result.Result<(BlocksTypes.PrimaryKey, BlocksTypes.Block), { #keyAlreadyExists }> {
-            let insert_result = Block.objects.insert(input);
+        public func addBlock(input : UnsavedBlock) : Result.Result<(PrimaryKey, Block), { #keyAlreadyExists }> {
+            let insert_result = Block_v2.objects.insert(input);
 
             switch insert_result {
                 case (#ok(pk, block)) {
@@ -52,8 +64,8 @@ module {
             return insert_result;
         };
 
-        public func updateBlock(input : BlocksTypes.Block) : Result.Result<(Types.PrimaryKey, BlocksTypes.Block), { #primaryKeyAttrNotFound }> {
-            let update_result = Block.objects.update(input);
+        public func updateBlock(input : Block) : Result.Result<(Types.PrimaryKey, Block), { #primaryKeyAttrNotFound }> {
+            let update_result = Block_v2.objects.update(input);
 
             switch update_result {
                 case (#ok(pk, block)) {
@@ -68,12 +80,12 @@ module {
         };
 
         public func deleteBlock(id : Types.PrimaryKey) : () {
-            Block.objects.delete(id);
+            Block_v2.objects.delete(id);
             ignore _removeBlockFromBlocksByParentIdIndex(id);
         };
 
         public func deleteBlockByUuid(uuid : UUID.UUID) : () {
-            let block = Block.objects.indexFilter(
+            let block = Block_v2.objects.indexFilter(
                 "uuid",
                 #text(UUID.toText(uuid)),
             ).first();
@@ -96,21 +108,20 @@ module {
             input : {
                 uuid : UUID.UUID;
                 parent : ?UUID.UUID;
-                content : [UUID.UUID];
-                properties : BlocksTypes.BlockProperties;
+                properties : BlockProperties;
             }
-        ) : Result.Result<(Types.PrimaryKey, BlocksTypes.Block), { #keyAlreadyExists }> {
-            Block.objects.insert({
+        ) : Result.Result<(Types.PrimaryKey, Block), { #keyAlreadyExists }> {
+            Block_v2.objects.insert({
                 uuid = input.uuid;
                 var blockType = #page;
                 parent = input.parent;
-                var content = input.content;
+                content = Tree.Tree(null);
                 properties = input.properties;
             });
         };
 
-        public func getBlockByUuid(uuid : UUID.UUID) : Result.Result<BlocksTypes.Block, { #blockNotFound }> {
-            let block = Block.objects.indexFilter(
+        public func getBlockByUuid(uuid : UUID.UUID) : Result.Result<Block, { #blockNotFound }> {
+            let block = Block_v2.objects.indexFilter(
                 "uuid",
                 #text(UUID.toText(uuid)),
             ).first();
@@ -125,8 +136,8 @@ module {
             };
         };
 
-        public func getPage(id : Types.PrimaryKey) : Result.Result<BlocksTypes.Block, { #pageNotFound }> {
-            let page = Block.objects.get(id);
+        public func getPage(id : Types.PrimaryKey) : Result.Result<Block, { #pageNotFound }> {
+            let page = Block_v2.objects.get(id);
             switch page {
                 case (?page) {
                     return #ok(page);
@@ -137,8 +148,8 @@ module {
             };
         };
 
-        public func getPageByUuid(uuid : UUID.UUID) : Result.Result<BlocksTypes.Block, { #pageNotFound }> {
-            let page = Block.objects.indexFilter(
+        public func getPageByUuid(uuid : UUID.UUID) : Result.Result<Block, { #pageNotFound }> {
+            let page = Block_v2.objects.indexFilter(
                 "uuid",
                 #text(UUID.toText(uuid)),
             ).first();
@@ -157,18 +168,18 @@ module {
             cursor : ?Types.PrimaryKey,
             limit : ?Nat,
             order : ?CoreTypes.SortOrder,
-        ) : List.List<BlocksTypes.Block> {
-            var pages = Block.objects.all().filter(
+        ) : List.List<Block> {
+            var pages = Block_v2.objects.all().filter(
                 func block = block.blockType == #page
             );
 
-            func sortBlocksByIdAsc(blockA : BlocksTypes.Block, blockB : BlocksTypes.Block) : Order.Order {
+            func sortBlocksByIdAsc(blockA : Block, blockB : Block) : Order.Order {
                 if (blockA.id < blockB.id) { return #less } else {
                     return #greater;
                 };
             };
 
-            func sortBlocksByIdDesc(blockA : BlocksTypes.Block, blockB : BlocksTypes.Block) : Order.Order {
+            func sortBlocksByIdDesc(blockA : Block, blockB : Block) : Order.Order {
                 if (blockA.id > blockB.id) { return #less } else {
                     return #greater;
                 };
@@ -196,8 +207,8 @@ module {
                 case (null) {};
                 case (?cursor) {
                     // Find index of page with id equal to cursor within pages
-                    let cursor_index = pages.findIndex<BlocksTypes.Block>(
-                        func hasMatchingId(page : BlocksTypes.Block) : Bool {
+                    let cursor_index = pages.findIndex<Block>(
+                        func hasMatchingId(page : Block) : Bool {
                             return page.id == cursor;
                         }
                     );
@@ -220,7 +231,7 @@ module {
             return pages.value();
         };
 
-        private func _addBlockToBlocksByParentIdIndex(block : BlocksTypes.Block) {
+        private func _addBlockToBlocksByParentIdIndex(block : Block) {
             let block_parent = switch (block.parent) {
                 case (null) {
                     return;
@@ -240,7 +251,7 @@ module {
         };
 
         private func _removeBlockFromBlocksByParentIdIndex(block_id : Types.PrimaryKey) : Result.Result<(), { #blockNotFound }> {
-            let block = Block.objects.get(block_id);
+            let block = Block_v2.objects.get(block_id);
             switch block {
                 case (?block) {
                     let block_parent = switch (block.parent) {

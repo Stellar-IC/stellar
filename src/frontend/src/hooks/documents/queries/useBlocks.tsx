@@ -11,7 +11,7 @@ import { Block, CanisterId, LocalStorageBlock } from '@/types';
 import { useWorkspaceActor } from '@/hooks/ic/actors/useWorkspaceActor';
 import {
   Result_1 as BlockByUuidResult,
-  ShareableBlock,
+  ShareableBlock_v2 as ShareableBlock,
   UUID,
 } from '../../../../../declarations/workspace/workspace.did';
 import { useQuery } from '../../useQuery';

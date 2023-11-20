@@ -1,7 +1,7 @@
-import { Box, Button, Flex, Group, useMantineTheme } from '@mantine/core';
+import { Box, Button, Flex, Group, Text, useMantineTheme } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
-import { PropsWithChildren, useCallback } from 'react';
 import { IconPlus, IconDotsVertical } from '@tabler/icons-react';
+import { PropsWithChildren, useCallback } from 'react';
 import { parse } from 'uuid';
 
 import { AddBlockModal } from '@/components/blocks/AddBlockModal';
@@ -45,7 +45,7 @@ export const BlockWithActions = ({
 
   const onBlockTypeChange = useCallback(
     (item: BlockType) => {
-      updateBlock(parsedParentExternalId, parse(block.uuid), {
+      updateBlock(parse(block.uuid), {
         updateBlockType: {
           data: {
             blockExternalId: parse(block.uuid),
@@ -54,7 +54,7 @@ export const BlockWithActions = ({
         },
       });
     },
-    [updateBlock, parsedParentExternalId, block.uuid]
+    [updateBlock, block.uuid]
   );
 
   return (
@@ -115,6 +115,9 @@ export const BlockWithActions = ({
 
         <Box w="100%">{children}</Box>
       </Flex>
+      <Text size="xs" c="gray.7">
+        {block.uuid}
+      </Text>
 
       <AddBlockModal
         isOpen={isAddModalOpen}
@@ -167,7 +170,9 @@ export const BlockWithActions = ({
           <Button
             color="inherit"
             onClick={() => {
-              removeBlock(parsedParentExternalId, parse(block.uuid));
+              // Note: We add 1 to the block index because the current functionality
+              // for removing a block is to remove the block before the given position.
+              removeBlock(parsedParentExternalId, blockIndex + 1);
             }}
           >
             Delete

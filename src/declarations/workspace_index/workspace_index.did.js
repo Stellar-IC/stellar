@@ -39,7 +39,6 @@ export const idlFactory = ({ IDL }) => {
         [IDL.Record({ 'accepted' : IDL.Nat64 })],
         [],
       ),
-    'upgradeWorkspaceCanister' : IDL.Func([IDL.Principal], [], ['oneway']),
     'walletReceive' : IDL.Func(
         [],
         [IDL.Record({ 'accepted' : IDL.Nat64 })],

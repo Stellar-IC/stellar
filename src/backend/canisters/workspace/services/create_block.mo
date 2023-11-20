@@ -10,13 +10,16 @@ import State "../model/state";
 import Types "../types";
 
 module {
+    type Input = Types.Services.CreateBlockService.CreateBlockServiceInput;
+    type Output = Types.Services.CreateBlockService.CreateBlockServiceOutput;
+
     let MAX_CONTENT_SIZE = 2000;
 
     public func execute(
         state : State.State,
         userPrincipal : Principal,
-        input : Types.Services.CreateBlockService.CreateBlockServiceInput,
-    ) : Types.Services.CreateBlockService.CreateBlockServiceOutput {
+        input : Input,
+    ) : Output {
         if (Principal.isAnonymous(userPrincipal)) {
             return #err(#anonymousUser);
         };
@@ -44,12 +47,8 @@ module {
     };
 
     private func _validate(
-        input : Types.Services.CreateBlockService.CreateBlockServiceInput
-    ) : Result.Result<(), { #anonymousUser; #inputTooLong; #invalidBlockType }> {
-        if (Array.size<UUID.UUID>(input.content) > MAX_CONTENT_SIZE) {
-            return #err(#inputTooLong);
-        };
-
+        input : Input
+    ) : Result.Result<(), { #anonymousUser; #invalidBlockType }> {
         let valid_block_types = [
             #heading1,
             #heading2,

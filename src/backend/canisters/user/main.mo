@@ -68,18 +68,18 @@ shared ({ caller = initializer }) actor class User(
         };
     };
 
-    // public shared ({ caller }) func upgradePersonalWorkspace() {
-    //     Guards.assertMatches(caller, stable_owner);
+    public shared ({ caller }) func upgradePersonalWorkspace() {
+        Guards.assertMatches(caller, stable_owner);
 
-    //     let workspaceActor = switch (stable_personalWorkspace) {
-    //         case (null) { Debug.trap("Personal workspace not initialized") };
-    //         case (?workspace) { workspace };
-    //     };
+        let workspaceActor = switch (stable_personalWorkspace) {
+            case (null) { Debug.trap("Personal workspace not initialized") };
+            case (?workspace) { workspace };
+        };
 
-    //     let workspace = await (system Workspace.Workspace)(
-    //         #upgrade(workspaceActor)
-    //     )(await (workspaceActor.getInitArgs()), await (workspaceActor.getInitData()));
-    // };
+        let workspace = await (system Workspace.Workspace)(
+            #upgrade(workspaceActor)
+        )(await (workspaceActor.getInitArgs()), await (workspaceActor.getInitData()));
+    };
 
     public shared ({ caller }) func updateProfile(
         input : UsersTypes.ProfileInput

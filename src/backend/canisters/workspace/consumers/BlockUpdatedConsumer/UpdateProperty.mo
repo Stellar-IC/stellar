@@ -1,4 +1,5 @@
 import UUID "mo:uuid/UUID";
+import Array "mo:base/Array";
 
 import Tree "../../../../utils/data/lseq/Tree";
 import LseqTypes "../../../../utils/data/lseq/types";
@@ -11,8 +12,9 @@ module {
         #title : BlocksTypes.BlockProperyTitleUpdatedEvent;
         #checked : BlocksTypes.BlockProperyCheckedUpdatedEvent;
     };
+    type Block_v2 = BlocksTypes.Block_v2;
 
-    public func execute(event : BlockProperyUpdatedEvent, block : BlocksTypes.Block) {
+    public func execute(event : BlockProperyUpdatedEvent, block : Block_v2) {
         switch (event) {
             case (#title(event)) {
                 return handleTitle(event, block);
@@ -23,34 +25,37 @@ module {
         };
     };
 
-    private func handleTitle(event : BlockProperyTitleUpdatedEvent, block : BlocksTypes.Block) {
+    private func handleTitle(event : BlockProperyTitleUpdatedEvent, block : Block_v2) {
         let blockExternalId = event.data.blockExternalId;
         let title = block.properties.title;
 
-        switch (event.data.event) {
-            case (#insert(treeEvent)) {
-                switch (title) {
-                    case (null) {};
-                    case (?title) {
-                        ignore title.insert({
-                            identifier = treeEvent.position;
-                            value = treeEvent.value;
-                        });
+        for (event in Array.vals(event.data.transaction)) {
+            switch (event) {
+                case (#insert(treeEvent)) {
+                    switch (title) {
+                        case (null) {};
+                        case (?title) {
+                            ignore title.insert({
+                                identifier = treeEvent.position;
+                                value = treeEvent.value;
+                            });
+                        };
                     };
                 };
-            };
-            case (#delete(treeEvent)) {
-                switch (title) {
-                    case (null) {};
-                    case (?title) {
-                        title.deleteNode(treeEvent.position);
+                case (#delete(treeEvent)) {
+                    switch (title) {
+                        case (null) {};
+                        case (?title) {
+                            title.deleteNode(treeEvent.position);
+                        };
                     };
                 };
             };
         };
+
     };
 
-    private func handleChecked(event : BlockProperyCheckedUpdatedEvent, block : BlocksTypes.Block) : () {
+    private func handleChecked(event : BlockProperyCheckedUpdatedEvent, block : Block_v2) : () {
         let blockExternalId = event.data.blockExternalId;
         block.properties.checked := ?event.data.checked;
     };

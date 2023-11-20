@@ -9,6 +9,19 @@ type Workspace__1 =
  };
 type WorkspaceOwner = principal;
 type WorkspaceName = text;
+type WorkspaceInitData = 
+ record {
+   createdAt: Time;
+   description: WorkspaceDescription;
+   name: WorkspaceName;
+   updatedAt: Time;
+   uuid: UUID;
+ };
+type WorkspaceInitArgs = 
+ record {
+   capacity: nat;
+   owner: principal;
+ };
 type WorkspaceDescription = text;
 type Workspace = 
  service {
@@ -48,7 +61,7 @@ type Workspace =
 type UpdateBlockUpdateOutputResult = 
  record {
    blockType: BlockType;
-   content: BlockContent;
+   content: ShareableBlockContent;
    id: PrimaryKey;
    parent: opt UUID;
    properties: ShareableBlockProperties;
@@ -63,7 +76,7 @@ type UpdateBlockUpdateOutput =
 type UpdateBlockUpdateInput = 
  record {
    blockType: BlockType;
-   content: BlockContent;
+   content: ShareableBlockContent;
    id: PrimaryKey;
    parent: opt UUID;
    properties: ShareableBlockProperties;
@@ -106,6 +119,15 @@ type ShareableNode =
    identifier: NodeIdentifier;
    value: NodeValue;
  };
+type ShareableBlock_v2 = 
+ record {
+   blockType: BlockType;
+   content: ShareableBlockContent;
+   id: PrimaryKey;
+   parent: opt UUID;
+   properties: ShareableBlockProperties;
+   uuid: UUID;
+ };
 type ShareableBlockText = 
  record {
    allocationStrategies: vec record {
@@ -125,14 +147,14 @@ type ShareableBlockProperties =
    checked: opt bool;
    title: opt ShareableBlockText;
  };
-type ShareableBlock = 
+type ShareableBlockContent = 
  record {
-   blockType: BlockType;
-   content: BlockContent;
-   id: PrimaryKey;
-   parent: opt UUID;
-   properties: ShareableBlockProperties;
-   uuid: UUID;
+   allocationStrategies: vec record {
+                               NodeDepth;
+                               AllocationStrategy;
+                             };
+   boundary: NodeBoundary;
+   rootNode: ShareableNode;
  };
 type SaveEventTransactionUpdateOutputResult = null;
 type SaveEventTransactionUpdateOutputError = 
@@ -150,12 +172,12 @@ type SaveEventTransactionUpdateInput = record {
 type Result_1 = 
  variant {
    err: variant {blockNotFound;};
-   ok: ShareableBlock;
+   ok: ShareableBlock_v2;
  };
 type Result = 
  variant {
    err: variant {pageNotFound;};
-   ok: ShareableBlock;
+   ok: ShareableBlock_v2;
  };
 type RemoveBlockUpdateOutputResult = null;
 type RemoveBlockUpdateOutputError = null;
@@ -175,11 +197,11 @@ type NodeIdentifier = vec NodeIndex;
 type NodeDepth = nat16;
 type NodeBoundary = nat16;
 type NodeBase = nat16;
-type Edge = record {node: ShareableBlock;};
+type Edge = record {node: ShareableBlock_v2;};
 type CreatePageUpdateOutputResult = 
  record {
    blockType: BlockType;
-   content: BlockContent;
+   content: ShareableBlockContent;
    id: PrimaryKey;
    parent: opt UUID;
    properties: ShareableBlockProperties;
@@ -200,31 +222,26 @@ type CreatePageUpdateOutput =
  };
 type CreatePageUpdateInput = 
  record {
-   content: BlockContent;
+   content: ShareableBlockContent;
    parent: opt UUID;
    properties: ShareableBlockProperties__1;
    uuid: UUID;
  };
 type BlockUpdatedEvent = 
  variant {
-   updateBlockType:
-    record {
-      data: record {
-              blockExternalId: UUID;
-              blockType: BlockType;
-            };
-      user: principal;
-      uuid: UUID;
-    };
-   updatePropertyTitle:
-    record {
-      data: record {
-              blockExternalId: UUID;
-              event: TreeEvent;
-            };
-      user: principal;
-      uuid: UUID;
-    };
+   updateBlockType: BlockTypeUpdatedEvent;
+   updateContent: BlockContentUpdatedEvent;
+   updatePropertyChecked: BlockProperyCheckedUpdatedEvent;
+   updatePropertyTitle: BlockProperyTitleUpdatedEvent;
+ };
+type BlockTypeUpdatedEvent = 
+ record {
+   data: record {
+           blockExternalId: UUID;
+           blockType: BlockType;
+         };
+   user: principal;
+   uuid: UUID;
  };
 type BlockType = 
  variant {
@@ -247,8 +264,29 @@ type BlockType =
 type BlockRemovedEvent = 
  record {
    data: record {
+           block: record {
+                    parent: UUID;
+                    uuid: UUID;
+                  };
+           index: nat;
+         };
+   user: principal;
+   uuid: UUID;
+ };
+type BlockProperyTitleUpdatedEvent = 
+ record {
+   data: record {
            blockExternalId: UUID;
-           parent: UUID;
+           transaction: vec TreeEvent;
+         };
+   user: principal;
+   uuid: UUID;
+ };
+type BlockProperyCheckedUpdatedEvent = 
+ record {
+   data: record {
+           blockExternalId: UUID;
+           checked: bool;
          };
    user: principal;
    uuid: UUID;
@@ -275,7 +313,12 @@ type BlockCreatedEvent =
    user: principal;
    uuid: UUID;
  };
-type BlockContent = vec UUID;
+type BlockContentUpdatedEvent = 
+ record {
+   data: record {transaction: vec TreeEvent;};
+   user: principal;
+   uuid: UUID;
+ };
 type AllocationStrategy = 
  variant {
    boundaryMinus;
@@ -291,18 +334,9 @@ type AddBlockUpdateOutput =
 type AddBlockUpdateInput = 
  record {
    blockType: BlockType;
-   content: BlockContent;
+   content: ShareableBlockContent;
    parent: opt UUID;
    properties: ShareableBlockProperties;
    uuid: UUID;
  };
-service : (record {
-             capacity: nat;
-             owner: principal;
-           }, record {
-                createdAt: Time;
-                description: WorkspaceDescription;
-                name: WorkspaceName;
-                updatedAt: Time;
-                uuid: UUID;
-              }) -> Workspace
+service : (WorkspaceInitArgs, WorkspaceInitData) -> Workspace

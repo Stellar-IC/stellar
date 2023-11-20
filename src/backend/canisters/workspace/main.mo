@@ -29,7 +29,7 @@ import Types "./types";
 shared ({ caller = initializer }) actor class Workspace(
     initArgs : CoreTypes.Workspaces.WorkspaceInitArgs,
     initData : CoreTypes.Workspaces.WorkspaceInitData,
-) {
+) = self {
     /*************************************************************************
      * Types
      *************************************************************************/
@@ -37,12 +37,14 @@ shared ({ caller = initializer }) actor class Workspace(
     type BlockByUuidResult = Types.Queries.BlockByUuid.BlockByUuidResult;
     type PrimaryKey = Types.PrimaryKey;
     type ShareableBlock = BlocksTypes.ShareableBlock;
+    type ShareableBlock_v2 = BlocksTypes.ShareableBlock_v2;
 
     /*************************************************************************
      * Stable Data
      *************************************************************************/
 
     stable var blocks : RBTree.Tree<PrimaryKey, ShareableBlock> = #leaf;
+    stable var blocks_v2 : RBTree.Tree<PrimaryKey, ShareableBlock_v2> = #leaf;
     stable var blocksIdCounter : Nat = 0;
     stable var owner : CoreTypes.Workspaces.WorkspaceOwner = initArgs.owner;
     stable var uuid : UUID.UUID = initData.uuid;
@@ -63,9 +65,33 @@ shared ({ caller = initializer }) actor class Workspace(
             id = blocksIdCounter;
             data = blocks;
         };
+        blocks_v2 = {
+            id = blocksIdCounter;
+            data = blocks_v2;
+        };
     });
     var state = State.State(data);
     let eventStream = LseqEvents.EventStream<BlocksTypes.BlockEvent>();
+
+    /*************************************************************************
+     * Initialization helper methods
+     *************************************************************************/
+    public func getInitArgs() : async {
+        capacity : Nat;
+        owner : Principal;
+    } {
+        return initArgs;
+    };
+
+    public func getInitData() : async {
+        uuid : UUID.UUID;
+        name : CoreTypes.Workspaces.WorkspaceName;
+        description : CoreTypes.Workspaces.WorkspaceDescription;
+        createdAt : Time.Time;
+        updatedAt : Time.Time;
+    } {
+        return initData;
+    };
 
     /*************************************************************************
      * Queries
@@ -82,24 +108,24 @@ shared ({ caller = initializer }) actor class Workspace(
         };
     };
 
-    public query func blockByUuid(uuid : UUID.UUID) : async Result.Result<ShareableBlock, { #blockNotFound }> {
+    public query func blockByUuid(uuid : UUID.UUID) : async Result.Result<ShareableBlock_v2, { #blockNotFound }> {
         switch (state.data.getBlockByUuid(uuid)) {
             case (#err(err)) {
                 #err(err);
             };
             case (#ok(block)) {
-                #ok(BlocksModels.Block.toShareable(block));
+                #ok(BlocksModels.Block_v2.toShareable(block));
             };
         };
     };
 
-    public query func pageByUuid(uuid : UUID.UUID) : async Result.Result<ShareableBlock, { #pageNotFound }> {
+    public query func pageByUuid(uuid : UUID.UUID) : async Result.Result<ShareableBlock_v2, { #pageNotFound }> {
         switch (state.data.getPageByUuid(uuid)) {
             case (#err(err)) {
                 #err(err);
             };
             case (#ok(block)) {
-                #ok(BlocksModels.Block.toShareable(block));
+                #ok(BlocksModels.Block_v2.toShareable(block));
             };
         };
     };
@@ -110,15 +136,15 @@ shared ({ caller = initializer }) actor class Workspace(
             limit : ?Nat;
             order : ?CoreTypes.SortOrder;
         }
-    ) : async CoreTypes.PaginatedResults<ShareableBlock> {
+    ) : async CoreTypes.PaginatedResults<ShareableBlock_v2> {
         let { cursor; limit; order } = options;
         let pages = state.data.getPages(cursor, limit, order);
         let result = {
-            edges = List.toArray<CoreTypes.Edge<ShareableBlock>>(
-                List.map<BlocksTypes.Block, CoreTypes.Edge<ShareableBlock>>(
+            edges = List.toArray<CoreTypes.Edge<ShareableBlock_v2>>(
+                List.map<BlocksTypes.Block_v2, CoreTypes.Edge<ShareableBlock_v2>>(
                     pages,
                     func(block) {
-                        { node = BlocksModels.Block.toShareable(block) };
+                        { node = BlocksModels.Block_v2.toShareable(block) };
                     },
                 )
             );
@@ -136,7 +162,7 @@ shared ({ caller = initializer }) actor class Workspace(
     };
 
     public shared ({ caller }) func addBlock(input : Types.Updates.AddBlockUpdate.AddBlockUpdateInput) : async Types.Updates.AddBlockUpdate.AddBlockUpdateOutput {
-        var block_id = state.data.addBlock(BlocksModels.Block.fromShareableUnsaved(input));
+        var block_id = state.data.addBlock(BlocksModels.Block_v2.fromShareableUnsaved(input));
 
         switch (block_id) {
             case (#err(#keyAlreadyExists)) {
@@ -149,14 +175,14 @@ shared ({ caller = initializer }) actor class Workspace(
     };
 
     public shared ({ caller }) func updateBlock(input : Types.Updates.UpdateBlockUpdate.UpdateBlockUpdateInput) : async Types.Updates.UpdateBlockUpdate.UpdateBlockUpdateOutput {
-        let result = state.data.updateBlock(BlocksModels.Block.fromShareable(input));
+        let result = state.data.updateBlock(BlocksModels.Block_v2.fromShareable(input));
 
         switch (result) {
             case (#err(err)) {
                 #err(err);
             };
             case (#ok(pk, block)) {
-                #ok(BlocksModels.Block.toShareable(block));
+                #ok(BlocksModels.Block_v2.toShareable(block));
             };
         };
     };
@@ -170,8 +196,8 @@ shared ({ caller = initializer }) actor class Workspace(
             switch (event) {
                 case (#empty) {};
                 case (#blockCreated(event)) {
-                    let block = BlocksModels.Block.fromShareableUnsaved({
-                        event.data.block and {} with content = [];
+                    let block = BlocksModels.Block_v2.fromShareableUnsaved({
+                        event.data.block and {} with content = LseqTree.toShareableTree(LseqTree.Tree(null));
                         properties = {
                             title = ?LseqTree.toShareableTree(LseqTree.Tree(null));
                             checked = ?false;
@@ -260,6 +286,10 @@ shared ({ caller = initializer }) actor class Workspace(
             case (#blockUpdated(event)) {
                 Debug.print("TYPE: Block Updated");
                 switch (event) {
+                    // TODO: Add case for content updated
+                    case (#updateContent(event)) {
+                        Debug.print("UUID: " # UUID.toText(event.uuid));
+                    };
                     case (#updateBlockType(event)) {
                         Debug.print("UUID: " # UUID.toText(event.uuid));
                     };
@@ -297,6 +327,7 @@ shared ({ caller = initializer }) actor class Workspace(
                         let res = BlockUpdatedConsumer.execute(event, state);
                         let uuid = switch (event) {
                             case (#updateBlockType(event)) { event.uuid };
+                            case (#updateContent(event)) { event.uuid };
                             case (#updatePropertyTitle(event)) { event.uuid };
                             case (#updatePropertyChecked(event)) { event.uuid };
                         };
@@ -345,26 +376,43 @@ shared ({ caller = initializer }) actor class Workspace(
      *************************************************************************/
 
     system func preupgrade() {
-        let transformedData = RBTree.RBTree<Nat, BlocksTypes.ShareableBlock>(Nat.compare);
+        Debug.print("Preupgrade for workspace: " # Principal.toText(Principal.fromActor(self)));
+
+        let transformedData = RBTree.RBTree<Nat, BlocksTypes.ShareableBlock_v2>(Nat.compare);
 
         for (block in state.data.Block.objects.data.entries()) {
-            transformedData.put(block.0, BlocksModels.Block.toShareable(block.1));
+            let blockId = block.0;
+            let blockData = block.1;
+
+            let currentContent : BlocksTypes.BlockContent = blockData.content;
+            let transformedContent : BlocksTypes.BlockContent_v2 = LseqTree.Tree(null);
+
+            for (blockUuid in Array.vals(currentContent)) {
+                ignore LseqTree.insertCharacterAtEnd(transformedContent, UUID.toText(blockUuid));
+            };
+
+            let upgradedBlock : BlocksTypes.Block_v2 = {
+                blockData and {} with
+                content = transformedContent;
+                var blockType = blockData.blockType;
+            };
+
+            transformedData.put(blockId, BlocksModels.Block_v2.toShareable(upgradedBlock));
         };
 
-        blocks := transformedData.share();
+        blocks_v2 := transformedData.share();
         blocksIdCounter := state.data.Block.id_manager.current();
     };
 
     system func postupgrade() {
-        let refreshData = RBTree.RBTree<Nat, BlocksTypes.ShareableBlock>(Nat.compare);
-        refreshData.unshare(blocks);
+        Debug.print("Postupgrade for workspace: " # Principal.toText(Principal.fromActor(self)));
+
+        let refreshData = RBTree.RBTree<Nat, BlocksTypes.ShareableBlock_v2>(Nat.compare);
+        refreshData.unshare(blocks_v2);
 
         for (entry in refreshData.entries()) {
-            state.data.Block.objects.data.put(entry.0, BlocksModels.Block.fromShareable(entry.1));
+            state.data.Block_v2.objects.data.put(entry.0, BlocksModels.Block_v2.fromShareable(entry.1));
         };
-
-        blocks := #leaf;
-        blocksIdCounter := 0;
 
         // Restart timers
         startTimers();

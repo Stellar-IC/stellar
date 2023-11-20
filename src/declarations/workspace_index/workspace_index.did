@@ -32,7 +32,6 @@ service : {
                               capacity: nat;
                             });
   requestCycles: (nat) -> (record {accepted: nat64;});
-  upgradeWorkspaceCanister: (principal) -> () oneway;
   walletReceive: () -> (record {accepted: nat64;});
   workspaceByUuid: (UUID) -> (Workspace);
   workspaces: (record {}) -> (PaginatedResults);

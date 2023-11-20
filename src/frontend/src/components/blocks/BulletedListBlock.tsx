@@ -1,7 +1,11 @@
 import { Flex } from '@mantine/core';
 import { useEffect, useMemo } from 'react';
 import { parse } from 'uuid';
+
 import { usePagesContext } from '@/contexts/blocks/usePagesContext';
+import { useSuccessHandlers } from '@/hooks/documents/hooks/useSuccessHandlers';
+import { Tree } from '@/modules/lseq';
+
 import { TextBlock } from './TextBlock';
 
 export const BulletedListBlock = ({
@@ -13,12 +17,13 @@ export const BulletedListBlock = ({
 }) => {
   const {
     addBlock,
-    blocks: { data, query },
-    insertCharacter,
-    removeCharacter,
+    blocks: { data, query, updateLocal },
   } = usePagesContext();
-
   const block = useMemo(() => data[externalId], [data, externalId]);
+  const { onInsertSuccess, onRemoveSuccess } = useSuccessHandlers({
+    block,
+    updateLocalBlock: updateLocal,
+  });
 
   useEffect(() => {
     query(parse(externalId));
@@ -45,9 +50,9 @@ export const BulletedListBlock = ({
         }}
       />
       <TextBlock
+        blockIndex={index}
         pageExternalId={parentExternalId}
         value={block.properties.title}
-        blockExternalId={block.uuid}
         blockType={block.blockType}
         onEnterPressed={() => {
           addBlock(parse(parentExternalId), block.blockType, index + 1);
@@ -62,10 +67,19 @@ export const BulletedListBlock = ({
           }, 50);
         }}
         onInsert={(cursorPosition, character) =>
-          insertCharacter(block.uuid, cursorPosition, character)
+          Tree.insertCharacter(
+            block.properties.title,
+            cursorPosition,
+            character,
+            onInsertSuccess
+          )
         }
         onRemove={(cursorPosition) =>
-          removeCharacter(block.uuid, cursorPosition)
+          Tree.removeCharacter(
+            block.properties.title,
+            cursorPosition,
+            onRemoveSuccess
+          )
         }
       />
     </Flex>

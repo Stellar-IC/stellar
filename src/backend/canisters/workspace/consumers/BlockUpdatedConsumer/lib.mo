@@ -22,17 +22,14 @@ import Tree "../../../../utils/data/lseq/Tree";
 import UpdateProperty "./UpdateProperty";
 
 module BlockUpdatedConsumer {
-    func _blockByUuid(state : State.State, uuid : UUID.UUID) : Result.Result<BlocksTypes.Block, { #blockNotFound }> {
+    type Block = BlocksTypes.Block;
+    type Block_v2 = BlocksTypes.Block_v2;
+
+    func _blockByUuid(state : State.State, uuid : UUID.UUID) : Result.Result<Block_v2, { #blockNotFound }> {
         state.data.getBlockByUuid(uuid);
     };
 
-    public func execute(event : BlocksTypes.BlockUpdatedEvent, state : State.State) : Result.Result<BlocksTypes.Block, { #blockNotFound; #insufficientCycles; #inputTooLong; #invalidBlockType; #failedToUpdate; #anonymousUser }> {
-        let blockExternalId = switch (event) {
-            case (#updateBlockType(event)) { event.data.blockExternalId };
-            case (#updatePropertyTitle(event)) { event.data.blockExternalId };
-            case (#updatePropertyChecked(event)) { event.data.blockExternalId };
-        };
-
+    public func execute(event : BlocksTypes.BlockUpdatedEvent, state : State.State) : Result.Result<Block_v2, { #blockNotFound; #insufficientCycles; #inputTooLong; #invalidBlockType; #failedToUpdate; #anonymousUser }> {
         switch (event) {
             case (#updateBlockType(event)) {
                 let blockExternalId = event.data.blockExternalId;
@@ -48,6 +45,33 @@ module BlockUpdatedConsumer {
                         return #ok(currentBlock);
                     };
                 };
+            };
+            case (#updateContent(event)) {
+                let blockExternalId = event.uuid;
+                let currentBlock = switch (_blockByUuid(state, blockExternalId)) {
+                    case (#err(#blockNotFound)) {
+                        Debug.print("Failed to update block. Block not found with uuid:" # UUID.toText(blockExternalId));
+                        return #err(#blockNotFound);
+                    };
+                    case (#ok(block)) { block };
+                };
+                for (event in Array.vals(event.data.transaction)) {
+                    switch (event) {
+                        case (#insert(event)) {
+                            ignore currentBlock.content.insert({
+                                identifier = event.position;
+                                value = event.value;
+                            });
+                        };
+                        case (#delete(event)) {
+                            currentBlock.content.deleteNode(
+                                event.position
+                            );
+                        };
+                    };
+                };
+
+                return #ok(currentBlock);
             };
             case (#updatePropertyTitle(event)) {
                 let blockExternalId = event.data.blockExternalId;

@@ -1,14 +1,14 @@
 import { Box } from '@mantine/core';
+import { useDisclosure } from '@mantine/hooks';
 import { createRef, useEffect, useMemo, useState } from 'react';
 import { parse } from 'uuid';
 
 import { usePagesContext } from '@/contexts/blocks/usePagesContext';
 import { Tree } from '@/modules/lseq';
 import { ExternalId } from '@/types';
-import { useDisclosure } from '@mantine/hooks';
 
 type TextBlockProps = {
-  blockExternalId: ExternalId;
+  blockIndex: number;
   blockType:
     | { paragraph: null }
     | { heading1: null }
@@ -30,8 +30,9 @@ type TextBlockProps = {
 };
 
 export const TextBlock = ({
+  blockIndex,
   blockType,
-  blockExternalId,
+  // blockExternalId,
   pageExternalId,
   placeholder,
   value,
@@ -123,7 +124,7 @@ export const TextBlock = ({
       className="TextBlock"
       pos="relative"
       w="100%"
-      style={{ border: '1px solid #fff', ...textStyles }}
+      style={{ ...textStyles }}
     >
       {placeholder && isShowingPlaceholder && (
         <Box
@@ -154,7 +155,9 @@ export const TextBlock = ({
           if (e.key === 'Backspace') {
             // If the block is empty, remove it
             if (pageExternalId && e.currentTarget.innerText === '') {
-              removeBlock(parse(pageExternalId), parse(blockExternalId));
+              // Note: We add 1 to the block index because the current functionality
+              // for removing a block is to remove the block before the given position.
+              removeBlock(parse(pageExternalId), blockIndex + 1);
               return false;
             }
 

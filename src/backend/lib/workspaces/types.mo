@@ -20,6 +20,17 @@ module {
             capacity : Nat;
             balance : Nat;
         };
+        getInitArgs() : async {
+            capacity : Nat;
+            owner : Principal;
+        };
+        getInitData() : async {
+            uuid : UUID.UUID;
+            name : WorkspaceName;
+            description : WorkspaceDescription;
+            createdAt : Time.Time;
+            updatedAt : Time.Time;
+        };
     };
 
     public type Workspace = {

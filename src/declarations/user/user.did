@@ -1,29 +1,33 @@
 type WorkspaceId = principal;
 type Username__1 = text;
 type Username = text;
-type UserProfile = record {
-  created_at : Time;
-  updatedAt : Time;
-  username : Username__1;
-};
-type User = service {
-  personalWorkspace : () -> (Result);
-  profile : () -> (UserProfile) query;
-  updateProfile : (ProfileInput) -> (UserProfile);
-  walletReceive : () -> (record { accepted : nat64 });
-};
+type UserProfile = 
+ record {
+   created_at: Time;
+   updatedAt: Time;
+   username: Username__1;
+ };
+type UserInitArgs = 
+ record {
+   capacity: nat;
+   owner: principal;
+ };
+type User = 
+ service {
+   personalWorkspace: () -> (Result);
+   profile: () -> (UserProfile) query;
+   updateProfile: (ProfileInput) -> (UserProfile);
+   upgradePersonalWorkspace: () -> () oneway;
+   walletReceive: () -> (record {accepted: nat64;});
+ };
 type Time = int;
-type Result = variant {
-  err : variant {
-    anonymousUser;
-    insufficientCycles;
-  };
-  ok : WorkspaceId;
-};
-type ProfileInput = record { username : Username };
-service : (
-  record {
-    capacity : nat;
-    owner : principal;
-  }
-) -> User;
+type Result = 
+ variant {
+   err: variant {
+          anonymousUser;
+          insufficientCycles;
+        };
+   ok: WorkspaceId;
+ };
+type ProfileInput = record {username: Username;};
+service : (UserInitArgs) -> User

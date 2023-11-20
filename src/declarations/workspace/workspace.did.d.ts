@@ -2,7 +2,7 @@ import type { Principal } from '@dfinity/principal';
 import type { ActorMethod } from '@dfinity/agent';
 
 export interface AddBlockUpdateInput {
-  'content' : BlockContent,
+  'content' : ShareableBlockContent,
   'uuid' : UUID,
   'blockType' : BlockType,
   'properties' : ShareableBlockProperties,
@@ -14,7 +14,11 @@ export type AddBlockUpdateOutputError = null;
 export interface AddBlockUpdateOutputResult { 'id' : PrimaryKey__2 }
 export type AllocationStrategy = { 'boundaryPlus' : null } |
   { 'boundaryMinus' : null };
-export type BlockContent = Array<UUID>;
+export interface BlockContentUpdatedEvent {
+  'data' : { 'transaction' : Array<TreeEvent> },
+  'user' : Principal,
+  'uuid' : UUID,
+}
 export interface BlockCreatedEvent {
   'data' : {
     'block' : {
@@ -32,8 +36,18 @@ export type BlockEvent = { 'blockRemoved' : BlockRemovedEvent } |
   { 'empty' : null } |
   { 'blockUpdated' : BlockUpdatedEvent };
 export type BlockEventTransaction = Array<BlockEvent>;
+export interface BlockProperyCheckedUpdatedEvent {
+  'data' : { 'checked' : boolean, 'blockExternalId' : UUID },
+  'user' : Principal,
+  'uuid' : UUID,
+}
+export interface BlockProperyTitleUpdatedEvent {
+  'data' : { 'transaction' : Array<TreeEvent>, 'blockExternalId' : UUID },
+  'user' : Principal,
+  'uuid' : UUID,
+}
 export interface BlockRemovedEvent {
-  'data' : { 'blockExternalId' : UUID, 'parent' : UUID },
+  'data' : { 'block' : { 'uuid' : UUID, 'parent' : UUID }, 'index' : bigint },
   'user' : Principal,
   'uuid' : UUID,
 }
@@ -52,22 +66,19 @@ export type BlockType = { 'numberedList' : null } |
   { 'bulletedList' : null } |
   { 'paragraph' : null } |
   { 'toggleList' : null };
+export interface BlockTypeUpdatedEvent {
+  'data' : { 'blockType' : BlockType, 'blockExternalId' : UUID },
+  'user' : Principal,
+  'uuid' : UUID,
+}
 export type BlockUpdatedEvent = {
-    'updateBlockType' : {
-      'data' : { 'blockType' : BlockType, 'blockExternalId' : UUID },
-      'user' : Principal,
-      'uuid' : UUID,
-    }
+    'updatePropertyChecked' : BlockProperyCheckedUpdatedEvent
   } |
-  {
-    'updatePropertyTitle' : {
-      'data' : { 'event' : TreeEvent, 'blockExternalId' : UUID },
-      'user' : Principal,
-      'uuid' : UUID,
-    }
-  };
+  { 'updateBlockType' : BlockTypeUpdatedEvent } |
+  { 'updateContent' : BlockContentUpdatedEvent } |
+  { 'updatePropertyTitle' : BlockProperyTitleUpdatedEvent };
 export interface CreatePageUpdateInput {
-  'content' : BlockContent,
+  'content' : ShareableBlockContent,
   'uuid' : UUID,
   'properties' : ShareableBlockProperties__1,
   'parent' : [] | [UUID],
@@ -81,13 +92,13 @@ export type CreatePageUpdateOutputError = { 'failedToCreate' : null } |
   { 'inputTooLong' : null };
 export interface CreatePageUpdateOutputResult {
   'id' : PrimaryKey,
-  'content' : BlockContent,
+  'content' : ShareableBlockContent,
   'uuid' : UUID,
   'blockType' : BlockType,
   'properties' : ShareableBlockProperties,
   'parent' : [] | [UUID],
 }
-export interface Edge { 'node' : ShareableBlock }
+export interface Edge { 'node' : ShareableBlock_v2 }
 export type NodeBase = number;
 export type NodeBoundary = number;
 export type NodeDepth = number;
@@ -103,9 +114,9 @@ export type RemoveBlockUpdateOutput = { 'ok' : RemoveBlockUpdateOutputResult } |
   { 'err' : RemoveBlockUpdateOutputError };
 export type RemoveBlockUpdateOutputError = null;
 export type RemoveBlockUpdateOutputResult = null;
-export type Result = { 'ok' : ShareableBlock } |
+export type Result = { 'ok' : ShareableBlock_v2 } |
   { 'err' : { 'pageNotFound' : null } };
-export type Result_1 = { 'ok' : ShareableBlock } |
+export type Result_1 = { 'ok' : ShareableBlock_v2 } |
   { 'err' : { 'blockNotFound' : null } };
 export interface SaveEventTransactionUpdateInput {
   'transaction' : BlockEventTransaction,
@@ -117,13 +128,10 @@ export type SaveEventTransactionUpdateOutput = {
 export type SaveEventTransactionUpdateOutputError = { 'anonymousUser' : null } |
   { 'insufficientCycles' : null };
 export type SaveEventTransactionUpdateOutputResult = null;
-export interface ShareableBlock {
-  'id' : PrimaryKey,
-  'content' : BlockContent,
-  'uuid' : UUID,
-  'blockType' : BlockType,
-  'properties' : ShareableBlockProperties,
-  'parent' : [] | [UUID],
+export interface ShareableBlockContent {
+  'boundary' : NodeBoundary,
+  'allocationStrategies' : Array<[NodeDepth, AllocationStrategy]>,
+  'rootNode' : ShareableNode,
 }
 export interface ShareableBlockProperties {
   'title' : [] | [ShareableBlockText],
@@ -137,6 +145,14 @@ export interface ShareableBlockText {
   'boundary' : NodeBoundary,
   'allocationStrategies' : Array<[NodeDepth, AllocationStrategy]>,
   'rootNode' : ShareableNode,
+}
+export interface ShareableBlock_v2 {
+  'id' : PrimaryKey,
+  'content' : ShareableBlockContent,
+  'uuid' : UUID,
+  'blockType' : BlockType,
+  'properties' : ShareableBlockProperties,
+  'parent' : [] | [UUID],
 }
 export interface ShareableNode {
   'value' : NodeValue,
@@ -165,7 +181,7 @@ export type TreeEvent = {
 export type UUID = Uint8Array | number[];
 export interface UpdateBlockUpdateInput {
   'id' : PrimaryKey,
-  'content' : BlockContent,
+  'content' : ShareableBlockContent,
   'uuid' : UUID,
   'blockType' : BlockType,
   'properties' : ShareableBlockProperties,
@@ -176,7 +192,7 @@ export type UpdateBlockUpdateOutput = { 'ok' : UpdateBlockUpdateOutputResult } |
 export type UpdateBlockUpdateOutputError = { 'primaryKeyAttrNotFound' : null };
 export interface UpdateBlockUpdateOutputResult {
   'id' : PrimaryKey,
-  'content' : BlockContent,
+  'content' : ShareableBlockContent,
   'uuid' : UUID,
   'blockType' : BlockType,
   'properties' : ShareableBlockProperties,
@@ -228,6 +244,14 @@ export interface Workspace {
   'walletReceive' : ActorMethod<[], { 'accepted' : bigint }>,
 }
 export type WorkspaceDescription = string;
+export interface WorkspaceInitArgs { 'owner' : Principal, 'capacity' : bigint }
+export interface WorkspaceInitData {
+  'name' : WorkspaceName,
+  'createdAt' : Time,
+  'uuid' : UUID,
+  'description' : WorkspaceDescription,
+  'updatedAt' : Time,
+}
 export type WorkspaceName = string;
 export type WorkspaceOwner = Principal;
 export interface Workspace__1 {

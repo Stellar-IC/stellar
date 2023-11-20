@@ -30,7 +30,6 @@ export interface _SERVICE {
     { 'balance' : bigint, 'capacity' : bigint }
   >,
   'requestCycles' : ActorMethod<[bigint], { 'accepted' : bigint }>,
-  'upgradeWorkspaceCanister' : ActorMethod<[Principal], undefined>,
   'walletReceive' : ActorMethod<[], { 'accepted' : bigint }>,
   'workspaceByUuid' : ActorMethod<[UUID], Workspace>,
   'workspaces' : ActorMethod<[{}], PaginatedResults>,

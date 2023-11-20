@@ -7,7 +7,7 @@ import { Tree } from '@/modules/lseq';
 import { ExternalId } from '@/types';
 
 type HeadingBlockProps = {
-  blockExternalId: ExternalId;
+  blockIndex: number;
   blockType: { heading1: null } | { heading2: null } | { heading3: null };
   pageExternalId?: ExternalId;
   value: Tree.Tree;
@@ -18,7 +18,7 @@ type HeadingBlockProps = {
 
 export const HeadingBlock = ({
   blockType,
-  blockExternalId,
+  blockIndex,
   pageExternalId,
   value,
   onEnterPressed,
@@ -73,7 +73,9 @@ export const HeadingBlock = ({
           }
           if (e.key === 'Backspace') {
             if (pageExternalId && e.currentTarget.innerText === '') {
-              removeBlock(parse(pageExternalId), parse(blockExternalId));
+              // Note: We add 1 to the block index because the current functionality
+              // for removing a block is to remove the block before the given position.
+              removeBlock(parse(pageExternalId), blockIndex + 1);
               return false;
             }
             const cursorPosition = window.getSelection()?.anchorOffset;

@@ -53,7 +53,7 @@ describe('profile', () => {
   let workspaceId: Principal;
 
   beforeAll(async () => {
-    console.log({ userIndexCanisterId, workspaceIndexCanisterId });
+    // console.log({ userIndexCanisterId, workspaceIndexCanisterId });
     userIndex = createActorUserIndex(userIndexCanisterId, {
       agentOptions: {
         host: 'http://localhost:5173',

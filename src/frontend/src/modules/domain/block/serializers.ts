@@ -6,7 +6,7 @@ import { Block, LocalStorageBlock } from '@/types';
 
 import {
   NodeBoundary,
-  ShareableBlock,
+  ShareableBlock_v2 as ShareableBlock,
   ShareableBlockText,
   ShareableNode,
 } from '../../../../../declarations/workspace/workspace.did';
@@ -65,7 +65,7 @@ export function serializeBlock(
           ? block.properties.checked[0]
           : null,
     },
-    content: block.content.map((blockExternalId) => stringify(blockExternalId)),
+    content: treefromShareable(block.content),
     parent: parent ? stringify(parent) : null,
   };
 }
@@ -91,6 +91,14 @@ export function fromLocalStorage(block: LocalStorageBlock): Block {
 
   return {
     ...block,
+    content: new Tree.Tree({
+      allocationStrategies: new Map(),
+      boundary: block.content.boundary,
+      rootNode: new Node.Node(
+        block.content.rootNode.identifier,
+        block.content.rootNode.value
+      ),
+    }),
     properties: {
       ...block.properties,
       title: new Tree.Tree({

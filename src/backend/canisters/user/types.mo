@@ -1,3 +1,6 @@
+import Time "mo:base/Time";
+import UUID "mo:uuid/UUID";
+
 import CoreTypes "../../types";
 
 module {
@@ -13,6 +16,17 @@ module {
         };
         walletReceive : () -> async {
             accepted : Nat64;
+        };
+        getInitArgs() : async {
+            capacity : Nat;
+            owner : Principal;
+        };
+        getInitData() : async {
+            uuid : UUID.UUID;
+            name : CoreTypes.Workspaces.WorkspaceName;
+            description : CoreTypes.Workspaces.WorkspaceDescription;
+            createdAt : Time.Time;
+            updatedAt : Time.Time;
         };
     };
 };

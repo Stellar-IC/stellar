@@ -398,16 +398,21 @@ module Tree {
         identifierA : NodeIdentifier.Identifier,
         identifierB : NodeIdentifier.Identifier,
     ) : NodeIdentifier.Identifier {
+        Debug.print("Getting available identifier between " # debug_show identifierA.value # " and " # debug_show identifierB.value);
         var newIdentifier = getIdentifierBetween(tree, identifierA, identifierB);
         let maxLoopCount = 20;
         var loopCounter = 0;
 
+        Debug.print("New identifier: " # debug_show newIdentifier.value);
+
         while (checkNodeAvailable(tree, newIdentifier) == false) {
             if (loopCounter == maxLoopCount) {
+                Debug.print("Unable to find available node identifier");
                 Debug.trap("Unable to find available node identifier");
             };
 
             newIdentifier := getIdentifierBetween(tree, newIdentifier, identifierB);
+            Debug.print("New identifier: " # debug_show newIdentifier.value);
             loopCounter += 1;
         };
 
@@ -422,6 +427,7 @@ module Tree {
         nodeToDelete : ?Node.Node;
         replacementNode : ?Node.Node;
     } {
+        Debug.print("Building nodes for front insert");
         let rootNodeHasChildren = Node.hasChildren(tree.rootNode);
 
         if (rootNodeHasChildren == false) {
@@ -430,6 +436,8 @@ module Tree {
                 getAvailableIdentifierBetween(tree, NodeIdentifier.Identifier(START_NODE_IDENTIFIER), NodeIdentifier.Identifier(END_NODE_IDENTIFIER)),
                 character,
             );
+            Debug.print("Root node has no children, insert the character as the first child");
+            Debug.print("New node identifier: " # debug_show newNode.identifier.value);
 
             return {
                 node = newNode;
@@ -437,6 +445,8 @@ module Tree {
                 replacementNode = null;
             };
         };
+
+        Debug.print("Root node has children");
 
         let firstNode = getNodeAtPosition(tree, 0);
         let firstNodeIdenfier = firstNode.identifier;
@@ -601,6 +611,7 @@ module Tree {
         deletedNode : ?Node.Node;
         replacementNode : ?Node.Node;
     } {
+        Debug.print("Inserting character at start");
         let { node; nodeToDelete; replacementNode } = buildNodesForFrontInsert(
             tree,
             character,
@@ -709,14 +720,13 @@ module Tree {
         let nodeAPrefix = Node.prefix(nodeAIdentifier, depth);
         let nodeBPrefix = Node.prefix(nodeBIdentifier, depth);
         let step = _calculateStep(tree, nodeAPrefix, nodeBPrefix);
+        Debug.print("Step: " # debug_show step);
 
-        let allocationStrategy = tree.allocationStrategies.get(depth);
+        let allocationStrategy = tree.allocationStrategy(depth);
 
         switch (allocationStrategy) {
-            case (null) {
-                Debug.trap("No allocation strategy found for depth" # debug_show depth);
-            };
-            case (? #boundaryPlus) {
+            case (#boundaryPlus) {
+                Debug.print("Allocation strategy: boundary plus");
                 let idIndexToUpdate : Nat = Nat16.toNat(depth) - 1;
                 let identifier = Array.mapEntries<NodeIndex, NodeIndex>(
                     nodeAPrefix,
@@ -726,9 +736,13 @@ module Tree {
                     },
                 );
 
-                return NodeIdentifier.Identifier(nodeAPrefix);
+                Debug.print("Identifier: " # debug_show identifier);
+                Debug.print("Node A prefix: " # debug_show nodeAPrefix);
+
+                return NodeIdentifier.Identifier(identifier);
             };
-            case (? #boundaryMinus) {
+            case (#boundaryMinus) {
+                Debug.print("Allocation strategy: boundary minus");
                 return NodeIdentifier.subtract(NodeIdentifier.Identifier(nodeBPrefix), step);
             };
         };
@@ -740,6 +754,7 @@ module Tree {
         tree : Tree,
         position : Nat,
     ) : Node.Node {
+        Debug.print("Getting node at position " # debug_show position);
         var counter = 0;
         let shouldSkipDeleted = true;
 

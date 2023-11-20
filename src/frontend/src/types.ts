@@ -14,7 +14,7 @@ export type LocalBlockProperties = {
 export type LocalStorageBlock = {
   id: string;
   uuid: ExternalId;
-  content: ExternalId[];
+  content: Lseq.Tree.Tree;
   blockType: BlockType;
   properties: {
     title: Lseq.Tree.Tree;
@@ -26,7 +26,7 @@ export type LocalStorageBlock = {
 export type Block = {
   id: string;
   uuid: ExternalId;
-  content: ExternalId[];
+  content: Lseq.Tree.Tree;
   blockType: BlockType;
   properties: LocalBlockProperties;
   parent?: ExternalId | null;
@@ -35,7 +35,7 @@ export type Block = {
 export type LocalStoragePage = {
   id: string;
   uuid: string;
-  content: ExternalId[];
+  content: Lseq.Tree.Tree;
   blockType: BlockType;
   properties: LocalBlockProperties;
   parent?: ExternalId | null;
@@ -44,7 +44,7 @@ export type LocalStoragePage = {
 export type Page = {
   id: string;
   uuid: ExternalId;
-  content: ExternalId[];
+  content: Lseq.Tree.Tree;
   blockType: BlockType;
   properties: LocalBlockProperties;
   parent?: ExternalId | null;

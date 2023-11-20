@@ -1,7 +1,11 @@
 import { Checkbox, Flex } from '@mantine/core';
 import { useEffect, useMemo } from 'react';
 import { parse } from 'uuid';
+
 import { usePagesContext } from '@/contexts/blocks/usePagesContext';
+import { useSuccessHandlers } from '@/hooks/documents/hooks/useSuccessHandlers';
+import { Tree } from '@/modules/lseq';
+
 import { TextBlock } from './TextBlock';
 
 export const TodoListBlock = ({
@@ -13,12 +17,14 @@ export const TodoListBlock = ({
 }) => {
   const {
     addBlock,
-    blocks: { data, query },
-    insertCharacter,
-    removeCharacter,
+    updateBlock,
+    blocks: { data, query, updateLocal },
   } = usePagesContext();
-
   const block = useMemo(() => data[externalId], [data, externalId]);
+  const { onInsertSuccess, onRemoveSuccess } = useSuccessHandlers({
+    block,
+    updateLocalBlock: updateLocal,
+  });
 
   useEffect(() => {
     query(parse(externalId));
@@ -32,13 +38,31 @@ export const TodoListBlock = ({
     throw new Error('Expected todoList block');
   }
 
+  const parsedExternalId = parse(externalId);
+
   return (
     <Flex>
-      <Checkbox mt="4px" mx="md" />
+      <Checkbox
+        mt="4px"
+        mx="md"
+        onChange={(e) => {
+          updateBlock(parsedExternalId, {
+            updateProperty: {
+              checked: {
+                data: {
+                  checked: e.target.checked,
+                  blockExternalId: parsedExternalId,
+                },
+              },
+            },
+          });
+        }}
+        checked={Boolean(block.properties.checked)}
+      />
       <TextBlock
+        blockIndex={index}
         pageExternalId={parentExternalId}
         value={block.properties.title}
-        blockExternalId={block.uuid}
         blockType={block.blockType}
         onEnterPressed={() => {
           addBlock(parse(parentExternalId), block.blockType, index + 1);
@@ -53,10 +77,19 @@ export const TodoListBlock = ({
           }, 50);
         }}
         onInsert={(cursorPosition, character) =>
-          insertCharacter(block.uuid, cursorPosition, character)
+          Tree.insertCharacter(
+            block.properties.title,
+            cursorPosition,
+            character,
+            onInsertSuccess
+          )
         }
         onRemove={(cursorPosition) =>
-          removeCharacter(block.uuid, cursorPosition)
+          Tree.removeCharacter(
+            block.properties.title,
+            cursorPosition,
+            onRemoveSuccess
+          )
         }
       />
     </Flex>

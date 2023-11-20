@@ -8,6 +8,7 @@ import {
   UUID,
 } from '../../../../declarations/workspace/workspace.did';
 
+// eslint-disable-next-line no-spaced-func
 export const PagesContext = createContext<{
   pages: {
     data: Record<string, Page>;
@@ -20,9 +21,8 @@ export const PagesContext = createContext<{
     updateLocal: (externalId: string, updatedData: Block) => void;
   };
   addBlock: (pageExternalId: UUID, blockType: BlockType, index: number) => void;
-  removeBlock: (pageExternalId: UUID, blockExternalId: UUID) => void;
+  removeBlock: (pageExternalId: UUID, index: number) => void;
   updateBlock: (
-    pageExternalId: UUID,
     blockExternalId: UUID,
     event:
       | {
@@ -31,15 +31,23 @@ export const PagesContext = createContext<{
           };
         }
       | {
-          updatePropertyTitle: {
-            data: { event: TreeEvent; blockExternalId: UUID };
-          };
+          updateProperty:
+            | {
+                title: {
+                  data: { transaction: TreeEvent[]; blockExternalId: UUID };
+                };
+              }
+            | {
+                checked: {
+                  data: { checked: boolean; blockExternalId: UUID };
+                };
+              };
         }
   ) => void;
-  insertCharacter: (
-    blockExternalId: string,
-    position: number,
-    character: string
-  ) => Promise<void>;
-  removeCharacter: (blockExternalId: string, position: number) => Promise<void>;
+  //   insertCharacter: (
+  //     blockExternalId: string,
+  //     position: number,
+  //     character: string
+  //   ) => Promise<void>;
+  //   removeCharacter: (blockExternalId: string, position: number) => Promise<void>;
 } | null>(null);
