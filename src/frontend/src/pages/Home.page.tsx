@@ -5,10 +5,10 @@ import { useNavigate } from 'react-router-dom';
 import { useCallback, useEffect, useState } from 'react';
 import { stringify } from 'uuid';
 import { useWorkspaceContext } from '@/contexts/WorkspaceContext/useWorkspaceContext';
-import { toText } from '@/modules/lseq/Tree';
+import { toText } from '@myklenero/stellar-lseq-typescript/Tree';
 import { fromShareable } from '@/modules/domain/block/serializers';
-import { DEFAULT_BOUNDARY } from '@/modules/lseq/constants';
-import { base } from '@/modules/lseq/utils';
+import { DEFAULT_BOUNDARY } from '@myklenero/stellar-lseq-typescript/constants';
+import { base } from '@myklenero/stellar-lseq-typescript/utils';
 import { Edge } from '../../../declarations/workspace/workspace.did';
 
 function WorkspaceContent() {

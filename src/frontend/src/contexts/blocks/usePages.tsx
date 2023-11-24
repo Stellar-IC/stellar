@@ -17,7 +17,7 @@ import {
   LocalStorageBlock,
 } from '@/types';
 
-import { Tree } from '@/modules/lseq';
+import { Tree } from '@myklenero/stellar-lseq-typescript';
 
 import {
   BlockEvent,

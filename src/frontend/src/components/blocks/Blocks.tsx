@@ -4,7 +4,7 @@ import { parse } from 'uuid';
 
 import { usePagesContext } from '@/contexts/blocks/usePagesContext';
 import { useSuccessHandlers } from '@/hooks/documents/hooks/useSuccessHandlers';
-import { Tree } from '@/modules/lseq';
+import { Tree } from '@myklenero/stellar-lseq-typescript';
 import { Page } from '@/types';
 
 import { BlockWithActions } from './BlockWithActions';

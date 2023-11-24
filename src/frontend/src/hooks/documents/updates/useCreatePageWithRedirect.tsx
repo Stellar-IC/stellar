@@ -4,8 +4,8 @@ import { useNavigate } from 'react-router-dom';
 import { useCallback } from 'react';
 import { stringify } from 'uuid';
 import { useWorkspaceContext } from '@/contexts/WorkspaceContext/useWorkspaceContext';
-import { DEFAULT_BOUNDARY } from '@/modules/lseq/constants';
-import { base } from '@/modules/lseq/utils';
+import { DEFAULT_BOUNDARY } from '@myklenero/stellar-lseq-typescript/constants';
+import { base } from '@myklenero/stellar-lseq-typescript/utils';
 
 export function useCreatePageWithRedirect() {
   const navigate = useNavigate();

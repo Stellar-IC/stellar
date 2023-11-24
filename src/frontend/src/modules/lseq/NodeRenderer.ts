@@ -1,4 +1,4 @@
-import * as Node from './Node';
+import { Node } from '@myklenero/stellar-lseq-typescript';
 
 export class NodeRenderer {
   private ctx: CanvasRenderingContext2D;
@@ -23,7 +23,6 @@ export class NodeRenderer {
 
   render() {
     const nodeIdentifier = this.node.identifier.value.join('.');
-    const textLength = this.ctx.measureText(nodeIdentifier);
     let radius = 6 / 1.5;
     const lineHeight = 16;
 

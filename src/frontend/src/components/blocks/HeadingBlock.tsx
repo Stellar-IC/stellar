@@ -3,7 +3,7 @@ import { createRef, useEffect, useMemo, useState } from 'react';
 import { parse } from 'uuid';
 
 import { usePagesContext } from '@/contexts/blocks/usePagesContext';
-import { Tree } from '@/modules/lseq';
+import { Tree } from '@myklenero/stellar-lseq-typescript';
 import { ExternalId } from '@/types';
 
 type HeadingBlockProps = {

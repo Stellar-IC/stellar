@@ -4,7 +4,7 @@ import { parse } from 'uuid';
 
 import { usePagesContext } from '@/contexts/blocks/usePagesContext';
 import { useSuccessHandlers } from '@/hooks/documents/hooks/useSuccessHandlers';
-import { Tree } from '@/modules/lseq';
+import { Tree } from '@myklenero/stellar-lseq-typescript';
 
 import { TextBlock } from './TextBlock';
 
@@ -60,6 +60,7 @@ export const TodoListBlock = ({
         checked={Boolean(block.properties.checked)}
       />
       <TextBlock
+        blockExternalId={block.uuid}
         blockIndex={index}
         pageExternalId={parentExternalId}
         value={block.properties.title}

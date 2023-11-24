@@ -3,7 +3,7 @@ import { usePages } from '@/contexts/blocks/usePages';
 import { useAuthContext } from '@/modules/auth/contexts/AuthContext';
 
 import { parse, stringify, v4 } from 'uuid';
-import { Tree } from '@/modules/lseq';
+import { Tree } from '@myklenero/stellar-lseq-typescript';
 import { PagesContext } from './PagesContext';
 import { useWorkspaceContext } from '../WorkspaceContext/useWorkspaceContext';
 
@@ -100,6 +100,26 @@ export function PagesContextProvider({ children }: PropsWithChildren<{}>) {
               blockUpdated: {
                 updateBlockType: {
                   ...event.updateBlockType,
+                  user: identity.getPrincipal(),
+                  uuid: blockExternalId,
+                },
+              },
+            });
+          } else if ('updateParent' in event) {
+            handleBlockEvent(blockExternalId, {
+              blockUpdated: {
+                updateParent: {
+                  ...event.updateParent,
+                  user: identity.getPrincipal(),
+                  uuid: blockExternalId,
+                },
+              },
+            });
+          } else if ('updateContent' in event) {
+            handleBlockEvent(blockExternalId, {
+              blockUpdated: {
+                updateContent: {
+                  ...event.updateContent,
                   user: identity.getPrincipal(),
                   uuid: blockExternalId,
                 },

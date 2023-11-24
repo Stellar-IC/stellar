@@ -1,8 +1,8 @@
 import { useCallback, useState } from 'react';
 import { serializeBlock } from '@/modules/domain/block/serializers';
 import { Block } from '@/types';
-import { DEFAULT_BOUNDARY } from '@/modules/lseq/constants';
-import { base } from '@/modules/lseq/utils';
+import { DEFAULT_BOUNDARY } from '@myklenero/stellar-lseq-typescript/constants';
+import { base } from '@myklenero/stellar-lseq-typescript/utils';
 import { BlockEvent } from '../../../../declarations/workspace/workspace.did';
 
 type SerializedBlockEvent = {

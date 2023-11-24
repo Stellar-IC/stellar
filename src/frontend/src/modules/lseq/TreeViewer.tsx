@@ -1,8 +1,8 @@
 import { Box } from '@mantine/core';
 import { createRef, useEffect, useMemo } from 'react';
 
+import { Node, Tree } from '@myklenero/stellar-lseq-typescript';
 import { NodeRenderer } from './NodeRenderer';
-import { Node, Tree } from '.';
 
 type TreeViewerProps = {
   tree: Tree.Tree;
@@ -30,7 +30,7 @@ export const TreeViewer = ({ tree }: TreeViewerProps) => {
 
           if (rootNode.children.size === 0) return final;
 
-          for (let i = 0; i < rootNode.base; i++) {
+          for (let i = 0; i < rootNode.base; i += 1) {
             const childNode = rootNode.children.get(i);
             if (!childNode) continue;
             final = [...final, ...buildNodes(childNode)];

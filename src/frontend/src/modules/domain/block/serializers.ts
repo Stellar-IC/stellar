@@ -1,7 +1,7 @@
 import { stringify } from 'uuid';
-import { Node, Tree } from '@/modules/lseq';
-import { DEFAULT_BOUNDARY } from '@/modules/lseq/constants';
-import * as Identifier from '@/modules/lseq/identifier';
+import { Node, Tree } from '@myklenero/stellar-lseq-typescript';
+import { DEFAULT_BOUNDARY } from '@myklenero/stellar-lseq-typescript/constants';
+import * as Identifier from '@myklenero/stellar-lseq-typescript/identifier';
 import { Block, LocalStorageBlock } from '@/types';
 
 import {
