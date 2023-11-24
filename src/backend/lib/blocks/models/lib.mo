@@ -176,7 +176,7 @@ module Models {
                     return {
                         id = pk;
                         var blockType = obj.blockType;
-                        parent = obj.parent;
+                        var parent = obj.parent;
                         content = obj.content;
                         properties = obj.properties;
                         uuid = obj.uuid;
@@ -227,6 +227,7 @@ module Models {
                 input with properties = properties;
                 content = content;
                 var blockType = input.blockType;
+                var parent = input.parent;
             };
         };
 
@@ -247,6 +248,7 @@ module Models {
                 input with properties = properties;
                 content = content;
                 var blockType = input.blockType;
+                var parent = input.parent;
             };
         };
 
@@ -269,6 +271,7 @@ module Models {
                 input with properties = shareableProperties;
                 content = shareableContent;
                 blockType = input.blockType;
+                parent = input.parent;
             };
         };
 

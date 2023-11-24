@@ -19,6 +19,7 @@ import Types "../../types";
 import BlocksTypes "../../../../lib/blocks/types";
 import Tree "../../../../utils/data/lseq/Tree";
 
+import UpdateParent "./UpdateParent";
 import UpdateProperty "./UpdateProperty";
 
 module BlockUpdatedConsumer {
@@ -31,6 +32,21 @@ module BlockUpdatedConsumer {
 
     public func execute(event : BlocksTypes.BlockUpdatedEvent, state : State.State) : Result.Result<Block_v2, { #blockNotFound; #insufficientCycles; #inputTooLong; #invalidBlockType; #failedToUpdate; #anonymousUser }> {
         switch (event) {
+            case (#updateParent(event)) {
+                let blockExternalId = event.data.blockExternalId;
+                let currentBlock = _blockByUuid(state, blockExternalId);
+
+                switch (currentBlock) {
+                    case (#err(#blockNotFound)) {
+                        Debug.print("Failed to update block. Block not found with uuid:" # UUID.toText(blockExternalId));
+                        return #err(#blockNotFound);
+                    };
+                    case (#ok(currentBlock)) {
+                        UpdateParent.execute(event, currentBlock);
+                        return #ok(currentBlock);
+                    };
+                };
+            };
             case (#updateBlockType(event)) {
                 let blockExternalId = event.data.blockExternalId;
                 let currentBlock = _blockByUuid(state, blockExternalId);

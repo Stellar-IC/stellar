@@ -50,6 +50,7 @@ export const BulletedListBlock = ({
         }}
       />
       <TextBlock
+        blockExternalId={block.uuid}
         blockIndex={index}
         pageExternalId={parentExternalId}
         value={block.properties.title}

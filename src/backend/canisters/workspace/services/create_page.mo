@@ -42,7 +42,7 @@ module {
                 title = ?Tree.Tree(null);
                 var checked = ?false;
             };
-            parent = ?input.uuid;
+            var parent = ?input.uuid;
         };
 
         let contentForNewPage = Tree.Tree(null);
@@ -66,7 +66,7 @@ module {
                 );
                 var checked = input.properties.checked;
             };
-            parent = input.parent;
+            var parent = input.parent;
         };
 
         let validation = _validate(pageToCreate);
@@ -100,6 +100,7 @@ module {
                     block with properties = shareableProperties;
                     content = shareableContent;
                     blockType = block.blockType;
+                    parent = block.parent;
                 });
             };
             case (#err(#keyAlreadyExists)) {

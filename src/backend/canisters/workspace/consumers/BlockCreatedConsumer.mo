@@ -28,7 +28,7 @@ module BlockCreatedConsumer {
                 uuid = event.data.block.uuid;
                 var blockType = event.data.block.blockType;
                 content = Tree.Tree(null);
-                parent = event.data.block.parent;
+                var parent = event.data.block.parent;
                 properties = {
                     title = ?Tree.Tree(null);
                     var checked = ?false;

@@ -36,6 +36,11 @@ export type BlockEvent = { 'blockRemoved' : BlockRemovedEvent } |
   { 'empty' : null } |
   { 'blockUpdated' : BlockUpdatedEvent };
 export type BlockEventTransaction = Array<BlockEvent>;
+export interface BlockParentUpdatedEvent {
+  'data' : { 'parentBlockExternalId' : UUID, 'blockExternalId' : UUID },
+  'user' : Principal,
+  'uuid' : UUID,
+}
 export interface BlockProperyCheckedUpdatedEvent {
   'data' : { 'checked' : boolean, 'blockExternalId' : UUID },
   'user' : Principal,
@@ -76,6 +81,7 @@ export type BlockUpdatedEvent = {
   } |
   { 'updateBlockType' : BlockTypeUpdatedEvent } |
   { 'updateContent' : BlockContentUpdatedEvent } |
+  { 'updateParent' : BlockParentUpdatedEvent } |
   { 'updatePropertyTitle' : BlockProperyTitleUpdatedEvent };
 export interface CreatePageUpdateInput {
   'content' : ShareableBlockContent,

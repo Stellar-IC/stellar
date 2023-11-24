@@ -21,6 +21,7 @@ type TextBlockProps = {
     | { code: null }
     | { quote: null }
     | { callout: null };
+  blockExternalId: ExternalId;
   pageExternalId?: ExternalId;
   placeholder?: string;
   value: Tree.Tree;
@@ -32,7 +33,7 @@ type TextBlockProps = {
 export const TextBlock = ({
   blockIndex,
   blockType,
-  // blockExternalId,
+  blockExternalId,
   pageExternalId,
   placeholder,
   value,
@@ -40,7 +41,12 @@ export const TextBlock = ({
   onInsert,
   onRemove,
 }: TextBlockProps) => {
-  const { removeBlock } = usePagesContext();
+  const {
+    pages: { data: pages },
+    blocks: { data: blocks, updateLocal: updateLocalBlock },
+    removeBlock,
+    updateBlock,
+  } = usePagesContext();
   const [initialText] = useState(Tree.toText(value));
   const [
     isShowingPlaceholder,
@@ -98,26 +104,7 @@ export const TextBlock = ({
     textBoxRef.current.innerText = initialText;
   }, [initialText, textBoxRef]);
 
-  // useEffect(() => {
-  //   const interval = setInterval(() => {
-  //     if (!textBoxRef.current) return;
-  //     if (textBoxRef.current.innerText !== '' && isShowingPlaceholder) {
-  //       hidePlaceholder();
-  //     } else if (textBoxRef.current.innerText === '' && !isShowingPlaceholder) {
-  //       showPlaceholder();
-  //     }
-  //   }, 0);
-
-  //   return () => {
-  //     clearInterval(interval);
-  //   };
-  // }, [
-  //   initialText,
-  //   textBoxRef,
-  //   isShowingPlaceholder,
-  //   hidePlaceholder,
-  //   showPlaceholder,
-  // ]);
+  const parentBlock = pageExternalId ? pages[pageExternalId] : null;
 
   return (
     <Box
@@ -152,6 +139,100 @@ export const TextBlock = ({
             onEnterPressed();
             return false;
           }
+          if (e.key === 'Tab') {
+            console.log('tab');
+            e.preventDefault();
+
+            // Change the parent block of the current block
+            if (blockIndex === 0) {
+              // If the block is the first block, do nothing
+              return false;
+            }
+
+            if (!parentBlock) return false;
+
+            // Find the previous block
+            const previousBlockExternalId = Tree.getNodeAtPosition(
+              parentBlock.content,
+              blockIndex - 1
+            )?.value;
+            const previousBlock = blocks[previousBlockExternalId];
+            if (!previousBlock) return false;
+
+            console.log('previousBlockExternalId', previousBlockExternalId);
+
+            const blockToMove = blocks[blockExternalId];
+            if (!blockToMove) return false;
+
+            // Update the block's parent on chain
+            updateBlock(parse(blockExternalId), {
+              updateParent: {
+                data: {
+                  blockExternalId: parse(blockExternalId),
+                  parentBlockExternalId: parse(previousBlockExternalId),
+                },
+              },
+            });
+
+            // Update the previous block's content to include the new block
+            updateBlock(parse(previousBlockExternalId), {
+              updateContent: {
+                data: {
+                  blockExternalId: parse(previousBlockExternalId),
+                  transaction: [
+                    {
+                      insert: {
+                        transactionType: { insert: null },
+                        position: Tree.buildNodeForEndInsert(
+                          previousBlock.content,
+                          blockToMove.uuid
+                        ).identifier.value,
+                        value: blockToMove.uuid,
+                      },
+                    },
+                  ],
+                },
+              },
+            });
+
+            updateBlock(parse(parentBlock.uuid), {
+              updateContent: {
+                data: {
+                  blockExternalId: parse(parentBlock.uuid),
+                  transaction: [
+                    {
+                      delete: {
+                        transactionType: { delete: null },
+                        position: Tree.getNodeAtPosition(
+                          parentBlock.content,
+                          blockIndex
+                        ).identifier.value,
+                      },
+                    },
+                  ],
+                },
+              },
+            });
+
+            const newBlockIndex = Tree.size(previousBlock.content);
+
+            // Remove the block from its current position
+            Tree.removeCharacter(parentBlock.content, blockIndex + 1, () => {});
+            updateLocalBlock(parentBlock.uuid, parentBlock);
+
+            // Add the block to the new position
+            Tree.insertCharacter(
+              previousBlock.content,
+              newBlockIndex,
+              blockToMove.uuid,
+              () => {}
+            );
+            updateLocalBlock(previousBlock.uuid, previousBlock);
+
+            blockToMove.parent = previousBlockExternalId;
+
+            return false;
+          }
           if (e.key === 'Backspace') {
             // If the block is empty, remove it
             if (pageExternalId && e.currentTarget.innerText === '') {
@@ -172,6 +253,22 @@ export const TextBlock = ({
             ) {
               showPlaceholder();
             }
+          } else if (e.key === 'ArrowDown') {
+            const blocksDiv = document.querySelector('.Blocks');
+            if (!blocksDiv) return;
+            const blockToFocus =
+              blocksDiv.querySelectorAll<HTMLDivElement>('.TextBlock')[
+                blockIndex + 2
+              ];
+            blockToFocus?.querySelector('span')?.focus();
+          } else if (e.key === 'ArrowUp') {
+            const blocksDiv = document.querySelector('.Blocks');
+            if (!blocksDiv) return;
+            const blockToFocus =
+              blocksDiv.querySelectorAll<HTMLDivElement>('.TextBlock')[
+                blockIndex
+              ];
+            blockToFocus?.querySelector('span')?.focus();
           } else if (e.key.match(/^[\w\W]$/g)) {
             const cursorPosition = window.getSelection()?.anchorOffset;
 

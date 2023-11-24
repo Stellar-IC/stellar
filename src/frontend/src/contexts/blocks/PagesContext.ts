@@ -43,6 +43,16 @@ export const PagesContext = createContext<{
                 };
               };
         }
+      | {
+          updateParent: {
+            data: { parentBlockExternalId: UUID; blockExternalId: UUID };
+          };
+        }
+      | {
+          updateContent: {
+            data: { transaction: TreeEvent[]; blockExternalId: UUID };
+          };
+        }
   ) => void;
   //   insertCharacter: (
   //     blockExternalId: string,

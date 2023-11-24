@@ -114,7 +114,7 @@ module {
             Block_v2.objects.insert({
                 uuid = input.uuid;
                 var blockType = #page;
-                parent = input.parent;
+                var parent = input.parent;
                 content = Tree.Tree(null);
                 properties = input.properties;
             });

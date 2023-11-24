@@ -186,6 +186,14 @@ export const idlFactory = ({ IDL }) => {
     'user' : IDL.Principal,
     'uuid' : UUID,
   });
+  const BlockParentUpdatedEvent = IDL.Record({
+    'data' : IDL.Record({
+      'parentBlockExternalId' : UUID,
+      'blockExternalId' : UUID,
+    }),
+    'user' : IDL.Principal,
+    'uuid' : UUID,
+  });
   const BlockProperyTitleUpdatedEvent = IDL.Record({
     'data' : IDL.Record({
       'transaction' : IDL.Vec(TreeEvent),
@@ -198,6 +206,7 @@ export const idlFactory = ({ IDL }) => {
     'updatePropertyChecked' : BlockProperyCheckedUpdatedEvent,
     'updateBlockType' : BlockTypeUpdatedEvent,
     'updateContent' : BlockContentUpdatedEvent,
+    'updateParent' : BlockParentUpdatedEvent,
     'updatePropertyTitle' : BlockProperyTitleUpdatedEvent,
   });
   const BlockEvent = IDL.Variant({

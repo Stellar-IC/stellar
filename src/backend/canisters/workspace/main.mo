@@ -213,6 +213,7 @@ shared ({ caller = initializer }) actor class Workspace(
                                 block and {} with
                                 content = block.content;
                                 blockType = block.blockType;
+                                parent = block.parent;
                                 properties = {
                                     block.properties and {} with
                                     title = switch (block.properties.title) {
@@ -299,6 +300,9 @@ shared ({ caller = initializer }) actor class Workspace(
                     case (#updatePropertyChecked(event)) {
                         Debug.print("UUID: " # UUID.toText(event.uuid));
                     };
+                    case (#updateParent(event)) {
+                        Debug.print("UUID: " # UUID.toText(event.uuid));
+                    };
                 };
             };
             case (#blockRemoved(event)) {
@@ -330,6 +334,7 @@ shared ({ caller = initializer }) actor class Workspace(
                             case (#updateContent(event)) { event.uuid };
                             case (#updatePropertyTitle(event)) { event.uuid };
                             case (#updatePropertyChecked(event)) { event.uuid };
+                            case (#updateParent(event)) { event.uuid };
                         };
 
                         switch (res) {
@@ -395,6 +400,7 @@ shared ({ caller = initializer }) actor class Workspace(
                 blockData and {} with
                 content = transformedContent;
                 var blockType = blockData.blockType;
+                var parent = blockData.parent;
             };
 
             transformedData.put(blockId, BlocksModels.Block_v2.toShareable(upgradedBlock));

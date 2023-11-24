@@ -1,4 +1,4 @@
-import { Box, Divider, Stack } from '@mantine/core';
+import { Box, Divider, Stack, Text } from '@mantine/core';
 import { useEffect, useMemo } from 'react';
 import { parse } from 'uuid';
 
@@ -9,18 +9,23 @@ import { Page } from '@/types';
 
 import { BlockWithActions } from './BlockWithActions';
 import { BulletedListBlock } from './BulletedListBlock';
+
 import { TextBlock } from './TextBlock';
 import { TodoListBlock } from './TodoListBlock';
+
+interface BlockRendererProps {
+  externalId: string;
+  index: number;
+  placeholder?: string;
+  depth: number;
+}
 
 export const BlockRenderer = ({
   externalId,
   index,
+  depth,
   placeholder,
-}: {
-  externalId: string;
-  index: number;
-  placeholder?: string;
-}) => {
+}: BlockRendererProps) => {
   const {
     addBlock,
     blocks: { data, query, updateLocal: updateLocalBlock },
@@ -42,11 +47,9 @@ export const BlockRenderer = ({
 
   if ('page' in block.blockType) {
     return (
-      <>
-        <Box ml="112px" mb="1rem" w="100%">
-          {/* <HeadingBlock key={String(block.uuid)} block={block} /> */}
-        </Box>
-      </>
+      <Box ml="112px" mb="1rem" w="100%">
+        {/* <HeadingBlock key={String(block.uuid)} block={block} /> */}
+      </Box>
     );
   }
 
@@ -57,42 +60,60 @@ export const BlockRenderer = ({
     'paragraph' in block.blockType
   ) {
     return (
-      <BlockWithActions key={block.uuid} blockIndex={index} block={block}>
-        <TextBlock
-          pageExternalId={parentExternalId}
-          value={block.properties.title}
-          blockIndex={index}
-          blockType={block.blockType}
-          placeholder={placeholder}
-          onEnterPressed={() => {
-            addBlock(parse(parentExternalId), { paragraph: null }, index + 1);
-            setTimeout(() => {
-              const blocksDiv = document.querySelector('.Blocks');
-              if (!blocksDiv) return;
-              const blockToFocus =
-                blocksDiv.querySelectorAll<HTMLDivElement>('.TextBlock')[
-                  index + 2
-                ];
-              blockToFocus.querySelector('span')?.focus();
-            }, 50);
-          }}
-          onInsert={(cursorPosition, character) =>
-            Tree.insertCharacter(
-              block.properties.title,
-              cursorPosition,
-              character,
-              onInsertSuccess
-            )
-          }
-          onRemove={(cursorPosition) =>
-            Tree.removeCharacter(
-              block.properties.title,
-              cursorPosition,
-              onRemoveSuccess
-            )
-          }
-        />
-      </BlockWithActions>
+      <>
+        <BlockWithActions key={block.uuid} blockIndex={index} block={block}>
+          <Box
+            style={(theme) => ({
+              paddingLeft: `calc(${depth} * ${theme.spacing.md})`,
+            })}
+          >
+            <TextBlock
+              pageExternalId={parentExternalId}
+              value={block.properties.title}
+              blockIndex={index}
+              blockType={block.blockType}
+              blockExternalId={block.uuid}
+              placeholder={placeholder}
+              onEnterPressed={() => {
+                addBlock(
+                  parse(parentExternalId),
+                  { paragraph: null },
+                  index + 1
+                );
+                setTimeout(() => {
+                  const blocksDiv = document.querySelector('.Blocks');
+                  if (!blocksDiv) return;
+                  const blockToFocus =
+                    blocksDiv.querySelectorAll<HTMLDivElement>('.TextBlock')[
+                      index + 2
+                    ];
+                  blockToFocus.querySelector('span')?.focus();
+                }, 50);
+              }}
+              onInsert={(cursorPosition, character) =>
+                Tree.insertCharacter(
+                  block.properties.title,
+                  cursorPosition,
+                  character,
+                  onInsertSuccess
+                )
+              }
+              onRemove={(cursorPosition) =>
+                Tree.removeCharacter(
+                  block.properties.title,
+                  cursorPosition,
+                  onRemoveSuccess
+                )
+              }
+            />
+            <Text size="xs" c="gray.7">
+              {block.uuid}
+            </Text>
+          </Box>
+        </BlockWithActions>
+        {/* eslint-disable-next-line @typescript-eslint/no-use-before-define */}
+        <BlockWithNestedBlocks blockExternalId={block.uuid} depth={depth + 1} />
+      </>
     );
   }
 
@@ -119,6 +140,42 @@ export const BlockRenderer = ({
   );
 };
 
+interface BlockWithNestedBlocksProps {
+  blockExternalId: string;
+  depth: number;
+}
+
+export const BlockWithNestedBlocks = ({
+  depth,
+  blockExternalId,
+}: BlockWithNestedBlocksProps) => {
+  const {
+    blocks: { data: blocks },
+  } = usePagesContext();
+
+  const block = useMemo(
+    () => blocks[blockExternalId],
+    [blocks, blockExternalId]
+  );
+
+  if (!block) return null;
+
+  return (
+    <Box pos="relative" w="100%">
+      {Tree.toArray(block.content).map((externalId, i) => (
+        <Box key={externalId}>
+          <BlockRenderer
+            key={externalId}
+            externalId={externalId}
+            index={i}
+            depth={depth}
+          />
+        </Box>
+      ))}
+    </Box>
+  );
+};
+
 export const Blocks = ({ page }: { page: Page }) => {
   const {
     blocks: { query, updateLocal },
@@ -136,6 +193,7 @@ export const Blocks = ({ page }: { page: Page }) => {
     <Stack className="Blocks" w="100%" gap={0}>
       <div style={{ padding: '1rem 0' }}>
         <TextBlock
+          blockExternalId={page.uuid}
           blockIndex={0}
           value={page.properties.title}
           blockType={{ heading1: null }}
@@ -165,6 +223,7 @@ export const Blocks = ({ page }: { page: Page }) => {
           <BlockRenderer
             key={blockUuid}
             index={index}
+            depth={0}
             externalId={blockUuid}
             placeholder={index === 0 ? 'Start typing here' : undefined}
           />

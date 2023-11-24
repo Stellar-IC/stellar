@@ -231,6 +231,7 @@ type BlockUpdatedEvent =
  variant {
    updateBlockType: BlockTypeUpdatedEvent;
    updateContent: BlockContentUpdatedEvent;
+   updateParent: BlockParentUpdatedEvent;
    updatePropertyChecked: BlockProperyCheckedUpdatedEvent;
    updatePropertyTitle: BlockProperyTitleUpdatedEvent;
  };
@@ -287,6 +288,15 @@ type BlockProperyCheckedUpdatedEvent =
    data: record {
            blockExternalId: UUID;
            checked: bool;
+         };
+   user: principal;
+   uuid: UUID;
+ };
+type BlockParentUpdatedEvent = 
+ record {
+   data: record {
+           blockExternalId: UUID;
+           parentBlockExternalId: UUID;
          };
    user: principal;
    uuid: UUID;

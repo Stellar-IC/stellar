@@ -1,4 +1,4 @@
-import { Box, Button, Flex, Group, Text, useMantineTheme } from '@mantine/core';
+import { Box, Button, Flex, Group, useMantineTheme } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
 import { IconPlus, IconDotsVertical } from '@tabler/icons-react';
 import { PropsWithChildren, useCallback } from 'react';
@@ -115,9 +115,6 @@ export const BlockWithActions = ({
 
         <Box w="100%">{children}</Box>
       </Flex>
-      <Text size="xs" c="gray.7">
-        {block.uuid}
-      </Text>
 
       <AddBlockModal
         isOpen={isAddModalOpen}

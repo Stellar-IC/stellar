@@ -1,17 +1,12 @@
 import { ActorSubclass } from '@dfinity/agent';
 import type { Principal } from '@dfinity/principal';
-import { expect, test, describe, beforeAll } from 'vitest';
+import { describe, beforeAll } from 'vitest';
 
 import { createActor as createActorUser } from '../../../declarations/user/index';
 import {
   canisterId as userIndexCanisterId,
   createActor as createActorUserIndex,
 } from '../../../declarations/user_index/index';
-import { canisterId as workspaceIndexCanisterId } from '../../../declarations/workspace_index/index';
-import {
-  canisterId as workspaceCanisterId,
-  createActor as createActorWorkspace,
-} from '../../../declarations/workspace/index';
 import { _SERVICE as _SERVICE_USER_INDEX } from '../../../declarations/user_index/user_index.did';
 
 import { identity } from '../../indentity';

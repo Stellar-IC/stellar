@@ -47,7 +47,7 @@ module {
         uuid : UUID.UUID;
         var blockType : BlockType;
         content : BlockContent_v2;
-        parent : ?UUID.UUID;
+        var parent : ?UUID.UUID;
         properties : BlockProperties;
     };
     public type Block = UnsavedBlock and {
@@ -109,6 +109,14 @@ module {
         };
         user : Principal;
     };
+    public type BlockParentUpdatedEvent = {
+        uuid : UUID.UUID;
+        data : {
+            blockExternalId : UUID.UUID;
+            parentBlockExternalId : UUID.UUID;
+        };
+        user : Principal;
+    };
 
     public type BlockProperyCheckedUpdatedEvent = {
         uuid : UUID.UUID;
@@ -142,6 +150,7 @@ module {
         #updatePropertyTitle : BlockProperyTitleUpdatedEvent;
         #updateBlockType : BlockTypeUpdatedEvent;
         #updateContent : BlockContentUpdatedEvent;
+        #updateParent : BlockParentUpdatedEvent;
     };
 
     public type BlockEvent = {

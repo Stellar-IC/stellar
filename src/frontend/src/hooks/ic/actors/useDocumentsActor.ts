@@ -1,18 +1,22 @@
 import { Identity } from '@dfinity/agent';
 import { useMemo } from 'react';
-import { createActor, canisterId } from '../../../../../declarations/workspace';
+import { CanisterId } from '@/types';
+import { createActor } from '../../../../../declarations/workspace';
 
-export const useDocumentsActor = (options: { identity?: Identity } = {}) => {
-  const { identity } = options;
+export const useDocumentsActor = (options: {
+  identity?: Identity;
+  workspaceId: CanisterId;
+}) => {
+  const { identity, workspaceId } = options;
   const actor = useMemo(
     () =>
-      createActor(canisterId, {
+      createActor(workspaceId, {
         agentOptions: {
           identity,
         },
       }),
-    [identity]
+    [identity, workspaceId]
   );
 
-  return { actor, canisterId };
+  return { actor, workspaceId };
 };
