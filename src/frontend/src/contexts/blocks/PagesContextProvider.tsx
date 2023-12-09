@@ -24,9 +24,12 @@ export function PagesContextProvider({ children }: PropsWithChildren<{}>) {
         blocks: blocksContext,
         addBlock: (parentBlockExternalId, blockType, index) => {
           const blockExternalId = v4();
-          const page = pagesContext.data[stringify(parentBlockExternalId)];
+          const parentBlock =
+            pagesContext.data[stringify(parentBlockExternalId)] ||
+            blocksContext.data[stringify(parentBlockExternalId)];
+
           Tree.insertCharacter(
-            page.content,
+            parentBlock.content,
             index,
             blockExternalId,
             (events) => {
@@ -58,7 +61,9 @@ export function PagesContextProvider({ children }: PropsWithChildren<{}>) {
         },
 
         removeBlock: (parentBlockExternalId, index) => {
-          const page = pagesContext.data[stringify(parentBlockExternalId)];
+          const page =
+            pagesContext.data[stringify(parentBlockExternalId)] ||
+            blocksContext.data[stringify(parentBlockExternalId)];
           Tree.removeCharacter(page.content, index, (event) => {
             handleBlockEvent(parentBlockExternalId, {
               blockUpdated: {

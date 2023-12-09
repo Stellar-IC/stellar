@@ -27,6 +27,7 @@ shared ({ caller = initializer }) actor class User(
     initArgs : Types.UserInitArgs
 ) = self {
     stable let USER_MIN_BALANCE = Constants.USER__MIN_BALANCE;
+    stable let WORKSPACE__CAPACITY = Constants.WORKSPACE__CAPACITY;
     stable let userIndexCanisterId = initializer;
 
     stable var stable_balance = 0;
@@ -79,6 +80,85 @@ shared ({ caller = initializer }) actor class User(
         let workspace = await (system Workspace.Workspace)(
             #upgrade(workspaceActor)
         )(await (workspaceActor.getInitArgs()), await (workspaceActor.getInitData()));
+    };
+
+    public shared func updatePersonalWorkspaceCanisterSettings(updatedSettings : CoreTypes.CanisterSettings) : async () {
+        let IC0 : CoreTypes.Management = actor "aaaaa-aa";
+
+        let workspaceId = switch (stable_personalWorkspaceId) {
+            case (null) { Debug.trap("Personal workspace not initialized") };
+            case (?workspaceId) { workspaceId };
+        };
+        let canister_status = await IC0.canister_status({
+            canister_id = workspaceId;
+        });
+        let memoryAllocation = switch (updatedSettings.memory_allocation) {
+            case (null) { canister_status.settings.memory_allocation };
+            case (?memoryAllocation) { memoryAllocation };
+        };
+        let computeAllocation = switch (updatedSettings.compute_allocation) {
+            case (null) { canister_status.settings.compute_allocation };
+            case (?computeAllocation) { computeAllocation };
+        };
+        let freezingThreshold = switch (updatedSettings.freezing_threshold) {
+            case (null) { canister_status.settings.freezing_threshold };
+            case (?freezingThreshold) { freezingThreshold };
+        };
+
+        let sender_canister_version : ?Nat64 = null;
+
+        try {
+            IC0.update_settings(
+                {
+                    canister_id = workspaceId;
+                    settings = {
+                        controllers = ?canister_status.settings.controllers;
+                        compute_allocation = ?computeAllocation;
+                        memory_allocation = ?memoryAllocation;
+                        freezing_threshold = ?freezingThreshold;
+                    };
+                    sender_canister_version = sender_canister_version;
+                }
+            );
+        } catch (err) {
+            Debug.print("Error updating user canister settings: " # debug_show (Error.code(err)) # ": " # debug_show (Error.message(err)));
+        };
+    };
+
+    public shared func upgradePersonalWorkspaceCanisterWasm(wasm_module : Blob) {
+        let IC0 : CoreTypes.Management = actor "aaaaa-aa";
+
+        let sender_canister_version : ?Nat64 = null;
+
+        let workspaceId = switch (stable_personalWorkspaceId) {
+            case (null) { Debug.trap("Personal workspace not initialized") };
+            case (?workspaceId) { workspaceId };
+        };
+        let workspaceActor = switch (stable_personalWorkspace) {
+            case (null) { Debug.trap("Personal workspace not initialized") };
+            case (?workspace) { workspace };
+        };
+
+        try {
+            await IC0.install_code(
+                {
+                    arg = to_candid (
+                        await (workspaceActor.getInitArgs()),
+                        await (workspaceActor.getInitData()),
+                    );
+                    canister_id = workspaceId;
+                    mode = #upgrade(
+                        ?{
+                            skip_pre_upgrade = ?false;
+                        }
+                    );
+                    sender_canister_version = sender_canister_version;
+                    wasm_module = wasm_module;
+                }
+            );
+        } catch (err) {
+            Debug.print("Error upgrading personal workspace canister: " # debug_show (Error.code(err)) # ": " # debug_show (Error.message(err)));
+        };
     };
 
     public shared ({ caller }) func updateProfile(

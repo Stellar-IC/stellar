@@ -13,7 +13,7 @@ module Constants {
     public let WORKSPACE__COMPUTE_ALLOCATION = 0; // 0% of maximum compute power that a single canister can allocate
     public let WORKSPACE__FREEZING_THRESHOLD = 2592000; // 30 days
     public let WORKSPACE__INITIAL_CYCLES_BALANCE = WORKSPACE__CAPACITY;
-    public let WORKSPACE__MEMORY_ALLOCATION = 5_000_000; // 5MB
+    public let WORKSPACE__MEMORY_ALLOCATION = 1_000_000_000; // 100MB
     public let WORKSPACE__MIN_BALANCE = 100_000_000_000; // 0.1T cycles
     public let WORKSPACE__TOP_UP_AMOUNT = 100_000_000_000; // 0.1T cycles
 

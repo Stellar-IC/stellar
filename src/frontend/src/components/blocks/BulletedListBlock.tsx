@@ -1,38 +1,38 @@
 import { Flex } from '@mantine/core';
-import { useEffect, useMemo } from 'react';
-import { parse } from 'uuid';
 
 import { usePagesContext } from '@/contexts/blocks/usePagesContext';
-import { useSuccessHandlers } from '@/hooks/documents/hooks/useSuccessHandlers';
-import { Tree } from '@myklenero/stellar-lseq-typescript';
 
+import { useEffect } from 'react';
+import { parse } from 'uuid';
 import { TextBlock } from './TextBlock';
+
+interface BulletedListBlockProps {
+  externalId: string;
+  index: number;
+  onCharacterInserted: (cursorPosition: number, character: string) => void;
+  onCharacterRemoved: (cursorPosition: number) => void;
+  onEnterPressed?: () => void;
+}
 
 export const BulletedListBlock = ({
   externalId,
   index,
-}: {
-  externalId: string;
-  index: number;
-}) => {
+  onCharacterInserted,
+  onCharacterRemoved,
+  onEnterPressed,
+}: BulletedListBlockProps) => {
   const {
-    addBlock,
-    blocks: { data, query, updateLocal },
+    blocks: { data, query },
   } = usePagesContext();
-  const block = useMemo(() => data[externalId], [data, externalId]);
-  const { onInsertSuccess, onRemoveSuccess } = useSuccessHandlers({
-    block,
-    updateLocalBlock: updateLocal,
-  });
 
   useEffect(() => {
     query(parse(externalId));
   }, [query, externalId]);
 
-  const parentExternalId = block?.parent;
+  const block = data[externalId];
 
-  if (!block) return <div />;
-  if (!parentExternalId) return <div />;
+  if (!block) return null;
+
   if (!('bulletedList' in block.blockType)) {
     throw new Error('Expected bulletedList block');
   }
@@ -52,36 +52,12 @@ export const BulletedListBlock = ({
       <TextBlock
         blockExternalId={block.uuid}
         blockIndex={index}
-        pageExternalId={parentExternalId}
+        parentBlockExternalId={block.parent}
         value={block.properties.title}
         blockType={block.blockType}
-        onEnterPressed={() => {
-          addBlock(parse(parentExternalId), block.blockType, index + 1);
-          setTimeout(() => {
-            const blocksDiv = document.querySelector('.Blocks');
-            if (!blocksDiv) return;
-            const blockToFocus =
-              blocksDiv.querySelectorAll<HTMLDivElement>('.TextBlock')[
-                index + 2
-              ];
-            blockToFocus.querySelector('span')?.focus();
-          }, 50);
-        }}
-        onInsert={(cursorPosition, character) =>
-          Tree.insertCharacter(
-            block.properties.title,
-            cursorPosition,
-            character,
-            onInsertSuccess
-          )
-        }
-        onRemove={(cursorPosition) =>
-          Tree.removeCharacter(
-            block.properties.title,
-            cursorPosition,
-            onRemoveSuccess
-          )
-        }
+        onEnterPressed={onEnterPressed}
+        onInsert={onCharacterInserted}
+        onRemove={onCharacterRemoved}
       />
     </Flex>
   );

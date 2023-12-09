@@ -10,6 +10,9 @@ import List "mo:base/List";
 import Timer "mo:base/Timer";
 import ExperimentalCycles "mo:base/ExperimentalCycles";
 import Time "mo:base/Time";
+import Blob "mo:base/Blob";
+import Int64 "mo:base/Int64";
+import Error "mo:base/Error";
 
 import Constants "../../constants";
 import CanisterTopUp "../../lib/shared/CanisterTopUp";
@@ -20,6 +23,7 @@ import User "../user/main";
 import State "./model/state";
 import CreateUser "./services/create_user";
 import Types "./types";
+import CoreTypes "../../types";
 
 actor UserIndex {
     type UserId = Principal;
@@ -73,6 +77,85 @@ actor UserIndex {
                 ignore initializeTopUpsForCanister(principal);
                 return #ok(principal);
             };
+        };
+    };
+
+    public shared func updateUserCanisterSettings(userPrincipal : Principal, updatedSettings : CoreTypes.CanisterSettings) : async () {
+        let IC0 : CoreTypes.Management = actor "aaaaa-aa";
+
+        Debug.print("Updating user canister settings: " # debug_show (userPrincipal));
+
+        let canister_status = await IC0.canister_status({
+            canister_id = userPrincipal;
+        });
+        let memoryAllocation = switch (updatedSettings.memory_allocation) {
+            case (null) { canister_status.settings.memory_allocation };
+            case (?memoryAllocation) { memoryAllocation };
+        };
+        let computeAllocation = switch (updatedSettings.compute_allocation) {
+            case (null) { canister_status.settings.compute_allocation };
+            case (?computeAllocation) { computeAllocation };
+        };
+        let freezingThreshold = switch (updatedSettings.freezing_threshold) {
+            case (null) { canister_status.settings.freezing_threshold };
+            case (?freezingThreshold) { freezingThreshold };
+        };
+
+        let sender_canister_version : ?Nat64 = null;
+
+        try {
+            IC0.update_settings(
+                {
+                    canister_id = userPrincipal;
+                    settings = {
+                        controllers = ?canister_status.settings.controllers;
+                        compute_allocation = ?computeAllocation;
+                        memory_allocation = ?memoryAllocation;
+                        freezing_threshold = ?freezingThreshold;
+                    };
+                    sender_canister_version = sender_canister_version;
+                }
+            );
+        } catch (err) {
+            Debug.print("Error updating user canister settings: " # debug_show (Error.code(err)) # ": " # debug_show (Error.message(err)));
+        };
+
+        Debug.print("Done updating user canister settings: " # debug_show (userPrincipal));
+    };
+
+    public shared func upgradeUserCanistersWasm(wasm_module : Blob) {
+        let IC0 : CoreTypes.Management = actor "aaaaa-aa";
+
+        let sender_canister_version : ?Nat64 = null;
+
+        for (entry in state.data.user_id_to_user_canister.entries()) {
+            var userId = entry.0;
+            Debug.print("Upgrading user canister: " # debug_show (userId));
+
+            try {
+                await IC0.install_code(
+                    {
+                        arg = to_candid (
+                            {
+                                capacity = USER_CAPACITY;
+                                owner = Principal.fromActor(UserIndex);
+                            }
+                        );
+                        canister_id = userId;
+                        mode = #upgrade(
+                            ?{
+                                skip_pre_upgrade = ?false;
+                            }
+                        );
+                        sender_canister_version = sender_canister_version;
+                        wasm_module = wasm_module;
+                    }
+                );
+            } catch (err) {
+                Debug.print("Error upgrading user canister: " # debug_show (Error.code(err)) # ": " # debug_show (Error.message(err)));
+            };
+
+            Debug.print("Done upgrading user canister: " # debug_show (userId));
         };
     };
 
