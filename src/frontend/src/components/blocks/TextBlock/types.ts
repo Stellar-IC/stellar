@@ -1,5 +1,5 @@
 import { ExternalId } from '@/types';
-import { Tree } from '@myklenero/stellar-lseq-typescript';
+import { Tree } from '@stellar-ic/lseq-ts';
 
 export type TextBlockBlockType =
   | { paragraph: null }
@@ -24,7 +24,6 @@ export type TextBlockProps = {
   parentBlockExternalId?: ExternalId | null;
   placeholder?: string;
   value: Tree.Tree;
-  onEnterPressed?: () => void;
   onInsert: (cursorPosition: number, character: string) => void;
   onRemove: (cursorPosition: number) => void;
 };

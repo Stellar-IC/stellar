@@ -35,11 +35,9 @@ export const TextBlockRenderer = ({
 
   if (!block) return <div />;
 
-  const { onEnterPressed, onCharacterInserted, onCharacterRemoved } =
-    useTextBlockEventHandlers({
-      blockExternalId,
-      index,
-    });
+  const { onCharacterInserted, onCharacterRemoved } = useTextBlockEventHandlers(
+    { blockExternalId }
+  );
 
   return (
     <BlockWithActions key={blockExternalId} blockIndex={index} block={block}>
@@ -48,7 +46,6 @@ export const TextBlockRenderer = ({
           blockIndex={index}
           blockType={blockType}
           blockExternalId={blockExternalId}
-          onEnterPressed={onEnterPressed}
           onInsert={onCharacterInserted}
           onRemove={onCharacterRemoved}
           parentBlockExternalId={parentExternalId}

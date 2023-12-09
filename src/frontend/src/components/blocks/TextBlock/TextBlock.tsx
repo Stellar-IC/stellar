@@ -1,6 +1,6 @@
 import { Box } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
-import { Tree } from '@myklenero/stellar-lseq-typescript';
+import { Tree } from '@stellar-ic/lseq-ts';
 import { createRef, useEffect, useMemo, useState } from 'react';
 
 import { useTextBlockKeyboardEventHandlers } from '@/hooks/documents/useTextBlockKeyboardEventHandlers';
@@ -15,7 +15,6 @@ export const TextBlock = ({
   parentBlockExternalId,
   placeholder,
   value,
-  onEnterPressed,
   onInsert,
   onRemove,
 }: TextBlockProps) => {
@@ -35,7 +34,7 @@ export const TextBlock = ({
   const { onKeyDown, onPaste } = useTextBlockKeyboardEventHandlers({
     blockExternalId,
     blockIndex,
-    onEnterPressed,
+    blockType,
     onInsert,
     onRemove,
     parentBlockExternalId,

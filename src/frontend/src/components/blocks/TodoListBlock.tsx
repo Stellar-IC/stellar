@@ -11,7 +11,6 @@ interface TodoListBlockProps {
   index: number;
   onCharacterInserted: (cursorPosition: number, character: string) => void;
   onCharacterRemoved: (cursorPosition: number) => void;
-  onEnterPressed?: () => void;
 }
 
 export const TodoListBlock = ({
@@ -19,7 +18,6 @@ export const TodoListBlock = ({
   index,
   onCharacterInserted,
   onCharacterRemoved,
-  onEnterPressed,
 }: TodoListBlockProps) => {
   const {
     updateBlock,
@@ -65,7 +63,6 @@ export const TodoListBlock = ({
         parentBlockExternalId={parentExternalId}
         value={block.properties.title}
         blockType={block.blockType}
-        onEnterPressed={onEnterPressed}
         onInsert={onCharacterInserted}
         onRemove={onCharacterRemoved}
       />

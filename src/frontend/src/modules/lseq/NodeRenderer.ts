@@ -1,4 +1,4 @@
-import { Node } from '@myklenero/stellar-lseq-typescript';
+import { Node } from '@stellar-ic/lseq-ts';
 
 export class NodeRenderer {
   private ctx: CanvasRenderingContext2D;

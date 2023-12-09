@@ -11,7 +11,6 @@ interface BulletedListBlockProps {
   index: number;
   onCharacterInserted: (cursorPosition: number, character: string) => void;
   onCharacterRemoved: (cursorPosition: number) => void;
-  onEnterPressed?: () => void;
 }
 
 export const BulletedListBlock = ({
@@ -19,7 +18,6 @@ export const BulletedListBlock = ({
   index,
   onCharacterInserted,
   onCharacterRemoved,
-  onEnterPressed,
 }: BulletedListBlockProps) => {
   const {
     blocks: { data, query },
@@ -55,7 +53,6 @@ export const BulletedListBlock = ({
         parentBlockExternalId={block.parent}
         value={block.properties.title}
         blockType={block.blockType}
-        onEnterPressed={onEnterPressed}
         onInsert={onCharacterInserted}
         onRemove={onCharacterRemoved}
       />

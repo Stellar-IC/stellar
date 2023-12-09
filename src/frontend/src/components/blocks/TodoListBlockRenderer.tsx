@@ -13,11 +13,9 @@ export const TodoListBlockRenderer = ({
   blockExternalId,
   index,
 }: TodoListBlockRendererProps) => {
-  const { onEnterPressed, onCharacterInserted, onCharacterRemoved } =
-    useTextBlockEventHandlers({
-      blockExternalId,
-      index,
-    });
+  const { onCharacterInserted, onCharacterRemoved } = useTextBlockEventHandlers(
+    { blockExternalId }
+  );
   const {
     blocks: { data },
   } = usePagesContext();
@@ -32,7 +30,6 @@ export const TodoListBlockRenderer = ({
         index={index}
         onCharacterInserted={onCharacterInserted}
         onCharacterRemoved={onCharacterRemoved}
-        onEnterPressed={onEnterPressed}
       />
     </BlockWithActions>
   );

@@ -1,5 +1,5 @@
 import { Divider, Stack } from '@mantine/core';
-import { Tree } from '@myklenero/stellar-lseq-typescript';
+import { Tree } from '@stellar-ic/lseq-ts';
 import { useEffect } from 'react';
 import { parse } from 'uuid';
 
@@ -16,10 +16,7 @@ export const Blocks = ({ page }: { page: Page }) => {
     blocks: { query },
   } = usePagesContext();
   const { onCharacterInserted, onCharacterRemoved } = useTextBlockEventHandlers(
-    {
-      blockExternalId: page.uuid,
-      index: titleBlockIndex,
-    }
+    { blockExternalId: page.uuid }
   );
 
   // Ensure that the page is loaded

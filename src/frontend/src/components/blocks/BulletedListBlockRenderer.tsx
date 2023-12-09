@@ -15,11 +15,9 @@ export const BulletedListBlockRenderer = ({
   blockExternalId,
   index,
 }: BulletedListBlockRendererProps) => {
-  const { onEnterPressed, onCharacterInserted, onCharacterRemoved } =
-    useTextBlockEventHandlers({
-      blockExternalId,
-      index,
-    });
+  const { onCharacterInserted, onCharacterRemoved } = useTextBlockEventHandlers(
+    { blockExternalId }
+  );
   const {
     blocks: { data },
   } = usePagesContext();
@@ -30,7 +28,6 @@ export const BulletedListBlockRenderer = ({
       <BulletedListBlock
         externalId={blockExternalId}
         index={index}
-        onEnterPressed={onEnterPressed}
         onCharacterInserted={onCharacterInserted}
         onCharacterRemoved={onCharacterRemoved}
       />

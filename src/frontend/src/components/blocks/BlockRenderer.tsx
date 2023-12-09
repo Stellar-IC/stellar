@@ -1,5 +1,5 @@
 import { Box } from '@mantine/core';
-import { Tree } from '@myklenero/stellar-lseq-typescript';
+import { Tree } from '@stellar-ic/lseq-ts';
 import { useEffect, useMemo } from 'react';
 import { parse } from 'uuid';
 

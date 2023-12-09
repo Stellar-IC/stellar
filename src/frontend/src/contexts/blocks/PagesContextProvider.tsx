@@ -3,7 +3,7 @@ import { usePages } from '@/contexts/blocks/usePages';
 import { useAuthContext } from '@/modules/auth/contexts/AuthContext';
 
 import { parse, stringify, v4 } from 'uuid';
-import { Tree } from '@myklenero/stellar-lseq-typescript';
+import { Tree } from '@stellar-ic/lseq-ts';
 import { PagesContext } from './PagesContext';
 import { useWorkspaceContext } from '../WorkspaceContext/useWorkspaceContext';
 

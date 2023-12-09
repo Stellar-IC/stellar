@@ -1,6 +1,6 @@
 import type { Principal } from '@dfinity/principal';
 import { usePagesContext } from '@/contexts/blocks/usePagesContext';
-import { Tree } from '@myklenero/stellar-lseq-typescript';
+import { Tree } from '@stellar-ic/lseq-ts';
 import {
   // TextInput,
   // Code,
