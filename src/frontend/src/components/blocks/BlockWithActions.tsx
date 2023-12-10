@@ -14,6 +14,7 @@ import { BlockType } from '../../../../declarations/workspace/workspace.did';
 type BlockWithActionsProps = PropsWithChildren<{
   blockIndex: number;
   blockExternalId: string;
+  blockType: BlockType;
   parentBlockExternalId?: string;
   dragHandleProps?: DraggableProvidedDragHandleProps | null;
 }>;
@@ -22,6 +23,7 @@ export const BlockWithActions = ({
   children,
   blockIndex,
   blockExternalId,
+  blockType,
   dragHandleProps,
   parentBlockExternalId,
 }: BlockWithActionsProps) => {
@@ -136,6 +138,7 @@ export const BlockWithActions = ({
         isOpen={isTransformModalOpen}
         onClose={onTransformModalClose}
         onItemSelected={onBlockTypeChange}
+        currentBlockType={blockType}
       />
 
       {shouldShowMobileModal && (
@@ -200,6 +203,7 @@ export const BlockWithActions = ({
       )}
       {shouldShowMobileModal && (
         <TransformBlockModal
+          currentBlockType={blockType}
           isOpen={isTransformModalOpen}
           onClose={() => {
             onTransformModalClose();

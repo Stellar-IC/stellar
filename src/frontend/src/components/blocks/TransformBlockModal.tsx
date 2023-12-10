@@ -1,13 +1,15 @@
-import { Box, Modal, ModalProps } from '@mantine/core';
+import { Box, CheckIcon, Group, Modal, ModalProps } from '@mantine/core';
 import { BlockType } from '../../../../declarations/workspace/workspace.did';
 
 type TransformBlockModalProps = {
+  currentBlockType: BlockType;
   isOpen: boolean;
   onClose: () => void;
   onItemSelected: (item: BlockType) => void;
 } & Pick<ModalProps, 'size'>;
 
 export const TransformBlockModal = ({
+  currentBlockType,
   isOpen,
   onClose,
   onItemSelected,
@@ -70,18 +72,21 @@ export const TransformBlockModal = ({
         </Modal.Header>
         <Modal.Body>
           {menuItems.map((menuItem) => (
-            <Box
-              key={menuItem.label}
-              h="2rem"
-              // fontSize="100"
-              // fontWeight="semibold"
-              onClick={() => {
-                onItemSelected(menuItem.value);
-                onClose();
-              }}
-            >
-              {menuItem.label}
-            </Box>
+            <Group>
+              <Box
+                key={menuItem.label}
+                h="2rem"
+                lh="2rem"
+                onClick={() => {
+                  onItemSelected(menuItem.value);
+                  onClose();
+                }}
+              >
+                {menuItem.label}
+              </Box>
+              {Object.keys(currentBlockType)[0] ===
+                Object.keys(menuItem.value)[0] && <CheckIcon size={16} />}
+            </Group>
           ))}
         </Modal.Body>
       </Modal.Content>

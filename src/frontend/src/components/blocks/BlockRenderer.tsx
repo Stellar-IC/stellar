@@ -1,11 +1,12 @@
 import { DraggableProvidedDragHandleProps } from '@hello-pangea/dnd';
-import { Box } from '@mantine/core';
+import { Box, Flex } from '@mantine/core';
 import { Tree } from '@stellar-ic/lseq-ts';
 import { useEffect, useMemo } from 'react';
 import { parse } from 'uuid';
 
 import { usePagesContext } from '@/contexts/blocks/usePagesContext';
 
+import { IconBulbFilled } from '@tabler/icons-react';
 import { BlockWithActions } from './BlockWithActions';
 import { BulletedListBlockRenderer } from './BulletedListBlockRenderer';
 import { TextBlockRenderer } from './TextBlockRenderer';
@@ -51,6 +52,103 @@ const NestedBlocks = ({
   );
 };
 
+interface BlockRendererInnerProps {
+  externalId: string;
+  index: number;
+  parentBlockIndex?: number;
+  placeholder?: string;
+  depth: number;
+}
+
+const BlockRendererInner = ({
+  externalId,
+  index,
+  depth,
+  parentBlockIndex,
+  placeholder,
+}: BlockRendererInnerProps) => {
+  const {
+    blocks: { data, query },
+  } = usePagesContext();
+  const block = useMemo(() => data[externalId], [data, externalId]);
+
+  useEffect(() => {
+    query(parse(externalId));
+  }, [query, externalId]);
+
+  if (!block) {
+    return <div />;
+  }
+
+  if ('page' in block.blockType) {
+    return <div />;
+  }
+
+  if (
+    'heading1' in block.blockType ||
+    'heading2' in block.blockType ||
+    'heading3' in block.blockType ||
+    'paragraph' in block.blockType
+  ) {
+    return (
+      <TextBlockRenderer
+        key={block.uuid}
+        blockExternalId={block.uuid}
+        index={index}
+        depth={depth}
+        placeholder={placeholder}
+        parentBlockIndex={parentBlockIndex}
+        blockType={block.blockType}
+      />
+    );
+  }
+
+  if ('quote' in block.blockType) {
+    return (
+      <div style={{ borderLeft: '2px solid #ddd', paddingLeft: '1rem' }}>
+        <TextBlockRenderer
+          key={block.uuid}
+          blockExternalId={block.uuid}
+          index={index}
+          depth={depth}
+          placeholder={placeholder}
+          parentBlockIndex={parentBlockIndex}
+          blockType={block.blockType}
+        />
+      </div>
+    );
+  }
+
+  if ('callout' in block.blockType) {
+    return (
+      <Flex p="md" bg="dark" style={{ borderRadius: '0.25rem' }} gap="md">
+        <IconBulbFilled size={24} d="inline-block" />
+        <TextBlockRenderer
+          key={block.uuid}
+          blockExternalId={block.uuid}
+          index={index}
+          depth={depth}
+          placeholder={placeholder}
+          parentBlockIndex={parentBlockIndex}
+          blockType={block.blockType}
+        />
+      </Flex>
+    );
+  }
+
+  if ('bulletedList' in block.blockType) {
+    return (
+      <BulletedListBlockRenderer blockExternalId={block.uuid} index={index} />
+    );
+  }
+
+  if ('todoList' in block.blockType) {
+    return <TodoListBlockRenderer blockExternalId={block.uuid} index={index} />;
+  }
+
+  return <>Unknown Block Type</>;
+};
+
 interface BlockRendererProps {
   externalId: string;
   index: number;
@@ -85,6 +183,7 @@ export const BlockRenderer = ({
         key={externalId}
         blockIndex={index}
         blockExternalId={externalId}
+        blockType={{ paragraph: null }}
         parentBlockExternalId={parentBlockExternalId}
         dragHandleProps={dragHandleProps}
       >
@@ -93,102 +192,29 @@ export const BlockRenderer = ({
     );
   }
 
-  if ('page' in block.blockType) {
-    return (
-      <Box ml="112px" mb="1rem" w="100%">
-        {/* <HeadingBlock key={String(block.uuid)} block={block} /> */}
-      </Box>
-    );
-  }
-
-  if (
-    'heading1' in block.blockType ||
-    'heading2' in block.blockType ||
-    'heading3' in block.blockType ||
-    'paragraph' in block.blockType
-  ) {
-    return (
-      <>
-        <BlockWithActions
-          key={block.uuid}
-          blockExternalId={externalId}
-          blockIndex={index}
-          parentBlockExternalId={parentBlockExternalId}
-          dragHandleProps={dragHandleProps}
-        >
-          <TextBlockRenderer
-            key={block.uuid}
-            blockExternalId={block.uuid}
-            index={index}
-            depth={depth}
-            placeholder={placeholder}
-            parentBlockIndex={parentBlockIndex}
-            blockType={block.blockType}
-          />
-        </BlockWithActions>
-        <NestedBlocks
-          blockExternalId={block.uuid}
-          depth={depth + 1}
-          parentBlockIndex={index}
-        />
-      </>
-    );
-  }
-
-  if ('bulletedList' in block.blockType) {
-    return (
-      <>
-        <BlockWithActions
-          key={block.uuid}
-          blockExternalId={externalId}
-          blockIndex={index}
-          parentBlockExternalId={parentBlockExternalId}
-          dragHandleProps={dragHandleProps}
-        >
-          <BulletedListBlockRenderer
-            blockExternalId={block.uuid}
-            index={index}
-          />
-        </BlockWithActions>
-        <NestedBlocks
-          blockExternalId={block.uuid}
-          depth={depth + 1}
-          parentBlockIndex={index}
-        />
-      </>
-    );
-  }
-
-  if ('todoList' in block.blockType) {
-    return (
-      <>
-        <BlockWithActions
-          key={block.uuid}
-          blockExternalId={externalId}
-          blockIndex={index}
-          parentBlockExternalId={parentBlockExternalId}
-          dragHandleProps={dragHandleProps}
-        >
-          <TodoListBlockRenderer blockExternalId={block.uuid} index={index} />
-        </BlockWithActions>
-        <NestedBlocks
-          blockExternalId={block.uuid}
-          depth={depth + 1}
-          parentBlockIndex={index}
-        />
-      </>
-    );
-  }
-
   return (
-    <BlockWithActions
-      key={block.uuid}
-      blockExternalId={externalId}
-      blockIndex={index}
-      parentBlockExternalId={parentBlockExternalId}
-      dragHandleProps={dragHandleProps}
-    >
-      Unknown Block Type
-    </BlockWithActions>
+    <>
+      <BlockWithActions
+        key={block.uuid}
+        blockExternalId={externalId}
+        blockIndex={index}
+        blockType={block.blockType}
+        parentBlockExternalId={parentBlockExternalId}
+        dragHandleProps={dragHandleProps}
+      >
+        <BlockRendererInner
+          depth={depth}
+          index={index}
+          parentBlockIndex={parentBlockIndex}
+          placeholder={placeholder}
+          externalId={externalId}
+        />
+      </BlockWithActions>
+      <NestedBlocks
+        blockExternalId={block.uuid}
+        depth={depth + 1}
+        parentBlockIndex={index}
+      />
+    </>
   );
 };
