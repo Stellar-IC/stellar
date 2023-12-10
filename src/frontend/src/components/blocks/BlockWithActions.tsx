@@ -1,25 +1,29 @@
 import { Box, Button, Flex, Group, useMantineTheme } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
-import { IconPlus, IconDotsVertical } from '@tabler/icons-react';
+import { IconPlus, IconGridDots } from '@tabler/icons-react';
 import { PropsWithChildren, useCallback } from 'react';
 import { parse } from 'uuid';
 
 import { AddBlockModal } from '@/components/blocks/AddBlockModal';
 import { usePagesContext } from '@/contexts/blocks/usePagesContext';
-import { Block } from '@/types';
 
+import { DraggableProvidedDragHandleProps } from '@hello-pangea/dnd';
 import { TransformBlockModal } from './TransformBlockModal';
 import { BlockType } from '../../../../declarations/workspace/workspace.did';
 
 type BlockWithActionsProps = PropsWithChildren<{
   blockIndex: number;
-  block: Block;
+  blockExternalId: string;
+  parentBlockExternalId?: string;
+  dragHandleProps?: DraggableProvidedDragHandleProps | null;
 }>;
 
 export const BlockWithActions = ({
   children,
   blockIndex,
-  block,
+  blockExternalId,
+  dragHandleProps,
+  parentBlockExternalId,
 }: BlockWithActionsProps) => {
   const { addBlock, removeBlock, updateBlock } = usePagesContext();
   const [isOpen, { open, close }] = useDisclosure();
@@ -37,24 +41,22 @@ export const BlockWithActions = ({
   const [isShowingActions, { open: showActions, close: hideActions }] =
     useDisclosure();
 
-  const parentExternalId = block.parent;
-
-  if (!parentExternalId) return <div />;
-
-  const parsedParentExternalId = parse(parentExternalId);
+  const parsedParentExternalId = parentBlockExternalId
+    ? parse(parentBlockExternalId)
+    : null;
 
   const onBlockTypeChange = useCallback(
     (item: BlockType) => {
-      updateBlock(parse(block.uuid), {
+      updateBlock(parse(blockExternalId), {
         updateBlockType: {
           data: {
-            blockExternalId: parse(block.uuid),
+            blockExternalId: parse(blockExternalId),
             blockType: item,
           },
         },
       });
     },
-    [updateBlock, block.uuid]
+    [updateBlock, blockExternalId]
   );
 
   return (
@@ -62,7 +64,6 @@ export const BlockWithActions = ({
       <Flex
         tabIndex={0}
         onFocus={() => {
-          // debugger;
           open();
         }}
         onBlur={() => {
@@ -82,17 +83,20 @@ export const BlockWithActions = ({
       >
         <Group
           style={{ flexShrink: 0, opacity: isShowingActions ? 1 : 0 }}
-          ml="-6rem"
+          pos="absolute"
+          left="-8rem"
           gap="2px"
         >
           <Button
             aria-label="Add block"
             onClick={() => {
+              if (!parsedParentExternalId) return;
+
               if (shouldShowMobileModal) {
                 onAddModalOpen();
               } else {
                 addBlock(
-                  parse(parentExternalId),
+                  parsedParentExternalId,
                   { paragraph: null },
                   blockIndex + 1
                 );
@@ -107,9 +111,10 @@ export const BlockWithActions = ({
             onClick={() => {
               onTransformModalOpen();
             }}
+            {...dragHandleProps}
             size="xs"
           >
-            <IconDotsVertical size="12px" />
+            <IconGridDots size="12px" />
           </Button>
         </Group>
 
@@ -122,7 +127,8 @@ export const BlockWithActions = ({
           onAddModalClose();
         }}
         onItemSelected={(item) => {
-          addBlock(parse(parentExternalId), item, blockIndex + 1);
+          if (!parsedParentExternalId) return;
+          addBlock(parsedParentExternalId, item, blockIndex + 1);
         }}
       />
 
@@ -147,6 +153,7 @@ export const BlockWithActions = ({
           <Button
             color="inherit"
             onClick={() => {
+              if (!parsedParentExternalId) return;
               addBlock(
                 parsedParentExternalId,
                 { paragraph: null },
@@ -167,6 +174,7 @@ export const BlockWithActions = ({
           <Button
             color="inherit"
             onClick={() => {
+              if (!parsedParentExternalId) return;
               // Note: We add 1 to the block index because the current functionality
               // for removing a block is to remove the block before the given position.
               removeBlock(parsedParentExternalId, blockIndex + 1);
@@ -184,6 +192,7 @@ export const BlockWithActions = ({
             onAddModalClose();
           }}
           onItemSelected={(item) => {
+            if (!parsedParentExternalId) return;
             addBlock(parsedParentExternalId, item, blockIndex + 1);
           }}
           size="full"

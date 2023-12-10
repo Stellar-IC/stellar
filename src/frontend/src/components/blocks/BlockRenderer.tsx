@@ -1,3 +1,4 @@
+import { DraggableProvidedDragHandleProps } from '@hello-pangea/dnd';
 import { Box } from '@mantine/core';
 import { Tree } from '@stellar-ic/lseq-ts';
 import { useEffect, useMemo } from 'react';
@@ -47,14 +48,18 @@ const NestedBlocks = ({ depth, blockExternalId }: NestedBlocksProps) => {
 interface BlockRendererProps {
   externalId: string;
   index: number;
+  parentBlockExternalId?: string;
   placeholder?: string;
   depth: number;
+  dragHandleProps?: DraggableProvidedDragHandleProps | null;
 }
 
 export const BlockRenderer = ({
   externalId,
   index,
   depth,
+  dragHandleProps,
+  parentBlockExternalId,
   placeholder,
 }: BlockRendererProps) => {
   const {
@@ -66,7 +71,19 @@ export const BlockRenderer = ({
     query(parse(externalId));
   }, [query, externalId]);
 
-  if (!block) return <div />;
+  if (!block) {
+    return (
+      <BlockWithActions
+        key={externalId}
+        blockIndex={index}
+        blockExternalId={externalId}
+        parentBlockExternalId={parentBlockExternalId}
+        dragHandleProps={dragHandleProps}
+      >
+        <div />
+      </BlockWithActions>
+    );
+  }
 
   if ('page' in block.blockType) {
     return (
@@ -84,15 +101,26 @@ export const BlockRenderer = ({
   ) {
     return (
       <>
-        <TextBlockRenderer
+        <BlockWithActions
           key={block.uuid}
+          blockExternalId={externalId}
+          blockIndex={index}
+          parentBlockExternalId={parentBlockExternalId}
+          dragHandleProps={dragHandleProps}
+        >
+          <TextBlockRenderer
+            key={block.uuid}
+            blockExternalId={block.uuid}
+            index={index}
+            depth={depth}
+            placeholder={placeholder}
+            blockType={block.blockType}
+          />
+        </BlockWithActions>
+        <NestedBlocks
           blockExternalId={block.uuid}
-          index={index}
-          depth={depth}
-          placeholder={placeholder}
-          blockType={block.blockType}
+          depth={depth + 1}
         />
-        <NestedBlocks blockExternalId={block.uuid} depth={depth + 1} />
       </>
     );
   }
@@ -100,8 +128,22 @@ export const BlockRenderer = ({
   if ('bulletedList' in block.blockType) {
     return (
       <>
-        <BulletedListBlockRenderer blockExternalId={block.uuid} index={index} />
-        <NestedBlocks blockExternalId={block.uuid} depth={depth + 1} />
+        <BlockWithActions
+          key={block.uuid}
+          blockExternalId={externalId}
+          blockIndex={index}
+          parentBlockExternalId={parentBlockExternalId}
+          dragHandleProps={dragHandleProps}
+        >
+          <BulletedListBlockRenderer
+            blockExternalId={block.uuid}
+            index={index}
+          />
+        </BlockWithActions>
+        <NestedBlocks
+          blockExternalId={block.uuid}
+          depth={depth + 1}
+        />
       </>
     );
   }
@@ -109,14 +151,31 @@ export const BlockRenderer = ({
   if ('todoList' in block.blockType) {
     return (
       <>
-        <TodoListBlockRenderer blockExternalId={block.uuid} index={index} />
-        <NestedBlocks blockExternalId={block.uuid} depth={depth + 1} />
+        <BlockWithActions
+          key={block.uuid}
+          blockExternalId={externalId}
+          blockIndex={index}
+          parentBlockExternalId={parentBlockExternalId}
+          dragHandleProps={dragHandleProps}
+        >
+          <TodoListBlockRenderer blockExternalId={block.uuid} index={index} />
+        </BlockWithActions>
+        <NestedBlocks
+          blockExternalId={block.uuid}
+          depth={depth + 1}
+        />
       </>
     );
   }
 
   return (
-    <BlockWithActions key={block.uuid} blockIndex={index} block={block}>
+    <BlockWithActions
+      key={block.uuid}
+      blockExternalId={externalId}
+      blockIndex={index}
+      parentBlockExternalId={parentBlockExternalId}
+      dragHandleProps={dragHandleProps}
+    >
       Unknown Block Type
     </BlockWithActions>
   );

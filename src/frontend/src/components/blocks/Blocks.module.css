@@ -1,0 +1,7 @@
+.item {
+  margin: var(--mantine-spacing-sm) 0;
+}
+
+.itemDragging {
+  box-shadow: var(--mantine-shadow-sm);
+}

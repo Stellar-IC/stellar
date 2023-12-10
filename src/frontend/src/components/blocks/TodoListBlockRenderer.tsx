@@ -1,7 +1,6 @@
 import { usePagesContext } from '@/contexts/blocks/usePagesContext';
 import { useTextBlockEventHandlers } from '@/hooks/documents/useTextBlockEventHandlers';
 
-import { BlockWithActions } from './BlockWithActions';
 import { TodoListBlock } from './TodoListBlock';
 
 interface TodoListBlockRendererProps {
@@ -24,13 +23,11 @@ export const TodoListBlockRenderer = ({
   if (!block) return null;
 
   return (
-    <BlockWithActions key={blockExternalId} blockIndex={index} block={block}>
-      <TodoListBlock
-        externalId={blockExternalId}
-        index={index}
-        onCharacterInserted={onCharacterInserted}
-        onCharacterRemoved={onCharacterRemoved}
-      />
-    </BlockWithActions>
+    <TodoListBlock
+      externalId={blockExternalId}
+      index={index}
+      onCharacterInserted={onCharacterInserted}
+      onCharacterRemoved={onCharacterRemoved}
+    />
   );
 };

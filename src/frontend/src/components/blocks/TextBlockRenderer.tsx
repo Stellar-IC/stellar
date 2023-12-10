@@ -3,12 +3,11 @@ import { Box, MantineTheme, Text } from '@mantine/core';
 import { usePagesContext } from '@/contexts/blocks/usePagesContext';
 
 import { useTextBlockEventHandlers } from '@/hooks/documents/useTextBlockEventHandlers';
-import { BlockWithActions } from './BlockWithActions';
 
 import { TextBlock } from './TextBlock';
 import { TextBlockBlockType } from './TextBlock/types';
 
-interface BlockRendererProps {
+interface TextBlockRendererProps {
   blockExternalId: string;
   index: number;
   placeholder?: string;
@@ -22,7 +21,7 @@ export const TextBlockRenderer = ({
   depth,
   index,
   placeholder,
-}: BlockRendererProps) => {
+}: TextBlockRendererProps) => {
   const {
     blocks: { data },
   } = usePagesContext();
@@ -40,22 +39,20 @@ export const TextBlockRenderer = ({
   );
 
   return (
-    <BlockWithActions key={blockExternalId} blockIndex={index} block={block}>
-      <Box style={getStyle}>
-        <TextBlock
-          blockIndex={index}
-          blockType={blockType}
-          blockExternalId={blockExternalId}
-          onInsert={onCharacterInserted}
-          onRemove={onCharacterRemoved}
-          parentBlockExternalId={parentExternalId}
-          placeholder={placeholder}
-          value={block.properties.title}
-        />
-        <Text size="xs" c="gray.7">
-          {blockExternalId}
-        </Text>
-      </Box>
-    </BlockWithActions>
+    <Box style={getStyle}>
+      <TextBlock
+        blockIndex={index}
+        blockType={blockType}
+        blockExternalId={blockExternalId}
+        onInsert={onCharacterInserted}
+        onRemove={onCharacterRemoved}
+        parentBlockExternalId={parentExternalId}
+        placeholder={placeholder}
+        value={block.properties.title}
+      />
+      <Text size="xs" c="gray.7">
+        {blockExternalId}
+      </Text>
+    </Box>
   );
 };
