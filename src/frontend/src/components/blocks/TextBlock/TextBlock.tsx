@@ -10,6 +10,7 @@ import { TextBlockProps } from './types';
 
 export const TextBlock = ({
   blockIndex,
+  parentBlockIndex,
   blockType,
   blockExternalId,
   parentBlockExternalId,
@@ -38,6 +39,7 @@ export const TextBlock = ({
     onInsert,
     onRemove,
     parentBlockExternalId,
+    parentBlockIndex,
     showPlaceholder,
     hidePlaceholder,
   });

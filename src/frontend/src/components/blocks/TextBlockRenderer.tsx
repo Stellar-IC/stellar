@@ -10,6 +10,7 @@ import { TextBlockBlockType } from './TextBlock/types';
 interface TextBlockRendererProps {
   blockExternalId: string;
   index: number;
+  parentBlockIndex?: number;
   placeholder?: string;
   depth: number;
   blockType: TextBlockBlockType;
@@ -20,6 +21,7 @@ export const TextBlockRenderer = ({
   blockType,
   depth,
   index,
+  parentBlockIndex,
   placeholder,
 }: TextBlockRendererProps) => {
   const {
@@ -47,6 +49,7 @@ export const TextBlockRenderer = ({
         onInsert={onCharacterInserted}
         onRemove={onCharacterRemoved}
         parentBlockExternalId={parentExternalId}
+        parentBlockIndex={parentBlockIndex}
         placeholder={placeholder}
         value={block.properties.title}
       />

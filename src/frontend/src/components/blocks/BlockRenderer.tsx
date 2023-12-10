@@ -14,9 +14,14 @@ import { TodoListBlockRenderer } from './TodoListBlockRenderer';
 interface NestedBlocksProps {
   blockExternalId: string;
   depth: number;
+  parentBlockIndex: number;
 }
 
-const NestedBlocks = ({ depth, blockExternalId }: NestedBlocksProps) => {
+const NestedBlocks = ({
+  depth,
+  blockExternalId,
+  parentBlockIndex,
+}: NestedBlocksProps) => {
   const {
     blocks: { data: blocks },
   } = usePagesContext();
@@ -38,6 +43,7 @@ const NestedBlocks = ({ depth, blockExternalId }: NestedBlocksProps) => {
             externalId={externalId}
             index={i}
             depth={depth}
+            parentBlockIndex={parentBlockIndex}
           />
         </Box>
       ))}
@@ -49,6 +55,7 @@ interface BlockRendererProps {
   externalId: string;
   index: number;
   parentBlockExternalId?: string;
+  parentBlockIndex?: number;
   placeholder?: string;
   depth: number;
   dragHandleProps?: DraggableProvidedDragHandleProps | null;
@@ -60,6 +67,7 @@ export const BlockRenderer = ({
   depth,
   dragHandleProps,
   parentBlockExternalId,
+  parentBlockIndex,
   placeholder,
 }: BlockRendererProps) => {
   const {
@@ -114,12 +122,14 @@ export const BlockRenderer = ({
             index={index}
             depth={depth}
             placeholder={placeholder}
+            parentBlockIndex={parentBlockIndex}
             blockType={block.blockType}
           />
         </BlockWithActions>
         <NestedBlocks
           blockExternalId={block.uuid}
           depth={depth + 1}
+          parentBlockIndex={index}
         />
       </>
     );
@@ -143,6 +153,7 @@ export const BlockRenderer = ({
         <NestedBlocks
           blockExternalId={block.uuid}
           depth={depth + 1}
+          parentBlockIndex={index}
         />
       </>
     );
@@ -163,6 +174,7 @@ export const BlockRenderer = ({
         <NestedBlocks
           blockExternalId={block.uuid}
           depth={depth + 1}
+          parentBlockIndex={index}
         />
       </>
     );

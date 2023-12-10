@@ -42,7 +42,7 @@ export const TodoListBlock = ({
     <Flex>
       <Checkbox
         mt="4px"
-        mx="md"
+        mr="md"
         onChange={(e) => {
           updateBlock(parsedExternalId, {
             updateProperty: {

@@ -9,12 +9,14 @@ import { useArrowDownHandler } from './useArrowDownHandler';
 import { useArrowUpHandler } from './useArrowUpHandler';
 import { useEnterHandler } from './useEnterHandler';
 import { BlockType } from '../../../../../declarations/workspace/workspace.did';
+import { useShiftTabHandler } from './useShiftTabHandler';
 
 type UseTextBlockKeyboardEventHandlersProps = {
   blockExternalId: ExternalId;
   blockIndex: number;
   blockType: BlockType;
   parentBlockExternalId?: ExternalId | null;
+  parentBlockIndex?: number;
   onInsert: (cursorPosition: number, character: string) => void;
   onRemove: (cursorPosition: number) => void;
   showPlaceholder?: () => void;
@@ -26,6 +28,7 @@ export const useTextBlockKeyboardEventHandlers = ({
   blockType,
   blockExternalId,
   parentBlockExternalId,
+  parentBlockIndex,
   onInsert,
   onRemove,
   showPlaceholder,
@@ -37,6 +40,12 @@ export const useTextBlockKeyboardEventHandlers = ({
     blockIndex,
     blockExternalId,
     parentBlockExternalId,
+  });
+  const handleShiftTab = useShiftTabHandler({
+    blockIndex,
+    blockExternalId,
+    parentBlockExternalId,
+    parentBlockIndex,
   });
 
   const handleArrowDown = useArrowDownHandler({
@@ -85,6 +94,9 @@ export const useTextBlockKeyboardEventHandlers = ({
 
     if (e.key === 'Tab') {
       e.preventDefault();
+      if (e.shiftKey) {
+        return handleShiftTab();
+      }
       return handleTab();
     }
 
