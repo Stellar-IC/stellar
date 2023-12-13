@@ -72,7 +72,7 @@ export const TransformBlockModal = ({
         </Modal.Header>
         <Modal.Body>
           {menuItems.map((menuItem) => (
-            <Group>
+            <Group key={menuItem.label}>
               <Box
                 key={menuItem.label}
                 h="2rem"

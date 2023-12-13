@@ -1,16 +1,19 @@
 import { DraggableProvidedDragHandleProps } from '@hello-pangea/dnd';
 import { Box, Flex } from '@mantine/core';
 import { Tree } from '@stellar-ic/lseq-ts';
-import { useEffect, useMemo } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
 import { parse } from 'uuid';
 
 import { usePagesContext } from '@/contexts/blocks/usePagesContext';
 
 import { IconBulbFilled } from '@tabler/icons-react';
+import { getNodeAtPosition } from '@stellar-ic/lseq-ts/Tree';
+import { Block } from '@/types';
 import { BlockWithActions } from './BlockWithActions';
 import { BulletedListBlockRenderer } from './BulletedListBlockRenderer';
 import { TextBlockRenderer } from './TextBlockRenderer';
 import { TodoListBlockRenderer } from './TodoListBlockRenderer';
+import { NumberedListBlockRenderer } from './NumberedListBlockRenderer';
 
 interface NestedBlocksProps {
   blockExternalId: string;
@@ -58,6 +61,7 @@ interface BlockRendererInnerProps {
   parentBlockIndex?: number;
   placeholder?: string;
   depth: number;
+  numeral?: number;
 }
 
 const BlockRendererInner = ({
@@ -66,6 +70,7 @@ const BlockRendererInner = ({
   depth,
   parentBlockIndex,
   placeholder,
+  numeral,
 }: BlockRendererInnerProps) => {
   const {
     blocks: { data, query },
@@ -146,6 +151,34 @@ const BlockRendererInner = ({
     return <TodoListBlockRenderer blockExternalId={block.uuid} index={index} />;
   }
 
+  if ('numberedList' in block.blockType) {
+    return (
+      <NumberedListBlockRenderer
+        blockExternalId={block.uuid}
+        index={index}
+        numeral={numeral || 0}
+      />
+    );
+  }
+
+  if ('code' in block.blockType) {
+    return (
+      <Box p="lg" bg="dark" style={{ borderRadius: '0.25rem' }}>
+        <pre>
+          <TextBlockRenderer
+            key={block.uuid}
+            blockExternalId={block.uuid}
+            index={index}
+            depth={depth}
+            placeholder={placeholder}
+            parentBlockIndex={parentBlockIndex}
+            blockType={block.blockType}
+          />
+        </pre>
+      </Box>
+    );
+  }
+
   return <>Unknown Block Type</>;
 };
 
@@ -172,6 +205,66 @@ export const BlockRenderer = ({
     blocks: { data, query },
   } = usePagesContext();
   const block = useMemo(() => data[externalId], [data, externalId]);
+  const parentBlock = useMemo(
+    () => (parentBlockExternalId ? data[parentBlockExternalId] : undefined),
+    [data, parentBlockExternalId]
+  );
+
+  const getPeviousSiblingBlockExternalId = useCallback(
+    (currentBlockIndex: number) => {
+      if (currentBlockIndex === 0) return undefined;
+      if (!parentBlock) return undefined;
+
+      try {
+        const previousSinblingNode = getNodeAtPosition(
+          parentBlock.content,
+          currentBlockIndex - 1
+        );
+
+        return previousSinblingNode.value;
+      } catch (e) {
+        // Previous sibling node does not exist
+        return undefined;
+      }
+    },
+    [parentBlock]
+  );
+
+  const calculateBlockNumeral = useCallback(() => {
+    const doTheThing = (
+      _block: Block,
+      currentBlockIndex: number,
+      numeral = 0
+    ): number | undefined => {
+      if (!('numberedList' in _block.blockType)) {
+        return;
+      }
+
+      const previousSiblingBlockExternalId =
+        getPeviousSiblingBlockExternalId(currentBlockIndex);
+      if (!previousSiblingBlockExternalId) {
+        return numeral + 1;
+      }
+
+      const previousSiblingBlock = data[previousSiblingBlockExternalId];
+      if (
+        !previousSiblingBlock ||
+        !('numberedList' in previousSiblingBlock.blockType)
+      ) {
+        return numeral + 1;
+      }
+
+      return doTheThing(
+        previousSiblingBlock,
+        currentBlockIndex - 1,
+        numeral + 1
+      );
+    };
+
+    if (!block) return;
+
+    return doTheThing(block, index);
+  }, [block, data, getPeviousSiblingBlockExternalId, index]);
 
   useEffect(() => {
     query(parse(externalId));
@@ -208,6 +301,7 @@ export const BlockRenderer = ({
           parentBlockIndex={parentBlockIndex}
           placeholder={placeholder}
           externalId={externalId}
+          numeral={calculateBlockNumeral()}
         />
       </BlockWithActions>
       <NestedBlocks

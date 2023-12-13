@@ -55,6 +55,13 @@ module {
             #heading3,
             #page,
             #paragraph,
+            #todoList,
+            #bulletedList,
+            #numberedList,
+            #toggleList,
+            #code,
+            #quote,
+            #callout,
         ];
 
         if (Array.find<BlocksTypes.BlockType>(valid_block_types, func x = x == input.blockType) == null) {

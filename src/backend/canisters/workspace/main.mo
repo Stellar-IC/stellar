@@ -43,7 +43,6 @@ shared ({ caller = initializer }) actor class Workspace(
      * Stable Data
      *************************************************************************/
 
-    stable var blocks : RBTree.Tree<PrimaryKey, ShareableBlock> = #leaf;
     stable var blocks_v2 : RBTree.Tree<PrimaryKey, ShareableBlock_v2> = #leaf;
     stable var blocksIdCounter : Nat = 0;
     stable var owner : CoreTypes.Workspaces.WorkspaceOwner = initArgs.owner;
@@ -61,10 +60,6 @@ shared ({ caller = initializer }) actor class Workspace(
      *************************************************************************/
 
     var data = State.Data({
-        blocks = {
-            id = blocksIdCounter;
-            data = blocks;
-        };
         blocks_v2 = {
             id = blocksIdCounter;
             data = blocks_v2;
@@ -385,29 +380,14 @@ shared ({ caller = initializer }) actor class Workspace(
 
         let transformedData = RBTree.RBTree<Nat, BlocksTypes.ShareableBlock_v2>(Nat.compare);
 
-        for (block in state.data.Block.objects.data.entries()) {
+        for (block in state.data.Block_v2.objects.data.entries()) {
             let blockId = block.0;
             let blockData = block.1;
-
-            let currentContent : BlocksTypes.BlockContent = blockData.content;
-            let transformedContent : BlocksTypes.BlockContent_v2 = LseqTree.Tree(null);
-
-            for (blockUuid in Array.vals(currentContent)) {
-                ignore LseqTree.insertCharacterAtEnd(transformedContent, UUID.toText(blockUuid));
-            };
-
-            let upgradedBlock : BlocksTypes.Block_v2 = {
-                blockData and {} with
-                content = transformedContent;
-                var blockType = blockData.blockType;
-                var parent = blockData.parent;
-            };
-
-            transformedData.put(blockId, BlocksModels.Block_v2.toShareable(upgradedBlock));
+            transformedData.put(blockId, BlocksModels.Block_v2.toShareable(blockData));
         };
 
         blocks_v2 := transformedData.share();
-        blocksIdCounter := state.data.Block.id_manager.current();
+        blocksIdCounter := state.data.Block_v2.id_manager.current();
     };
 
     system func postupgrade() {

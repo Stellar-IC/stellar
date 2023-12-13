@@ -70,8 +70,6 @@ shared ({ caller = initializer }) actor class User(
     };
 
     public shared ({ caller }) func upgradePersonalWorkspace() {
-        Guards.assertMatches(caller, stable_owner);
-
         let workspaceActor = switch (stable_personalWorkspace) {
             case (null) { Debug.trap("Personal workspace not initialized") };
             case (?workspace) { workspace };
@@ -125,7 +123,7 @@ shared ({ caller = initializer }) actor class User(
         };
     };
 
-    public shared func upgradePersonalWorkspaceCanisterWasm(wasm_module : Blob) {
+    public shared func upgradePersonalWorkspaceCanisterWasm(wasm_module : Blob) : async () {
         let IC0 : CoreTypes.Management = actor "aaaaa-aa";
 
         let sender_canister_version : ?Nat64 = null;

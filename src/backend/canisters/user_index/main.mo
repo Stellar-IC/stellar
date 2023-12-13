@@ -159,6 +159,26 @@ actor UserIndex {
         };
     };
 
+    public shared func upgradeUserPersonalWorkspaceCanistersWasm(wasm_module : Blob) : async () {
+        let IC0 : CoreTypes.Management = actor "aaaaa-aa";
+
+        let sender_canister_version : ?Nat64 = null;
+
+        for (entry in state.data.user_id_to_user_canister.entries()) {
+            var userId = entry.0;
+            var userCanister = entry.1;
+            Debug.print("Upgrading personal workspace canister for user: " # debug_show (userId));
+
+            try {
+                await userCanister.upgradePersonalWorkspaceCanisterWasm(wasm_module);
+            } catch (err) {
+                Debug.print("Error personal workspace canister: " # debug_show (Error.code(err)) # ": " # debug_show (Error.message(err)));
+            };
+
+            Debug.print("Done personal workspace canister for user: " # debug_show (userId));
+        };
+    };
+
     public shared func upgradeUserCanisters() {
         for (entry in state.data.user_id_to_user_canister.entries()) {
             var userId = entry.0;

@@ -33,17 +33,12 @@ module {
 
     public class Data(
         initial_value : {
-            blocks : {
-                id : Nat;
-                data : RBTree.Tree<PrimaryKey, BlocksTypes.ShareableBlock>;
-            };
             blocks_v2 : {
                 id : Nat;
                 data : RBTree.Tree<PrimaryKey, ShareableBlock>;
             };
         }
     ) {
-        public var Block = BlocksModels.Block.Model(initial_value.blocks.id, initial_value.blocks.data);
         public var Block_v2 = BlocksModels.Block_v2.Model(initial_value.blocks_v2.id, initial_value.blocks_v2.data);
 
         // Red-black trees to index orders by product ID and products by order ID

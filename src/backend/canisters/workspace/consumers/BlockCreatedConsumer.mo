@@ -54,7 +54,7 @@ module BlockCreatedConsumer {
                 return ();
             };
             case (#err(#invalidBlockType)) {
-                Debug.print("Failed to create block. Invalid block type");
+                Debug.print("Failed to create block. Invalid block type - " # debug_show (event.data.block.blockType));
                 return ();
             };
             case (#ok(block)) {
