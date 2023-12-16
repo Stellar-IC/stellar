@@ -24,12 +24,13 @@ export function PagesContextProvider({ children }: PropsWithChildren<{}>) {
   const addBlock = useCallback(
     (parentBlockExternalId: UUID, blockType: BlockType, index: number) => {
       const blockExternalId = v4();
+      const eventExternalId = v4();
       const parsedExternalId = parse(blockExternalId);
 
       handleBlockEvent(blockExternalId, {
         blockCreated: {
           user: identity.getPrincipal(),
-          uuid: parsedExternalId,
+          uuid: parse(eventExternalId),
           data: {
             block: {
               uuid: parsedExternalId,
@@ -58,9 +59,12 @@ export function PagesContextProvider({ children }: PropsWithChildren<{}>) {
             handleBlockEvent(stringify(parentBlockExternalId), {
               blockUpdated: {
                 updateContent: {
+                  uuid: parse(v4()),
                   user: identity.getPrincipal(),
-                  uuid: parentBlockExternalId,
-                  data: { transaction: [event] },
+                  data: {
+                    blockExternalId: parentBlockExternalId,
+                    transaction: [event],
+                  },
                 },
               },
             });
@@ -85,7 +89,7 @@ export function PagesContextProvider({ children }: PropsWithChildren<{}>) {
                   updatePropertyTitle: {
                     ...event.updateProperty.title,
                     user: identity.getPrincipal(),
-                    uuid: blockExternalId,
+                    uuid: parse(v4()),
                   },
                 },
               });
@@ -95,7 +99,7 @@ export function PagesContextProvider({ children }: PropsWithChildren<{}>) {
                   updatePropertyChecked: {
                     ...event.updateProperty.checked,
                     user: identity.getPrincipal(),
-                    uuid: blockExternalId,
+                    uuid: parse(v4()),
                   },
                 },
               });
@@ -106,7 +110,7 @@ export function PagesContextProvider({ children }: PropsWithChildren<{}>) {
                 updateBlockType: {
                   ...event.updateBlockType,
                   user: identity.getPrincipal(),
-                  uuid: blockExternalId,
+                  uuid: parse(v4()),
                 },
               },
             });
@@ -116,7 +120,7 @@ export function PagesContextProvider({ children }: PropsWithChildren<{}>) {
                 updateParent: {
                   ...event.updateParent,
                   user: identity.getPrincipal(),
-                  uuid: blockExternalId,
+                  uuid: parse(v4()),
                 },
               },
             });
@@ -126,7 +130,7 @@ export function PagesContextProvider({ children }: PropsWithChildren<{}>) {
                 updateContent: {
                   ...event.updateContent,
                   user: identity.getPrincipal(),
-                  uuid: blockExternalId,
+                  uuid: parse(v4()),
                 },
               },
             });

@@ -1,6 +1,6 @@
 import { Identity } from '@dfinity/agent';
 import { useCallback, useEffect } from 'react';
-import { parse, stringify } from 'uuid';
+import { parse, stringify, v4 } from 'uuid';
 
 import { useWorkspaceActor } from '@/hooks/ic/actors/useWorkspaceActor';
 import { useUpdate } from '@/hooks/useUpdate';
@@ -127,9 +127,12 @@ export const usePages = (props: {
         blockExternalId,
         (_events) => {
           const contentUpdatedEvent: BlockContentUpdatedEvent = {
+            uuid: parse(v4()),
             user: event.user,
-            data: { transaction: _events },
-            uuid: parse(parentExternalId),
+            data: {
+              blockExternalId: parse(parentBlock.uuid),
+              transaction: _events,
+            },
           };
 
           sendUpdate([

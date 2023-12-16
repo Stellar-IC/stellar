@@ -105,6 +105,7 @@ module {
     public type BlockContentUpdatedEvent = {
         uuid : UUID.UUID;
         data : {
+            blockExternalId : UUID.UUID;
             transaction : [LseqTypes.TreeEvent];
         };
         user : Principal;

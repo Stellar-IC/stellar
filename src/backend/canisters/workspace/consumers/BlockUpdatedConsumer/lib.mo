@@ -63,7 +63,7 @@ module BlockUpdatedConsumer {
                 };
             };
             case (#updateContent(event)) {
-                let blockExternalId = event.uuid;
+                let blockExternalId = event.data.blockExternalId;
                 let currentBlock = switch (_blockByUuid(state, blockExternalId)) {
                     case (#err(#blockNotFound)) {
                         Debug.print("Failed to update block. Block not found with uuid:" # UUID.toText(blockExternalId));

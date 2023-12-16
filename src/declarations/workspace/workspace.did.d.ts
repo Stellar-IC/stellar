@@ -15,7 +15,7 @@ export interface AddBlockUpdateOutputResult { 'id' : PrimaryKey__2 }
 export type AllocationStrategy = { 'boundaryPlus' : null } |
   { 'boundaryMinus' : null };
 export interface BlockContentUpdatedEvent {
-  'data' : { 'transaction' : Array<TreeEvent> },
+  'data' : { 'transaction' : Array<TreeEvent>, 'blockExternalId' : UUID },
   'user' : Principal,
   'uuid' : UUID,
 }

@@ -10,7 +10,7 @@ import {
   //  MenuList
 } from '@mantine/core';
 import { useCallback } from 'react';
-import { canisters, INTERNET_IDENTITY_HOST } from '@/config';
+import { INTERNET_IDENTITY_HOST } from '@/config';
 import { logout } from '@/modules/auth/client';
 import { useAuthContext } from '@/modules/auth/contexts/AuthContext';
 import classes from './AuthButton.module.css';
@@ -21,7 +21,7 @@ export function AuthButton() {
   const handleLogin = useCallback(
     () =>
       login({
-        identityProvider: `${INTERNET_IDENTITY_HOST}?canisterId=${canisters.INTERNET_IDENTITY.id}`,
+        identityProvider: `${INTERNET_IDENTITY_HOST}`,
       }),
     [login]
   );

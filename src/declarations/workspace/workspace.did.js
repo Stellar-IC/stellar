@@ -182,7 +182,10 @@ export const idlFactory = ({ IDL }) => {
     }),
   });
   const BlockContentUpdatedEvent = IDL.Record({
-    'data' : IDL.Record({ 'transaction' : IDL.Vec(TreeEvent) }),
+    'data' : IDL.Record({
+      'transaction' : IDL.Vec(TreeEvent),
+      'blockExternalId' : UUID,
+    }),
     'user' : IDL.Principal,
     'uuid' : UUID,
   });
