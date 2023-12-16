@@ -101,5 +101,9 @@ export const usePageEvents = () => {
   //     [prepareFromStorage]
   // );
 
-  return { events, addEvent: serializeAndStoreEventLocally, clearEvents };
+  return {
+    events,
+    storeEventLocal: serializeAndStoreEventLocally,
+    clearEvents,
+  };
 };

@@ -1,6 +1,6 @@
 import { Identity } from '@dfinity/agent';
 import { useCallback, useEffect } from 'react';
-import { stringify } from 'uuid';
+import { parse, stringify } from 'uuid';
 
 import { useWorkspaceActor } from '@/hooks/ic/actors/useWorkspaceActor';
 import { useUpdate } from '@/hooks/useUpdate';
@@ -30,6 +30,7 @@ import {
   BlockTypeUpdatedEvent,
   BlockProperyTitleUpdatedEvent,
   BlockProperyCheckedUpdatedEvent,
+  BlockCreatedEvent,
   BlockContentUpdatedEvent,
 } from '../../../../declarations/workspace/workspace.did';
 
@@ -94,12 +95,77 @@ export const usePages = (props: {
       });
   }, [actor, updateLocalPage]);
 
-  const { addEvent: storeEventLocally } = usePageEvents();
+  const { storeEventLocal } = usePageEvents();
 
   const [sendUpdate] = useUpdate<
     [SaveEventTransactionUpdateInput],
     SaveEventTransactionUpdateOutput
   >(workspaceId, actor.saveEvents);
+
+  const updateContent = useCallback((_event: BlockContentUpdatedEvent) => {
+    // TODO: Figure out what needs to happen here
+  }, []);
+
+  const createBlock = useCallback(
+    (event: BlockCreatedEvent) => {
+      if (!event.data.block.parent[0]) {
+        return;
+      }
+
+      const blockExternalId = stringify(event.data.block.uuid);
+      const parentExternalId = stringify(event.data.block.parent[0]);
+
+      const parentBlock = blocks[parentExternalId];
+      if (!parentBlock) {
+        return;
+      }
+
+      // Add block to parent block's content
+      Tree.insertCharacter(
+        parentBlock.content,
+        Number(event.data.index),
+        blockExternalId,
+        (_events) => {
+          const contentUpdatedEvent: BlockContentUpdatedEvent = {
+            user: event.user,
+            data: { transaction: _events },
+            uuid: parse(parentExternalId),
+          };
+
+          sendUpdate([
+            {
+              transaction: [
+                {
+                  blockUpdated: {
+                    updateContent: contentUpdatedEvent,
+                  },
+                },
+              ],
+            },
+          ]);
+        }
+      );
+
+      updateLocalBlock(parentExternalId, parentBlock);
+      if ('page' in parentBlock.blockType) {
+        updateLocalPage(parentExternalId, parentBlock);
+      }
+
+      // Create block locally
+      updateLocalBlock(blockExternalId, {
+        id: '', // this will be set by the backend
+        content: new Tree.Tree(),
+        parent: parentExternalId,
+        properties: {
+          title: new Tree.Tree(),
+          checked: false,
+        },
+        blockType: event.data.block.blockType,
+        uuid: blockExternalId,
+      });
+    },
+    [blocks, sendUpdate, updateLocalBlock, updateLocalPage]
+  );
 
   const updateBlockType = useCallback(
     (event: BlockTypeUpdatedEvent) => {
@@ -138,38 +204,13 @@ export const usePages = (props: {
     []
   );
 
-  const updateContent = useCallback(
-    (event: BlockContentUpdatedEvent) => {
-      const treeEvents = event.data.transaction;
-      treeEvents.forEach((treeEvent) => {
-        if ('insert' in treeEvent) {
-          const parentExternalId = event.uuid;
-          const contentExternalId = treeEvent.insert.value;
-
-          updateLocalBlock(contentExternalId, {
-            id: '',
-            content: new Tree.Tree(),
-            parent: stringify(parentExternalId),
-            properties: {
-              title: new Tree.Tree(),
-              checked: false,
-            },
-            blockType: { paragraph: null },
-            uuid: contentExternalId,
-          });
-        } else if ('delete' in treeEvent) {
-          // TODO: Store change in local storage
-        }
-      });
-    },
-    [updateLocalBlock]
-  );
-
-  const processBlockEvent = useCallback(
+  const handleBlockEvent = useCallback(
     (blockExternalId: string, event: BlockEvent) => {
-      storeEventLocally(blockExternalId, event);
+      storeEventLocal(blockExternalId, event);
 
-      if ('blockUpdated' in event) {
+      if ('blockCreated' in event) {
+        createBlock(event.blockCreated);
+      } else if ('blockUpdated' in event) {
         if ('updateContent' in event.blockUpdated) {
           updateContent(event.blockUpdated.updateContent);
         } else if ('updateBlockType' in event.blockUpdated) {
@@ -185,22 +226,14 @@ export const usePages = (props: {
       return sendUpdate([{ transaction: [event] }]);
     },
     [
+      createBlock,
       sendUpdate,
-      storeEventLocally,
+      storeEventLocal,
       updateBlockType,
       updateContent,
       updatePropertyChecked,
       updatePropertyTitle,
     ]
-  );
-
-  const handleBlockEvent = useCallback(
-    (blockExternalId: UUID, event: BlockEvent) => {
-      const block = blocks[stringify(blockExternalId)];
-      if (!block) throw new Error('Block not found');
-      processBlockEvent(block.uuid, event);
-    },
-    [blocks, processBlockEvent]
   );
 
   return {

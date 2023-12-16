@@ -49,6 +49,10 @@ export const Blocks = ({ page }: { page: Page }) => {
   // Update the state if the blocks change
   useEffect(() => {
     let i = 0;
+    if (blocksToRender.length !== state.length) {
+      handlers.setState(blocksToRender);
+      return;
+    }
     for (const block of blocksToRender) {
       if (block !== state[i]) {
         handlers.setState(blocksToRender);

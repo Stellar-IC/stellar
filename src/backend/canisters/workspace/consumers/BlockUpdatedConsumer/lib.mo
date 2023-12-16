@@ -71,6 +71,7 @@ module BlockUpdatedConsumer {
                     };
                     case (#ok(block)) { block };
                 };
+
                 for (event in Array.vals(event.data.transaction)) {
                     switch (event) {
                         case (#insert(event)) {
