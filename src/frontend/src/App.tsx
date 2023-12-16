@@ -17,8 +17,30 @@ import { DelegationIdentity } from '@dfinity/identity';
 import { WorkspaceContextProvider } from './contexts/WorkspaceContext/WorkspaceContextProvider';
 import { useUserActor } from './hooks/ic/actors/useUserActor';
 
-function AppBody({ children }: PropsWithChildren) {
-  return <Box w="100%">{children}</Box>;
+function AppBody({
+  children,
+  workspaceId,
+}: PropsWithChildren<{ workspaceId?: Principal }>) {
+  return (
+    <Box w="100%">
+      <Flex>
+        <NavbarSearch workspaceId={workspaceId} />
+        <div
+          style={{
+            display: 'flex',
+            width: '100%',
+            height: '100%',
+            alignContent: 'center',
+            justifyContent: 'center',
+            flexGrow: 1,
+            paddingLeft: '300px', // TODO: Convert this to rems
+          }}
+        >
+          {children}
+        </div>
+      </Flex>
+    </Box>
+  );
 }
 
 function PageWrapper({ children }: PropsWithChildren) {
@@ -52,90 +74,23 @@ function PageWrapper({ children }: PropsWithChildren) {
   if (isLoading) {
     return (
       <AppBody>
-        <Flex>
-          <NavbarSearch />
-          <div
-            style={{
-              display: 'flex',
-              width: '100%',
-              height: '100%',
-              alignContent: 'center',
-              justifyContent: 'center',
-              flexGrow: 1,
-            }}
-          >
-            <Loader />
-          </div>
-        </Flex>
+        <Loader />
       </AppBody>
     );
   }
 
   if (!(identity instanceof DelegationIdentity)) {
-    return (
-      <AppBody>
-        <Flex>
-          <NavbarSearch />
-          <div
-            style={{
-              display: 'flex',
-              width: '100%',
-              height: '100%',
-              alignContent: 'center',
-              justifyContent: 'center',
-              flexGrow: 1,
-            }}
-          >
-            {/* {children} */}
-          </div>
-        </Flex>
-      </AppBody>
-    );
+    return <AppBody />;
   }
 
   if (!workspaceId) {
-    return (
-      <AppBody>
-        <Flex>
-          <NavbarSearch />
-          <div
-            style={{
-              display: 'flex',
-              width: '100%',
-              height: '100%',
-              alignContent: 'center',
-              justifyContent: 'center',
-              flexGrow: 1,
-            }}
-          >
-            {/* {children} */}
-            No Workspace
-          </div>
-        </Flex>
-      </AppBody>
-    );
+    return <AppBody>No Workspace</AppBody>;
   }
 
   return (
     <WorkspaceContextProvider identity={identity} workspaceId={workspaceId}>
       <PagesContextProvider>
-        <AppBody>
-          <Flex>
-            <NavbarSearch workspaceId={workspaceId} />
-            <div
-              style={{
-                display: 'flex',
-                width: '100%',
-                height: '100%',
-                alignContent: 'center',
-                justifyContent: 'center',
-                flexGrow: 1,
-              }}
-            >
-              {children}
-            </div>
-          </Flex>
-        </AppBody>
+        <AppBody workspaceId={workspaceId}>{children}</AppBody>
       </PagesContextProvider>
     </WorkspaceContextProvider>
   );
