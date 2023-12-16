@@ -66,7 +66,36 @@ shared ({ caller = initializer }) actor class Workspace(
         };
     });
     var state = State.State(data);
-    let eventStream = LseqEvents.EventStream<BlocksTypes.BlockEvent>();
+    let eventStream = LseqEvents.EventStream<BlocksTypes.BlockEvent>({
+        getEventId = func(event) {
+            switch (event) {
+                case (#empty) {
+                    return "";
+                };
+                case (#blockCreated(event)) {
+                    return UUID.toText(event.uuid);
+                };
+                case (#blockUpdated(event)) {
+                    return switch (event) {
+                        case (#updateBlockType(event)) {
+                            UUID.toText(event.uuid);
+                        };
+                        case (#updateContent(event)) { UUID.toText(event.uuid) };
+                        case (#updatePropertyTitle(event)) {
+                            UUID.toText(event.uuid);
+                        };
+                        case (#updatePropertyChecked(event)) {
+                            UUID.toText(event.uuid);
+                        };
+                        case (#updateParent(event)) { UUID.toText(event.uuid) };
+                    };
+                };
+                case (#blockRemoved(event)) {
+                    return UUID.toText(event.uuid);
+                };
+            };
+        };
+    });
 
     /*************************************************************************
      * Initialization helper methods
@@ -202,7 +231,8 @@ shared ({ caller = initializer }) actor class Workspace(
                     let eventToPublish : {
                         #blockCreated : BlocksTypes.BlockCreatedEvent;
                     } = #blockCreated({
-                        uuid = await Source.Source().new();
+                        uuid = event.uuid;
+                        user = event.user;
                         data = {
                             block = {
                                 block and {} with
@@ -224,7 +254,6 @@ shared ({ caller = initializer }) actor class Workspace(
                             };
                             index = event.data.index;
                         };
-                        user = caller;
                     });
                     eventStream.publish(eventToPublish);
                     return #ok();
@@ -271,38 +300,35 @@ shared ({ caller = initializer }) actor class Workspace(
      *************************************************************************/
 
     func logEvent(event : BlocksTypes.BlockEvent) : () {
-        Debug.print("");
-        Debug.print("Logging event");
         switch (event) {
             case (#empty) {};
             case (#blockCreated(event)) {
-                Debug.print("TYPE: Block Created");
-                Debug.print("UUID: " # UUID.toText(event.uuid));
+                Debug.print("EVENT TYPE: Block Created");
+                Debug.print("EVENT UUID: " # UUID.toText(event.uuid));
             };
             case (#blockUpdated(event)) {
-                Debug.print("TYPE: Block Updated");
+                Debug.print("EVENT TYPE: Block Updated");
                 switch (event) {
-                    // TODO: Add case for content updated
                     case (#updateContent(event)) {
-                        Debug.print("UUID: " # UUID.toText(event.uuid));
+                        Debug.print("EVENT UUID: " # UUID.toText(event.uuid));
                     };
                     case (#updateBlockType(event)) {
-                        Debug.print("UUID: " # UUID.toText(event.uuid));
+                        Debug.print("EVENT UUID: " # UUID.toText(event.uuid));
                     };
                     case (#updatePropertyTitle(event)) {
-                        Debug.print("UUID: " # UUID.toText(event.uuid));
+                        Debug.print("EVENT UUID: " # UUID.toText(event.uuid));
                     };
                     case (#updatePropertyChecked(event)) {
-                        Debug.print("UUID: " # UUID.toText(event.uuid));
+                        Debug.print("EVENT UUID: " # UUID.toText(event.uuid));
                     };
                     case (#updateParent(event)) {
-                        Debug.print("UUID: " # UUID.toText(event.uuid));
+                        Debug.print("EVENT UUID: " # UUID.toText(event.uuid));
                     };
                 };
             };
             case (#blockRemoved(event)) {
-                Debug.print("TYPE: Block Removed");
-                Debug.print("UUID: " # UUID.toText(event.uuid));
+                Debug.print("EVENT TYPE: Block Removed");
+                Debug.print("EVENT UUID: " # UUID.toText(event.uuid));
             };
         };
     };
@@ -311,18 +337,13 @@ shared ({ caller = initializer }) actor class Workspace(
         eventStream.addEventListener(
             "test",
             func(event) {
-                Debug.print("Received event: ");
                 logEvent(event);
-
                 switch (event) {
                     case (#empty) {};
                     case (#blockCreated(event)) {
-                        Debug.print("Processing `blockCreated` event");
                         BlockCreatedConsumer.execute(event, state);
-                        Debug.print("Successfully processed `blockCreated` event: " # UUID.toText(event.uuid));
                     };
                     case (#blockUpdated(event)) {
-                        Debug.print("Processing `blockUpdated` event");
                         let res = BlockUpdatedConsumer.execute(event, state);
                         let uuid = switch (event) {
                             case (#updateBlockType(event)) { event.uuid };
@@ -342,21 +363,23 @@ shared ({ caller = initializer }) actor class Workspace(
                         };
                     };
                     case (#blockRemoved(event)) {
-                        Debug.print("Processing `blockRemoved` event");
                         let res = BlockRemovedConsumer.execute(event, state);
                         switch (res) {
                             case (#err(err)) {
-                                Debug.print("Failed to process `blockUpdated` event: " # UUID.toText(event.uuid));
+                                Debug.print("Failed to process `blockRemoved` event: " # UUID.toText(event.uuid));
                             };
                             case (#ok(_)) {
-                                Debug.print("Successfully processed `blockUpdated` event: " # UUID.toText(event.uuid));
+                                Debug.print("Successfully processed `blockRemoved` event: " # UUID.toText(event.uuid));
                             };
                         };
-                        Debug.print("Successfully processed `blockRemoved` event: " # UUID.toText(event.uuid));
                     };
                 };
             },
         );
+    };
+
+    private func startProcessingEvents() : async () {
+        eventStream.processEvents();
     };
 
     /*************************************************************************
@@ -367,9 +390,11 @@ shared ({ caller = initializer }) actor class Workspace(
             #nanoseconds(0),
             startListeningForEvents,
         );
+        ignore Timer.recurringTimer(
+            #nanoseconds(500_000_000),
+            startProcessingEvents,
+        );
     };
-
-    startTimers();
 
     /*************************************************************************
      * System Functions

@@ -16,7 +16,6 @@ import Error "mo:base/Error";
 
 import Constants "../../constants";
 import CanisterTopUp "../../lib/shared/CanisterTopUp";
-import EventStream "../../utils/EventStream";
 
 import User "../user/main";
 

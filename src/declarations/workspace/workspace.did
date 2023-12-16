@@ -325,7 +325,10 @@ type BlockCreatedEvent =
  };
 type BlockContentUpdatedEvent = 
  record {
-   data: record {transaction: vec TreeEvent;};
+   data: record {
+           blockExternalId: UUID;
+           transaction: vec TreeEvent;
+         };
    user: principal;
    uuid: UUID;
  };

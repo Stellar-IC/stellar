@@ -1,4 +1,4 @@
-import { parse } from 'uuid';
+import { parse, v4 } from 'uuid';
 import { Block } from '@/types';
 import { useAuthContext } from '@/modules/auth/contexts/AuthContext';
 import { useWorkspaceContext } from '@/contexts/WorkspaceContext/useWorkspaceContext';
@@ -37,7 +37,7 @@ export const useSuccessHandlers = ({
             blockUpdated: {
               updatePropertyTitle: {
                 user: identity.getPrincipal(),
-                uuid: parse(block.uuid),
+                uuid: parse(v4()),
                 data: {
                   transaction: [event],
                   blockExternalId: parse(block.uuid),
@@ -65,7 +65,7 @@ export const useSuccessHandlers = ({
             blockUpdated: {
               updatePropertyTitle: {
                 user: identity.getPrincipal(),
-                uuid: parse(block.uuid),
+                uuid: parse(v4()),
                 data: {
                   blockExternalId: parse(block.uuid),
                   transaction: events,

@@ -16,8 +16,10 @@ type User =
  service {
    personalWorkspace: () -> (Result);
    profile: () -> (UserProfile) query;
+   updatePersonalWorkspaceCanisterSettings: (CanisterSettings) -> ();
    updateProfile: (ProfileInput) -> (UserProfile);
    upgradePersonalWorkspace: () -> () oneway;
+   upgradePersonalWorkspaceCanisterWasm: (blob) -> ();
    walletReceive: () -> (record {accepted: nat64;});
  };
 type Time = int;
@@ -30,4 +32,11 @@ type Result =
    ok: WorkspaceId;
  };
 type ProfileInput = record {username: Username;};
+type CanisterSettings = 
+ record {
+   compute_allocation: opt nat;
+   controllers: opt vec principal;
+   freezing_threshold: opt nat;
+   memory_allocation: opt nat;
+ };
 service : (UserInitArgs) -> User

@@ -9,7 +9,7 @@ import BlocksTypes "../../../lib/blocks/types";
 import State "../model/state";
 import Types "../types";
 
-module {
+module CreateBlock {
     type Input = Types.Services.CreateBlockService.CreateBlockServiceInput;
     type Output = Types.Services.CreateBlockService.CreateBlockServiceOutput;
 
