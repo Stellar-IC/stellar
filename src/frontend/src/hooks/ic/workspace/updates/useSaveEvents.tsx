@@ -1,12 +1,14 @@
 import { Identity } from '@dfinity/agent';
 import { useCallback } from 'react';
+
 import { useWorkspaceActor } from '@/hooks/ic/workspace/useWorkspaceActor';
+import { useUpdate } from '@/hooks/useUpdate';
 import { CanisterId } from '@/types';
+
 import {
   SaveEventTransactionUpdateInput,
   SaveEventTransactionUpdateOutput,
-} from '../../../../../declarations/workspace/workspace.did';
-import { useUpdate } from '@/hooks/useUpdate';
+} from '../../../../../../declarations/workspace/workspace.did';
 
 export const useSaveEvents = (options: {
   identity: Identity;

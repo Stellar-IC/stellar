@@ -104,7 +104,8 @@ export interface CreatePageUpdateOutputResult {
   'properties' : ShareableBlockProperties,
   'parent' : [] | [UUID],
 }
-export interface Edge { 'node' : ShareableBlock_v2 }
+export interface Edge { 'node' : ShareableBlock }
+export type List = [] | [[ShareableBlock, List]];
 export type NodeBase = number;
 export type NodeBoundary = number;
 export type NodeDepth = number;
@@ -120,9 +121,9 @@ export type RemoveBlockUpdateOutput = { 'ok' : RemoveBlockUpdateOutputResult } |
   { 'err' : RemoveBlockUpdateOutputError };
 export type RemoveBlockUpdateOutputError = null;
 export type RemoveBlockUpdateOutputResult = null;
-export type Result = { 'ok' : ShareableBlock_v2 } |
+export type Result = { 'ok' : ShareableBlock } |
   { 'err' : { 'pageNotFound' : null } };
-export type Result_1 = { 'ok' : ShareableBlock_v2 } |
+export type Result_1 = { 'ok' : ShareableBlock } |
   { 'err' : { 'blockNotFound' : null } };
 export interface SaveEventTransactionUpdateInput {
   'transaction' : BlockEventTransaction,
@@ -134,6 +135,14 @@ export type SaveEventTransactionUpdateOutput = {
 export type SaveEventTransactionUpdateOutputError = { 'anonymousUser' : null } |
   { 'insufficientCycles' : null };
 export type SaveEventTransactionUpdateOutputResult = null;
+export interface ShareableBlock {
+  'id' : PrimaryKey,
+  'content' : ShareableBlockContent,
+  'uuid' : UUID,
+  'blockType' : BlockType,
+  'properties' : ShareableBlockProperties,
+  'parent' : [] | [UUID],
+}
 export interface ShareableBlockContent {
   'boundary' : NodeBoundary,
   'allocationStrategies' : Array<[NodeDepth, AllocationStrategy]>,
@@ -151,14 +160,6 @@ export interface ShareableBlockText {
   'boundary' : NodeBoundary,
   'allocationStrategies' : Array<[NodeDepth, AllocationStrategy]>,
   'rootNode' : ShareableNode,
-}
-export interface ShareableBlock_v2 {
-  'id' : PrimaryKey,
-  'content' : ShareableBlockContent,
-  'uuid' : UUID,
-  'blockType' : BlockType,
-  'properties' : ShareableBlockProperties,
-  'parent' : [] | [UUID],
 }
 export interface ShareableNode {
   'value' : NodeValue,
@@ -207,6 +208,7 @@ export interface UpdateBlockUpdateOutputResult {
 export interface Workspace {
   'addBlock' : ActorMethod<[AddBlockUpdateInput], AddBlockUpdateOutput>,
   'blockByUuid' : ActorMethod<[UUID], Result_1>,
+  'blocksByPageUuid' : ActorMethod<[string], List>,
   'createPage' : ActorMethod<[CreatePageUpdateInput], CreatePageUpdateOutput>,
   'cyclesInformation' : ActorMethod<
     [],

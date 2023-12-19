@@ -1,4 +1,5 @@
 export const idlFactory = ({ IDL }) => {
+  const List = IDL.Rec();
   const ShareableNode = IDL.Rec();
   const WorkspaceInitArgs = IDL.Record({
     'owner' : IDL.Principal,
@@ -80,7 +81,7 @@ export const idlFactory = ({ IDL }) => {
     'err' : AddBlockUpdateOutputError,
   });
   const PrimaryKey = IDL.Nat;
-  const ShareableBlock_v2 = IDL.Record({
+  const ShareableBlock = IDL.Record({
     'id' : PrimaryKey,
     'content' : ShareableBlockContent,
     'uuid' : UUID,
@@ -89,9 +90,10 @@ export const idlFactory = ({ IDL }) => {
     'parent' : IDL.Opt(UUID),
   });
   const Result_1 = IDL.Variant({
-    'ok' : ShareableBlock_v2,
+    'ok' : ShareableBlock,
     'err' : IDL.Variant({ 'blockNotFound' : IDL.Null }),
   });
+  List.fill(IDL.Opt(IDL.Tuple(ShareableBlock, List)));
   const ShareableBlockProperties__1 = IDL.Record({
     'title' : IDL.Opt(ShareableBlockText),
     'checked' : IDL.Opt(IDL.Bool),
@@ -122,7 +124,7 @@ export const idlFactory = ({ IDL }) => {
     'err' : CreatePageUpdateOutputError,
   });
   const Result = IDL.Variant({
-    'ok' : ShareableBlock_v2,
+    'ok' : ShareableBlock,
     'err' : IDL.Variant({ 'pageNotFound' : IDL.Null }),
   });
   const SortDirection = IDL.Variant({ 'asc' : IDL.Null, 'desc' : IDL.Null });
@@ -131,7 +133,7 @@ export const idlFactory = ({ IDL }) => {
     'fieldName' : IDL.Text,
   });
   const PrimaryKey__1 = IDL.Nat;
-  const Edge = IDL.Record({ 'node' : ShareableBlock_v2 });
+  const Edge = IDL.Record({ 'node' : ShareableBlock });
   const PaginatedResults = IDL.Record({ 'edges' : IDL.Vec(Edge) });
   const RemoveBlockUpdateInput = IDL.Record({ 'uuid' : UUID });
   const RemoveBlockUpdateOutputResult = IDL.Null;
@@ -266,6 +268,7 @@ export const idlFactory = ({ IDL }) => {
   const Workspace = IDL.Service({
     'addBlock' : IDL.Func([AddBlockUpdateInput], [AddBlockUpdateOutput], []),
     'blockByUuid' : IDL.Func([UUID], [Result_1], ['query']),
+    'blocksByPageUuid' : IDL.Func([IDL.Text], [List], ['query']),
     'createPage' : IDL.Func(
         [CreatePageUpdateInput],
         [CreatePageUpdateOutput],

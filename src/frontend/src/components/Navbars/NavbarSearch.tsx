@@ -1,11 +1,7 @@
 import type { Principal } from '@dfinity/principal';
-import { usePagesContext } from '@/contexts/blocks/usePagesContext';
+import { usePagesContext } from '@/contexts/PagesContext/usePagesContext';
 import { Tree } from '@stellar-ic/lseq-ts';
 import {
-  // TextInput,
-  // Code,
-  UnstyledButton,
-  Badge,
   Text,
   Group,
   ActionIcon,
@@ -13,23 +9,11 @@ import {
   rem,
   useMantineTheme,
 } from '@mantine/core';
-import {
-  IconBulb,
-  IconUser,
-  IconCheckbox,
-  // IconSearch,
-  IconPlus,
-} from '@tabler/icons-react';
+import { IconPlus } from '@tabler/icons-react';
 import { useCreatePageWithRedirect } from '@/hooks/documents/updates/useCreatePageWithRedirect';
 import { Link } from 'react-router-dom';
 import { AuthButton } from '../AuthButton/AuthButton';
 import classes from './NavbarSearch.module.css';
-
-const links = [
-  { icon: IconBulb, label: 'Activity', notifications: 3 },
-  { icon: IconCheckbox, label: 'Tasks', notifications: 4 },
-  { icon: IconUser, label: 'Contacts' },
-];
 
 function PageLinksSection() {
   const { pages } = usePagesContext();
@@ -75,19 +59,6 @@ function PageLinksSection() {
 
 export function NavbarSearch({ workspaceId }: { workspaceId?: Principal }) {
   const theme = useMantineTheme();
-  const mainLinks = links.map((link) => (
-    <UnstyledButton key={link.label} className={classes.mainLink}>
-      <div className={classes.mainLinkInner}>
-        <link.icon size={20} className={classes.mainLinkIcon} stroke={1.5} />
-        <span>{link.label}</span>
-      </div>
-      {link.notifications && (
-        <Badge size="sm" variant="filled" className={classes.mainLinkBadge}>
-          {link.notifications}
-        </Badge>
-      )}
-    </UnstyledButton>
-  ));
 
   return (
     <nav className={classes.navbar}>
@@ -110,25 +81,6 @@ export function NavbarSearch({ workspaceId }: { workspaceId?: Principal }) {
           )}
         </div>
       </div>
-
-      {/* <TextInput
-        placeholder="Search"
-        size="xs"
-        leftSection={
-          <IconSearch
-            style={{ width: rem(12), height: rem(12) }}
-            stroke={1.5}
-          />
-        }
-        rightSectionWidth={70}
-        rightSection={<Code className={classes.searchCode}>Ctrl + K</Code>}
-        styles={{ section: { pointerEvents: 'none' } }}
-        mb="sm"
-      />
-
-      <div className={classes.section}>
-        <div className={classes.mainLinks}>{mainLinks}</div>
-      </div> */}
 
       {workspaceId && <PageLinksSection />}
     </nav>

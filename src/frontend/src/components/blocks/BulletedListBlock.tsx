@@ -1,6 +1,6 @@
 import { Flex } from '@mantine/core';
 
-import { usePagesContext } from '@/contexts/blocks/usePagesContext';
+import { usePagesContext } from '@/contexts/PagesContext/usePagesContext';
 
 import { useEffect } from 'react';
 import { parse } from 'uuid';

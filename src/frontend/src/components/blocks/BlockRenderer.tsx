@@ -4,7 +4,7 @@ import { Tree } from '@stellar-ic/lseq-ts';
 import { useCallback, useEffect, useMemo } from 'react';
 import { parse } from 'uuid';
 
-import { usePagesContext } from '@/contexts/blocks/usePagesContext';
+import { usePagesContext } from '@/contexts/PagesContext/usePagesContext';
 
 import { IconBulbFilled } from '@tabler/icons-react';
 import { getNodeAtPosition } from '@stellar-ic/lseq-ts/Tree';
@@ -73,13 +73,9 @@ const BlockRendererInner = ({
   numeral,
 }: BlockRendererInnerProps) => {
   const {
-    blocks: { data, query },
+    blocks: { data },
   } = usePagesContext();
   const block = useMemo(() => data[externalId], [data, externalId]);
-
-  useEffect(() => {
-    query(parse(externalId));
-  }, [query, externalId]);
 
   if (!block) {
     return <div />;

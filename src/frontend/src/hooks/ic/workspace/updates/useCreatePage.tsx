@@ -9,7 +9,7 @@ import { CanisterId } from '@/types';
 import {
   CreatePageUpdateInput,
   CreatePageUpdateOutput,
-} from '../../../../../declarations/workspace/workspace.did';
+} from '../../../../../../declarations/workspace/workspace.did';
 
 export const useCreatePage = (options: {
   identity: Identity;

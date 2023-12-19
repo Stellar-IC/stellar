@@ -2,7 +2,7 @@ import { Checkbox, Flex } from '@mantine/core';
 import { useEffect, useMemo } from 'react';
 import { parse } from 'uuid';
 
-import { usePagesContext } from '@/contexts/blocks/usePagesContext';
+import { usePagesContext } from '@/contexts/PagesContext/usePagesContext';
 
 import { TextBlock } from './TextBlock';
 

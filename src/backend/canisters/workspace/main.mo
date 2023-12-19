@@ -10,6 +10,7 @@ import Timer = "mo:base/Timer";
 import ExperimentalCycles "mo:base/ExperimentalCycles";
 import Nat64 "mo:base/Nat64";
 import Error "mo:base/Error";
+import Text "mo:base/Text";
 import UUID "mo:uuid/UUID";
 import Source "mo:uuid/async/SourceV4";
 
@@ -36,14 +37,13 @@ shared ({ caller = initializer }) actor class Workspace(
 
     type BlockByUuidResult = Types.Queries.BlockByUuid.BlockByUuidResult;
     type PrimaryKey = Types.PrimaryKey;
-    type ShareableBlock = BlocksTypes.ShareableBlock;
-    type ShareableBlock_v2 = BlocksTypes.ShareableBlock_v2;
+    type ShareableBlock = BlocksTypes.ShareableBlock_v2;
 
     /*************************************************************************
      * Stable Data
      *************************************************************************/
 
-    stable var blocks_v2 : RBTree.Tree<PrimaryKey, ShareableBlock_v2> = #leaf;
+    stable var blocks_v2 : RBTree.Tree<PrimaryKey, ShareableBlock> = #leaf;
     stable var blocksIdCounter : Nat = 0;
     stable var owner : CoreTypes.Workspaces.WorkspaceOwner = initArgs.owner;
     stable var uuid : UUID.UUID = initData.uuid;
@@ -132,7 +132,7 @@ shared ({ caller = initializer }) actor class Workspace(
         };
     };
 
-    public query func blockByUuid(uuid : UUID.UUID) : async Result.Result<ShareableBlock_v2, { #blockNotFound }> {
+    public query func blockByUuid(uuid : UUID.UUID) : async Result.Result<ShareableBlock, { #blockNotFound }> {
         switch (state.data.getBlockByUuid(uuid)) {
             case (#err(err)) {
                 #err(err);
@@ -143,7 +143,15 @@ shared ({ caller = initializer }) actor class Workspace(
         };
     };
 
-    public query func pageByUuid(uuid : UUID.UUID) : async Result.Result<ShareableBlock_v2, { #pageNotFound }> {
+    public query func blocksByPageUuid(uuid : Text) : async List.List<ShareableBlock> {
+        let blocks = state.data.getBlocksByPageUuid(uuid);
+        return List.map<BlocksTypes.Block_v2, ShareableBlock>(
+            blocks,
+            BlocksModels.Block_v2.toShareable,
+        );
+    };
+
+    public query func pageByUuid(uuid : UUID.UUID) : async Result.Result<ShareableBlock, { #pageNotFound }> {
         switch (state.data.getPageByUuid(uuid)) {
             case (#err(err)) {
                 #err(err);
@@ -160,12 +168,12 @@ shared ({ caller = initializer }) actor class Workspace(
             limit : ?Nat;
             order : ?CoreTypes.SortOrder;
         }
-    ) : async CoreTypes.PaginatedResults<ShareableBlock_v2> {
+    ) : async CoreTypes.PaginatedResults<ShareableBlock> {
         let { cursor; limit; order } = options;
         let pages = state.data.getPages(cursor, limit, order);
         let result = {
-            edges = List.toArray<CoreTypes.Edge<ShareableBlock_v2>>(
-                List.map<BlocksTypes.Block_v2, CoreTypes.Edge<ShareableBlock_v2>>(
+            edges = List.toArray<CoreTypes.Edge<ShareableBlock>>(
+                List.map<BlocksTypes.Block_v2, CoreTypes.Edge<ShareableBlock>>(
                     pages,
                     func(block) {
                         { node = BlocksModels.Block_v2.toShareable(block) };
@@ -416,14 +424,45 @@ shared ({ caller = initializer }) actor class Workspace(
     };
 
     system func postupgrade() {
+        func backfill_blocks_by_parent_uuid() {
+            var blocks_by_parent_uuid = RBTree.RBTree<Text, List.List<PrimaryKey>>(Text.compare);
+
+            label doLoop for (block in state.data.Block_v2.objects.data.entries()) {
+                let blockId = block.0;
+                let blockData = block.1;
+                switch (blockData.parent) {
+                    case (null) { continue doLoop };
+                    case (?parent) {
+                        let parentUuid = UUID.toText(parent);
+                        let blocksList = switch (blocks_by_parent_uuid.get(parentUuid)) {
+                            case (null) {
+                                List.fromArray<PrimaryKey>([blockId]);
+                            };
+                            case (?blocksList) {
+                                List.push<PrimaryKey>(blockId, blocksList);
+                            };
+                        };
+                        blocks_by_parent_uuid.put(parentUuid, blocksList);
+                    };
+                };
+            };
+
+            state.data.blocks_by_parent_uuid := blocks_by_parent_uuid;
+        };
+
         Debug.print("Postupgrade for workspace: " # Principal.toText(Principal.fromActor(self)));
 
         let refreshData = RBTree.RBTree<Nat, BlocksTypes.ShareableBlock_v2>(Nat.compare);
         refreshData.unshare(blocks_v2);
 
         for (entry in refreshData.entries()) {
-            state.data.Block_v2.objects.data.put(entry.0, BlocksModels.Block_v2.fromShareable(entry.1));
+            let blockId = entry.0;
+            let block = entry.1;
+
+            state.data.Block_v2.objects.data.put(blockId, BlocksModels.Block_v2.fromShareable(block));
         };
+
+        backfill_blocks_by_parent_uuid();
 
         // Restart timers
         startTimers();

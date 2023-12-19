@@ -1,6 +1,6 @@
 import { parse } from 'uuid';
 
-import { usePagesContext } from '@/contexts/blocks/usePagesContext';
+import { usePagesContext } from '@/contexts/PagesContext/usePagesContext';
 import { Node, Tree } from '@stellar-ic/lseq-ts';
 import { ExternalId } from '@/types';
 import { useCallback, useMemo } from 'react';

@@ -1,4 +1,4 @@
-import { usePagesContext } from '@/contexts/blocks/usePagesContext';
+import { usePagesContext } from '@/contexts/PagesContext/usePagesContext';
 import { ExternalId } from '@/types';
 import { parse } from 'uuid';
 import { BlockType } from '../../../../../declarations/workspace/workspace.did';

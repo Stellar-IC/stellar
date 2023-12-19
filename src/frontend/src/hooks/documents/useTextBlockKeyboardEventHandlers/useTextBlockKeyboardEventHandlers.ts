@@ -1,7 +1,7 @@
 import { KeyboardEvent } from 'react';
 import { parse } from 'uuid';
 
-import { usePagesContext } from '@/contexts/blocks/usePagesContext';
+import { usePagesContext } from '@/contexts/PagesContext/usePagesContext';
 import { ExternalId } from '@/types';
 import { useTabHandler } from './useTabHandler';
 import { useBackspaceHandler } from './useBackspaceHandler';

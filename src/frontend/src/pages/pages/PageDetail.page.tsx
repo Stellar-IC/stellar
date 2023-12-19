@@ -8,18 +8,36 @@ import {
 } from '@/components/layout/page/Page';
 import { useEffect } from 'react';
 import { parse } from 'uuid';
-import { usePagesContext } from '@/contexts/blocks/usePagesContext';
+import { usePagesContext } from '@/contexts/PagesContext/usePagesContext';
+import { useDataStoreContext } from '@/contexts/DataStoreContext/useDataStoreContext';
+import { useWorkspaceContext } from '@/contexts/WorkspaceContext/useWorkspaceContext';
+import { useBlocksByPageUuid } from '@/hooks/documents/queries/useBlocksByPageUuid';
+import { useAuthContext } from '@/modules/auth/contexts/AuthContext';
 
 export function PageDetailPage() {
   const { pageId } = useParams<{ pageId: string }>();
+  const { workspaceId } = useWorkspaceContext();
+  const { identity } = useAuthContext();
   const {
     pages: { data = {}, query: queryPage },
   } = usePagesContext();
+  const { store: dataStore } = useDataStoreContext();
+
+  console.log({ dataStore });
+
+  const blocksByPageUuid = useBlocksByPageUuid({
+    identity,
+    workspaceId,
+  });
+
   if (!pageId) throw new Error('Missing pageId');
 
   useEffect(() => {
     queryPage(parse(pageId));
-  }, [queryPage, pageId]);
+    blocksByPageUuid(pageId).catch((err) => {
+      console.log({ err });
+    });
+  }, [blocksByPageUuid, queryPage, pageId]);
 
   const page = data[pageId];
 

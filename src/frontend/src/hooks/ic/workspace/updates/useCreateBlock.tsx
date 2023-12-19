@@ -1,6 +1,7 @@
 import { Identity } from '@dfinity/agent';
-import { useWorkspaceActor } from '@/hooks/ic/workspace/useWorkspaceActor';
+
 import { useUpdate } from '@/hooks/useUpdate';
+import { useWorkspaceActor } from '@/hooks/ic/workspace/useWorkspaceActor';
 import { CanisterId } from '@/types';
 
 export const useCreateBlock = (options: {

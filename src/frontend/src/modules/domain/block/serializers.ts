@@ -6,7 +6,7 @@ import { Block, LocalStorageBlock } from '@/types';
 
 import {
   NodeBoundary,
-  ShareableBlock_v2 as ShareableBlock,
+  ShareableBlock,
   ShareableBlockText,
   ShareableNode,
 } from '../../../../../declarations/workspace/workspace.did';
@@ -56,6 +56,7 @@ export function serializeBlock(
 
   return {
     ...block,
+    blockType: block.blockType,
     uuid: stringify(block.uuid),
     properties: {
       ...block.properties,

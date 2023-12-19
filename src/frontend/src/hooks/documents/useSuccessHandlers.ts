@@ -2,7 +2,7 @@ import { parse, v4 } from 'uuid';
 import { Block } from '@/types';
 import { useAuthContext } from '@/modules/auth/contexts/AuthContext';
 import { useWorkspaceContext } from '@/contexts/WorkspaceContext/useWorkspaceContext';
-import { useWorkspaceActor } from '@/hooks/ic/actors/useWorkspaceActor';
+import { useWorkspaceActor } from '@/hooks/ic/workspace/useWorkspaceActor';
 import { useUpdate } from '@/hooks/useUpdate';
 import {
   SaveEventTransactionUpdateInput,

@@ -2,13 +2,9 @@ import { Identity } from '@dfinity/agent';
 import { useCallback, useEffect } from 'react';
 import { parse, stringify, v4 } from 'uuid';
 
-import { useWorkspaceActor } from '@/hooks/ic/actors/useWorkspaceActor';
+import { useWorkspaceActor } from '@/hooks/ic/workspace/useWorkspaceActor';
 import { useUpdate } from '@/hooks/useUpdate';
-import {
-  fromLocalStorageBulk,
-  fromShareable,
-  toLocalStorageBulk,
-} from '@/modules/domain/block/serializers';
+import * as blockSerializers from '@/modules/domain/block/serializers';
 import {
   Page,
   LocalStoragePage,
@@ -25,7 +21,6 @@ import {
   Result as PageByUuidResult,
   SaveEventTransactionUpdateInput,
   SaveEventTransactionUpdateOutput,
-  // ShareableBlock_v2 as ShareableBlock,
   UUID,
   BlockTypeUpdatedEvent,
   BlockProperyTitleUpdatedEvent,
@@ -61,8 +56,8 @@ export const usePages = (props: {
     {
       serialize: serializePage,
       getExternalId: getPageExternalId,
-      prepareForStorage: toLocalStorageBulk,
-      prepareFromStorage: fromLocalStorageBulk,
+      prepareForStorage: blockSerializers.toLocalStorageBulk,
+      prepareFromStorage: blockSerializers.fromLocalStorageBulk,
     }
   );
 
@@ -76,8 +71,8 @@ export const usePages = (props: {
     {
       serialize: serializeBlock,
       getExternalId: getBlockExternalId,
-      prepareForStorage: toLocalStorageBulk,
-      prepareFromStorage: fromLocalStorageBulk,
+      prepareForStorage: blockSerializers.toLocalStorageBulk,
+      prepareFromStorage: blockSerializers.fromLocalStorageBulk,
     }
   );
 
@@ -90,7 +85,10 @@ export const usePages = (props: {
       })
       .then((res) => {
         res.edges.forEach((edge) => {
-          updateLocalPage(stringify(edge.node.uuid), fromShareable(edge.node));
+          updateLocalPage(
+            stringify(edge.node.uuid),
+            blockSerializers.fromShareable(edge.node)
+          );
         });
       });
   }, [actor, updateLocalPage]);

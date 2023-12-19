@@ -5,7 +5,7 @@ import { PropsWithChildren, useCallback } from 'react';
 import { parse } from 'uuid';
 
 import { AddBlockModal } from '@/components/blocks/AddBlockModal';
-import { usePagesContext } from '@/contexts/blocks/usePagesContext';
+import { usePagesContext } from '@/contexts/PagesContext/usePagesContext';
 
 import { DraggableProvidedDragHandleProps } from '@hello-pangea/dnd';
 import { TransformBlockModal } from './TransformBlockModal';

@@ -1,4 +1,4 @@
-import { usePagesContext } from '@/contexts/blocks/usePagesContext';
+import { usePagesContext } from '@/contexts/PagesContext/usePagesContext';
 import { ExternalId } from '@/types';
 import { Tree } from '@stellar-ic/lseq-ts';
 import { useSuccessHandlers } from './useSuccessHandlers';

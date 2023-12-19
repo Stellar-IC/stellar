@@ -11,7 +11,7 @@ import cx from 'clsx';
 import { useCallback, useEffect } from 'react';
 import { parse } from 'uuid';
 
-import { usePagesContext } from '@/contexts/blocks/usePagesContext';
+import { usePagesContext } from '@/contexts/PagesContext/usePagesContext';
 import { useTextBlockEventHandlers } from '@/hooks/documents/useTextBlockEventHandlers';
 import { Page } from '@/types';
 

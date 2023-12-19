@@ -2,7 +2,7 @@ import { PropsWithChildren } from 'react';
 
 import { CanisterId } from '@/types';
 
-import { useWorkspaceActor } from '@/hooks/ic/actors/useWorkspaceActor';
+import { useWorkspaceActor } from '@/hooks/ic/workspace/useWorkspaceActor';
 import { DelegationIdentity } from '@dfinity/identity';
 import { WorkspaceContext } from './WorkspaceContext';
 

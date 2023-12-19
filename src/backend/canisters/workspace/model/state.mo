@@ -42,7 +42,7 @@ module {
         public var Block_v2 = BlocksModels.Block_v2.Model(initial_value.blocks_v2.id, initial_value.blocks_v2.data);
 
         // Red-black trees to index orders by product ID and products by order ID
-        var blocks_by_parent_uuid = RBTree.RBTree<Text, List.List<PrimaryKey>>(Text.compare);
+        public var blocks_by_parent_uuid = RBTree.RBTree<Text, List.List<PrimaryKey>>(Text.compare);
 
         public func addBlock(input : UnsavedBlock) : Result.Result<(PrimaryKey, Block), { #keyAlreadyExists }> {
             let insert_result = Block_v2.objects.insert(input);
@@ -129,6 +129,39 @@ module {
                     return #err(#blockNotFound);
                 };
             };
+        };
+
+        public func getBlocksByPageUuid(uuid : Text) : List.List<Block> {
+            let page = Block_v2.objects.indexFilter(
+                "uuid",
+                #text(uuid),
+            ).first();
+
+            let pageId = switch (page) {
+                case (null) {
+                    // Page not found, return empty list
+                    return List.fromArray<Block>([]);
+                };
+                case (?page) { page.id };
+            };
+
+            let blocks = switch (blocks_by_parent_uuid.get(uuid)) {
+                case (null) { List.fromArray<Types.PrimaryKey>([]) };
+                case (?blocks) { blocks };
+            };
+
+            var final_blocks = List.fromArray<Block>([]);
+
+            for (block_id in List.toIter(blocks)) {
+                switch (Block_v2.objects.get(block_id)) {
+                    case (?block) {
+                        final_blocks := List.push<Block>(block, final_blocks);
+                    };
+                    case (null) {};
+                };
+            };
+
+            return final_blocks;
         };
 
         public func getPage(id : Types.PrimaryKey) : Result.Result<Block, { #pageNotFound }> {

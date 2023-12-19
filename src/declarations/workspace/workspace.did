@@ -27,6 +27,7 @@ type Workspace =
  service {
    addBlock: (AddBlockUpdateInput) -> (AddBlockUpdateOutput);
    blockByUuid: (UUID) -> (Result_1) query;
+   blocksByPageUuid: (text) -> (List) query;
    createPage: (CreatePageUpdateInput) -> (CreatePageUpdateOutput);
    cyclesInformation: () -> (record {
                                balance: nat;
@@ -119,15 +120,6 @@ type ShareableNode =
    identifier: NodeIdentifier;
    value: NodeValue;
  };
-type ShareableBlock_v2 = 
- record {
-   blockType: BlockType;
-   content: ShareableBlockContent;
-   id: PrimaryKey;
-   parent: opt UUID;
-   properties: ShareableBlockProperties;
-   uuid: UUID;
- };
 type ShareableBlockText = 
  record {
    allocationStrategies: vec record {
@@ -156,6 +148,15 @@ type ShareableBlockContent =
    boundary: NodeBoundary;
    rootNode: ShareableNode;
  };
+type ShareableBlock = 
+ record {
+   blockType: BlockType;
+   content: ShareableBlockContent;
+   id: PrimaryKey;
+   parent: opt UUID;
+   properties: ShareableBlockProperties;
+   uuid: UUID;
+ };
 type SaveEventTransactionUpdateOutputResult = null;
 type SaveEventTransactionUpdateOutputError = 
  variant {
@@ -172,12 +173,12 @@ type SaveEventTransactionUpdateInput = record {
 type Result_1 = 
  variant {
    err: variant {blockNotFound;};
-   ok: ShareableBlock_v2;
+   ok: ShareableBlock;
  };
 type Result = 
  variant {
    err: variant {pageNotFound;};
-   ok: ShareableBlock_v2;
+   ok: ShareableBlock;
  };
 type RemoveBlockUpdateOutputResult = null;
 type RemoveBlockUpdateOutputError = null;
@@ -197,7 +198,12 @@ type NodeIdentifier = vec NodeIndex;
 type NodeDepth = nat16;
 type NodeBoundary = nat16;
 type NodeBase = nat16;
-type Edge = record {node: ShareableBlock_v2;};
+type List = 
+ opt record {
+       ShareableBlock;
+       List;
+     };
+type Edge = record {node: ShareableBlock;};
 type CreatePageUpdateOutputResult = 
  record {
    blockType: BlockType;

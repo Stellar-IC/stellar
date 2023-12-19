@@ -1,5 +1,6 @@
 import { ActorMethod } from '@dfinity/agent';
 import { useCallback, useState } from 'react';
+
 import { useQueryContext } from '@/contexts/QueryContext/useQueryContext';
 import { CanisterId } from '@/types';
 

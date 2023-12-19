@@ -1,6 +1,6 @@
 import { Box, MantineTheme, Text } from '@mantine/core';
 
-import { usePagesContext } from '@/contexts/blocks/usePagesContext';
+import { usePagesContext } from '@/contexts/PagesContext/usePagesContext';
 
 import { useTextBlockEventHandlers } from '@/hooks/documents/useTextBlockEventHandlers';
 

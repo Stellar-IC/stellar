@@ -2,7 +2,7 @@ import { Box, Flex } from '@mantine/core';
 import { createRef, useEffect, useMemo, useState } from 'react';
 import { parse } from 'uuid';
 
-import { usePagesContext } from '@/contexts/blocks/usePagesContext';
+import { usePagesContext } from '@/contexts/PagesContext/usePagesContext';
 
 import { Tree } from '@stellar-ic/lseq-ts';
 import { useDisclosure } from '@mantine/hooks';
