@@ -4,7 +4,9 @@ import { fileURLToPath, URL } from 'url';
 import * as path from 'path';
 import * as dotenv from 'dotenv';
 import react from '@vitejs/plugin-react-swc';
-const network = process.env.DFX_NETWORK || (process.env.NODE_ENV === 'production' ? 'ic' : 'local');
+const network =
+  process.env.DFX_NETWORK ||
+  (process.env.NODE_ENV === 'production' ? 'ic' : 'local');
 
 dotenv.config();
 
@@ -35,7 +37,12 @@ export default defineConfig({
   },
   resolve: {
     alias: [
-      { find: '@/', replacement: fileURLToPath(new URL('./src/frontend/src/', import.meta.url)) },
+      {
+        find: '@/',
+        replacement: fileURLToPath(
+          new URL('./src/frontend/src/', import.meta.url)
+        ),
+      },
     ],
     dedupe: ['react', 'react-dom'],
   },
