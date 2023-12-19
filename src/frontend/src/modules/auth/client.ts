@@ -5,7 +5,6 @@ import {
 } from '@dfinity/identity';
 
 import { AuthClient, IdbStorage } from '@dfinity/auth-client';
-import { AnonymousIdentity, Identity, SignIdentity } from '@dfinity/agent';
 
 let authClient: AuthClient;
 
@@ -59,7 +58,7 @@ export async function login(options: { identityProvider: string }) {
 export async function logout() {
   const authClient = await getAuthClient();
 
-  return new Promise<void>((resolve, reject) => {
+  return new Promise<void>(() => {
     authClient.logout({
       returnTo: 'http://127.0.0.1:8080',
     });

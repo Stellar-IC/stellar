@@ -17,18 +17,12 @@ export function PageWrapper({ children }: PropsWithChildren) {
   useEffect(() => {
     const timeout = setTimeout(() => {
       if (identity instanceof DelegationIdentity && !canisterId.isAnonymous()) {
-        console.log("Getting user's default workspace");
-        userActor
-          .personalWorkspace()
-          .then((result) => {
-            if (!('ok' in result)) {
-              throw new Error('No default workspace found');
-            }
-            setWorkspaceId(result.ok);
-          })
-          .catch((err) => {
-            console.log(err);
-          });
+        userActor.personalWorkspace().then((result) => {
+          if (!('ok' in result)) {
+            throw new Error('No default workspace found');
+          }
+          setWorkspaceId(result.ok);
+        });
       }
     }, 0);
 

@@ -38,9 +38,6 @@ export const useAuthState = () => {
             setProfile(await getUserProfile({ userId: newUserId, identity }));
           }
         })
-        .catch((err) => {
-          console.error(err);
-        })
         .finally(() => {
           setIsLoading(false);
         });

@@ -1,16 +1,16 @@
-import { ActorSubclass } from '@dfinity/agent';
-import type { Principal } from '@dfinity/principal';
+// import { ActorSubclass } from '@dfinity/agent';
+// import type { Principal } from '@dfinity/principal';
 import { describe, beforeAll } from 'vitest';
 
-import { createActor as createActorUser } from '../../../declarations/user/index';
-import {
-  canisterId as userIndexCanisterId,
-  createActor as createActorUserIndex,
-} from '../../../declarations/user_index/index';
-import { _SERVICE as _SERVICE_USER_INDEX } from '../../../declarations/user_index/user_index.did';
+// import { createActor as createActorUser } from '../../../declarations/user/index';
+// import {
+//   canisterId as userIndexCanisterId,
+//   createActor as createActorUserIndex,
+// } from '../../../declarations/user_index/index';
+// import { _SERVICE as _SERVICE_USER_INDEX } from '../../../declarations/user_index/user_index.did';
 
-import { identity } from '../../indentity';
-import { assertResultOk } from '../../helpers';
+// import { identity } from '../../indentity';
+// import { assertResultOk } from '../../helpers';
 
 // service {
 //   addBlock: (AddBlockUpdateInput) -> (AddBlockUpdateOutput);
@@ -43,33 +43,30 @@ import { assertResultOk } from '../../helpers';
 // };
 
 describe('profile', () => {
-  let userIndex: ActorSubclass<_SERVICE_USER_INDEX>;
-  let userId: Principal;
-  let workspaceId: Principal;
+  // let userIndex: ActorSubclass<_SERVICE_USER_INDEX>;
+  // let userId: Principal;
+  // let workspaceId: Principal;
 
   beforeAll(async () => {
     // console.log({ userIndexCanisterId, workspaceIndexCanisterId });
-    userIndex = createActorUserIndex(userIndexCanisterId, {
-      agentOptions: {
-        host: 'http://localhost:5173',
-        identity,
-      },
-    });
-
-    const createUserResult = assertResultOk(await userIndex.registerUser());
-    userId = createUserResult.ok;
-
-    const user = createActorUser(userId, {
-      agentOptions: {
-        host: 'http://localhost:5173',
-        identity,
-      },
-    });
-
-    const personalWorkspaceResult = assertResultOk(
-      await user.personalWorkspace()
-    );
-    workspaceId = personalWorkspaceResult.ok;
+    // userIndex = createActorUserIndex(userIndexCanisterId, {
+    //   agentOptions: {
+    //     host: 'http://localhost:5173',
+    //     identity,
+    //   },
+    // });
+    // const createUserResult = assertResultOk(await userIndex.registerUser());
+    // userId = createUserResult.ok;
+    // const user = createActorUser(userId, {
+    //   agentOptions: {
+    //     host: 'http://localhost:5173',
+    //     identity,
+    //   },
+    // });
+    // const personalWorkspaceResult = assertResultOk(
+    //   await user.personalWorkspace()
+    // );
+    // workspaceId = personalWorkspaceResult.ok;
   });
 
   // describe('toObject', () => {

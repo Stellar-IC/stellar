@@ -8,6 +8,7 @@ type SerializedUserProfile = Omit<UserProfile, 'username'> & {
   username: string;
 };
 
+// eslint-disable-next-line no-spaced-func
 const AuthContext = createContext<{
   login: (options: { identityProvider: string }) => void;
   identity: Identity;

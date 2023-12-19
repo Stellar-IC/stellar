@@ -44,9 +44,6 @@ export const useHydrate = () => {
 
         logger.info('Unknown identity type. Done hydrating.');
       })
-      .catch((err) => {
-        console.error(err);
-      })
       .finally(() => {
         setIsLoading(false);
       });
