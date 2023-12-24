@@ -1,3 +1,17 @@
+type RequestCyclesUpdateOutput = 
+ variant {
+   err: RequestCyclesUpdateError;
+   ok: RequestCyclesUpdateOk;
+ };
+type RequestCyclesUpdateOk = record {accepted: nat64;};
+type RequestCyclesUpdateError = 
+ variant {
+   amountTooHigh;
+   insufficientFunds;
+   throttled;
+   topUpAlreadyInProgress;
+   unauthorized;
+ };
 service : {
-  requestCycles: (nat) -> (record {accepted: nat64;});
+  requestCycles: (nat) -> (RequestCyclesUpdateOutput);
 }

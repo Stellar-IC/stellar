@@ -54,6 +54,7 @@ shared ({ caller = initializer }) actor class Workspace(
     stable let workspaceIndexCanisterId = initializer;
     stable let capacity : Nat = initArgs.capacity;
     stable var balance : Nat = ExperimentalCycles.balance();
+    var timersHaveBeenStarted = false;
 
     /*************************************************************************
      * Transient Data
@@ -224,10 +225,12 @@ shared ({ caller = initializer }) actor class Workspace(
     };
 
     public shared ({ caller }) func saveEvents(input : Types.Updates.SaveEventTransactionUpdate.SaveEventTransactionUpdateInput) : async Types.Updates.SaveEventTransactionUpdate.SaveEventTransactionUpdateOutput {
+        Debug.print("Saving events");
         for (event in input.transaction.vals()) {
             switch (event) {
                 case (#empty) {};
                 case (#blockCreated(event)) {
+                    Debug.print("EVENT TYPE: Block Created");
                     let block = BlocksModels.Block_v2.fromShareableUnsaved({
                         event.data.block and {} with content = LseqTree.toShareableTree(LseqTree.Tree(null));
                         properties = {
@@ -267,10 +270,12 @@ shared ({ caller = initializer }) actor class Workspace(
                     return #ok();
                 };
                 case (#blockUpdated(event)) {
+                    Debug.print("EVENT TYPE: Block Updated");
                     eventStream.publish(#blockUpdated(event));
                     return #ok();
                 };
                 case (#blockRemoved(event)) {
+                    Debug.print("EVENT TYPE: Block Removed");
                     eventStream.publish(#blockRemoved(event));
                     return #ok();
                 };
@@ -342,6 +347,7 @@ shared ({ caller = initializer }) actor class Workspace(
     };
 
     func startListeningForEvents() : async () {
+        Debug.print("Listening for events");
         eventStream.addEventListener(
             "test",
             func(event) {
@@ -394,6 +400,9 @@ shared ({ caller = initializer }) actor class Workspace(
      * Timers
      *************************************************************************/
     private func startTimers() {
+        if (timersHaveBeenStarted) {
+            return;
+        };
         ignore Timer.setTimer(
             #nanoseconds(0),
             startListeningForEvents,
@@ -403,6 +412,9 @@ shared ({ caller = initializer }) actor class Workspace(
             startProcessingEvents,
         );
     };
+
+    // Start timers on install
+    startTimers();
 
     /*************************************************************************
      * System Functions
@@ -424,31 +436,31 @@ shared ({ caller = initializer }) actor class Workspace(
     };
 
     system func postupgrade() {
-        func backfill_blocks_by_parent_uuid() {
-            var blocks_by_parent_uuid = RBTree.RBTree<Text, List.List<PrimaryKey>>(Text.compare);
+        // func backfill_blocks_by_parent_uuid() {
+        //     var blocks_by_parent_uuid = RBTree.RBTree<Text, List.List<PrimaryKey>>(Text.compare);
 
-            label doLoop for (block in state.data.Block_v2.objects.data.entries()) {
-                let blockId = block.0;
-                let blockData = block.1;
-                switch (blockData.parent) {
-                    case (null) { continue doLoop };
-                    case (?parent) {
-                        let parentUuid = UUID.toText(parent);
-                        let blocksList = switch (blocks_by_parent_uuid.get(parentUuid)) {
-                            case (null) {
-                                List.fromArray<PrimaryKey>([blockId]);
-                            };
-                            case (?blocksList) {
-                                List.push<PrimaryKey>(blockId, blocksList);
-                            };
-                        };
-                        blocks_by_parent_uuid.put(parentUuid, blocksList);
-                    };
-                };
-            };
+        //     label doLoop for (block in state.data.Block_v2.objects.data.entries()) {
+        //         let blockId = block.0;
+        //         let blockData = block.1;
+        //         switch (blockData.parent) {
+        //             case (null) { continue doLoop };
+        //             case (?parent) {
+        //                 let parentUuid = UUID.toText(parent);
+        //                 let blocksList = switch (blocks_by_parent_uuid.get(parentUuid)) {
+        //                     case (null) {
+        //                         List.fromArray<PrimaryKey>([blockId]);
+        //                     };
+        //                     case (?blocksList) {
+        //                         List.push<PrimaryKey>(blockId, blocksList);
+        //                     };
+        //                 };
+        //                 blocks_by_parent_uuid.put(parentUuid, blocksList);
+        //             };
+        //         };
+        //     };
 
-            state.data.blocks_by_parent_uuid := blocks_by_parent_uuid;
-        };
+        //     state.data.blocks_by_parent_uuid := blocks_by_parent_uuid;
+        // };
 
         Debug.print("Postupgrade for workspace: " # Principal.toText(Principal.fromActor(self)));
 
@@ -462,7 +474,7 @@ shared ({ caller = initializer }) actor class Workspace(
             state.data.Block_v2.objects.data.put(blockId, BlocksModels.Block_v2.fromShareable(block));
         };
 
-        backfill_blocks_by_parent_uuid();
+        // backfill_blocks_by_parent_uuid();
 
         // Restart timers
         startTimers();

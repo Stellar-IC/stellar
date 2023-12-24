@@ -40,15 +40,20 @@ shared ({ caller = initializer }) actor class User(
         var created_at = Time.now();
         var updatedAt = Time.now();
     };
+    var timersHaveBeenStarted = false;
 
-    public query ({ caller }) func profile() : async UserProfile.UserProfile {
-        Guards.assertMatches(caller, stable_owner);
+    public query ({ caller }) func profile() : async Result.Result<UserProfile.UserProfile, { #unauthorized }> {
+        if (caller != stable_owner) {
+            return #err(#unauthorized);
+        };
 
-        return UserProfile.fromMutableUserProfile(stable_profile);
+        return #ok(UserProfile.fromMutableUserProfile(stable_profile));
     };
 
-    public shared ({ caller }) func personalWorkspace() : async Result.Result<WorkspacesTypes.WorkspaceId, { #anonymousUser; #insufficientCycles }> {
-        Guards.assertMatches(caller, stable_owner);
+    public shared ({ caller }) func personalWorkspace() : async Result.Result<WorkspacesTypes.WorkspaceId, { #anonymousUser; #insufficientCycles; #unauthorized }> {
+        if (caller != stable_owner) {
+            return #err(#unauthorized);
+        };
 
         switch (stable_personalWorkspaceId) {
             case (null) {
@@ -67,6 +72,31 @@ shared ({ caller = initializer }) actor class User(
             };
             case (?workspaceId) { #ok(workspaceId) };
         };
+    };
+
+    public shared ({ caller }) func updateProfile(
+        input : UsersTypes.ProfileInput
+    ) : async Result.Result<UserProfile.UserProfile, { #unauthorized }> {
+        if (caller != stable_owner) {
+            return #err(#unauthorized);
+        };
+
+        stable_profile.username := input.username;
+        stable_profile.updatedAt := Time.now();
+
+        return #ok(UserProfile.fromMutableUserProfile(stable_profile));
+    };
+
+    // Returns the cycles received up to the capacity allowed
+    public func walletReceive() : async { accepted : Nat64 } {
+        let amount = Cycles.available();
+        let limit : Nat = stable_capacity - stable_balance;
+        let accepted = if (amount <= limit) amount else limit;
+        let deposit = Cycles.accept(accepted);
+        assert (deposit == accepted);
+        stable_balance += accepted;
+
+        return { accepted = Nat64.fromNat(accepted) };
     };
 
     public shared ({ caller }) func upgradePersonalWorkspace() {
@@ -159,30 +189,6 @@ shared ({ caller = initializer }) actor class User(
         };
     };
 
-    public shared ({ caller }) func updateProfile(
-        input : UsersTypes.ProfileInput
-    ) : async UserProfile.UserProfile {
-        Guards.assertIsNotAnonymous(caller);
-        Guards.assertMatches(caller, stable_owner);
-
-        stable_profile.username := input.username;
-        stable_profile.updatedAt := Time.now();
-
-        return UserProfile.fromMutableUserProfile(stable_profile);
-    };
-
-    // Returns the cycles received up to the capacity allowed
-    public func walletReceive() : async { accepted : Nat64 } {
-        let amount = Cycles.available();
-        let limit : Nat = stable_capacity - stable_balance;
-        let accepted = if (amount <= limit) amount else limit;
-        let deposit = Cycles.accept(accepted);
-        assert (deposit == accepted);
-        stable_balance += accepted;
-
-        return { accepted = Nat64.fromNat(accepted) };
-    };
-
     private func checkCyclesBalance() : async () {
         if (Cycles.balance() < USER_MIN_BALANCE) {
             let amount : Nat = stable_capacity - Cycles.balance();
@@ -227,7 +233,9 @@ shared ({ caller = initializer }) actor class User(
      * Timers
      *************************************************************************/
     private func startRecurringTimers() {
-        Debug.print("Restarting timers");
+        if (timersHaveBeenStarted) {
+            return;
+        };
         ignore Timer.recurringTimer(
             #seconds(60 * 5),
             checkCyclesBalance,
@@ -249,6 +257,6 @@ shared ({ caller = initializer }) actor class User(
 
     system func postupgrade() {
         // Restart timers
-        // startRecurringTimers();
+        startRecurringTimers();
     };
 };

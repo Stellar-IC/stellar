@@ -32,15 +32,64 @@ export function PageWrapper({ children }: PropsWithChildren) {
   }, [userActor, identity, canisterId]);
 
   if (isLoading) {
-    return <Loader />;
+    return (
+      <Flex>
+        <NavbarSearch workspaceId={workspaceId} />
+        <div
+          style={{
+            display: 'flex',
+            width: '100%',
+            height: '100%',
+            alignContent: 'center',
+            justifyContent: 'center',
+            flexGrow: 1,
+            paddingLeft: '300px', // TODO: Convert this to rems
+          }}
+        >
+          <Loader />
+        </div>
+      </Flex>
+    );
   }
 
   if (!(identity instanceof DelegationIdentity)) {
-    return null;
+    return (
+      <Flex>
+        <NavbarSearch workspaceId={workspaceId} />
+        <div
+          style={{
+            display: 'flex',
+            width: '100%',
+            height: '100%',
+            alignContent: 'center',
+            justifyContent: 'center',
+            flexGrow: 1,
+            paddingLeft: '300px', // TODO: Convert this to rems
+          }}
+        />
+      </Flex>
+    );
   }
 
   if (!workspaceId) {
-    return <Text>No Workspace</Text>;
+    return (
+      <Flex>
+        <NavbarSearch workspaceId={workspaceId} />
+        <div
+          style={{
+            display: 'flex',
+            width: '100%',
+            height: '100%',
+            alignContent: 'center',
+            justifyContent: 'center',
+            flexGrow: 1,
+            paddingLeft: '300px', // TODO: Convert this to rems
+          }}
+        >
+          <Text>No Workspace</Text>
+        </div>
+      </Flex>
+    );
   }
 
   return (

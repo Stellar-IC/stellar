@@ -6,7 +6,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { stringify } from 'uuid';
 import { useWorkspaceContext } from '@/contexts/WorkspaceContext/useWorkspaceContext';
 import { toText } from '@stellar-ic/lseq-ts/Tree';
-import { fromShareable } from '@/modules/domain/block/serializers';
+import { fromShareable } from '@/modules/serializers/block';
 import { DEFAULT_BOUNDARY } from '@stellar-ic/lseq-ts/constants';
 import { base } from '@stellar-ic/lseq-ts/utils';
 import { Edge } from '../../../declarations/workspace/workspace.did';
@@ -14,7 +14,6 @@ import { Edge } from '../../../declarations/workspace/workspace.did';
 function WorkspaceContent() {
   const { identity } = useAuthContext();
   const { actor, workspaceId } = useWorkspaceContext();
-
   const [createPage] = useCreatePage({
     identity,
     workspaceId,

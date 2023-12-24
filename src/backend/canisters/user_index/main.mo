@@ -65,8 +65,8 @@ actor UserIndex {
             case (#err(#insufficientCycles)) {
                 return #err(#insufficientCycles);
             };
-            case (#err(#missingUserCanister)) {
-                return #err(#missingUserCanister);
+            case (#err(#canisterNotFoundForRegisteredUser)) {
+                return #err(#canisterNotFoundForRegisteredUser);
             };
             case (#ok(#existing(principal, user))) {
                 return #ok(principal);
@@ -171,22 +171,10 @@ actor UserIndex {
             try {
                 await userCanister.upgradePersonalWorkspaceCanisterWasm(wasm_module);
             } catch (err) {
-                Debug.print("Error personal workspace canister: " # debug_show (Error.code(err)) # ": " # debug_show (Error.message(err)));
+                Debug.print("Error upgrading personal workspace canister: " # debug_show (Error.code(err)) # ": " # debug_show (Error.message(err)));
             };
 
-            Debug.print("Done personal workspace canister for user: " # debug_show (userId));
-        };
-    };
-
-    public shared func upgradeUserCanisters() {
-        for (entry in state.data.user_id_to_user_canister.entries()) {
-            var userId = entry.0;
-            var user = await (system User.User)(
-                #upgrade(entry.1)
-            )({
-                capacity = USER_CAPACITY;
-                owner = userId;
-            });
+            Debug.print("Done upgrading personal workspace canister for user: " # debug_show (userId));
         };
     };
 

@@ -10,6 +10,7 @@ import ExperimentalCycles "mo:base/ExperimentalCycles";
 import Timer "mo:base/Timer";
 import Array "mo:base/Array";
 import Iter "mo:base/Iter";
+import Result "mo:base/Result";
 
 import CanisterTopUp "../../lib/shared/CanisterTopUp";
 import Constants "../../constants";
@@ -18,12 +19,12 @@ import Types "types";
 actor CyclesDispenser {
     type RegisterableCanister = Types.RegisterableCanister;
 
-    stable var capacity = 100_000_000_000_000;
-    stable var balance = 0;
     stable let MAX_TOP_UP_AMOUNT = 1_000_000_000_000_000;
     stable let MIN_INTERVAL = 3 * 60 * 60 * 1_000_000_000_000; // 3 hours
     stable let MIN_BALANCE = 10_000_000_000_000; // 10 cycles
 
+    stable var stable_capacity = 100_000_000_000_000;
+    stable var stable_balance = 0;
     stable var stable_timerIds : [Timer.TimerId] = [];
     stable var stable_canisters : RbTree.Tree<Principal, RegisterableCanister> = #leaf;
     stable var stable_topUps : RbTree.Tree<Principal, CanisterTopUp.CanisterTopUp> = #leaf;
@@ -34,23 +35,38 @@ actor CyclesDispenser {
     canisters.unshare(stable_canisters);
     topUps.unshare(stable_topUps);
 
-    public shared ({ caller }) func requestCycles(amount : Nat) : async {
+    type RequestCyclesUpdateOk = {
         accepted : Nat64;
-    } {
+    };
+
+    type RequestCyclesUpdateError = {
+        #unauthorized;
+        #topUpAlreadyInProgress;
+        #amountTooHigh;
+        #throttled;
+        #insufficientFunds;
+    };
+
+    type RequestCyclesUpdateOutput = Result.Result<RequestCyclesUpdateOk, RequestCyclesUpdateError>;
+
+    public shared ({ caller }) func requestCycles(amount : Nat) : async RequestCyclesUpdateOutput {
         let now = Time.now();
         let canister = switch (canisters.get(caller)) {
-            case (null) { Debug.trap("Canister not registered") };
+            case (null) {
+                // Canister not registered
+                return #err(#unauthorized);
+            };
             case (?canister) { canister };
         };
-        return await depositCycles(canister, amount);
+        let result = await depositCycles(canister, amount);
+
+        return result;
     };
 
     private func depositCycles(
         canister : RegisterableCanister,
         amount : Nat,
-    ) : async {
-        accepted : Nat64;
-    } {
+    ) : async RequestCyclesUpdateOutput {
         let maxAmount = MAX_TOP_UP_AMOUNT;
         let minInterval = MIN_INTERVAL;
         let minBalance = MIN_BALANCE;
@@ -65,19 +81,19 @@ actor CyclesDispenser {
         };
 
         if (topUp.topUpInProgress) {
-            Debug.trap("Top up in progress");
+            return #err(#topUpAlreadyInProgress);
         } else if (amount > maxAmount) {
-            Debug.trap("Amount too high");
+            return #err(#amountTooHigh);
         } else if (shouldThrottle) {
-            Debug.trap("Throttled");
-        } else if (balance < minBalance + amount) {
-            Debug.trap("Balance too low");
+            return #err(#throttled);
+        } else if (stable_balance < minBalance + amount) {
+            return #err(#insufficientFunds);
         } else {
             CanisterTopUp.setTopUpInProgress(topUp, true);
             ExperimentalCycles.add(amount);
             let result = await canister.walletReceive();
             CanisterTopUp.setTopUpInProgress(topUp, false);
-            return result;
+            return #ok(result);
         };
     };
 

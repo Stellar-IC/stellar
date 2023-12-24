@@ -5,7 +5,7 @@ module {
         #anonymousUser;
         #insufficientCycles;
         #userNotFound;
-        #missingUserCanister;
+        #canisterNotFoundForRegisteredUser;
     };
     public type RegisterUserResult = Result.Result<Principal, RegisterUserError>;
 

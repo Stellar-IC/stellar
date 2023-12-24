@@ -1,5 +1,5 @@
 import { useCallback, useState } from 'react';
-import { serializeBlock } from '@/modules/domain/block/serializers';
+import { serializeBlock } from '@/modules/serializers/block';
 import { Block } from '@/types';
 import { DEFAULT_BOUNDARY } from '@stellar-ic/lseq-ts/constants';
 import { base } from '@stellar-ic/lseq-ts/utils';

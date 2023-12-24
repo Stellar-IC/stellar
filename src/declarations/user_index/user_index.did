@@ -6,8 +6,8 @@ type RegisterUserResult =
 type RegisterUserError = 
  variant {
    anonymousUser;
+   canisterNotFoundForRegisteredUser;
    insufficientCycles;
-   missingUserCanister;
    userNotFound;
  };
 type CanisterSettings = 
@@ -25,7 +25,6 @@ service : {
   registerUser: () -> (RegisterUserResult);
   requestCycles: (nat) -> (record {accepted: nat64;});
   updateUserCanisterSettings: (principal, CanisterSettings) -> ();
-  upgradeUserCanisters: () -> () oneway;
   upgradeUserCanistersWasm: (blob) -> () oneway;
   upgradeUserPersonalWorkspaceCanistersWasm: (blob) -> ();
   walletReceive: () -> (record {accepted: nat64;});

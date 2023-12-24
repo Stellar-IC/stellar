@@ -35,7 +35,14 @@ export const useAuthState = () => {
             setIdentity(identity);
             const newUserId = await registerUser(identity);
             setUserId(newUserId);
-            setProfile(await getUserProfile({ userId: newUserId, identity }));
+            const result = await getUserProfile({
+              userId: newUserId,
+              identity,
+            });
+            if ('ok' in result) {
+              setProfile(result.ok);
+            }
+            // TODO: handle error
           }
         })
         .finally(() => {

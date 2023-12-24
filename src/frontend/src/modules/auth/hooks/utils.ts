@@ -6,6 +6,7 @@ import {
   canisterId as canisterIdForUserIndex,
   createActor as createActorForUserIndex,
 } from '../../../../../declarations/user_index';
+import { Result as ProfileQueryResult } from '../../../../../declarations/user/user.did';
 
 const createAuthenticatedUserIndexActor = (identity: DelegationIdentity) =>
   createActorForUserIndex(canisterIdForUserIndex, {
@@ -45,7 +46,7 @@ export const registerUser = async (
 export const getUserProfile = async (args: {
   userId: Principal;
   identity: DelegationIdentity;
-}) => {
+}): Promise<ProfileQueryResult> => {
   const logger = baseLogger.getLogger('auth');
 
   const { userId, identity } = args;
@@ -56,7 +57,11 @@ export const getUserProfile = async (args: {
   });
   const result = await userActor.profile();
 
-  logger.info('Retrieved profile for user:', result.username[0]);
+  if ('ok' in result) {
+    logger.info('Retrieved profile for user:', result.ok.username[0]);
+  } else {
+    logger.error('Error occurred during user profile retrieval');
+  }
 
   return result;
 };

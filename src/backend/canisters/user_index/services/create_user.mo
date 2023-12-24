@@ -20,7 +20,7 @@ module CreateUser {
         state : State.State,
         owner : Principal,
         userIndexPrincipal : Principal,
-    ) : async Result.Result<{ #created : (Principal, User.User); #existing : (Principal, User.User) }, { #anonymousUser; #insufficientCycles; #missingUserCanister }> {
+    ) : async Result.Result<{ #created : (Principal, User.User); #existing : (Principal, User.User) }, { #anonymousUser; #insufficientCycles; #canisterNotFoundForRegisteredUser }> {
         var balance = Cycles.balance();
 
         if (balance < intialUserCycles) {
@@ -38,7 +38,7 @@ module CreateUser {
 
                 switch (user) {
                     case null {
-                        return #err(#missingUserCanister);
+                        return #err(#canisterNotFoundForRegisteredUser);
                     };
                     case (?user) {
                         return #ok(#existing(userId, user));

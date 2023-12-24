@@ -10,7 +10,6 @@ test('should handle a basic greeting', async () => {
       identity,
     },
   });
-
   const result = assertResultOk(await userIndex.registerUser());
   expect(result.ok.toText()).toBe('ctiya-peaaa-aaaaa-qaaja-cai');
 });

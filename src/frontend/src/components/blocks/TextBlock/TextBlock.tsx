@@ -36,12 +36,12 @@ export const TextBlock = ({
     blockExternalId,
     blockIndex,
     blockType,
-    onInsert,
-    onRemove,
     parentBlockExternalId,
     parentBlockIndex,
-    showPlaceholder,
     hidePlaceholder,
+    onInsert,
+    onRemove,
+    showPlaceholder,
   });
 
   return (

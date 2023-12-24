@@ -52,7 +52,11 @@ describe('updateProfile', () => {
       username: 'eric_cartman',
     });
 
-    expect(result.username).toEqual('eric_cartman');
+    if ('err' in result) {
+      fail("failed to update user's profile");
+    }
+
+    expect(result.ok.username).toEqual('eric_cartman');
     // TODO : Assert that updatedAt is updated
   });
 });

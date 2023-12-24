@@ -4,11 +4,12 @@ export const idlFactory = ({ IDL }) => {
     'capacity' : IDL.Nat,
   });
   const WorkspaceId = IDL.Principal;
-  const Result = IDL.Variant({
+  const Result_1 = IDL.Variant({
     'ok' : WorkspaceId,
     'err' : IDL.Variant({
       'anonymousUser' : IDL.Null,
       'insufficientCycles' : IDL.Null,
+      'unauthorized' : IDL.Null,
     }),
   });
   const Username__1 = IDL.Text;
@@ -17,6 +18,10 @@ export const idlFactory = ({ IDL }) => {
     'username' : Username__1,
     'created_at' : Time,
     'updatedAt' : Time,
+  });
+  const Result = IDL.Variant({
+    'ok' : UserProfile,
+    'err' : IDL.Variant({ 'unauthorized' : IDL.Null }),
   });
   const CanisterSettings = IDL.Record({
     'freezing_threshold' : IDL.Opt(IDL.Nat),
@@ -27,14 +32,14 @@ export const idlFactory = ({ IDL }) => {
   const Username = IDL.Text;
   const ProfileInput = IDL.Record({ 'username' : Username });
   const User = IDL.Service({
-    'personalWorkspace' : IDL.Func([], [Result], []),
-    'profile' : IDL.Func([], [UserProfile], ['query']),
+    'personalWorkspace' : IDL.Func([], [Result_1], []),
+    'profile' : IDL.Func([], [Result], ['query']),
     'updatePersonalWorkspaceCanisterSettings' : IDL.Func(
         [CanisterSettings],
         [],
         [],
       ),
-    'updateProfile' : IDL.Func([ProfileInput], [UserProfile], []),
+    'updateProfile' : IDL.Func([ProfileInput], [Result], []),
     'upgradePersonalWorkspace' : IDL.Func([], [], ['oneway']),
     'upgradePersonalWorkspaceCanisterWasm' : IDL.Func(
         [IDL.Vec(IDL.Nat8)],

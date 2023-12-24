@@ -57,7 +57,11 @@ function PageLinksSection() {
   );
 }
 
-export function NavbarSearch({ workspaceId }: { workspaceId?: Principal }) {
+export function NavbarSearch({
+  workspaceId,
+}: {
+  workspaceId?: Principal | null;
+}) {
   const theme = useMantineTheme();
 
   return (

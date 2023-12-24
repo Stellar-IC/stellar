@@ -4,7 +4,7 @@ import { useCallback } from 'react';
 import { DATA_TYPES } from '@/constants';
 import { useDataStoreContext } from '@/contexts/DataStoreContext/useDataStoreContext';
 import { useWorkspaceActor } from '@/hooks/ic/workspace/useWorkspaceActor';
-import * as blockSerializers from '@/modules/domain/block/serializers';
+import * as blockSerializers from '@/modules/serializers/block';
 import { IcListSerializer } from '@/modules/ic-serializers/IcListSerializer';
 import { Block, CanisterId } from '@/types';
 

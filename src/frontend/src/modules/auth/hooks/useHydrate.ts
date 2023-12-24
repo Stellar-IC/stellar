@@ -28,13 +28,18 @@ export const useHydrate = () => {
         if (identity instanceof DelegationIdentity) {
           logger.info('Delegation Identity found');
           const userId = await registerUser(identity);
-          const profile = await getUserProfile({ userId, identity });
+          const result = await getUserProfile({ userId, identity });
 
-          return {
-            userId,
-            identity,
-            profile,
-          };
+          if ('ok' in result) {
+            return {
+              userId,
+              identity,
+              profile: result.ok,
+            };
+          }
+
+          logger.error('Failed to hydrate auth state');
+          return;
         }
 
         if (identity instanceof AnonymousIdentity) {

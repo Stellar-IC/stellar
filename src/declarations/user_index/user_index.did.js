@@ -1,9 +1,9 @@
 export const idlFactory = ({ IDL }) => {
   const RegisterUserError = IDL.Variant({
+    'canisterNotFoundForRegisteredUser' : IDL.Null,
     'userNotFound' : IDL.Null,
     'anonymousUser' : IDL.Null,
     'insufficientCycles' : IDL.Null,
-    'missingUserCanister' : IDL.Null,
   });
   const RegisterUserResult = IDL.Variant({
     'ok' : IDL.Principal,
@@ -32,7 +32,6 @@ export const idlFactory = ({ IDL }) => {
         [],
         [],
       ),
-    'upgradeUserCanisters' : IDL.Func([], [], ['oneway']),
     'upgradeUserCanistersWasm' : IDL.Func([IDL.Vec(IDL.Nat8)], [], ['oneway']),
     'upgradeUserPersonalWorkspaceCanistersWasm' : IDL.Func(
         [IDL.Vec(IDL.Nat8)],

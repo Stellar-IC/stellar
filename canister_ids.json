@@ -1,0 +1,20 @@
+{
+  "__Candid_UI": {
+    "local": "c5kvi-uuaaa-aaaaa-qaaia-cai"
+  },
+  "cycles_dispenser": {
+    "local": "a4tbr-q4aaa-aaaaa-qaafq-cai"
+  },
+  "frontend": {
+    "local": "ajuq4-ruaaa-aaaaa-qaaga-cai"
+  },
+  "internet_identity": {
+    "local": "aovwi-4maaa-aaaaa-qaagq-cai"
+  },
+  "user_index": {
+    "local": "ahw5u-keaaa-aaaaa-qaaha-cai"
+  },
+  "workspace_index": {
+    "local": "aax3a-h4aaa-aaaaa-qaahq-cai"
+  }
+}

@@ -50,12 +50,18 @@ describe('profile', () => {
     });
     const result = await user.profile();
 
-    expect(result.username).toEqual([]);
+    if ('err' in result) {
+      fail("failed to get user's profile");
+    }
+
+    const profile = result.ok;
+
+    expect(profile.username).toEqual([]);
 
     // TODO: Figure out why there is a time mismatch between createdAt from the
     // canister and the now variable
-    const createdAt = new Date(Number(result.created_at / 1000000n));
-    const updatedAt = new Date(Number(result.updatedAt / 1000000n));
+    const createdAt = new Date(Number(profile.created_at / 1000000n));
+    const updatedAt = new Date(Number(profile.updatedAt / 1000000n));
 
     expect(createdAt.getDate()).toEqual(now.getDate());
     expect(createdAt.getMonth()).toEqual(now.getMonth());

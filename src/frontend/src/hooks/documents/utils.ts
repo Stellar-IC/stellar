@@ -1,4 +1,4 @@
-import { fromShareable } from '@/modules/domain/block/serializers';
+import { fromShareable } from '@/modules/serializers/block';
 
 import {
   Result_1 as BlockByUuidResult,

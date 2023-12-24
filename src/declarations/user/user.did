@@ -14,22 +14,28 @@ type UserInitArgs =
  };
 type User = 
  service {
-   personalWorkspace: () -> (Result);
-   profile: () -> (UserProfile) query;
+   personalWorkspace: () -> (Result_1);
+   profile: () -> (Result) query;
    updatePersonalWorkspaceCanisterSettings: (CanisterSettings) -> ();
-   updateProfile: (ProfileInput) -> (UserProfile);
+   updateProfile: (ProfileInput) -> (Result);
    upgradePersonalWorkspace: () -> () oneway;
    upgradePersonalWorkspaceCanisterWasm: (blob) -> ();
    walletReceive: () -> (record {accepted: nat64;});
  };
 type Time = int;
-type Result = 
+type Result_1 = 
  variant {
    err: variant {
           anonymousUser;
           insufficientCycles;
+          unauthorized;
         };
    ok: WorkspaceId;
+ };
+type Result = 
+ variant {
+   err: variant {unauthorized;};
+   ok: UserProfile;
  };
 type ProfileInput = record {username: Username;};
 type CanisterSettings = 

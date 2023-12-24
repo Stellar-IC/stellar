@@ -4,7 +4,7 @@ import { parse, stringify, v4 } from 'uuid';
 
 import { useWorkspaceActor } from '@/hooks/ic/workspace/useWorkspaceActor';
 import { useUpdate } from '@/hooks/useUpdate';
-import * as blockSerializers from '@/modules/domain/block/serializers';
+import * as blockSerializers from '@/modules/serializers/block';
 import {
   Page,
   LocalStoragePage,
