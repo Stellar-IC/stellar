@@ -138,7 +138,10 @@ export function useQuery<
 
       setData((prev) => ({
         ...prev,
-        [externalId]: updatedData,
+        [externalId]: {
+          ...prev[externalId],
+          ...updatedData,
+        },
       }));
     },
     [loadFromLocalStorage, prepareForStorage, queryName, setData]

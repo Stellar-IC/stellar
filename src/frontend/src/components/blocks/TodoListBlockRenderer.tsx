@@ -1,4 +1,3 @@
-import { usePagesContext } from '@/contexts/PagesContext/usePagesContext';
 import { useTextBlockEventHandlers } from '@/hooks/documents/useTextBlockEventHandlers';
 
 import { TodoListBlock } from './TodoListBlock';
@@ -15,12 +14,6 @@ export const TodoListBlockRenderer = ({
   const { onCharacterInserted, onCharacterRemoved } = useTextBlockEventHandlers(
     { blockExternalId }
   );
-  const {
-    blocks: { data },
-  } = usePagesContext();
-  const block = data[blockExternalId];
-
-  if (!block) return null;
 
   return (
     <TodoListBlock

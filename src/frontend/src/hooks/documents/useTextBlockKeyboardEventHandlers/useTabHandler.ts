@@ -2,8 +2,10 @@ import { parse } from 'uuid';
 
 import { usePagesContext } from '@/contexts/PagesContext/usePagesContext';
 import { Tree } from '@stellar-ic/lseq-ts';
-import { ExternalId } from '@/types';
+import { Block, ExternalId } from '@/types';
 import { useCallback, useMemo } from 'react';
+import { useDataStoreContext } from '@/contexts/DataStoreContext/useDataStoreContext';
+import { DATA_TYPES } from '@/constants';
 
 type UseTabHandler = {
   blockIndex: number;
@@ -17,17 +19,18 @@ export const useTabHandler = ({
   parentBlockExternalId,
 }: UseTabHandler) => {
   const {
-    pages: { data: pages },
-    blocks: { data: blocks, updateLocal: updateLocalBlock },
+    blocks: { updateLocal: updateLocalBlock },
     updateBlock,
   } = usePagesContext();
+  const { get } = useDataStoreContext();
 
   const parentBlock = useMemo(
     () =>
       parentBlockExternalId
-        ? pages[parentBlockExternalId] || blocks[parentBlockExternalId]
+        ? get<Block>(DATA_TYPES.page, parentBlockExternalId) ||
+          get<Block>(DATA_TYPES.block, parentBlockExternalId)
         : null,
-    [pages, blocks, parentBlockExternalId]
+    [get, parentBlockExternalId]
   );
 
   const doTabOperation = useCallback(() => {
@@ -44,11 +47,47 @@ export const useTabHandler = ({
       parentBlock.content,
       blockIndex - 1
     )?.value;
-    const previousBlock = blocks[previousBlockExternalId];
+    const previousBlock = get<Block>(DATA_TYPES.block, previousBlockExternalId);
     if (!previousBlock) return false;
 
-    const blockToMove = blocks[blockExternalId];
+    const blockToMove = get<Block>(DATA_TYPES.block, blockExternalId);
     if (!blockToMove) return false;
+
+    const newBlockIndex = Tree.size(previousBlock.content);
+
+    // Remove the block from its current position
+    Tree.removeCharacter(parentBlock.content, blockIndex + 1, (event) => {
+      updateBlock(parse(parentBlock.uuid), {
+        updateContent: {
+          data: {
+            blockExternalId: parse(parentBlock.uuid),
+            transaction: [event],
+          },
+        },
+      });
+    });
+    updateLocalBlock(parentBlock.uuid, parentBlock);
+
+    // Add the block to the new position
+    Tree.insertCharacter(
+      previousBlock.content,
+      newBlockIndex,
+      blockToMove.uuid,
+      (events) => {
+        // Update the previous block's content to include the new block
+        updateBlock(parse(previousBlockExternalId), {
+          updateContent: {
+            data: {
+              blockExternalId: parse(previousBlockExternalId),
+              transaction: events,
+            },
+          },
+        });
+      }
+    );
+    updateLocalBlock(previousBlock.uuid, previousBlock);
+
+    blockToMove.parent = previousBlockExternalId;
 
     // Update the block's parent on chain
     updateBlock(parse(blockExternalId), {
@@ -59,67 +98,10 @@ export const useTabHandler = ({
         },
       },
     });
-
-    // Update the previous block's content to include the new block
-    updateBlock(parse(previousBlockExternalId), {
-      updateContent: {
-        data: {
-          blockExternalId: parse(previousBlockExternalId),
-          transaction: [
-            {
-              insert: {
-                transactionType: { insert: null },
-                position: Tree.buildNodeForEndInsert(
-                  previousBlock.content,
-                  blockToMove.uuid
-                ).identifier.value,
-                value: blockToMove.uuid,
-              },
-            },
-          ],
-        },
-      },
-    });
-
-    updateBlock(parse(parentBlock.uuid), {
-      updateContent: {
-        data: {
-          blockExternalId: parse(parentBlock.uuid),
-          transaction: [
-            {
-              delete: {
-                transactionType: { delete: null },
-                position: Tree.getNodeAtPosition(
-                  parentBlock.content,
-                  blockIndex
-                ).identifier.value,
-              },
-            },
-          ],
-        },
-      },
-    });
-
-    const newBlockIndex = Tree.size(previousBlock.content);
-
-    // Remove the block from its current position
-    Tree.removeCharacter(parentBlock.content, blockIndex + 1, () => {});
-    updateLocalBlock(parentBlock.uuid, parentBlock);
-
-    // Add the block to the new position
-    Tree.insertCharacter(
-      previousBlock.content,
-      newBlockIndex,
-      blockToMove.uuid,
-      () => {}
-    );
-    updateLocalBlock(previousBlock.uuid, previousBlock);
-
-    blockToMove.parent = previousBlockExternalId;
   }, [
     blockIndex,
     blockExternalId,
-    blocks,
+    get,
     parentBlock,
     updateBlock,
     updateLocalBlock,

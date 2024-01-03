@@ -1,5 +1,7 @@
+import { DATA_TYPES } from '@/constants';
+import { useDataStoreContext } from '@/contexts/DataStoreContext/useDataStoreContext';
 import { usePagesContext } from '@/contexts/PagesContext/usePagesContext';
-import { ExternalId } from '@/types';
+import { Block, ExternalId } from '@/types';
 import { Tree } from '@stellar-ic/lseq-ts';
 import { useSuccessHandlers } from './useSuccessHandlers';
 
@@ -11,10 +13,14 @@ export const useTextBlockEventHandlers = ({
   blockExternalId,
 }: UseTextBlockEventHandlersProps) => {
   const {
-    blocks: { data, updateLocal: updateLocalBlock },
+    blocks: { updateLocal: updateLocalBlock },
   } = usePagesContext();
 
-  const block = data[blockExternalId];
+  const { get } = useDataStoreContext();
+
+  const block = get<Block>(DATA_TYPES.block, blockExternalId);
+
+  if (!block) throw new Error(`Block not found: ${blockExternalId}`);
 
   const { onInsertSuccess, onRemoveSuccess } = useSuccessHandlers({
     block,

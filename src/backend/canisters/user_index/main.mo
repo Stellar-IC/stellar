@@ -72,7 +72,6 @@ actor UserIndex {
                 return #ok(principal);
             };
             case (#ok(#created(principal, user))) {
-                Debug.print("User created with principal: " # debug_show (principal));
                 ignore initializeTopUpsForCanister(principal);
                 return #ok(principal);
             };
@@ -81,8 +80,6 @@ actor UserIndex {
 
     public shared func updateUserCanisterSettings(userPrincipal : Principal, updatedSettings : CoreTypes.CanisterSettings) : async () {
         let IC0 : CoreTypes.Management = actor "aaaaa-aa";
-
-        Debug.print("Updating user canister settings: " # debug_show (userPrincipal));
 
         let canister_status = await IC0.canister_status({
             canister_id = userPrincipal;
@@ -119,7 +116,6 @@ actor UserIndex {
             Debug.print("Error updating user canister settings: " # debug_show (Error.code(err)) # ": " # debug_show (Error.message(err)));
         };
 
-        Debug.print("Done updating user canister settings: " # debug_show (userPrincipal));
     };
 
     public shared func upgradeUserCanistersWasm(wasm_module : Blob) {
@@ -129,7 +125,6 @@ actor UserIndex {
 
         for (entry in state.data.user_id_to_user_canister.entries()) {
             var userId = entry.0;
-            Debug.print("Upgrading user canister: " # debug_show (userId));
 
             try {
                 await IC0.install_code(
@@ -154,7 +149,6 @@ actor UserIndex {
                 Debug.print("Error upgrading user canister: " # debug_show (Error.code(err)) # ": " # debug_show (Error.message(err)));
             };
 
-            Debug.print("Done upgrading user canister: " # debug_show (userId));
         };
     };
 
@@ -166,15 +160,12 @@ actor UserIndex {
         for (entry in state.data.user_id_to_user_canister.entries()) {
             var userId = entry.0;
             var userCanister = entry.1;
-            Debug.print("Upgrading personal workspace canister for user: " # debug_show (userId));
 
             try {
                 await userCanister.upgradePersonalWorkspaceCanisterWasm(wasm_module);
             } catch (err) {
-                Debug.print("Error upgrading personal workspace canister: " # debug_show (Error.code(err)) # ": " # debug_show (Error.message(err)));
+                Debug.print("Error upgrading user personal workspace canister: " # debug_show (Error.code(err)) # ": " # debug_show (Error.message(err)));
             };
-
-            Debug.print("Done upgrading personal workspace canister for user: " # debug_show (userId));
         };
     };
 
@@ -200,7 +191,6 @@ actor UserIndex {
     public shared ({ caller }) func requestCycles(amount : Nat) : async {
         accepted : Nat64;
     } {
-        Debug.print("Cycles requested for user - " # debug_show (caller));
 
         let maxAmount = MAX_TOP_UP_AMOUNT;
         let minInterval = MIN_TOP_UP_INTERVAL;
@@ -224,8 +214,6 @@ actor UserIndex {
             case (?latestTopUp) { latestTopUp + minInterval > now };
         };
 
-        Debug.print("should throttle: " # debug_show (shouldThrottle));
-
         if (topUp.topUpInProgress) {
             Debug.trap("Top up in progress");
         } else if (amount > maxAmount) {
@@ -239,7 +227,6 @@ actor UserIndex {
             ExperimentalCycles.add(amount);
             let result = await user.walletReceive();
             CanisterTopUp.setTopUpInProgress(topUp, false);
-            Debug.print(debug_show (result.accepted) # "cycles deposited for user - " # debug_show (caller));
             return result;
         };
     };

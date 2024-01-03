@@ -21,7 +21,6 @@ import LseqEvents "../../utils/data/lseq/Events";
 import LseqTree "../../utils/data/lseq/Tree";
 
 import BlockCreatedConsumer "./consumers/BlockCreatedConsumer";
-import BlockRemovedConsumer "./consumers/BlockRemovedConsumer";
 import BlockUpdatedConsumer "./consumers/BlockUpdatedConsumer";
 import State "./model/state";
 import CreatePage "./services/create_page";
@@ -90,9 +89,6 @@ shared ({ caller = initializer }) actor class Workspace(
                         };
                         case (#updateParent(event)) { UUID.toText(event.uuid) };
                     };
-                };
-                case (#blockRemoved(event)) {
-                    return UUID.toText(event.uuid);
                 };
             };
         };
@@ -225,12 +221,10 @@ shared ({ caller = initializer }) actor class Workspace(
     };
 
     public shared ({ caller }) func saveEvents(input : Types.Updates.SaveEventTransactionUpdate.SaveEventTransactionUpdateInput) : async Types.Updates.SaveEventTransactionUpdate.SaveEventTransactionUpdateOutput {
-        Debug.print("Saving events");
         for (event in input.transaction.vals()) {
             switch (event) {
                 case (#empty) {};
                 case (#blockCreated(event)) {
-                    Debug.print("EVENT TYPE: Block Created");
                     let block = BlocksModels.Block_v2.fromShareableUnsaved({
                         event.data.block and {} with content = LseqTree.toShareableTree(LseqTree.Tree(null));
                         properties = {
@@ -270,13 +264,7 @@ shared ({ caller = initializer }) actor class Workspace(
                     return #ok();
                 };
                 case (#blockUpdated(event)) {
-                    Debug.print("EVENT TYPE: Block Updated");
                     eventStream.publish(#blockUpdated(event));
-                    return #ok();
-                };
-                case (#blockRemoved(event)) {
-                    Debug.print("EVENT TYPE: Block Removed");
-                    eventStream.publish(#blockRemoved(event));
                     return #ok();
                 };
             };
@@ -312,46 +300,10 @@ shared ({ caller = initializer }) actor class Workspace(
      * Event Handling
      *************************************************************************/
 
-    func logEvent(event : BlocksTypes.BlockEvent) : () {
-        switch (event) {
-            case (#empty) {};
-            case (#blockCreated(event)) {
-                Debug.print("EVENT TYPE: Block Created");
-                Debug.print("EVENT UUID: " # UUID.toText(event.uuid));
-            };
-            case (#blockUpdated(event)) {
-                Debug.print("EVENT TYPE: Block Updated");
-                switch (event) {
-                    case (#updateContent(event)) {
-                        Debug.print("EVENT UUID: " # UUID.toText(event.uuid));
-                    };
-                    case (#updateBlockType(event)) {
-                        Debug.print("EVENT UUID: " # UUID.toText(event.uuid));
-                    };
-                    case (#updatePropertyTitle(event)) {
-                        Debug.print("EVENT UUID: " # UUID.toText(event.uuid));
-                    };
-                    case (#updatePropertyChecked(event)) {
-                        Debug.print("EVENT UUID: " # UUID.toText(event.uuid));
-                    };
-                    case (#updateParent(event)) {
-                        Debug.print("EVENT UUID: " # UUID.toText(event.uuid));
-                    };
-                };
-            };
-            case (#blockRemoved(event)) {
-                Debug.print("EVENT TYPE: Block Removed");
-                Debug.print("EVENT UUID: " # UUID.toText(event.uuid));
-            };
-        };
-    };
-
     func startListeningForEvents() : async () {
-        Debug.print("Listening for events");
         eventStream.addEventListener(
             "test",
             func(event) {
-                logEvent(event);
                 switch (event) {
                     case (#empty) {};
                     case (#blockCreated(event)) {
@@ -368,23 +320,8 @@ shared ({ caller = initializer }) actor class Workspace(
                         };
 
                         switch (res) {
-                            case (#err(err)) {
-                                Debug.print("Failed to process `blockUpdated` event: " # UUID.toText(uuid));
-                            };
-                            case (#ok(_)) {
-                                Debug.print("Successfully processed `blockUpdated` event: " # UUID.toText(uuid));
-                            };
-                        };
-                    };
-                    case (#blockRemoved(event)) {
-                        let res = BlockRemovedConsumer.execute(event, state);
-                        switch (res) {
-                            case (#err(err)) {
-                                Debug.print("Failed to process `blockRemoved` event: " # UUID.toText(event.uuid));
-                            };
-                            case (#ok(_)) {
-                                Debug.print("Successfully processed `blockRemoved` event: " # UUID.toText(event.uuid));
-                            };
+                            case (#err(err)) {};
+                            case (#ok(_)) {};
                         };
                     };
                 };
@@ -421,7 +358,6 @@ shared ({ caller = initializer }) actor class Workspace(
      *************************************************************************/
 
     system func preupgrade() {
-        Debug.print("Preupgrade for workspace: " # Principal.toText(Principal.fromActor(self)));
 
         let transformedData = RBTree.RBTree<Nat, BlocksTypes.ShareableBlock_v2>(Nat.compare);
 
@@ -461,8 +397,6 @@ shared ({ caller = initializer }) actor class Workspace(
 
         //     state.data.blocks_by_parent_uuid := blocks_by_parent_uuid;
         // };
-
-        Debug.print("Postupgrade for workspace: " # Principal.toText(Principal.fromActor(self)));
 
         let refreshData = RBTree.RBTree<Nat, BlocksTypes.ShareableBlock_v2>(Nat.compare);
         refreshData.unshare(blocks_v2);

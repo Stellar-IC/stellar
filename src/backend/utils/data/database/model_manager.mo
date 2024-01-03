@@ -59,8 +59,6 @@ module ModelManager {
         List.iterate<Types.IndexConfig<DataT, PrimaryKeyT>>(
             init_args.indexes,
             func _addIndexOnField(index_config : Types.IndexConfig<DataT, PrimaryKeyT>) {
-                Debug.print("_addIndexOnField");
-                Debug.print(index_config.field_name);
                 let { field_name; index_type } = index_config;
                 let index_prefix = switch (index_type) {
                     case (#unique) {

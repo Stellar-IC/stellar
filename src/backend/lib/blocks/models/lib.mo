@@ -72,7 +72,6 @@ module Models {
                         let transformedData = RBTree.RBTree<Nat, Block>(Nat.compare);
                         for (entry in refreshData.entries()) {
                             transformedData.put(entry.0, fromShareable(entry.1));
-                            Debug.print(debug_show (UUID.toText(entry.1.uuid)));
                         };
                         transformedData.share();
                     };
@@ -200,7 +199,6 @@ module Models {
                         let transformedData = RBTree.RBTree<Nat, Block>(Nat.compare);
                         for (entry in refreshData.entries()) {
                             transformedData.put(entry.0, fromShareable(entry.1));
-                            Debug.print(debug_show (UUID.toText(entry.1.uuid)));
                         };
                         transformedData.share();
                     };

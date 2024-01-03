@@ -90,18 +90,6 @@ module {
         user : Principal;
     };
 
-    public type BlockRemovedEvent = {
-        uuid : UUID.UUID;
-        data : {
-            index : Nat;
-            block : {
-                uuid : UUID.UUID;
-                parent : UUID.UUID;
-            };
-        };
-        user : Principal;
-    };
-
     public type BlockContentUpdatedEvent = {
         uuid : UUID.UUID;
         data : {
@@ -158,7 +146,6 @@ module {
         #empty : ();
         #blockCreated : BlockCreatedEvent;
         #blockUpdated : BlockUpdatedEvent;
-        #blockRemoved : BlockRemovedEvent;
     };
 
     public type BlockEventTransaction = [BlockEvent];

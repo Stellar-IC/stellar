@@ -192,7 +192,6 @@ actor WorkspaceIndex {
     public shared ({ caller }) func requestCycles(amount : Nat) : async {
         accepted : Nat64;
     } {
-        Debug.print("Cycles requested for workspace - " # debug_show (caller));
 
         let maxAmount = MAX_TOP_UP_AMOUNT;
         let minInterval = MIN_INTERVAL;

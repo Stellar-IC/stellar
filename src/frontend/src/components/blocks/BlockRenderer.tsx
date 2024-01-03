@@ -1,14 +1,13 @@
 import { DraggableProvidedDragHandleProps } from '@hello-pangea/dnd';
 import { Box, Flex } from '@mantine/core';
 import { Tree } from '@stellar-ic/lseq-ts';
-import { useCallback, useEffect, useMemo } from 'react';
-import { parse } from 'uuid';
-
-import { usePagesContext } from '@/contexts/PagesContext/usePagesContext';
+import { useCallback } from 'react';
 
 import { IconBulbFilled } from '@tabler/icons-react';
 import { getNodeAtPosition } from '@stellar-ic/lseq-ts/Tree';
 import { Block } from '@/types';
+import { useDataStoreContext } from '@/contexts/DataStoreContext/useDataStoreContext';
+import { DATA_TYPES } from '@/constants';
 import { BlockWithActions } from './BlockWithActions';
 import { BulletedListBlockRenderer } from './BulletedListBlockRenderer';
 import { TextBlockRenderer } from './TextBlockRenderer';
@@ -26,14 +25,8 @@ const NestedBlocks = ({
   blockExternalId,
   parentBlockIndex,
 }: NestedBlocksProps) => {
-  const {
-    blocks: { data: blocks },
-  } = usePagesContext();
-
-  const block = useMemo(
-    () => blocks[blockExternalId],
-    [blocks, blockExternalId]
-  );
+  const { get } = useDataStoreContext();
+  const block = get<Block>('block', blockExternalId);
 
   if (!block) return null;
 
@@ -72,17 +65,15 @@ const BlockRendererInner = ({
   placeholder,
   numeral,
 }: BlockRendererInnerProps) => {
-  const {
-    blocks: { data },
-  } = usePagesContext();
-  const block = useMemo(() => data[externalId], [data, externalId]);
+  const { get } = useDataStoreContext();
+  const block = get<Block>('block', externalId);
 
   if (!block) {
-    return <div />;
+    return null;
   }
 
   if ('page' in block.blockType) {
-    return <div />;
+    return null;
   }
 
   if (
@@ -197,14 +188,11 @@ export const BlockRenderer = ({
   parentBlockIndex,
   placeholder,
 }: BlockRendererProps) => {
-  const {
-    blocks: { data, query },
-  } = usePagesContext();
-  const block = useMemo(() => data[externalId], [data, externalId]);
-  const parentBlock = useMemo(
-    () => (parentBlockExternalId ? data[parentBlockExternalId] : undefined),
-    [data, parentBlockExternalId]
-  );
+  const { get } = useDataStoreContext();
+  const block = get<Block>('block', externalId);
+  const parentBlock = parentBlockExternalId
+    ? get<Block>(DATA_TYPES.block, parentBlockExternalId)
+    : undefined;
 
   const getPeviousSiblingBlockExternalId = useCallback(
     (currentBlockIndex: number) => {
@@ -242,7 +230,10 @@ export const BlockRenderer = ({
         return numeral + 1;
       }
 
-      const previousSiblingBlock = data[previousSiblingBlockExternalId];
+      const previousSiblingBlock = get<Block>(
+        DATA_TYPES.block,
+        previousSiblingBlockExternalId
+      );
       if (
         !previousSiblingBlock ||
         !('numberedList' in previousSiblingBlock.blockType)
@@ -260,11 +251,7 @@ export const BlockRenderer = ({
     if (!block) return;
 
     return doTheThing(block, index);
-  }, [block, data, getPeviousSiblingBlockExternalId, index]);
-
-  useEffect(() => {
-    query(parse(externalId));
-  }, [query, externalId]);
+  }, [block, get, getPeviousSiblingBlockExternalId, index]);
 
   if (!block) {
     return (

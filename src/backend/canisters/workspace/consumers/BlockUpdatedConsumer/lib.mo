@@ -38,7 +38,6 @@ module BlockUpdatedConsumer {
 
                 switch (currentBlock) {
                     case (#err(#blockNotFound)) {
-                        Debug.print("Failed to update block. Block not found with uuid:" # UUID.toText(blockExternalId));
                         return #err(#blockNotFound);
                     };
                     case (#ok(currentBlock)) {
@@ -53,7 +52,6 @@ module BlockUpdatedConsumer {
 
                 switch (currentBlock) {
                     case (#err(#blockNotFound)) {
-                        Debug.print("Failed to update block. Block not found with uuid:" # UUID.toText(blockExternalId));
                         return #err(#blockNotFound);
                     };
                     case (#ok(currentBlock)) {
@@ -66,7 +64,6 @@ module BlockUpdatedConsumer {
                 let blockExternalId = event.data.blockExternalId;
                 let currentBlock = switch (_blockByUuid(state, blockExternalId)) {
                     case (#err(#blockNotFound)) {
-                        Debug.print("Failed to update block. Block not found with uuid:" # UUID.toText(blockExternalId));
                         return #err(#blockNotFound);
                     };
                     case (#ok(block)) { block };
@@ -75,10 +72,22 @@ module BlockUpdatedConsumer {
                 for (event in Array.vals(event.data.transaction)) {
                     switch (event) {
                         case (#insert(event)) {
-                            ignore currentBlock.content.insert({
+                            let res = currentBlock.content.insert({
                                 identifier = event.position;
                                 value = event.value;
                             });
+                            switch (res) {
+                                case (#err(#identifierAlreadyInUse)) {
+                                    return #err(#failedToUpdate);
+                                };
+                                case (#err(#invalidIdentifier)) {
+                                    return #err(#failedToUpdate);
+                                };
+                                case (#err(#outOfOrder)) {
+                                    return #err(#failedToUpdate);
+                                };
+                                case (#ok) {};
+                            };
                         };
                         case (#delete(event)) {
                             currentBlock.content.deleteNode(
@@ -96,7 +105,6 @@ module BlockUpdatedConsumer {
 
                 switch (currentBlock) {
                     case (#err(#blockNotFound)) {
-                        Debug.print("Failed to update block. Block not found with uuid:" # UUID.toText(blockExternalId));
                         return #err(#blockNotFound);
                     };
                     case (#ok(currentBlock)) {
@@ -111,7 +119,6 @@ module BlockUpdatedConsumer {
 
                 switch (currentBlock) {
                     case (#err(#blockNotFound)) {
-                        Debug.print("Failed to update block. Block not found with uuid:" # UUID.toText(blockExternalId));
                         return #err(#blockNotFound);
                     };
                     case (#ok(currentBlock)) {

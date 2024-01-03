@@ -1,27 +1,20 @@
 import { Identity } from '@dfinity/agent';
+import { Tree } from '@stellar-ic/lseq-ts';
 import { useCallback, useEffect } from 'react';
 import { parse, stringify, v4 } from 'uuid';
 
-import { useWorkspaceActor } from '@/hooks/ic/workspace/useWorkspaceActor';
+import { DATA_TYPES } from '@/constants';
+import { useBlockByUuid } from '@/hooks/ic/workspace/queries/useBlockByUuid';
+import { usePageByUuid } from '@/hooks/ic/workspace/queries/usePageByUuid';
 import { useUpdate } from '@/hooks/useUpdate';
+import { useWorkspaceActor } from '@/hooks/ic/workspace/useWorkspaceActor';
 import * as blockSerializers from '@/modules/serializers/block';
-import {
-  Page,
-  LocalStoragePage,
-  Block,
-  CanisterId,
-  LocalStorageBlock,
-} from '@/types';
-
-import { Tree } from '@stellar-ic/lseq-ts';
+import { Page, Block, CanisterId } from '@/types';
 
 import {
   BlockEvent,
-  Result_1 as BlockByUuidResult,
-  Result as PageByUuidResult,
   SaveEventTransactionUpdateInput,
   SaveEventTransactionUpdateOutput,
-  UUID,
   BlockTypeUpdatedEvent,
   BlockProperyTitleUpdatedEvent,
   BlockProperyCheckedUpdatedEvent,
@@ -29,15 +22,8 @@ import {
   BlockContentUpdatedEvent,
 } from '../../../../declarations/workspace/workspace.did';
 
-import {
-  getBlockExternalId,
-  getPageExternalId,
-  serializeBlock,
-  serializePage,
-} from '../../hooks/documents/utils';
-import { useQuery } from '../../hooks/useQuery';
-
 import { usePageEvents } from './usePageEvents';
+import { useDataStoreContext } from '../DataStoreContext/useDataStoreContext';
 
 export const usePages = (props: {
   workspaceId: CanisterId;
@@ -46,34 +32,27 @@ export const usePages = (props: {
   const { identity, workspaceId } = props;
   const { actor } = useWorkspaceActor({ identity, workspaceId });
 
-  const {
-    data: pages,
-    query: queryPage,
-    updateLocal: updateLocalPage,
-  } = useQuery<[UUID], PageByUuidResult, Page, LocalStoragePage>(
-    'pageByUUid',
-    actor.pageByUuid,
-    {
-      serialize: serializePage,
-      getExternalId: getPageExternalId,
-      prepareForStorage: blockSerializers.toLocalStorageBulk,
-      prepareFromStorage: blockSerializers.fromLocalStorageBulk,
-    }
+  const { get, put } = useDataStoreContext();
+
+  const queryBlock = useBlockByUuid({ identity, workspaceId });
+  const queryPage = usePageByUuid({ identity, workspaceId });
+
+  const updateLocalPage = useCallback(
+    (externalId: string, updatedData: Page) => {
+      put(DATA_TYPES.page, externalId, updatedData, {
+        prepareForStorage: blockSerializers.toLocalStorage,
+      });
+    },
+    [put]
   );
 
-  const {
-    data: blocks,
-    query: queryBlock,
-    updateLocal: updateLocalBlock,
-  } = useQuery<[UUID], BlockByUuidResult, Block, LocalStorageBlock>(
-    'blockByUUid',
-    actor.blockByUuid,
-    {
-      serialize: serializeBlock,
-      getExternalId: getBlockExternalId,
-      prepareForStorage: blockSerializers.toLocalStorageBulk,
-      prepareFromStorage: blockSerializers.fromLocalStorageBulk,
-    }
+  const updateLocalBlock = useCallback(
+    (externalId: string, updatedData: Block) => {
+      put(DATA_TYPES.block, externalId, updatedData, {
+        prepareForStorage: blockSerializers.toLocalStorage,
+      });
+    },
+    [put]
   );
 
   useEffect(() => {
@@ -113,7 +92,7 @@ export const usePages = (props: {
       const blockExternalId = stringify(event.data.block.uuid);
       const parentExternalId = stringify(event.data.block.parent[0]);
 
-      const parentBlock = blocks[parentExternalId];
+      const parentBlock = get<Block>(DATA_TYPES.block, parentExternalId);
       if (!parentBlock) {
         return;
       }
@@ -132,7 +111,6 @@ export const usePages = (props: {
               transaction: _events,
             },
           };
-
           sendUpdate([
             {
               transaction: [
@@ -165,26 +143,32 @@ export const usePages = (props: {
         uuid: blockExternalId,
       });
     },
-    [blocks, sendUpdate, updateLocalBlock, updateLocalPage]
+    [get, sendUpdate, updateLocalBlock, updateLocalPage]
   );
 
   const updateBlockType = useCallback(
     (event: BlockTypeUpdatedEvent) => {
       const blockExternalId = stringify(event.data.blockExternalId);
-      const currentBlock = blocks[blockExternalId];
+      const currentBlock = get<Block>(DATA_TYPES.block, blockExternalId);
+      if (!currentBlock) {
+        return;
+      }
 
       updateLocalBlock(blockExternalId, {
         ...currentBlock,
         blockType: event.data.blockType,
       });
     },
-    [blocks, updateLocalBlock]
+    [get, updateLocalBlock]
   );
 
   const updatePropertyChecked = useCallback(
     (event: BlockProperyCheckedUpdatedEvent) => {
       const blockExternalId = stringify(event.data.blockExternalId);
-      const currentBlock = blocks[blockExternalId];
+      const currentBlock = get<Block>(DATA_TYPES.block, blockExternalId);
+      if (!currentBlock) {
+        return;
+      }
 
       updateLocalBlock(blockExternalId, {
         ...currentBlock,
@@ -194,7 +178,7 @@ export const usePages = (props: {
         },
       });
     },
-    [blocks, updateLocalBlock]
+    [get, updateLocalBlock]
   );
 
   const updatePropertyTitle = useCallback(
@@ -239,12 +223,10 @@ export const usePages = (props: {
 
   return {
     pages: {
-      data: pages,
       query: queryPage,
       updateLocal: updateLocalPage,
     },
     blocks: {
-      data: blocks,
       query: queryBlock,
       updateLocal: updateLocalBlock,
     },

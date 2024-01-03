@@ -1,15 +1,76 @@
 import { parse } from 'uuid';
 
 import { usePagesContext } from '@/contexts/PagesContext/usePagesContext';
-import { Node, Tree } from '@stellar-ic/lseq-ts';
-import { ExternalId } from '@/types';
-import { useCallback, useMemo } from 'react';
+import { Tree } from '@stellar-ic/lseq-ts';
+import { Block, ExternalId } from '@/types';
+import { useCallback } from 'react';
+import { useDataStoreContext } from '@/contexts/DataStoreContext/useDataStoreContext';
+import { DATA_TYPES } from '@/constants';
+import { TreeEvent } from '@stellar-ic/lseq-ts/types';
 
 type UseShiftTabHandler = {
   blockIndex: number;
   parentBlockIndex?: number;
   blockExternalId: ExternalId;
   parentBlockExternalId?: ExternalId | null;
+};
+
+const doUpdateBlockParent = (
+  block: Block,
+  parent: ExternalId,
+  opts: {
+    onUpdateLocal: (block: Block) => void;
+    onUpdateRemote: (block: Block) => void;
+  }
+) => {
+  const { onUpdateLocal, onUpdateRemote } = opts;
+  const updatedBlock = {
+    ...block,
+    parent,
+  };
+  onUpdateLocal(updatedBlock);
+  onUpdateRemote(updatedBlock);
+};
+
+const doInsertBlockContent = (
+  block: Block,
+  data: { index: number; item: ExternalId }[],
+  opts: {
+    onUpdateLocal: (block: Block) => void;
+    onUpdateRemote: (block: Block, events: TreeEvent[]) => void;
+  }
+) => {
+  const { onUpdateLocal, onUpdateRemote } = opts;
+  const allEvents: TreeEvent[] = [];
+  data.forEach((x) => {
+    const { index, item } = x;
+    Tree.insertCharacter(block.content, index, item, (events) => {
+      allEvents.push(...events);
+    });
+  });
+  onUpdateLocal(block);
+  onUpdateRemote(block, allEvents);
+};
+
+const doRemoveBlockContent = (
+  block: Block,
+  indexes: number[],
+  opts: {
+    onUpdateLocal: (block: Block) => void;
+    onUpdateRemote: (block: Block, events: TreeEvent[]) => void;
+  }
+) => {
+  const { onUpdateLocal, onUpdateRemote } = opts;
+  const allEvents: TreeEvent[] = [];
+  indexes.forEach((index) => {
+    // We are removing the character at index + 1 because we want to remove the
+    // character before the "cursor"
+    Tree.removeCharacter(block.content, index + 1, (event) => {
+      allEvents.push(event);
+    });
+  });
+  onUpdateLocal(block);
+  onUpdateRemote(block, allEvents);
 };
 
 export const useShiftTabHandler = ({
@@ -19,134 +80,240 @@ export const useShiftTabHandler = ({
   parentBlockIndex,
 }: UseShiftTabHandler) => {
   const {
-    pages: { data: pages, updateLocal: updateLocalPage },
-    blocks: { data: blocks, updateLocal: updateLocalBlock },
+    pages: { updateLocal: updateLocalPage },
+    blocks: { updateLocal: updateLocalBlock },
     updateBlock,
   } = usePagesContext();
+  const { get } = useDataStoreContext();
 
-  const parentBlock = useMemo(
-    () =>
-      parentBlockExternalId
-        ? pages[parentBlockExternalId] || blocks[parentBlockExternalId]
-        : null,
-    [pages, blocks, parentBlockExternalId]
+  const updateBlockParent = useCallback(
+    (block: Block, parentBlock: Block) => {
+      doUpdateBlockParent(block, parentBlock.uuid, {
+        onUpdateLocal: (updatedBlock) => {
+          updateLocalBlock(updatedBlock.uuid, updatedBlock);
+          if ('page' in updatedBlock.blockType) {
+            updateLocalPage(updatedBlock.uuid, updatedBlock);
+          }
+        },
+        onUpdateRemote: (updatedBlock) => {
+          if (!updatedBlock.parent) throw new Error('No parent');
+          updateBlock(parse(updatedBlock.uuid), {
+            updateParent: {
+              data: {
+                blockExternalId: parse(updatedBlock.uuid),
+                parentBlockExternalId: parse(updatedBlock.parent),
+              },
+            },
+          });
+        },
+      });
+    },
+    [updateBlock, updateLocalBlock, updateLocalPage]
   );
 
-  const grandparentBlock = useMemo(
-    () =>
-      parentBlock?.parent
-        ? pages[parentBlock.parent] || blocks[parentBlock.parent]
-        : null,
-    [pages, blocks, parentBlock]
+  const insertBlockIntoBlockContent = useCallback(
+    (block: Block, newParentBlock: Block, index: number) => {
+      doInsertBlockContent(newParentBlock, [{ index, item: block.uuid }], {
+        onUpdateLocal: (updatedBlock) => {
+          updateLocalBlock(updatedBlock.uuid, updatedBlock);
+          if ('page' in updatedBlock.blockType) {
+            updateLocalPage(updatedBlock.uuid, updatedBlock);
+          }
+        },
+        onUpdateRemote: (updatedBlock, events) => {
+          const blockExternalId = parse(updatedBlock.uuid);
+          updateBlock(blockExternalId, {
+            updateContent: {
+              data: {
+                blockExternalId,
+                transaction: events,
+              },
+            },
+          });
+        },
+      });
+    },
+    [updateBlock, updateLocalBlock, updateLocalPage]
+  );
+
+  const removeBlockFromParentBlockContent = useCallback(
+    (parentBlock: Block, blockIndex: number) => {
+      doRemoveBlockContent(parentBlock, [blockIndex], {
+        onUpdateLocal: (updatedBlock) => {
+          updateLocalBlock(updatedBlock.uuid, updatedBlock);
+          if ('page' in updatedBlock.blockType) {
+            updateLocalPage(updatedBlock.uuid, updatedBlock);
+          }
+        },
+        onUpdateRemote: (updatedBlock, events) => {
+          const blockExternalId = parse(updatedBlock.uuid);
+          updateBlock(blockExternalId, {
+            updateContent: {
+              data: {
+                blockExternalId,
+                transaction: events,
+              },
+            },
+          });
+        },
+      });
+    },
+    [updateBlock, updateLocalBlock, updateLocalPage]
+  );
+
+  const moveSiblingsIntoBlockContent = useCallback(
+    (block: Block, siblingBlockExternalIds: ExternalId[]) => {
+      const siblings = siblingBlockExternalIds;
+      const initialSiblingIndex = Tree.size(block.content);
+      let insertIndex = initialSiblingIndex;
+
+      doInsertBlockContent(
+        block,
+        siblings.map((siblingExternalId) => {
+          const index = insertIndex;
+          insertIndex += 1;
+          return {
+            index,
+            item: siblingExternalId,
+          };
+        }),
+        {
+          onUpdateLocal: (updatedBlock) => {
+            updateLocalBlock(updatedBlock.uuid, updatedBlock);
+            if ('page' in updatedBlock.blockType) {
+              updateLocalPage(updatedBlock.uuid, updatedBlock);
+            }
+          },
+          onUpdateRemote: (updatedBlock, events) => {
+            const blockExternalId = parse(updatedBlock.uuid);
+            updateBlock(blockExternalId, {
+              updateContent: {
+                data: {
+                  blockExternalId,
+                  transaction: events,
+                },
+              },
+            });
+          },
+        }
+      );
+    },
+    [updateBlock, updateLocalBlock, updateLocalPage]
+  );
+
+  const removeSiblingBlocksFromBlockContent = useCallback(
+    (parentBlock: Block, siblingBlockExternalIds: ExternalId[]) => {
+      doRemoveBlockContent(
+        parentBlock,
+        // We are iterating in reverse order so that the indexes don't change
+        // as we remove the siblings
+        siblingBlockExternalIds.reverse().map((siblingBlockExternalId) => {
+          const siblingBlockIndex = Tree.toArray(parentBlock.content).indexOf(
+            siblingBlockExternalId
+          );
+          return siblingBlockIndex;
+        }),
+        {
+          onUpdateLocal: (updatedBlock) => {
+            updateLocalBlock(updatedBlock.uuid, updatedBlock);
+            if ('page' in updatedBlock.blockType) {
+              updateLocalPage(updatedBlock.uuid, updatedBlock);
+            }
+          },
+          onUpdateRemote: (updatedBlock, events) => {
+            const blockExternalId = parse(updatedBlock.uuid);
+            updateBlock(blockExternalId, {
+              updateContent: {
+                data: {
+                  blockExternalId,
+                  transaction: events,
+                },
+              },
+            });
+          },
+        }
+      );
+    },
+    [updateBlock, updateLocalBlock, updateLocalPage]
+  );
+
+  const updateSiblingBlocksParent = useCallback(
+    (block: Block, siblingBlockExternalIds: ExternalId[]) => {
+      siblingBlockExternalIds.forEach((siblingBlockExternalId) => {
+        const siblingBlock = get<Block>(
+          DATA_TYPES.block,
+          siblingBlockExternalId
+        );
+
+        if (!siblingBlock) return;
+
+        doUpdateBlockParent(siblingBlock, block.uuid, {
+          onUpdateLocal: (updatedBlock) => {
+            updateLocalBlock(updatedBlock.uuid, updatedBlock);
+            if ('page' in updatedBlock.blockType) {
+              updateLocalPage(updatedBlock.uuid, updatedBlock);
+            }
+          },
+          onUpdateRemote: (updatedBlock) => {
+            if (!updatedBlock.parent) throw new Error('No parent was set');
+            updateBlock(parse(updatedBlock.uuid), {
+              updateParent: {
+                data: {
+                  blockExternalId: parse(updatedBlock.uuid),
+                  parentBlockExternalId: parse(updatedBlock.parent),
+                },
+              },
+            });
+          },
+        });
+      });
+    },
+    [get, updateBlock, updateLocalBlock, updateLocalPage]
   );
 
   const doShiftTabOperation = useCallback(() => {
+    const parentBlock = parentBlockExternalId
+      ? get<Block>(DATA_TYPES.page, parentBlockExternalId) ||
+        get<Block>(DATA_TYPES.block, parentBlockExternalId)
+      : null;
+
+    const grandparentBlock = parentBlock?.parent
+      ? get<Block>(DATA_TYPES.page, parentBlock.parent) ||
+        get<Block>(DATA_TYPES.block, parentBlock.parent)
+      : null;
+
     if (!parentBlock) return false;
-    if (!parentBlockIndex) return false;
+    if (parentBlockIndex === undefined) return false;
     if (!grandparentBlock) return false;
 
-    const blockToMove = blocks[blockExternalId];
+    const blockToMove = get<Block>(DATA_TYPES.block, blockExternalId);
     if (!blockToMove) return false;
 
-    // Update the block's parent on chain
-    updateBlock(parse(blockExternalId), {
-      updateParent: {
-        data: {
-          blockExternalId: parse(blockExternalId),
-          parentBlockExternalId: parse(grandparentBlock.uuid),
-        },
-      },
-    });
+    const parentBlockContent = Tree.toArray(parentBlock.content);
+    const siblings = parentBlockContent.slice(blockIndex + 1);
 
-    const insertNodeRemote = (node: Node.Node) => {
-      // Update the grandparent block's content to include the new block
-      updateBlock(parse(grandparentBlock.uuid), {
-        updateContent: {
-          data: {
-            blockExternalId: parse(grandparentBlock.uuid),
-            transaction: [
-              {
-                insert: {
-                  transactionType: { insert: null },
-                  // TODO: This is wrong, we need to insert at the correct position
-                  position: node.identifier.value,
-                  value: blockToMove.uuid,
-                },
-              },
-            ],
-          },
-        },
-      });
-    };
-
-    const newBlockIndex = parentBlockIndex + 1;
-
-    if (newBlockIndex === Tree.size(grandparentBlock.content) - 1) {
-      insertNodeRemote(
-        Tree.buildNodeForEndInsert(grandparentBlock.content, blockToMove.uuid)
-      );
-    } else {
-      insertNodeRemote(
-        Tree.buildNodeForMiddleInsert(
-          grandparentBlock.content,
-          blockToMove.uuid,
-          newBlockIndex
-        )
-      );
-    }
-
-    // Update the parent block's content to remove the block
-    updateBlock(parse(parentBlock.uuid), {
-      updateContent: {
-        data: {
-          blockExternalId: parse(parentBlock.uuid),
-          transaction: [
-            {
-              delete: {
-                transactionType: { delete: null },
-                position: Tree.getNodeAtPosition(
-                  parentBlock.content,
-                  blockIndex
-                ).identifier.value,
-              },
-            },
-          ],
-        },
-      },
-    });
-
-    // Local updates
-    // Remove the block from its current position
-    Tree.removeCharacter(parentBlock.content, blockIndex + 1, () => {});
-    updateLocalBlock(parentBlock.uuid, parentBlock);
-    if ('page' in parentBlock.blockType) {
-      updateLocalPage(blockToMove.uuid, blockToMove);
-    }
-
-    // Add the block to the new position
-    Tree.insertCharacter(
-      grandparentBlock.content,
-      newBlockIndex,
-      blockToMove.uuid,
-      () => {}
+    moveSiblingsIntoBlockContent(blockToMove, siblings);
+    removeSiblingBlocksFromBlockContent(parentBlock, siblings);
+    updateSiblingBlocksParent(blockToMove, siblings);
+    updateBlockParent(blockToMove, grandparentBlock);
+    insertBlockIntoBlockContent(
+      blockToMove,
+      grandparentBlock,
+      parentBlockIndex + 1
     );
-    updateLocalBlock(grandparentBlock.uuid, grandparentBlock);
-    if ('page' in grandparentBlock.blockType) {
-      updateLocalPage(grandparentBlock.uuid, grandparentBlock);
-    }
-
-    blockToMove.parent = grandparentBlock.uuid;
-    updateLocalBlock(blockToMove.uuid, blockToMove);
+    removeBlockFromParentBlockContent(parentBlock, blockIndex);
   }, [
-    blockIndex,
     blockExternalId,
-    blocks,
-    grandparentBlock,
-    parentBlock,
+    blockIndex,
+    parentBlockExternalId,
     parentBlockIndex,
-    updateBlock,
-    updateLocalBlock,
-    updateLocalPage,
+    get,
+    insertBlockIntoBlockContent,
+    moveSiblingsIntoBlockContent,
+    removeBlockFromParentBlockContent,
+    removeSiblingBlocksFromBlockContent,
+    updateBlockParent,
+    updateSiblingBlocksParent,
   ]);
 
   return doShiftTabOperation;

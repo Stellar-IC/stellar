@@ -9,9 +9,7 @@ import { useListState } from '@mantine/hooks';
 import { Tree } from '@stellar-ic/lseq-ts';
 import cx from 'clsx';
 import { useCallback, useEffect } from 'react';
-import { parse } from 'uuid';
 
-import { usePagesContext } from '@/contexts/PagesContext/usePagesContext';
 import { useTextBlockEventHandlers } from '@/hooks/documents/useTextBlockEventHandlers';
 import { Page } from '@/types';
 
@@ -29,9 +27,6 @@ type OnDragEndProps = {
 
 export const Blocks = ({ page }: { page: Page }) => {
   const titleBlockIndex = 0;
-  const {
-    blocks: { query },
-  } = usePagesContext();
   const { onCharacterInserted, onCharacterRemoved } = useTextBlockEventHandlers(
     { blockExternalId: page.uuid }
   );
@@ -40,11 +35,6 @@ export const Blocks = ({ page }: { page: Page }) => {
   });
   const blocksToRender = Tree.toArray(page.content);
   const [state, handlers] = useListState(blocksToRender);
-
-  // Ensure that the page is loaded
-  useEffect(() => {
-    query(parse(page.uuid));
-  }, [query, page.uuid]);
 
   // Update the state if the blocks change
   useEffect(() => {

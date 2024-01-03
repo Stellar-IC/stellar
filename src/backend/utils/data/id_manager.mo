@@ -13,9 +13,7 @@ module IdManager {
             var result = idManager.registerModel(model);
 
             switch result {
-                case (#err(#alreadyRegistered)) {
-                    Debug.print("`" # toString(model) # "` model already registered. Skipping...");
-                };
+                case (#err(#alreadyRegistered)) {};
                 case (#ok) {};
             };
         };

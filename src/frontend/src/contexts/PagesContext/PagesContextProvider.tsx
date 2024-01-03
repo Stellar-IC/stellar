@@ -4,6 +4,8 @@ import { useAuthContext } from '@/modules/auth/contexts/AuthContext';
 
 import { parse, stringify, v4 } from 'uuid';
 import { Tree } from '@stellar-ic/lseq-ts';
+import { DATA_TYPES } from '@/constants';
+import { Block } from '@/types';
 import { PagesContext } from './PagesContext';
 import { useWorkspaceContext } from '../WorkspaceContext/useWorkspaceContext';
 import {
@@ -11,10 +13,12 @@ import {
   UUID,
 } from '../../../../declarations/workspace/workspace.did';
 import { BlockEvent } from './types';
+import { useDataStoreContext } from '../DataStoreContext/useDataStoreContext';
 
 export function PagesContextProvider({ children }: PropsWithChildren<{}>) {
   const { identity } = useAuthContext();
   const { workspaceId } = useWorkspaceContext();
+  const { get } = useDataStoreContext();
 
   const {
     pages: pagesContext,
@@ -49,8 +53,15 @@ export function PagesContextProvider({ children }: PropsWithChildren<{}>) {
   const removeBlock = useCallback(
     (parentBlockExternalId: UUID, index: number) => {
       const parentBlock =
-        pagesContext.data[stringify(parentBlockExternalId)] ||
-        blocksContext.data[stringify(parentBlockExternalId)];
+        get<Block>(DATA_TYPES.page, stringify(parentBlockExternalId)) ||
+        get<Block>(DATA_TYPES.block, stringify(parentBlockExternalId));
+
+      if (!parentBlock) {
+        throw new Error(
+          `Could not find parent block with external id ${parentBlockExternalId}`
+        );
+      }
+
       Tree.removeCharacter(parentBlock.content, index, (event) => {
         handleBlockEvent(stringify(parentBlockExternalId), {
           blockUpdated: {
@@ -65,12 +76,13 @@ export function PagesContextProvider({ children }: PropsWithChildren<{}>) {
           },
         });
       });
+
       blocksContext.updateLocal(stringify(parentBlockExternalId), parentBlock);
       if ('page' in parentBlock.blockType) {
         pagesContext.updateLocal(stringify(parentBlockExternalId), parentBlock);
       }
     },
-    [blocksContext, handleBlockEvent, identity, pagesContext]
+    [get, blocksContext, pagesContext, handleBlockEvent, identity]
   );
 
   const updateBlock = useCallback(

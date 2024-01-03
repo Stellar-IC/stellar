@@ -46,10 +46,8 @@ module {
         };
 
         let contentForNewPage = Tree.Tree(null);
-        Debug.print("\n\n\ncreating page...");
 
         ignore Tree.insertCharacterAtStart(contentForNewPage, UUID.toText(contentBlockUuid));
-        // Debug.print("created inital content");
 
         let pageToCreate : UnsavedBlock_v2 = {
             var blockType = #page;

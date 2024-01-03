@@ -1,12 +1,11 @@
 import { PropsWithChildren, useCallback, useState } from 'react';
 
 import { DataStoreContext } from './DataStoreContext';
+import { DataStore } from './types';
 
 function getKey(root: string, externalId: string) {
   return `${root}.${externalId}`;
 }
-
-type DataStore = Record<string, unknown>;
 
 export function DataStoreContextProvider({ children }: PropsWithChildren) {
   const [store, setStore] = useState<DataStore>({});
@@ -28,8 +27,18 @@ export function DataStoreContextProvider({ children }: PropsWithChildren) {
     [setStore]
   );
 
+  const get = useCallback(
+    <DataT,>(key: string, externalId: string): DataT | null => {
+      const fullKey = getKey(key, externalId);
+      const item = store[fullKey];
+      if (item) return item as DataT;
+      return null;
+    },
+    [store]
+  );
+
   return (
-    <DataStoreContext.Provider value={{ store, put }}>
+    <DataStoreContext.Provider value={{ store, get, put }}>
       {children}
     </DataStoreContext.Provider>
   );

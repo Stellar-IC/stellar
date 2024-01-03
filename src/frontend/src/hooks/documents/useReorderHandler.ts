@@ -2,8 +2,10 @@ import { parse } from 'uuid';
 
 import { usePagesContext } from '@/contexts/PagesContext/usePagesContext';
 import { Node, Tree } from '@stellar-ic/lseq-ts';
-import { ExternalId } from '@/types';
-import { useCallback, useMemo } from 'react';
+import { Block, ExternalId } from '@/types';
+import { useCallback } from 'react';
+import { useDataStoreContext } from '@/contexts/DataStoreContext/useDataStoreContext';
+import { DATA_TYPES } from '@/constants';
 
 type UseReorderHandler = {
   parentBlockExternalId?: ExternalId | null;
@@ -13,18 +15,16 @@ export const useReorderHandler = ({
   parentBlockExternalId,
 }: UseReorderHandler) => {
   const {
-    pages: { data: pages, updateLocal: updateLocalPage },
-    blocks: { data: blocks, updateLocal: updateLocalBlock },
+    pages: { updateLocal: updateLocalPage },
+    blocks: { updateLocal: updateLocalBlock },
     updateBlock,
   } = usePagesContext();
+  const { get } = useDataStoreContext();
 
-  const parentBlock = useMemo(
-    () =>
-      parentBlockExternalId
-        ? pages[parentBlockExternalId] || blocks[parentBlockExternalId]
-        : null,
-    [pages, blocks, parentBlockExternalId]
-  );
+  const parentBlock = parentBlockExternalId
+    ? get<Block>(DATA_TYPES.page, parentBlockExternalId) ||
+      get<Block>(DATA_TYPES.block, parentBlockExternalId)
+    : null;
 
   const doReorderOperation = useCallback(
     (
@@ -34,7 +34,7 @@ export const useReorderHandler = ({
     ) => {
       if (!parentBlock) return false;
 
-      const blockToMove = blocks[blockExternalId];
+      const blockToMove = get<Block>(DATA_TYPES.block, blockExternalId);
       if (!blockToMove) return false;
 
       // Remove the block from its current position
@@ -143,7 +143,7 @@ export const useReorderHandler = ({
         updateLocalPage(parentBlock.uuid, parentBlock);
       }
     },
-    [blocks, parentBlock, updateBlock, updateLocalBlock, updateLocalPage]
+    [get, parentBlock, updateBlock, updateLocalBlock, updateLocalPage]
   );
 
   return doReorderOperation;

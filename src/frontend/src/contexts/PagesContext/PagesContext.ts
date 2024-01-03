@@ -2,8 +2,6 @@ import { createContext } from 'react';
 import { Block, Page } from '@/types';
 import {
   BlockType,
-  Result as PageByUuidQueryResult,
-  Result_1 as BlockByUuidQueryResult,
   TreeEvent,
   UUID,
 } from '../../../../declarations/workspace/workspace.did';
@@ -11,13 +9,9 @@ import {
 // eslint-disable-next-line no-spaced-func
 export const PagesContext = createContext<{
   pages: {
-    data: Record<string, Page>;
-    query: (args_0: UUID) => Promise<PageByUuidQueryResult>;
     updateLocal: (externalId: string, updatedData: Page) => void;
   };
   blocks: {
-    data: Record<string, Block>;
-    query: (args_0: UUID) => Promise<BlockByUuidQueryResult>;
     updateLocal: (externalId: string, updatedData: Block) => void;
   };
   addBlock: (pageExternalId: UUID, blockType: BlockType, index: number) => void;

@@ -1,5 +1,4 @@
 import type { Principal } from '@dfinity/principal';
-import { usePagesContext } from '@/contexts/PagesContext/usePagesContext';
 import { Tree } from '@stellar-ic/lseq-ts';
 import {
   Text,
@@ -12,13 +11,19 @@ import {
 import { IconPlus } from '@tabler/icons-react';
 import { useCreatePageWithRedirect } from '@/hooks/documents/updates/useCreatePageWithRedirect';
 import { Link } from 'react-router-dom';
+import { useDataStoreContext } from '@/contexts/DataStoreContext/useDataStoreContext';
+import { DATA_TYPES } from '@/constants';
+import { Block } from '@/types';
 import { AuthButton } from '../AuthButton/AuthButton';
 import classes from './NavbarSearch.module.css';
 
 function PageLinksSection() {
-  const { pages } = usePagesContext();
+  const { store } = useDataStoreContext();
+  const pages = Object.keys(store)
+    .filter((key) => key.startsWith(DATA_TYPES.page))
+    .map((key) => store[key]) as Block[];
   const createPageAndRedirect = useCreatePageWithRedirect();
-  const pageLinks = Object.values(pages.data).map((page) => (
+  const pageLinks = Object.values(pages).map((page) => (
     <Link
       to={`/pages/${page.uuid}`}
       key={page.uuid}

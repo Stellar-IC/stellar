@@ -1,9 +1,9 @@
 import { Box, MantineTheme, Text } from '@mantine/core';
 
-import { usePagesContext } from '@/contexts/PagesContext/usePagesContext';
-
 import { useTextBlockEventHandlers } from '@/hooks/documents/useTextBlockEventHandlers';
 
+import { useDataStoreContext } from '@/contexts/DataStoreContext/useDataStoreContext';
+import { Block } from '@/types';
 import { TextBlock } from './TextBlock';
 import { TextBlockBlockType } from './TextBlock/types';
 
@@ -24,10 +24,8 @@ export const TextBlockRenderer = ({
   parentBlockIndex,
   placeholder,
 }: TextBlockRendererProps) => {
-  const {
-    blocks: { data },
-  } = usePagesContext();
-  const block = data[blockExternalId];
+  const { get } = useDataStoreContext();
+  const block = get<Block>('block', blockExternalId);
   const parentExternalId = block?.parent;
 
   const getStyle = (theme: MantineTheme) => ({

@@ -1,4 +1,3 @@
-import { usePagesContext } from '@/contexts/PagesContext/usePagesContext';
 import { useTextBlockEventHandlers } from '@/hooks/documents/useTextBlockEventHandlers';
 
 import { NumberedListBlock } from './NumberedListBlock';
@@ -17,12 +16,6 @@ export const NumberedListBlockRenderer = ({
   const { onCharacterInserted, onCharacterRemoved } = useTextBlockEventHandlers(
     { blockExternalId }
   );
-  const {
-    blocks: { data },
-  } = usePagesContext();
-  const block = data[blockExternalId];
-
-  if (!block) return null;
 
   return (
     <NumberedListBlock

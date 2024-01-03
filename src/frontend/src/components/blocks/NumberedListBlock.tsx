@@ -1,13 +1,11 @@
 import { Box, Flex } from '@mantine/core';
 import { createRef, useEffect, useMemo, useState } from 'react';
-import { parse } from 'uuid';
-
-import { usePagesContext } from '@/contexts/PagesContext/usePagesContext';
 
 import { Tree } from '@stellar-ic/lseq-ts';
 import { useDisclosure } from '@mantine/hooks';
-import { ExternalId } from '@/types';
+import { Block, ExternalId } from '@/types';
 import { useTextBlockKeyboardEventHandlers } from '@/hooks/documents/useTextBlockKeyboardEventHandlers';
+import { useDataStoreContext } from '@/contexts/DataStoreContext/useDataStoreContext';
 import { useTextStyles } from './TextBlock/hooks/useTextStyles';
 
 export type NumberedListBlockInnerProps = {
@@ -106,21 +104,15 @@ export const NumberedListBlock = ({
   onCharacterInserted,
   onCharacterRemoved,
 }: NumberedListBlockProps) => {
-  const {
-    blocks: { data, query },
-  } = usePagesContext();
-  const block = useMemo(() => data[externalId], [data, externalId]);
+  const { get } = useDataStoreContext();
+  const block = get<Block>('block', externalId);
 
-  useEffect(() => {
-    query(parse(externalId));
-  }, [query, externalId]);
-
-  const parentExternalId = block?.parent;
-
-  if (!block) return <div />;
+  if (!block) return null;
   if (!('numberedList' in block.blockType)) {
     throw new Error('Expected numbered list block');
   }
+
+  const parentExternalId = block.parent;
 
   return (
     <Flex>

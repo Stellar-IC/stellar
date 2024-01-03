@@ -38,34 +38,27 @@ module BlockCreatedConsumer {
 
         let block = switch (result) {
             case (#err(#anonymousUser)) {
-                Debug.print("Failed to create block. User is anonymous");
                 return ();
             };
             case (#err(#failedToCreate)) {
-                Debug.print("Failed to create block");
                 return ();
             };
             case (#err(#inputTooLong)) {
-                Debug.print("Failed to create block. Input too long");
                 return ();
             };
             case (#err(#insufficientCycles)) {
-                Debug.print("Failed to create block. Insufficient cycles");
                 return ();
             };
             case (#err(#invalidBlockType)) {
-                Debug.print("Failed to create block. Invalid block type - " # debug_show (event.data.block.blockType));
                 return ();
             };
             case (#ok(block)) {
-                Debug.print("Block created:" # Nat.toText(block.id));
                 block;
             };
         };
 
         let parentBlock = switch (event.data.block.parent) {
             case (null) {
-                Debug.print("Failed to add block to parent block. Parent block not specified");
                 return ();
             };
             case (?parent) {
@@ -73,8 +66,6 @@ module BlockCreatedConsumer {
 
                 switch (parentBlock) {
                     case (#err(#blockNotFound)) {
-                        Debug.print(UUID.toText(parent));
-                        Debug.print("Failed to add block to parent block. Parent block not found");
                         return ();
                     };
                     case (#ok(parentBlock)) {

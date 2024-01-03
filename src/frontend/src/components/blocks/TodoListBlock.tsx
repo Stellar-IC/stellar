@@ -1,9 +1,10 @@
 import { Checkbox, Flex } from '@mantine/core';
-import { useEffect, useMemo } from 'react';
 import { parse } from 'uuid';
 
 import { usePagesContext } from '@/contexts/PagesContext/usePagesContext';
 
+import { useDataStoreContext } from '@/contexts/DataStoreContext/useDataStoreContext';
+import { Block } from '@/types';
 import { TextBlock } from './TextBlock';
 
 interface TodoListBlockProps {
@@ -19,23 +20,16 @@ export const TodoListBlock = ({
   onCharacterInserted,
   onCharacterRemoved,
 }: TodoListBlockProps) => {
-  const {
-    updateBlock,
-    blocks: { data, query },
-  } = usePagesContext();
-  const block = useMemo(() => data[externalId], [data, externalId]);
+  const { updateBlock } = usePagesContext();
+  const { get } = useDataStoreContext();
+  const block = get<Block>('block', externalId);
 
-  useEffect(() => {
-    query(parse(externalId));
-  }, [query, externalId]);
-
-  const parentExternalId = block?.parent;
-
-  if (!block) return <div />;
+  if (!block) return null;
   if (!('todoList' in block.blockType)) {
     throw new Error('Expected todoList block');
   }
 
+  const parentExternalId = block.parent;
   const parsedExternalId = parse(externalId);
 
   return (

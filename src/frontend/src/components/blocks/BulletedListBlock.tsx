@@ -1,9 +1,8 @@
 import { Flex } from '@mantine/core';
 
-import { usePagesContext } from '@/contexts/PagesContext/usePagesContext';
+import { useDataStoreContext } from '@/contexts/DataStoreContext/useDataStoreContext';
+import { Block } from '@/types';
 
-import { useEffect } from 'react';
-import { parse } from 'uuid';
 import { TextBlock } from './TextBlock';
 
 interface BulletedListBlockProps {
@@ -19,15 +18,8 @@ export const BulletedListBlock = ({
   onCharacterInserted,
   onCharacterRemoved,
 }: BulletedListBlockProps) => {
-  const {
-    blocks: { data, query },
-  } = usePagesContext();
-
-  useEffect(() => {
-    query(parse(externalId));
-  }, [query, externalId]);
-
-  const block = data[externalId];
+  const { get } = useDataStoreContext();
+  const block = get<Block>('block', externalId);
 
   if (!block) return null;
 
