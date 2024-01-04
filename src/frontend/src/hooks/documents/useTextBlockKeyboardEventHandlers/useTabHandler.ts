@@ -6,6 +6,11 @@ import { Block, ExternalId } from '@/types';
 import { useCallback, useMemo } from 'react';
 import { useDataStoreContext } from '@/contexts/DataStoreContext/useDataStoreContext';
 import { DATA_TYPES } from '@/constants';
+import {
+  insertBlockContent,
+  removeBlockContent,
+  updateBlockParent,
+} from './utils';
 
 type UseTabHandler = {
   blockIndex: number;
@@ -20,6 +25,7 @@ export const useTabHandler = ({
 }: UseTabHandler) => {
   const {
     blocks: { updateLocal: updateLocalBlock },
+    pages: { updateLocal: updateLocalPage },
     updateBlock,
   } = usePagesContext();
   const { get } = useDataStoreContext();
@@ -53,49 +59,73 @@ export const useTabHandler = ({
     const blockToMove = get<Block>(DATA_TYPES.block, blockExternalId);
     if (!blockToMove) return false;
 
+    // Inserting at the end of the previous block's content
     const newBlockIndex = Tree.size(previousBlock.content);
 
     // Remove the block from its current position
-    Tree.removeCharacter(parentBlock.content, blockIndex + 1, (event) => {
-      updateBlock(parse(parentBlock.uuid), {
-        updateContent: {
-          data: {
-            blockExternalId: parse(parentBlock.uuid),
-            transaction: [event],
-          },
-        },
-      });
-    });
-    updateLocalBlock(parentBlock.uuid, parentBlock);
-
-    // Add the block to the new position
-    Tree.insertCharacter(
-      previousBlock.content,
-      newBlockIndex,
-      blockToMove.uuid,
-      (events) => {
-        // Update the previous block's content to include the new block
-        updateBlock(parse(previousBlockExternalId), {
+    removeBlockContent(parentBlock, [blockIndex], {
+      onUpdateLocal: (updatedBlock) => {
+        updateLocalBlock(updatedBlock.uuid, updatedBlock);
+        if ('page' in updatedBlock.blockType) {
+          updateLocalPage(updatedBlock.uuid, updatedBlock);
+        }
+      },
+      onUpdateRemote: (updatedBlock, events) => {
+        const blockExternalId = parse(updatedBlock.uuid);
+        updateBlock(blockExternalId, {
           updateContent: {
             data: {
-              blockExternalId: parse(previousBlockExternalId),
+              blockExternalId,
               transaction: events,
             },
           },
         });
+      },
+    });
+
+    // Add the block to the new position
+    insertBlockContent(
+      previousBlock,
+      [{ index: newBlockIndex, item: blockToMove.uuid }],
+      {
+        onUpdateLocal: (updatedBlock) => {
+          updateLocalBlock(updatedBlock.uuid, updatedBlock);
+          if ('page' in updatedBlock.blockType) {
+            updateLocalPage(updatedBlock.uuid, updatedBlock);
+          }
+        },
+        onUpdateRemote: (updatedBlock, events) => {
+          const blockExternalId = parse(updatedBlock.uuid);
+          updateBlock(blockExternalId, {
+            updateContent: {
+              data: {
+                blockExternalId,
+                transaction: events,
+              },
+            },
+          });
+        },
       }
     );
-    updateLocalBlock(previousBlock.uuid, previousBlock);
-
-    blockToMove.parent = previousBlockExternalId;
 
     // Update the block's parent on chain
-    updateBlock(parse(blockExternalId), {
-      updateParent: {
-        data: {
-          blockExternalId: parse(blockExternalId),
-          parentBlockExternalId: parse(previousBlockExternalId),
-        },
+    updateBlockParent(blockToMove, previousBlockExternalId, {
+      onUpdateLocal: (updatedBlock) => {
+        updateLocalBlock(updatedBlock.uuid, updatedBlock);
+        if ('page' in updatedBlock.blockType) {
+          updateLocalPage(updatedBlock.uuid, updatedBlock);
+        }
+      },
+      onUpdateRemote: (updatedBlock) => {
+        const blockExternalId = parse(updatedBlock.uuid);
+        updateBlock(blockExternalId, {
+          updateParent: {
+            data: {
+              blockExternalId,
+              parentBlockExternalId: parse(previousBlockExternalId),
+            },
+          },
+        });
       },
     });
   }, [
@@ -105,6 +135,7 @@ export const useTabHandler = ({
     parentBlock,
     updateBlock,
     updateLocalBlock,
+    updateLocalPage,
   ]);
 
   return doTabOperation;

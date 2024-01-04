@@ -6,71 +6,17 @@ import { Block, ExternalId } from '@/types';
 import { useCallback } from 'react';
 import { useDataStoreContext } from '@/contexts/DataStoreContext/useDataStoreContext';
 import { DATA_TYPES } from '@/constants';
-import { TreeEvent } from '@stellar-ic/lseq-ts/types';
+import {
+  insertBlockContent as _insertBlockContent,
+  removeBlockContent as _removeBlockContent,
+  updateBlockParent as _updateBlockParent,
+} from './utils';
 
 type UseShiftTabHandler = {
   blockIndex: number;
   parentBlockIndex?: number;
   blockExternalId: ExternalId;
   parentBlockExternalId?: ExternalId | null;
-};
-
-const doUpdateBlockParent = (
-  block: Block,
-  parent: ExternalId,
-  opts: {
-    onUpdateLocal: (block: Block) => void;
-    onUpdateRemote: (block: Block) => void;
-  }
-) => {
-  const { onUpdateLocal, onUpdateRemote } = opts;
-  const updatedBlock = {
-    ...block,
-    parent,
-  };
-  onUpdateLocal(updatedBlock);
-  onUpdateRemote(updatedBlock);
-};
-
-const doInsertBlockContent = (
-  block: Block,
-  data: { index: number; item: ExternalId }[],
-  opts: {
-    onUpdateLocal: (block: Block) => void;
-    onUpdateRemote: (block: Block, events: TreeEvent[]) => void;
-  }
-) => {
-  const { onUpdateLocal, onUpdateRemote } = opts;
-  const allEvents: TreeEvent[] = [];
-  data.forEach((x) => {
-    const { index, item } = x;
-    Tree.insertCharacter(block.content, index, item, (events) => {
-      allEvents.push(...events);
-    });
-  });
-  onUpdateLocal(block);
-  onUpdateRemote(block, allEvents);
-};
-
-const doRemoveBlockContent = (
-  block: Block,
-  indexes: number[],
-  opts: {
-    onUpdateLocal: (block: Block) => void;
-    onUpdateRemote: (block: Block, events: TreeEvent[]) => void;
-  }
-) => {
-  const { onUpdateLocal, onUpdateRemote } = opts;
-  const allEvents: TreeEvent[] = [];
-  indexes.forEach((index) => {
-    // We are removing the character at index + 1 because we want to remove the
-    // character before the "cursor"
-    Tree.removeCharacter(block.content, index + 1, (event) => {
-      allEvents.push(event);
-    });
-  });
-  onUpdateLocal(block);
-  onUpdateRemote(block, allEvents);
 };
 
 export const useShiftTabHandler = ({
@@ -88,7 +34,7 @@ export const useShiftTabHandler = ({
 
   const updateBlockParent = useCallback(
     (block: Block, parentBlock: Block) => {
-      doUpdateBlockParent(block, parentBlock.uuid, {
+      _updateBlockParent(block, parentBlock.uuid, {
         onUpdateLocal: (updatedBlock) => {
           updateLocalBlock(updatedBlock.uuid, updatedBlock);
           if ('page' in updatedBlock.blockType) {
@@ -113,7 +59,7 @@ export const useShiftTabHandler = ({
 
   const insertBlockIntoBlockContent = useCallback(
     (block: Block, newParentBlock: Block, index: number) => {
-      doInsertBlockContent(newParentBlock, [{ index, item: block.uuid }], {
+      _insertBlockContent(newParentBlock, [{ index, item: block.uuid }], {
         onUpdateLocal: (updatedBlock) => {
           updateLocalBlock(updatedBlock.uuid, updatedBlock);
           if ('page' in updatedBlock.blockType) {
@@ -138,7 +84,7 @@ export const useShiftTabHandler = ({
 
   const removeBlockFromParentBlockContent = useCallback(
     (parentBlock: Block, blockIndex: number) => {
-      doRemoveBlockContent(parentBlock, [blockIndex], {
+      _removeBlockContent(parentBlock, [blockIndex], {
         onUpdateLocal: (updatedBlock) => {
           updateLocalBlock(updatedBlock.uuid, updatedBlock);
           if ('page' in updatedBlock.blockType) {
@@ -167,7 +113,7 @@ export const useShiftTabHandler = ({
       const initialSiblingIndex = Tree.size(block.content);
       let insertIndex = initialSiblingIndex;
 
-      doInsertBlockContent(
+      _insertBlockContent(
         block,
         siblings.map((siblingExternalId) => {
           const index = insertIndex;
@@ -203,7 +149,7 @@ export const useShiftTabHandler = ({
 
   const removeSiblingBlocksFromBlockContent = useCallback(
     (parentBlock: Block, siblingBlockExternalIds: ExternalId[]) => {
-      doRemoveBlockContent(
+      _removeBlockContent(
         parentBlock,
         // We are iterating in reverse order so that the indexes don't change
         // as we remove the siblings
@@ -247,7 +193,7 @@ export const useShiftTabHandler = ({
 
         if (!siblingBlock) return;
 
-        doUpdateBlockParent(siblingBlock, block.uuid, {
+        _updateBlockParent(siblingBlock, block.uuid, {
           onUpdateLocal: (updatedBlock) => {
             updateLocalBlock(updatedBlock.uuid, updatedBlock);
             if ('page' in updatedBlock.blockType) {
