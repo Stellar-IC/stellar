@@ -39,10 +39,16 @@ export const useTextStyles = ({ blockType }: UseTextStylesProps) => {
       };
     }
 
+    if ('heading1' in blockType) {
+      return {
+        fontWeight: 600,
+        fontSize: '1.875em',
+        lineHeight: 1.3,
+      };
+    }
+
     return {
-      fontWeight: 600,
-      fontSize: '1.875em',
-      lineHeight: 1.3,
+      fontSize: '1rem',
     };
   }, [blockType]);
 

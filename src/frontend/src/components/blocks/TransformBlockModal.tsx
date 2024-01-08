@@ -17,6 +17,10 @@ export const TransformBlockModal = ({
 }: TransformBlockModalProps) => {
   const menuItems = [
     {
+      label: 'Page',
+      value: { page: null },
+    },
+    {
       label: 'Text',
       value: { paragraph: null },
     },

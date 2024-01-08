@@ -14,6 +14,11 @@ import { useTextBlockEventHandlers } from '@/hooks/documents/useTextBlockEventHa
 import { Page } from '@/types';
 
 import { useReorderHandler } from '@/hooks/documents/useReorderHandler';
+import { useBlockByUuid } from '@/hooks/documents/queries/useBlockByUuid';
+import { useWorkspaceContext } from '@/contexts/WorkspaceContext/useWorkspaceContext';
+import { useAuthContext } from '@/modules/auth/contexts/AuthContext';
+import { parse } from 'uuid';
+import { usePagesContext } from '@/contexts/PagesContext/usePagesContext';
 import { BlockRenderer } from './BlockRenderer';
 import { TextBlock } from './TextBlock';
 
@@ -26,7 +31,6 @@ type OnDragEndProps = {
 };
 
 export const Blocks = ({ page }: { page: Page }) => {
-  const titleBlockIndex = 0;
   const { onCharacterInserted, onCharacterRemoved } = useTextBlockEventHandlers(
     { blockExternalId: page.uuid }
   );
@@ -35,6 +39,27 @@ export const Blocks = ({ page }: { page: Page }) => {
   });
   const blocksToRender = Tree.toArray(page.content);
   const [state, handlers] = useListState(blocksToRender);
+  const { workspaceId } = useWorkspaceContext();
+  const { identity } = useAuthContext();
+  const getBlockByUuid = useBlockByUuid({ identity, workspaceId });
+  const { addBlock } = usePagesContext();
+
+  useEffect(() => {
+    getBlockByUuid(parse(page.uuid));
+  }, [getBlockByUuid, page.uuid]);
+
+  useEffect(() => {
+    // create block if page is empty
+    const timeout = setTimeout(() => {
+      if (Tree.size(page.content) === 0) {
+        addBlock(parse(page.uuid), { paragraph: null }, 0);
+      }
+    }, 500);
+
+    return () => {
+      clearTimeout(timeout);
+    };
+  }, [addBlock, page.content, page.uuid]);
 
   // Update the state if the blocks change
   useEffect(() => {
@@ -72,7 +97,7 @@ export const Blocks = ({ page }: { page: Page }) => {
       <div style={{ padding: '1rem 0' }}>
         <TextBlock
           blockExternalId={page.uuid}
-          blockIndex={titleBlockIndex}
+          blockIndex={0}
           blockType={{ heading1: null }}
           onInsert={onCharacterInserted}
           onRemove={onCharacterRemoved}

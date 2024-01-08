@@ -2,6 +2,7 @@ import { ExternalId } from '@/types';
 import { Tree } from '@stellar-ic/lseq-ts';
 
 export type TextBlockBlockType =
+  | { page: null }
   | { paragraph: null }
   | { heading1: null }
   | { heading2: null }

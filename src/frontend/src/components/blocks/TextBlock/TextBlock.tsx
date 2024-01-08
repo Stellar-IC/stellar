@@ -29,8 +29,9 @@ export const TextBlock = ({
 
   useEffect(() => {
     if (!textBoxRef.current) return;
-    textBoxRef.current.innerText = initialText;
-  }, [initialText, textBoxRef]);
+    const newText = Tree.toText(value);
+    textBoxRef.current.innerText = newText;
+  }, [initialText, textBoxRef, value]);
 
   const { onKeyDown, onPaste } = useTextBlockKeyboardEventHandlers({
     blockExternalId,

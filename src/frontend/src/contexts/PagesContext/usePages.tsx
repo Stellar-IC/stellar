@@ -64,13 +64,17 @@ export const usePages = (props: {
       })
       .then((res) => {
         res.edges.forEach((edge) => {
+          updateLocalBlock(
+            stringify(edge.node.uuid),
+            blockSerializers.fromShareable(edge.node)
+          );
           updateLocalPage(
             stringify(edge.node.uuid),
             blockSerializers.fromShareable(edge.node)
           );
         });
       });
-  }, [actor, updateLocalPage]);
+  }, [actor, updateLocalBlock, updateLocalPage]);
 
   const { storeEventLocal } = usePageEvents();
 

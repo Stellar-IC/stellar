@@ -1,5 +1,5 @@
 import { DraggableProvidedDragHandleProps } from '@hello-pangea/dnd';
-import { Box, Flex } from '@mantine/core';
+import { Box, Flex, MantineTheme } from '@mantine/core';
 import { Tree } from '@stellar-ic/lseq-ts';
 import { useCallback } from 'react';
 
@@ -13,6 +13,7 @@ import { BulletedListBlockRenderer } from './BulletedListBlockRenderer';
 import { TextBlockRenderer } from './TextBlockRenderer';
 import { TodoListBlockRenderer } from './TodoListBlockRenderer';
 import { NumberedListBlockRenderer } from './NumberedListBlockRenderer';
+import { PageBlockRenderer } from './PageBlockRenderer';
 
 interface NestedBlocksProps {
   blockExternalId: string;
@@ -53,14 +54,12 @@ interface BlockRendererInnerProps {
   index: number;
   parentBlockIndex?: number;
   placeholder?: string;
-  depth: number;
   numeral?: number;
 }
 
 const BlockRendererInner = ({
   externalId,
   index,
-  depth,
   parentBlockIndex,
   placeholder,
   numeral,
@@ -73,7 +72,16 @@ const BlockRendererInner = ({
   }
 
   if ('page' in block.blockType) {
-    return null;
+    return (
+      <PageBlockRenderer
+        key={block.uuid}
+        blockExternalId={block.uuid}
+        index={index}
+        placeholder={placeholder}
+        parentBlockIndex={parentBlockIndex}
+        blockType={block.blockType}
+      />
+    );
   }
 
   if (
@@ -87,7 +95,6 @@ const BlockRendererInner = ({
         key={block.uuid}
         blockExternalId={block.uuid}
         index={index}
-        depth={depth}
         placeholder={placeholder}
         parentBlockIndex={parentBlockIndex}
         blockType={block.blockType}
@@ -102,7 +109,6 @@ const BlockRendererInner = ({
           key={block.uuid}
           blockExternalId={block.uuid}
           index={index}
-          depth={depth}
           placeholder={placeholder}
           parentBlockIndex={parentBlockIndex}
           blockType={block.blockType}
@@ -119,7 +125,6 @@ const BlockRendererInner = ({
           key={block.uuid}
           blockExternalId={block.uuid}
           index={index}
-          depth={depth}
           placeholder={placeholder}
           parentBlockIndex={parentBlockIndex}
           blockType={block.blockType}
@@ -156,7 +161,6 @@ const BlockRendererInner = ({
             key={block.uuid}
             blockExternalId={block.uuid}
             index={index}
-            depth={depth}
             placeholder={placeholder}
             parentBlockIndex={parentBlockIndex}
             blockType={block.blockType}
@@ -268,6 +272,10 @@ export const BlockRenderer = ({
     );
   }
 
+  const getStyle = (theme: MantineTheme) => ({
+    paddingLeft: `calc(${depth} * ${theme.spacing.lg})`,
+  });
+
   return (
     <>
       <BlockWithActions
@@ -278,14 +286,15 @@ export const BlockRenderer = ({
         parentBlockExternalId={parentBlockExternalId}
         dragHandleProps={dragHandleProps}
       >
-        <BlockRendererInner
-          depth={depth}
-          index={index}
-          parentBlockIndex={parentBlockIndex}
-          placeholder={placeholder}
-          externalId={externalId}
-          numeral={calculateBlockNumeral()}
-        />
+        <Box style={getStyle}>
+          <BlockRendererInner
+            index={index}
+            parentBlockIndex={parentBlockIndex}
+            placeholder={placeholder}
+            externalId={externalId}
+            numeral={calculateBlockNumeral()}
+          />
+        </Box>
       </BlockWithActions>
       <NestedBlocks
         blockExternalId={block.uuid}
