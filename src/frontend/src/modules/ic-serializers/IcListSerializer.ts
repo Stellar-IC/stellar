@@ -1,4 +1,4 @@
-type IcShareableList<DataT> = [] | [[DataT, IcShareableList<DataT>]];
+import { IcShareableList } from './types';
 
 export class IcListSerializer<DataT, SerializedDataT> {
   serialize = (
@@ -16,7 +16,7 @@ export class IcListSerializer<DataT, SerializedDataT> {
 
     let currentItem = list[0][0];
     let remaining = list[0][1];
-    let i = 0;
+    let i = 1;
 
     final.push(opts.fromShareable(currentItem));
 

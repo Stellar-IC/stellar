@@ -2,7 +2,8 @@ import { useEffect, useState } from 'react';
 import { DelegationIdentity } from '@dfinity/identity';
 import { Principal } from '@dfinity/principal';
 import { AnonymousIdentity, Identity } from '@dfinity/agent';
-import { getAuthClient, login as _login } from '../client';
+import { getAuthClient } from '../client';
+import { login as _login } from '../commands';
 
 import { useHydrate } from './useHydrate';
 import { getUserProfile, registerUser } from './utils';

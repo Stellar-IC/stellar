@@ -16,7 +16,7 @@ export interface BlockText {
   boundary: NodeBoundary;
 }
 
-export function nodefromShareable(shareable: ShareableNode): Node.Node {
+function nodefromShareable(shareable: ShareableNode): Node.Node {
   const node = new Node.Node(
     new Identifier.Identifier(shareable.identifier),
     shareable.value
@@ -35,7 +35,7 @@ export function nodefromShareable(shareable: ShareableNode): Node.Node {
   return node;
 }
 
-export function treefromShareable(tree: ShareableBlockText): Tree.Tree {
+function treefromShareable(tree: ShareableBlockText): Tree.Tree {
   return new Tree.Tree({
     allocationStrategies: new Map(),
     boundary: tree.boundary,
