@@ -30,10 +30,13 @@ const NestedBlocks = ({
   const block = get<Block>('block', blockExternalId);
 
   if (!block) return null;
+  const nestedBlockIds = Tree.toArray(block.content);
+
+  if (nestedBlockIds.length === 0) return null;
 
   return (
-    <Box pos="relative" w="100%">
-      {Tree.toArray(block.content).map((externalId, i) => (
+    <Box pos="relative" w="100%" pt="sm">
+      {nestedBlockIds.map((externalId, i) => (
         <Box key={externalId}>
           {/* eslint-disable-next-line @typescript-eslint/no-use-before-define */}
           <BlockRenderer
@@ -296,11 +299,13 @@ export const BlockRenderer = ({
           />
         </Box>
       </BlockWithActions>
-      <NestedBlocks
-        blockExternalId={block.uuid}
-        depth={depth + 1}
-        parentBlockIndex={index}
-      />
+      {!('page' in block.blockType) && (
+        <NestedBlocks
+          blockExternalId={block.uuid}
+          depth={depth + 1}
+          parentBlockIndex={index}
+        />
+      )}
     </>
   );
 };
