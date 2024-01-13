@@ -280,7 +280,7 @@ export const BlockRenderer = ({
   });
 
   return (
-    <>
+    <Box className="FocusableBlock">
       <BlockWithActions
         key={block.uuid}
         blockExternalId={externalId}
@@ -306,6 +306,6 @@ export const BlockRenderer = ({
           parentBlockIndex={index}
         />
       )}
-    </>
+    </Box>
   );
 };

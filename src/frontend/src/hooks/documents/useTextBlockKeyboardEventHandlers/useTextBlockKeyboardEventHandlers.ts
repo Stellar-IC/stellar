@@ -48,13 +48,9 @@ export const useTextBlockKeyboardEventHandlers = ({
     parentBlockIndex,
   });
 
-  const handleArrowDown = useArrowDownHandler({
-    blockIndex,
-  });
+  const handleArrowDown = useArrowDownHandler();
 
-  const handleArrowUp = useArrowUpHandler({
-    blockIndex,
-  });
+  const handleArrowUp = useArrowUpHandler();
 
   const handleBackspace = useBackspaceHandler({
     onRemove,

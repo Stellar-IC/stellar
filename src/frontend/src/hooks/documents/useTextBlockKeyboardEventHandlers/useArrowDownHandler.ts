@@ -1,19 +1,19 @@
-type UseArrowDownHandlerProps = {
-  blockIndex: number;
-};
-
-export const useArrowDownHandler = ({
-  blockIndex,
-}: UseArrowDownHandlerProps) => {
+export const useArrowDownHandler = () => {
   const doArrowDownOperation = () => {
     const blocksDiv = document.querySelector('.Blocks');
-
     if (!blocksDiv) return;
 
-    const blockToFocus =
-      blocksDiv.querySelectorAll<HTMLDivElement>('.TextBlock')[blockIndex + 2];
+    const blockElements = blocksDiv.querySelectorAll<HTMLDivElement>(
+      '.FocusableBlock span[role="textbox"]'
+    );
+    const index = Array.from(blockElements).findIndex(
+      (blockElement) => blockElement === document.activeElement
+    );
 
-    blockToFocus?.querySelector('span')?.focus();
+    const indexToFocus = index + 1;
+    const blockToFocus = blockElements[indexToFocus];
+
+    blockToFocus?.focus();
   };
 
   return doArrowDownOperation;
