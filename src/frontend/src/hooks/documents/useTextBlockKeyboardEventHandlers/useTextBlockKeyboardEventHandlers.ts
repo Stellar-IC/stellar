@@ -62,6 +62,7 @@ export const useTextBlockKeyboardEventHandlers = ({
   });
 
   const handleEnter = useEnterHandler({
+    blockExternalId,
     blockIndex,
     blockType,
     parentBlockExternalId,

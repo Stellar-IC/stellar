@@ -88,9 +88,9 @@ export const usePages = (props: {
   }, []);
 
   const createBlock = useCallback(
-    (event: BlockCreatedEvent) => {
+    (event: BlockCreatedEvent): Block | null => {
       if (!event.data.block.parent[0]) {
-        return;
+        return null;
       }
 
       const blockExternalId = stringify(event.data.block.uuid);
@@ -98,7 +98,7 @@ export const usePages = (props: {
 
       const parentBlock = get<Block>(DATA_TYPES.block, parentExternalId);
       if (!parentBlock) {
-        return;
+        return null;
       }
 
       // Add block to parent block's content
@@ -134,8 +134,7 @@ export const usePages = (props: {
         updateLocalPage(parentExternalId, parentBlock);
       }
 
-      // Create block locally
-      updateLocalBlock(blockExternalId, {
+      const newBlock = {
         id: '', // this will be set by the backend
         content: new Tree.Tree(),
         parent: parentExternalId,
@@ -145,7 +144,12 @@ export const usePages = (props: {
         },
         blockType: event.data.block.blockType,
         uuid: blockExternalId,
-      });
+      };
+
+      // Create block locally
+      updateLocalBlock(blockExternalId, newBlock);
+
+      return newBlock;
     },
     [get, sendUpdate, updateLocalBlock, updateLocalPage]
   );
@@ -194,12 +198,17 @@ export const usePages = (props: {
   );
 
   const handleBlockEvent = useCallback(
-    (blockExternalId: string, event: BlockEvent) => {
+    (blockExternalId: string, event: BlockEvent): Block | null => {
       storeEventLocal(blockExternalId, event);
 
+      let block: Block | null = null;
+
       if ('blockCreated' in event) {
-        createBlock(event.blockCreated);
-      } else if ('blockUpdated' in event) {
+        block = createBlock(event.blockCreated);
+      }
+
+      if ('blockUpdated' in event) {
+        block = get<Block>(DATA_TYPES.block, blockExternalId);
         if ('updateContent' in event.blockUpdated) {
           updateContent(event.blockUpdated.updateContent);
         } else if ('updateBlockType' in event.blockUpdated) {
@@ -211,11 +220,13 @@ export const usePages = (props: {
         }
       }
 
-      // send event to backend
-      return sendUpdate([{ transaction: [event] }]);
+      sendUpdate([{ transaction: [event] }]);
+
+      return block;
     },
     [
       createBlock,
+      get,
       sendUpdate,
       storeEventLocal,
       updateBlockType,

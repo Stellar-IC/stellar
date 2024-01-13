@@ -32,7 +32,7 @@ export function PagesContextProvider({ children }: PropsWithChildren<{}>) {
       const eventExternalId = v4();
       const parsedExternalId = parse(blockExternalId);
 
-      handleBlockEvent(blockExternalId, {
+      const block = handleBlockEvent(blockExternalId, {
         blockCreated: {
           user: identity.getPrincipal(),
           uuid: parse(eventExternalId),
@@ -46,6 +46,12 @@ export function PagesContextProvider({ children }: PropsWithChildren<{}>) {
           },
         },
       });
+
+      if (!block) {
+        throw new Error('Could not create block');
+      }
+
+      return block;
     },
     [handleBlockEvent, identity]
   );

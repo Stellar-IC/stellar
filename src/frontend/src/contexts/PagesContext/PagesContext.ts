@@ -14,7 +14,11 @@ export const PagesContext = createContext<{
   blocks: {
     updateLocal: (externalId: string, updatedData: Block) => void;
   };
-  addBlock: (pageExternalId: UUID, blockType: BlockType, index: number) => void;
+  addBlock: (
+    pageExternalId: UUID,
+    blockType: BlockType,
+    index: number
+  ) => Block;
   removeBlock: (pageExternalId: UUID, index: number) => void;
   updateBlock: (
     blockExternalId: UUID,

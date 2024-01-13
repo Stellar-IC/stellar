@@ -19,6 +19,65 @@ export const updateBlockParent = (
   onUpdateRemote(updatedBlock);
 };
 
+export const insertBlockTitleCharacters = (
+  block: Block,
+  characters: string,
+  opts: {
+    onUpdateLocal: (block: Block) => void;
+    onUpdateRemote: (block: Block, events: TreeEvent[]) => void;
+  }
+) => {
+  const { onUpdateLocal, onUpdateRemote } = opts;
+  const allEvents: TreeEvent[] = [];
+  const { title } = block.properties;
+
+  characters.split('').forEach((character, index) => {
+    Tree.insertCharacter(title, index, character, (events) => {
+      allEvents.push(...events);
+    });
+  });
+
+  const updatedBlock = {
+    ...block,
+    properties: {
+      ...block.properties,
+      title,
+    },
+  };
+  onUpdateLocal(updatedBlock);
+  onUpdateRemote(updatedBlock, allEvents);
+};
+
+export const removeBlockTitleCharacters = (
+  block: Block,
+  characterIndexes: number[],
+  opts: {
+    onUpdateLocal: (block: Block) => void;
+    onUpdateRemote: (block: Block, events: TreeEvent[]) => void;
+  }
+) => {
+  const { onUpdateLocal, onUpdateRemote } = opts;
+  const allEvents: TreeEvent[] = [];
+  const { title } = block.properties;
+  const newTitle = Tree.clone(title);
+
+  characterIndexes.forEach((characterIndex) => {
+    Tree.removeCharacter(newTitle, characterIndex, (event) => {
+      allEvents.push(event);
+    });
+  });
+
+  const updatedBlock = {
+    ...block,
+    properties: {
+      ...block.properties,
+      title: newTitle,
+    },
+  };
+  onUpdateLocal(updatedBlock);
+  onUpdateRemote(updatedBlock, allEvents);
+};
+
 export const insertBlockContent = (
   block: Block,
   data: { index: number; item: ExternalId }[],
