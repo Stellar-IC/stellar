@@ -14,6 +14,7 @@ import { INTERNET_IDENTITY_HOST } from '@/config';
 import { logout } from '@/modules/auth/commands';
 import { useAuthContext } from '@/modules/auth/contexts/AuthContext';
 import classes from './AuthButton.module.css';
+import { PrincipalBadge } from '../PrincipalBadge';
 
 export function AuthButton() {
   const { isAuthenticated, login, profile, userId } = useAuthContext();
@@ -30,7 +31,7 @@ export function AuthButton() {
     <div className={classes.section}>
       {isAuthenticated ? (
         <>
-          <Text className={classes.userId}>{userId.toString()}</Text>
+          <PrincipalBadge principal={userId} />
           <Menu width="target">
             <MenuTarget>
               <Button size="sm" variant="transparent">

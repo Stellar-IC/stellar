@@ -16,6 +16,7 @@ import { DATA_TYPES } from '@/constants';
 import { Block } from '@/types';
 import { AuthButton } from '../AuthButton/AuthButton';
 import classes from './NavbarSearch.module.css';
+import { PrincipalBadge } from '../PrincipalBadge';
 
 function PageLinksSection() {
   const { store } = useDataStoreContext();
@@ -83,11 +84,7 @@ export function NavbarSearch({
           }}
         >
           <Text size="sm">Workspace</Text>
-          {workspaceId && (
-            <Text size="xs" ta="right">
-              {workspaceId.toString()}
-            </Text>
-          )}
+          {workspaceId && <PrincipalBadge principal={workspaceId} />}
         </div>
       </div>
 
