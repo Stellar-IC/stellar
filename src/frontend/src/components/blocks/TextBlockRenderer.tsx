@@ -1,7 +1,5 @@
 import { Box, Text } from '@mantine/core';
 
-import { useTextBlockEventHandlers } from '@/hooks/documents/useTextBlockEventHandlers';
-
 import { useDataStoreContext } from '@/contexts/DataStoreContext/useDataStoreContext';
 import { Block } from '@/types';
 import { TextBlock } from './TextBlock';
@@ -28,18 +26,12 @@ export const TextBlockRenderer = ({
 
   if (!block) return <div />;
 
-  const { onCharacterInserted, onCharacterRemoved } = useTextBlockEventHandlers(
-    { blockExternalId }
-  );
-
   return (
     <Box>
       <TextBlock
         blockIndex={index}
         blockType={blockType}
         blockExternalId={blockExternalId}
-        onInsert={onCharacterInserted}
-        onRemove={onCharacterRemoved}
         parentBlockExternalId={parentExternalId}
         parentBlockIndex={parentBlockIndex}
         placeholder={placeholder}

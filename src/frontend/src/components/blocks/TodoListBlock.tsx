@@ -8,17 +8,15 @@ import { Block } from '@/types';
 import { TextBlock } from './TextBlock';
 
 interface TodoListBlockProps {
+  parentBlockIndex?: number;
   externalId: string;
   index: number;
-  onCharacterInserted: (cursorPosition: number, character: string) => void;
-  onCharacterRemoved: (cursorPosition: number) => void;
 }
 
 export const TodoListBlock = ({
   externalId,
   index,
-  onCharacterInserted,
-  onCharacterRemoved,
+  parentBlockIndex,
 }: TodoListBlockProps) => {
   const { updateBlock } = usePagesContext();
   const { get } = useDataStoreContext();
@@ -55,10 +53,9 @@ export const TodoListBlock = ({
         blockExternalId={block.uuid}
         blockIndex={index}
         parentBlockExternalId={parentExternalId}
+        parentBlockIndex={parentBlockIndex}
         value={block.properties.title}
         blockType={block.blockType}
-        onInsert={onCharacterInserted}
-        onRemove={onCharacterRemoved}
       />
     </Flex>
   );

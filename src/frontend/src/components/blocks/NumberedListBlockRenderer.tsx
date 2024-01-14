@@ -1,5 +1,3 @@
-import { useTextBlockEventHandlers } from '@/hooks/documents/useTextBlockEventHandlers';
-
 import { NumberedListBlock } from './NumberedListBlock';
 
 interface NumberedListBlockRendererProps {
@@ -12,18 +10,10 @@ export const NumberedListBlockRenderer = ({
   blockExternalId,
   index,
   numeral,
-}: NumberedListBlockRendererProps) => {
-  const { onCharacterInserted, onCharacterRemoved } = useTextBlockEventHandlers(
-    { blockExternalId }
-  );
-
-  return (
-    <NumberedListBlock
-      externalId={blockExternalId}
-      index={index}
-      numeral={numeral}
-      onCharacterInserted={onCharacterInserted}
-      onCharacterRemoved={onCharacterRemoved}
-    />
-  );
-};
+}: NumberedListBlockRendererProps) => (
+  <NumberedListBlock
+    externalId={blockExternalId}
+    index={index}
+    numeral={numeral}
+  />
+);

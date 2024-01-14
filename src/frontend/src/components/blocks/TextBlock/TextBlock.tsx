@@ -16,8 +16,6 @@ export const TextBlock = ({
   parentBlockExternalId,
   placeholder,
   value,
-  onInsert,
-  onRemove,
 }: TextBlockProps) => {
   const [initialText] = useState(Tree.toText(value));
   const [
@@ -31,7 +29,10 @@ export const TextBlock = ({
     if (!textBoxRef.current) return;
     const newText = Tree.toText(value);
     textBoxRef.current.innerText = newText;
-  }, [initialText, textBoxRef, value]);
+    if (newText.length > 0) {
+      hidePlaceholder();
+    }
+  }, [initialText, textBoxRef, value, hidePlaceholder]);
 
   const { onKeyDown, onPaste } = useTextBlockKeyboardEventHandlers({
     blockExternalId,
@@ -40,8 +41,6 @@ export const TextBlock = ({
     parentBlockExternalId,
     parentBlockIndex,
     hidePlaceholder,
-    onInsert,
-    onRemove,
     showPlaceholder,
   });
 

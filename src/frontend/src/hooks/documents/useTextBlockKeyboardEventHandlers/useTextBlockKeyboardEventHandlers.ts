@@ -10,6 +10,7 @@ import { useEnterHandler } from './useEnterHandler';
 import { useShiftTabHandler } from './useShiftTabHandler';
 import { useArrowDownHandler } from './useArrowDownHandler';
 import { useArrowUpHandler } from './useArrowUpHandler';
+import { useTextBlockEventHandlers } from '../useTextBlockEventHandlers';
 
 type UseTextBlockKeyboardEventHandlersProps = {
   blockExternalId: ExternalId;
@@ -17,8 +18,6 @@ type UseTextBlockKeyboardEventHandlersProps = {
   blockType: BlockType;
   parentBlockExternalId?: ExternalId | null;
   parentBlockIndex?: number;
-  onInsert: (cursorPosition: number, character: string) => void;
-  onRemove: (cursorPosition: number) => void;
   showPlaceholder?: () => void;
   hidePlaceholder?: () => void;
 };
@@ -29,13 +28,15 @@ export const useTextBlockKeyboardEventHandlers = ({
   blockExternalId,
   parentBlockExternalId,
   parentBlockIndex,
-  onInsert,
-  onRemove,
   showPlaceholder,
   hidePlaceholder,
 }: UseTextBlockKeyboardEventHandlersProps) => {
   const { removeBlock } = usePagesContext();
 
+  const { onCharacterInserted, onCharacterRemoved, onCharactersInserted } =
+    useTextBlockEventHandlers({
+      blockExternalId,
+    });
   const handleTab = useTabHandler({
     blockIndex,
     blockExternalId,
@@ -50,7 +51,7 @@ export const useTextBlockKeyboardEventHandlers = ({
   const handleArrowDown = useArrowDownHandler();
   const handleArrowUp = useArrowUpHandler();
   const handleBackspace = useBackspaceHandler({
-    onRemove,
+    onRemove: onCharacterRemoved,
     showPlaceholder,
   });
   const handleEnter = useEnterHandler({
@@ -73,7 +74,7 @@ export const useTextBlockKeyboardEventHandlers = ({
       hidePlaceholder();
     }
 
-    onInsert(cursorPosition, character);
+    onCharacterInserted(cursorPosition, character);
   };
 
   const onKeyDown = (e: KeyboardEvent<HTMLSpanElement>) => {
@@ -132,14 +133,32 @@ export const useTextBlockKeyboardEventHandlers = ({
 
   const onPaste = (e: React.ClipboardEvent<HTMLSpanElement>) => {
     e.preventDefault();
+
     const text = e.clipboardData.getData('text/plain');
-    let cursorPosition = window.getSelection()?.anchorOffset;
+    const cursorPosition = window.getSelection()?.anchorOffset;
+
     if (cursorPosition === undefined) {
       throw new Error('No cursor position');
     }
-    for (const character of text) {
-      onInsert(cursorPosition, character);
-      cursorPosition += 1;
+
+    // Since we're using a contenteditable span and preventing default behavior,
+    // we need to manually insert the text at the cursor position.
+    const spliced = e.currentTarget.innerText.split('');
+    spliced.splice(cursorPosition, 0, ...text.split(''));
+    e.currentTarget.innerText = spliced.join('');
+
+    // Insert the characters into the tree
+    onCharactersInserted(cursorPosition, text.split(''));
+
+    // Set the cursor position to the end of the pasted text
+    const newCursorPosition = cursorPosition + text.length;
+    const selection = window.getSelection();
+    if (selection) {
+      const range = document.createRange();
+      range.setStart(e.currentTarget.childNodes[0], newCursorPosition);
+      range.collapse(true);
+      selection.removeAllRanges();
+      selection.addRange(range);
     }
   };
 

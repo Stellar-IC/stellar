@@ -16,8 +16,6 @@ export type NumberedListBlockInnerProps = {
   parentBlockIndex?: number;
   placeholder?: string;
   value: Tree.Tree;
-  onInsert: (cursorPosition: number, character: string) => void;
-  onRemove: (cursorPosition: number) => void;
 };
 
 const NumberedListBlockInner = ({
@@ -28,8 +26,6 @@ const NumberedListBlockInner = ({
   parentBlockExternalId,
   placeholder,
   value,
-  onInsert,
-  onRemove,
 }: NumberedListBlockInnerProps) => {
   const [initialText] = useState(Tree.toText(value));
   const [
@@ -48,8 +44,6 @@ const NumberedListBlockInner = ({
     blockExternalId,
     blockIndex,
     blockType,
-    onInsert,
-    onRemove,
     parentBlockExternalId,
     parentBlockIndex,
     showPlaceholder,
@@ -92,8 +86,6 @@ const NumberedListBlockInner = ({
 interface NumberedListBlockProps {
   externalId: string;
   index: number;
-  onCharacterInserted: (cursorPosition: number, character: string) => void;
-  onCharacterRemoved: (cursorPosition: number) => void;
   numeral: number;
 }
 
@@ -101,8 +93,6 @@ export const NumberedListBlock = ({
   externalId,
   index,
   numeral,
-  onCharacterInserted,
-  onCharacterRemoved,
 }: NumberedListBlockProps) => {
   const { get } = useDataStoreContext();
   const block = get<Block>('block', externalId);
@@ -123,8 +113,6 @@ export const NumberedListBlock = ({
         parentBlockExternalId={parentExternalId}
         value={block.properties.title}
         blockType={block.blockType}
-        onInsert={onCharacterInserted}
-        onRemove={onCharacterRemoved}
       />
     </Flex>
   );

@@ -1,26 +1,19 @@
-import { useTextBlockEventHandlers } from '@/hooks/documents/useTextBlockEventHandlers';
-
 import { TodoListBlock } from './TodoListBlock';
 
 interface TodoListBlockRendererProps {
   blockExternalId: string;
   index: number;
+  parentBlockIndex?: number;
 }
 
 export const TodoListBlockRenderer = ({
   blockExternalId,
   index,
-}: TodoListBlockRendererProps) => {
-  const { onCharacterInserted, onCharacterRemoved } = useTextBlockEventHandlers(
-    { blockExternalId }
-  );
-
-  return (
-    <TodoListBlock
-      externalId={blockExternalId}
-      index={index}
-      onCharacterInserted={onCharacterInserted}
-      onCharacterRemoved={onCharacterRemoved}
-    />
-  );
-};
+  parentBlockIndex,
+}: TodoListBlockRendererProps) => (
+  <TodoListBlock
+    parentBlockIndex={parentBlockIndex}
+    externalId={blockExternalId}
+    index={index}
+  />
+);

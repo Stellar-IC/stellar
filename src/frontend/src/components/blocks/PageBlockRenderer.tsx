@@ -1,7 +1,5 @@
 import { Box, Text } from '@mantine/core';
 
-import { useTextBlockEventHandlers } from '@/hooks/documents/useTextBlockEventHandlers';
-
 import { useDataStoreContext } from '@/contexts/DataStoreContext/useDataStoreContext';
 import { Block } from '@/types';
 import { Link } from 'react-router-dom';
@@ -28,10 +26,6 @@ export const PageBlockRenderer = ({
 
   if (!block) return <div />;
 
-  const { onCharacterInserted, onCharacterRemoved } = useTextBlockEventHandlers(
-    { blockExternalId }
-  );
-
   return (
     <Box>
       <Link to={`/pages/${block.uuid}`}>
@@ -39,8 +33,6 @@ export const PageBlockRenderer = ({
           blockIndex={index}
           blockType={blockType}
           blockExternalId={blockExternalId}
-          onInsert={onCharacterInserted}
-          onRemove={onCharacterRemoved}
           parentBlockExternalId={parentExternalId}
           parentBlockIndex={parentBlockIndex}
           placeholder={placeholder}

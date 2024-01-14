@@ -10,7 +10,6 @@ import { Tree } from '@stellar-ic/lseq-ts';
 import cx from 'clsx';
 import { useCallback, useEffect } from 'react';
 
-import { useTextBlockEventHandlers } from '@/hooks/documents/useTextBlockEventHandlers';
 import { Page } from '@/types';
 
 import { useReorderHandler } from '@/hooks/documents/useReorderHandler';
@@ -31,9 +30,6 @@ type OnDragEndProps = {
 };
 
 export const Blocks = ({ page }: { page: Page }) => {
-  const { onCharacterInserted, onCharacterRemoved } = useTextBlockEventHandlers(
-    { blockExternalId: page.uuid }
-  );
   const handleReorder = useReorderHandler({
     parentBlockExternalId: page.uuid,
   });
@@ -99,8 +95,6 @@ export const Blocks = ({ page }: { page: Page }) => {
           blockExternalId={page.uuid}
           blockIndex={0}
           blockType={{ heading1: null }}
-          onInsert={onCharacterInserted}
-          onRemove={onCharacterRemoved}
           placeholder="Untitled"
           value={page.properties.title}
         />

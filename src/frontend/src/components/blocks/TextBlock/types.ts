@@ -26,6 +26,4 @@ export type TextBlockProps = {
   parentBlockIndex?: number;
   placeholder?: string;
   value: Tree.Tree;
-  onInsert: (cursorPosition: number, character: string) => void;
-  onRemove: (cursorPosition: number) => void;
 };

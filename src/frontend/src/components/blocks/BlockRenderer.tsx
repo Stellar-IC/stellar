@@ -143,7 +143,13 @@ const BlockRendererInner = ({
   }
 
   if ('todoList' in block.blockType) {
-    return <TodoListBlockRenderer blockExternalId={block.uuid} index={index} />;
+    return (
+      <TodoListBlockRenderer
+        blockExternalId={block.uuid}
+        index={index}
+        parentBlockIndex={parentBlockIndex}
+      />
+    );
   }
 
   if ('numberedList' in block.blockType) {

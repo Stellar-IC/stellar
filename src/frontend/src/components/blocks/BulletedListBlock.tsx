@@ -8,15 +8,11 @@ import { TextBlock } from './TextBlock';
 interface BulletedListBlockProps {
   externalId: string;
   index: number;
-  onCharacterInserted: (cursorPosition: number, character: string) => void;
-  onCharacterRemoved: (cursorPosition: number) => void;
 }
 
 export const BulletedListBlock = ({
   externalId,
   index,
-  onCharacterInserted,
-  onCharacterRemoved,
 }: BulletedListBlockProps) => {
   const { get } = useDataStoreContext();
   const block = get<Block>('block', externalId);
@@ -45,8 +41,6 @@ export const BulletedListBlock = ({
         parentBlockExternalId={block.parent}
         value={block.properties.title}
         blockType={block.blockType}
-        onInsert={onCharacterInserted}
-        onRemove={onCharacterRemoved}
       />
     </Flex>
   );
