@@ -2,7 +2,7 @@ import { Identity } from '@dfinity/agent';
 import { Principal } from '@dfinity/principal';
 import { createContext, PropsWithChildren, useContext } from 'react';
 import { UserProfile } from '../../../../../declarations/user/user.did';
-import { useAuthState } from '../hooks/auth';
+import { useAuthState } from '../hooks/useAuthState';
 
 type SerializedUserProfile = Omit<UserProfile, 'username'> & {
   username: string;

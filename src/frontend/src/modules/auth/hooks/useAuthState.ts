@@ -9,7 +9,7 @@ import { useHydrate } from './useHydrate';
 import { getUserProfile, registerUser } from './utils';
 import { UserProfile } from '../../../../../declarations/user/user.did';
 
-class AnonymousUserProfile implements UserProfile {
+export class AnonymousUserProfile implements UserProfile {
   username = 'Anonymous';
   created_at = 1000000000000000000n;
   updatedAt = 1000000000000000000n;
@@ -77,8 +77,12 @@ export const useAuthState = () => {
 
   return {
     identity,
-    isAuthenticated:
-      identity instanceof DelegationIdentity && !userId.isAnonymous(),
+    // If identity is a DelegationIdentity and user is not anonymous,
+    // then the user is authenticated.
+    // Ideally we would check if the user is authenticated by checking
+    // if the identity is a DelegationIdentity but it would be difficult
+    // to test because we would need to mock the DelegationIdentity class.
+    isAuthenticated: 'getDelegation' in identity && !userId.isAnonymous(),
     isLoading: isLoading || isHydrating,
     profile,
     userId,
