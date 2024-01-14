@@ -1,20 +1,5 @@
-export const useArrowUpHandler = () => {
-  const doArrowUpOperation = () => {
-    const blocksDiv = document.querySelector('.Blocks');
-    if (!blocksDiv) return;
+import { focusNextBlock } from '@/modules/editor/utils';
 
-    const blockElements = blocksDiv.querySelectorAll<HTMLDivElement>(
-      '.FocusableBlock span[role="textbox"]'
-    );
-    const index = Array.from(blockElements).findIndex(
-      (blockElement) => blockElement === document.activeElement
-    );
-
-    const indexToFocus = index - 1;
-    const blockToFocus = blockElements[indexToFocus];
-
-    blockToFocus?.focus();
-  };
-
-  return doArrowUpOperation;
-};
+export function useArrowUpHandler() {
+  return focusNextBlock;
+}

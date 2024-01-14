@@ -3,13 +3,13 @@ import { parse } from 'uuid';
 
 import { usePagesContext } from '@/contexts/PagesContext/usePagesContext';
 import { ExternalId } from '@/types';
+import { BlockType } from '../../../../../declarations/workspace/workspace.did';
 import { useTabHandler } from './useTabHandler';
 import { useBackspaceHandler } from './useBackspaceHandler';
+import { useEnterHandler } from './useEnterHandler';
+import { useShiftTabHandler } from './useShiftTabHandler';
 import { useArrowDownHandler } from './useArrowDownHandler';
 import { useArrowUpHandler } from './useArrowUpHandler';
-import { useEnterHandler } from './useEnterHandler';
-import { BlockType } from '../../../../../declarations/workspace/workspace.did';
-import { useShiftTabHandler } from './useShiftTabHandler';
 
 type UseTextBlockKeyboardEventHandlersProps = {
   blockExternalId: ExternalId;
@@ -47,23 +47,18 @@ export const useTextBlockKeyboardEventHandlers = ({
     parentBlockExternalId,
     parentBlockIndex,
   });
-
   const handleArrowDown = useArrowDownHandler();
-
   const handleArrowUp = useArrowUpHandler();
-
   const handleBackspace = useBackspaceHandler({
     onRemove,
     showPlaceholder,
   });
-
   const handleEnter = useEnterHandler({
     blockExternalId,
     blockIndex,
     blockType,
     parentBlockExternalId,
   });
-
   const handleWordCharacter = (
     character: string,
     { shouldHidePlaceholder }: { shouldHidePlaceholder?: boolean } = {}

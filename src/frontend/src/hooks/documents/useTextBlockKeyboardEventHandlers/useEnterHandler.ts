@@ -1,6 +1,7 @@
 import { DATA_TYPES } from '@/constants';
 import { useDataStoreContext } from '@/contexts/DataStoreContext/useDataStoreContext';
 import { usePagesContext } from '@/contexts/PagesContext/usePagesContext';
+import { focusNextBlock as _focusNextBlock } from '@/modules/editor/utils';
 import { Block, ExternalId } from '@/types';
 import { Tree } from '@stellar-ic/lseq-ts';
 import { parse } from 'uuid';
@@ -17,6 +18,12 @@ type UseEnterHandlerProps = {
   parentBlockExternalId?: ExternalId | null;
 };
 
+function focusNextBlock() {
+  setTimeout(() => {
+    _focusNextBlock();
+  }, 100);
+}
+
 export function useEnterHandler({
   blockIndex,
   blockType,
@@ -30,15 +37,6 @@ export function useEnterHandler({
     pages: { updateLocal: updateLocalPage },
   } = usePagesContext();
   const { get } = useDataStoreContext();
-
-  const focusOnBlock = () => {
-    const blocksDiv = document.querySelector('.Blocks');
-    if (!blocksDiv) return;
-
-    const blockToFocus =
-      blocksDiv.querySelectorAll<HTMLDivElement>('.TextBlock')[blockIndex + 1];
-    blockToFocus.querySelector('span')?.focus();
-  };
 
   const onEnterPressed = () => {
     if (!blockExternalId) return;
@@ -57,7 +55,7 @@ export function useEnterHandler({
     if (blockTitleLength === 0) {
       // Create a new block
       addBlock(parse(parentBlockExternalId), blockType, blockIndex + 1);
-      focusOnBlock();
+      focusNextBlock();
       return;
     }
 
@@ -67,6 +65,9 @@ export function useEnterHandler({
       blockType,
       blockIndex + 1
     );
+
+    // Focus on the new block
+    focusNextBlock();
 
     insertBlockTitleCharacters(newBlock, blockTitleAfterCursor, {
       onUpdateLocal: (updatedBlock) => {
@@ -117,11 +118,6 @@ export function useEnterHandler({
         });
       },
     });
-
-    // Focus on the new block
-    setTimeout(() => {
-      focusOnBlock();
-    }, 100);
   };
 
   return onEnterPressed;
