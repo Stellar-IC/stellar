@@ -49,7 +49,7 @@ module {
 
             switch insert_result {
                 case (#ok(pk, block)) {
-                    _addBlockToBlocksByParentIdIndex(block);
+                    addBlockToBlocksByParentIdIndex(block);
                 };
                 case (#err(#keyAlreadyExists)) {
                     return #err(#keyAlreadyExists);
@@ -64,7 +64,7 @@ module {
 
             switch update_result {
                 case (#ok(pk, block)) {
-                    _addBlockToBlocksByParentIdIndex(block);
+                    addBlockToBlocksByParentIdIndex(block);
                 };
                 case (#err(#primaryKeyAttrNotFound)) {
                     return #err(#primaryKeyAttrNotFound);
@@ -259,7 +259,7 @@ module {
             return pages.value();
         };
 
-        private func _addBlockToBlocksByParentIdIndex(block : Block) {
+        public func addBlockToBlocksByParentIdIndex(block : Block) {
             let block_parent = switch (block.parent) {
                 case (null) {
                     return;

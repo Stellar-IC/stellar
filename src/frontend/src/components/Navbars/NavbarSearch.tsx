@@ -7,13 +7,20 @@ import {
   Tooltip,
   rem,
   useMantineTheme,
+  Button,
+  Flex,
 } from '@mantine/core';
-import { IconPlus } from '@tabler/icons-react';
+import { IconPlus, IconTrash } from '@tabler/icons-react';
 import { useCreatePageWithRedirect } from '@/hooks/documents/updates/useCreatePageWithRedirect';
 import { Link } from 'react-router-dom';
 import { useDataStoreContext } from '@/contexts/DataStoreContext/useDataStoreContext';
 import { DATA_TYPES } from '@/constants';
 import { Block } from '@/types';
+import { useDeletePage } from '@/hooks/ic/workspace/updates/useDeletePage';
+import { useWorkspaceContext } from '@/contexts/WorkspaceContext/useWorkspaceContext';
+import { useAuthContext } from '@/modules/auth/contexts/AuthContext';
+import { parse } from 'uuid';
+import { notifications } from '@mantine/notifications';
 import { AuthButton } from '../AuthButton/AuthButton';
 import classes from './NavbarSearch.module.css';
 import { PrincipalBadge } from '../PrincipalBadge';
@@ -24,17 +31,50 @@ function PageLinksSection() {
     .filter((key) => key.startsWith(DATA_TYPES.page))
     .map((key) => store[key]) as Block[];
   const createPageAndRedirect = useCreatePageWithRedirect();
+  const { workspaceId } = useWorkspaceContext();
+  const { identity } = useAuthContext();
+  const [deletePage] = useDeletePage({
+    identity,
+    workspaceId,
+  });
+
   const pageLinks = Object.values(pages).map((page) => (
-    <Link
-      to={`/pages/${page.uuid}`}
-      key={page.uuid}
-      className={classes.pageLink}
-    >
-      {/* <span style={{ marginRight: rem(9), fontSize: rem(16) }}>
+    <Flex justify="space-between" key={page.uuid}>
+      <Link
+        to={`/pages/${page.uuid}`}
+        key={page.uuid}
+        className={classes.pageLink}
+        style={{
+          flexGrow: 1,
+          alignSelf: 'center',
+        }}
+      >
+        {/* <span style={{ marginRight: rem(9), fontSize: rem(16) }}>
         {page.emoji}
       </span>{' '} */}
-      {Tree.toText(page.properties.title) || 'Untitled'}
-    </Link>
+        {Tree.toText(page.properties.title) || 'Untitled'}
+      </Link>
+      <Button
+        leftSection={<IconTrash color="gray" size="1.25rem" />}
+        onClick={() => {
+          deletePage([{ uuid: parse(page.uuid) }])
+            .then(() => {
+              notifications.show({
+                title: 'Success',
+                message: `Deleted page '${page.uuid} '`,
+              });
+            })
+            .catch((e) => {
+              notifications.show({
+                title: 'Error',
+                message: e.message,
+                color: 'red',
+              });
+            });
+        }}
+        variant="transparent"
+      />
+    </Flex>
   ));
 
   return (

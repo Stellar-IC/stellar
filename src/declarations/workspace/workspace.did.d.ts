@@ -31,8 +31,7 @@ export interface BlockCreatedEvent {
   'user' : Principal,
   'uuid' : UUID,
 }
-export type BlockEvent = { 'blockRemoved' : BlockRemovedEvent } |
-  { 'blockCreated' : BlockCreatedEvent } |
+export type BlockEvent = { 'blockCreated' : BlockCreatedEvent } |
   { 'empty' : null } |
   { 'blockUpdated' : BlockUpdatedEvent };
 export type BlockEventTransaction = Array<BlockEvent>;
@@ -48,11 +47,6 @@ export interface BlockProperyCheckedUpdatedEvent {
 }
 export interface BlockProperyTitleUpdatedEvent {
   'data' : { 'transaction' : Array<TreeEvent>, 'blockExternalId' : UUID },
-  'user' : Principal,
-  'uuid' : UUID,
-}
-export interface BlockRemovedEvent {
-  'data' : { 'block' : { 'uuid' : UUID, 'parent' : UUID }, 'index' : bigint },
   'user' : Principal,
   'uuid' : UUID,
 }
@@ -104,6 +98,11 @@ export interface CreatePageUpdateOutputResult {
   'properties' : ShareableBlockProperties,
   'parent' : [] | [UUID],
 }
+export interface DeletePageUpdateInput { 'uuid' : UUID }
+export type DeletePageUpdateOutput = { 'ok' : DeletePageUpdateOutputResult } |
+  { 'err' : DeletePageUpdateOutputError };
+export type DeletePageUpdateOutputError = null;
+export type DeletePageUpdateOutputResult = null;
 export interface Edge { 'node' : ShareableBlock }
 export type List = [] | [[ShareableBlock, List]];
 export type NodeBase = number;
@@ -116,11 +115,6 @@ export interface PaginatedResults { 'edges' : Array<Edge> }
 export type PrimaryKey = bigint;
 export type PrimaryKey__1 = bigint;
 export type PrimaryKey__2 = bigint;
-export interface RemoveBlockUpdateInput { 'uuid' : UUID }
-export type RemoveBlockUpdateOutput = { 'ok' : RemoveBlockUpdateOutputResult } |
-  { 'err' : RemoveBlockUpdateOutputError };
-export type RemoveBlockUpdateOutputError = null;
-export type RemoveBlockUpdateOutputResult = null;
 export type Result = { 'ok' : ShareableBlock } |
   { 'err' : { 'pageNotFound' : null } };
 export type Result_1 = { 'ok' : ShareableBlock } |
@@ -214,6 +208,7 @@ export interface Workspace {
     [],
     { 'balance' : bigint, 'capacity' : bigint }
   >,
+  'deletePage' : ActorMethod<[DeletePageUpdateInput], DeletePageUpdateOutput>,
   'getInitArgs' : ActorMethod<[], { 'owner' : Principal, 'capacity' : bigint }>,
   'getInitData' : ActorMethod<
     [],
@@ -235,10 +230,6 @@ export interface Workspace {
       },
     ],
     PaginatedResults
-  >,
-  'removeBlock' : ActorMethod<
-    [RemoveBlockUpdateInput],
-    RemoveBlockUpdateOutput
   >,
   'saveEvents' : ActorMethod<
     [SaveEventTransactionUpdateInput],

@@ -33,6 +33,7 @@ type Workspace =
                                balance: nat;
                                capacity: nat;
                              });
+   deletePage: (DeletePageUpdateInput) -> (DeletePageUpdateOutput);
    getInitArgs: () -> (record {
                          capacity: nat;
                          owner: principal;
@@ -52,7 +53,6 @@ type Workspace =
        limit: opt nat;
        order: opt SortOrder;
      }) -> (PaginatedResults) query;
-   removeBlock: (RemoveBlockUpdateInput) -> (RemoveBlockUpdateOutput);
    saveEvents: (SaveEventTransactionUpdateInput) ->
     (SaveEventTransactionUpdateOutput);
    toObject: () -> (Workspace__1) query;
@@ -180,14 +180,6 @@ type Result =
    err: variant {pageNotFound;};
    ok: ShareableBlock;
  };
-type RemoveBlockUpdateOutputResult = null;
-type RemoveBlockUpdateOutputError = null;
-type RemoveBlockUpdateOutput = 
- variant {
-   err: RemoveBlockUpdateOutputError;
-   ok: RemoveBlockUpdateOutputResult;
- };
-type RemoveBlockUpdateInput = record {uuid: UUID;};
 type PrimaryKey__2 = nat;
 type PrimaryKey__1 = nat;
 type PrimaryKey = nat;
@@ -204,6 +196,14 @@ type List =
        List;
      };
 type Edge = record {node: ShareableBlock;};
+type DeletePageUpdateOutputResult = null;
+type DeletePageUpdateOutputError = null;
+type DeletePageUpdateOutput = 
+ variant {
+   err: DeletePageUpdateOutputError;
+   ok: DeletePageUpdateOutputResult;
+ };
+type DeletePageUpdateInput = record {uuid: UUID;};
 type CreatePageUpdateOutputResult = 
  record {
    blockType: BlockType;
@@ -268,18 +268,6 @@ type BlockType =
    toggleHeading3;
    toggleList;
  };
-type BlockRemovedEvent = 
- record {
-   data: record {
-           block: record {
-                    parent: UUID;
-                    uuid: UUID;
-                  };
-           index: nat;
-         };
-   user: principal;
-   uuid: UUID;
- };
 type BlockProperyTitleUpdatedEvent = 
  record {
    data: record {
@@ -311,7 +299,6 @@ type BlockEventTransaction = vec BlockEvent;
 type BlockEvent = 
  variant {
    blockCreated: BlockCreatedEvent;
-   blockRemoved: BlockRemovedEvent;
    blockUpdated: BlockUpdatedEvent;
    "empty";
  };

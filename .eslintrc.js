@@ -6,6 +6,7 @@ module.exports = {
   plugins: ['react', 'react-hooks'],
   rules: {
     'consistent-return': 'off',
+    'no-commented-out-code': 'off',
     'no-continue': 'off',
     'no-restricted-syntax': [
       'error',

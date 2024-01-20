@@ -216,7 +216,7 @@ shared ({ caller = initializer }) actor class Workspace(
         };
     };
 
-    public shared ({ caller }) func removeBlock(input : Types.Updates.RemoveBlockUpdate.RemoveBlockUpdateInput) : async Types.Updates.RemoveBlockUpdate.RemoveBlockUpdateOutput {
+    public shared ({ caller }) func deletePage(input : Types.Updates.DeletePageUpdate.DeletePageUpdateInput) : async Types.Updates.DeletePageUpdate.DeletePageUpdateOutput {
         return #ok(state.data.deleteBlockByUuid(input.uuid));
     };
 
@@ -350,65 +350,33 @@ shared ({ caller = initializer }) actor class Workspace(
         );
     };
 
-    // Start timers on install
-    startTimers();
-
     /*************************************************************************
      * System Functions
      *************************************************************************/
 
     system func preupgrade() {
-
-        let transformedData = RBTree.RBTree<Nat, BlocksTypes.ShareableBlock_v2>(Nat.compare);
+        let shareableBlocks = RBTree.RBTree<Nat, BlocksTypes.ShareableBlock_v2>(Nat.compare);
 
         for (block in state.data.Block_v2.objects.data.entries()) {
             let blockId = block.0;
             let blockData = block.1;
-            transformedData.put(blockId, BlocksModels.Block_v2.toShareable(blockData));
+            shareableBlocks.put(blockId, BlocksModels.Block_v2.toShareable(blockData));
         };
 
-        blocks_v2 := transformedData.share();
+        blocks_v2 := shareableBlocks.share();
         blocksIdCounter := state.data.Block_v2.id_manager.current();
     };
 
     system func postupgrade() {
-        // func backfill_blocks_by_parent_uuid() {
-        //     var blocks_by_parent_uuid = RBTree.RBTree<Text, List.List<PrimaryKey>>(Text.compare);
-
-        //     label doLoop for (block in state.data.Block_v2.objects.data.entries()) {
-        //         let blockId = block.0;
-        //         let blockData = block.1;
-        //         switch (blockData.parent) {
-        //             case (null) { continue doLoop };
-        //             case (?parent) {
-        //                 let parentUuid = UUID.toText(parent);
-        //                 let blocksList = switch (blocks_by_parent_uuid.get(parentUuid)) {
-        //                     case (null) {
-        //                         List.fromArray<PrimaryKey>([blockId]);
-        //                     };
-        //                     case (?blocksList) {
-        //                         List.push<PrimaryKey>(blockId, blocksList);
-        //                     };
-        //                 };
-        //                 blocks_by_parent_uuid.put(parentUuid, blocksList);
-        //             };
-        //         };
-        //     };
-
-        //     state.data.blocks_by_parent_uuid := blocks_by_parent_uuid;
-        // };
-
         let refreshData = RBTree.RBTree<Nat, BlocksTypes.ShareableBlock_v2>(Nat.compare);
         refreshData.unshare(blocks_v2);
 
         for (entry in refreshData.entries()) {
             let blockId = entry.0;
             let block = entry.1;
-
             state.data.Block_v2.objects.data.put(blockId, BlocksModels.Block_v2.fromShareable(block));
+            state.data.addBlockToBlocksByParentIdIndex(BlocksModels.Block_v2.fromShareable(block));
         };
-
-        // backfill_blocks_by_parent_uuid();
 
         // Restart timers
         startTimers();

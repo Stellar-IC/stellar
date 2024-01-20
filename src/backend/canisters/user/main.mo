@@ -114,7 +114,9 @@ shared ({ caller = initializer }) actor class User(
         let IC0 : CoreTypes.Management = actor "aaaaa-aa";
 
         let workspaceId = switch (stable_personalWorkspaceId) {
-            case (null) { Debug.trap("Personal workspace not initialized") };
+            case (null) {
+                Debug.trap("Personal workspace not initialized for user: " # debug_show (Principal.fromActor(self)));
+            };
             case (?workspaceId) { workspaceId };
         };
         let canister_status = await IC0.canister_status({
@@ -159,11 +161,15 @@ shared ({ caller = initializer }) actor class User(
         let sender_canister_version : ?Nat64 = null;
 
         let workspaceId = switch (stable_personalWorkspaceId) {
-            case (null) { Debug.trap("Personal workspace not initialized") };
+            case (null) {
+                Debug.trap("Personal workspace not initialized for user: " # debug_show (Principal.fromActor(self)));
+            };
             case (?workspaceId) { workspaceId };
         };
         let workspaceActor = switch (stable_personalWorkspace) {
-            case (null) { Debug.trap("Personal workspace not initialized") };
+            case (null) {
+                Debug.trap("Personal workspace not initialized for user: " # debug_show (Principal.fromActor(self)));
+            };
             case (?workspace) { workspace };
         };
 
@@ -237,17 +243,15 @@ shared ({ caller = initializer }) actor class User(
             return;
         };
         ignore Timer.recurringTimer(
-            #seconds(60 * 5),
+            #seconds(60),
             checkCyclesBalance,
         );
         ignore Timer.recurringTimer(
-            #seconds(60 * 5),
+            #seconds(60),
             topUpKnownCanisters,
         );
+        timersHaveBeenStarted := true;
     };
-
-    // Start timers on install
-    startRecurringTimers();
 
     /*************************************************************************
      * System Functions
@@ -256,6 +260,7 @@ shared ({ caller = initializer }) actor class User(
     system func preupgrade() {};
 
     system func postupgrade() {
+        timersHaveBeenStarted := false;
         // Restart timers
         startRecurringTimers();
     };

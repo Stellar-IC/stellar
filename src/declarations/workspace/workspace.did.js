@@ -123,6 +123,13 @@ export const idlFactory = ({ IDL }) => {
     'ok' : CreatePageUpdateOutputResult,
     'err' : CreatePageUpdateOutputError,
   });
+  const DeletePageUpdateInput = IDL.Record({ 'uuid' : UUID });
+  const DeletePageUpdateOutputResult = IDL.Null;
+  const DeletePageUpdateOutputError = IDL.Null;
+  const DeletePageUpdateOutput = IDL.Variant({
+    'ok' : DeletePageUpdateOutputResult,
+    'err' : DeletePageUpdateOutputError,
+  });
   const Result = IDL.Variant({
     'ok' : ShareableBlock,
     'err' : IDL.Variant({ 'pageNotFound' : IDL.Null }),
@@ -135,21 +142,6 @@ export const idlFactory = ({ IDL }) => {
   const PrimaryKey__1 = IDL.Nat;
   const Edge = IDL.Record({ 'node' : ShareableBlock });
   const PaginatedResults = IDL.Record({ 'edges' : IDL.Vec(Edge) });
-  const RemoveBlockUpdateInput = IDL.Record({ 'uuid' : UUID });
-  const RemoveBlockUpdateOutputResult = IDL.Null;
-  const RemoveBlockUpdateOutputError = IDL.Null;
-  const RemoveBlockUpdateOutput = IDL.Variant({
-    'ok' : RemoveBlockUpdateOutputResult,
-    'err' : RemoveBlockUpdateOutputError,
-  });
-  const BlockRemovedEvent = IDL.Record({
-    'data' : IDL.Record({
-      'block' : IDL.Record({ 'uuid' : UUID, 'parent' : UUID }),
-      'index' : IDL.Nat,
-    }),
-    'user' : IDL.Principal,
-    'uuid' : UUID,
-  });
   const BlockCreatedEvent = IDL.Record({
     'data' : IDL.Record({
       'block' : IDL.Record({
@@ -215,7 +207,6 @@ export const idlFactory = ({ IDL }) => {
     'updatePropertyTitle' : BlockProperyTitleUpdatedEvent,
   });
   const BlockEvent = IDL.Variant({
-    'blockRemoved' : BlockRemovedEvent,
     'blockCreated' : BlockCreatedEvent,
     'empty' : IDL.Null,
     'blockUpdated' : BlockUpdatedEvent,
@@ -279,6 +270,11 @@ export const idlFactory = ({ IDL }) => {
         [IDL.Record({ 'balance' : IDL.Nat, 'capacity' : IDL.Nat })],
         [],
       ),
+    'deletePage' : IDL.Func(
+        [DeletePageUpdateInput],
+        [DeletePageUpdateOutput],
+        [],
+      ),
     'getInitArgs' : IDL.Func(
         [],
         [IDL.Record({ 'owner' : IDL.Principal, 'capacity' : IDL.Nat })],
@@ -308,11 +304,6 @@ export const idlFactory = ({ IDL }) => {
         ],
         [PaginatedResults],
         ['query'],
-      ),
-    'removeBlock' : IDL.Func(
-        [RemoveBlockUpdateInput],
-        [RemoveBlockUpdateOutput],
-        [],
       ),
     'saveEvents' : IDL.Func(
         [SaveEventTransactionUpdateInput],

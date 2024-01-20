@@ -118,13 +118,13 @@ module {
             public type UpdateBlockUpdateOutput = Result.Result<UpdateBlockUpdateOutputResult, UpdateBlockUpdateOutputError>;
         };
 
-        public module RemoveBlockUpdate {
-            public type RemoveBlockUpdateInput = {
+        public module DeletePageUpdate {
+            public type DeletePageUpdateInput = {
                 uuid : UUID.UUID;
             };
-            public type RemoveBlockUpdateOutputError = ();
-            public type RemoveBlockUpdateOutputResult = ();
-            public type RemoveBlockUpdateOutput = Result.Result<RemoveBlockUpdateOutputResult, RemoveBlockUpdateOutputError>;
+            public type DeletePageUpdateOutputError = ();
+            public type DeletePageUpdateOutputResult = ();
+            public type DeletePageUpdateOutput = Result.Result<DeletePageUpdateOutputResult, DeletePageUpdateOutputError>;
         };
 
         public module SaveEventTransactionUpdate {
