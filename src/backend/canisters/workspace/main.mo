@@ -13,6 +13,7 @@ import Error "mo:base/Error";
 import Text "mo:base/Text";
 import UUID "mo:uuid/UUID";
 import Source "mo:uuid/async/SourceV4";
+import Canistergeek "mo:canistergeek/canistergeek";
 
 import BlocksModels "../../lib/blocks/models";
 import BlocksTypes "../../lib/blocks/types";
@@ -334,6 +335,54 @@ shared ({ caller = initializer }) actor class Workspace(
     };
 
     /*************************************************************************
+     * Canister Monitoring
+     *************************************************************************/
+
+    // CanisterGeek
+    private let canistergeekMonitor = Canistergeek.Monitor();
+    private let canistergeekLogger = Canistergeek.Logger();
+    stable var _canistergeekMonitorUD : ?Canistergeek.UpgradeData = null;
+    stable var _canistergeekLoggerUD : ?Canistergeek.LoggerUpgradeData = null;
+
+    /**
+    * Returns canister information based on passed parameters.
+    * Called from browser.
+    */
+    public query ({ caller }) func getCanistergeekInformation(request : Canistergeek.GetInformationRequest) : async Canistergeek.GetInformationResponse {
+        validateCaller(caller);
+        Canistergeek.getInformation(?canistergeekMonitor, ?canistergeekLogger, request);
+    };
+
+    /**
+    * Updates canister information based on passed parameters at current time.
+    * Called from browser or any canister "update" method.
+    */
+    public shared ({ caller }) func updateCanistergeekInformation(request : Canistergeek.UpdateInformationRequest) : async () {
+        validateCaller(caller);
+        canistergeekMonitor.updateInformation(request);
+    };
+
+    private func validateCaller(principal : Principal) : () {
+        //limit access here!
+    };
+
+    private func doCanisterGeekPreUpgrade() {
+        _canistergeekMonitorUD := ?canistergeekMonitor.preupgrade();
+        _canistergeekLoggerUD := ?canistergeekLogger.preupgrade();
+    };
+
+    private func doCanisterGeekPostUpgrade() {
+        canistergeekMonitor.postupgrade(_canistergeekMonitorUD);
+        _canistergeekMonitorUD := null;
+
+        canistergeekLogger.postupgrade(_canistergeekLoggerUD);
+        _canistergeekLoggerUD := null;
+
+        //Optional: override default number of log messages to your value
+        canistergeekLogger.setMaxMessagesCount(3000);
+    };
+
+    /*************************************************************************
      * Timers
      *************************************************************************/
     private func startTimers() {
@@ -365,6 +414,8 @@ shared ({ caller = initializer }) actor class Workspace(
 
         blocks_v2 := shareableBlocks.share();
         blocksIdCounter := state.data.Block_v2.id_manager.current();
+
+        doCanisterGeekPreUpgrade();
     };
 
     system func postupgrade() {
@@ -380,5 +431,7 @@ shared ({ caller = initializer }) actor class Workspace(
 
         // Restart timers
         startTimers();
+
+        doCanisterGeekPostUpgrade();
     };
 };

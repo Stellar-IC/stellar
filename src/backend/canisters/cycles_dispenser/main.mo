@@ -11,6 +11,7 @@ import Timer "mo:base/Timer";
 import Array "mo:base/Array";
 import Iter "mo:base/Iter";
 import Result "mo:base/Result";
+import Canistergeek "mo:canistergeek/canistergeek";
 
 import CanisterTopUp "../../lib/shared/CanisterTopUp";
 import Constants "../../constants";
@@ -164,12 +165,62 @@ actor CyclesDispenser {
     );
 
     /*************************************************************************
+     * Canister Monitoring
+     *************************************************************************/
+
+    // CanisterGeek
+    private let canistergeekMonitor = Canistergeek.Monitor();
+    private let canistergeekLogger = Canistergeek.Logger();
+    stable var _canistergeekMonitorUD : ?Canistergeek.UpgradeData = null;
+    stable var _canistergeekLoggerUD : ?Canistergeek.LoggerUpgradeData = null;
+
+    /**
+    * Returns canister information based on passed parameters.
+    * Called from browser.
+    */
+    public query ({ caller }) func getCanistergeekInformation(request : Canistergeek.GetInformationRequest) : async Canistergeek.GetInformationResponse {
+        validateCaller(caller);
+        Canistergeek.getInformation(?canistergeekMonitor, ?canistergeekLogger, request);
+    };
+
+    /**
+    * Updates canister information based on passed parameters at current time.
+    * Called from browser or any canister "update" method.
+    */
+    public shared ({ caller }) func updateCanistergeekInformation(request : Canistergeek.UpdateInformationRequest) : async () {
+        validateCaller(caller);
+        canistergeekMonitor.updateInformation(request);
+    };
+
+    private func validateCaller(principal : Principal) : () {
+        //limit access here!
+    };
+
+    private func doCanisterGeekPreUpgrade() {
+        _canistergeekMonitorUD := ?canistergeekMonitor.preupgrade();
+        _canistergeekLoggerUD := ?canistergeekLogger.preupgrade();
+    };
+
+    private func doCanisterGeekPostUpgrade() {
+        canistergeekMonitor.postupgrade(_canistergeekMonitorUD);
+        _canistergeekMonitorUD := null;
+
+        canistergeekLogger.postupgrade(_canistergeekLoggerUD);
+        _canistergeekLoggerUD := null;
+
+        //Optional: override default number of log messages to your value
+        canistergeekLogger.setMaxMessagesCount(3000);
+    };
+
+    /*************************************************************************
      * System Functions
      *************************************************************************/
 
     system func preupgrade() {
         stable_canisters := canisters.share();
         stable_topUps := topUps.share();
+
+        doCanisterGeekPreUpgrade();
     };
 
     system func postupgrade() {
@@ -178,5 +229,7 @@ actor CyclesDispenser {
 
         // Restart timers
         startRecurringTimers();
+
+        doCanisterGeekPostUpgrade();
     };
 };

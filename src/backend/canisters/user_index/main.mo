@@ -13,6 +13,7 @@ import Time "mo:base/Time";
 import Blob "mo:base/Blob";
 import Int64 "mo:base/Int64";
 import Error "mo:base/Error";
+import Canistergeek "mo:canistergeek/canistergeek";
 
 import Constants "../../constants";
 import CanisterTopUp "../../lib/shared/CanisterTopUp";
@@ -242,6 +243,54 @@ actor UserIndex {
     };
 
     /*************************************************************************
+     * Canister Monitoring
+     *************************************************************************/
+
+    // CanisterGeek
+    private let canistergeekMonitor = Canistergeek.Monitor();
+    private let canistergeekLogger = Canistergeek.Logger();
+    stable var _canistergeekMonitorUD : ?Canistergeek.UpgradeData = null;
+    stable var _canistergeekLoggerUD : ?Canistergeek.LoggerUpgradeData = null;
+
+    /**
+    * Returns canister information based on passed parameters.
+    * Called from browser.
+    */
+    public query ({ caller }) func getCanistergeekInformation(request : Canistergeek.GetInformationRequest) : async Canistergeek.GetInformationResponse {
+        validateCaller(caller);
+        Canistergeek.getInformation(?canistergeekMonitor, ?canistergeekLogger, request);
+    };
+
+    /**
+    * Updates canister information based on passed parameters at current time.
+    * Called from browser or any canister "update" method.
+    */
+    public shared ({ caller }) func updateCanistergeekInformation(request : Canistergeek.UpdateInformationRequest) : async () {
+        validateCaller(caller);
+        canistergeekMonitor.updateInformation(request);
+    };
+
+    private func validateCaller(principal : Principal) : () {
+        //limit access here!
+    };
+
+    private func doCanisterGeekPreUpgrade() {
+        _canistergeekMonitorUD := ?canistergeekMonitor.preupgrade();
+        _canistergeekLoggerUD := ?canistergeekLogger.preupgrade();
+    };
+
+    private func doCanisterGeekPostUpgrade() {
+        canistergeekMonitor.postupgrade(_canistergeekMonitorUD);
+        _canistergeekMonitorUD := null;
+
+        canistergeekLogger.postupgrade(_canistergeekLoggerUD);
+        _canistergeekLoggerUD := null;
+
+        //Optional: override default number of log messages to your value
+        canistergeekLogger.setMaxMessagesCount(3000);
+    };
+
+    /*************************************************************************
      * System Functions
      *************************************************************************/
 
@@ -251,6 +300,8 @@ actor UserIndex {
         stable_user_id_to_principal := state.data.user_id_to_principal.share();
         stable_user_id_to_user_canister := state.data.user_id_to_user_canister.share();
         stable_topUps := topUps.share();
+
+        doCanisterGeekPreUpgrade();
     };
 
     system func postupgrade() {
@@ -259,5 +310,7 @@ actor UserIndex {
         stable_user_id_to_principal := #leaf;
         stable_user_id_to_user_canister := #leaf;
         stable_topUps := #leaf;
+
+        doCanisterGeekPostUpgrade();
     };
 };

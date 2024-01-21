@@ -31,6 +31,11 @@ let
         , version = "v1.3.0"
         , repo = "https://github.com/kritzcreek/motoko-matchers"
         , dependencies = [] : List Text
+        }, 
+        { name = "canistergeek"
+        , repo = "https://github.com/usergeek/canistergeek-ic-motoko"
+        , version = "v0.0.7"
+        , dependencies = ["base"] : List Text
         }
     ] : List Package
 
