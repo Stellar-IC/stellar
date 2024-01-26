@@ -77,6 +77,31 @@ export type BlockUpdatedEvent = {
   { 'updateContent' : BlockContentUpdatedEvent } |
   { 'updateParent' : BlockParentUpdatedEvent } |
   { 'updatePropertyTitle' : BlockProperyTitleUpdatedEvent };
+export type CanisterCyclesAggregatedData = BigUint64Array | bigint[];
+export type CanisterHeapMemoryAggregatedData = BigUint64Array | bigint[];
+export type CanisterLogFeature = { 'filterMessageByContains' : null } |
+  { 'filterMessageByRegex' : null };
+export interface CanisterLogMessages {
+  'data' : Array<LogMessagesData>,
+  'lastAnalyzedMessageTimeNanos' : [] | [Nanos],
+}
+export interface CanisterLogMessagesInfo {
+  'features' : Array<[] | [CanisterLogFeature]>,
+  'lastTimeNanos' : [] | [Nanos],
+  'count' : number,
+  'firstTimeNanos' : [] | [Nanos],
+}
+export type CanisterLogRequest = { 'getMessagesInfo' : null } |
+  { 'getMessages' : GetLogMessagesParameters } |
+  { 'getLatestMessages' : GetLatestLogMessagesParameters };
+export type CanisterLogResponse = { 'messagesInfo' : CanisterLogMessagesInfo } |
+  { 'messages' : CanisterLogMessages };
+export type CanisterMemoryAggregatedData = BigUint64Array | bigint[];
+export interface CanisterMetrics { 'data' : CanisterMetricsData }
+export type CanisterMetricsData = { 'hourly' : Array<HourlyMetricsData> } |
+  { 'daily' : Array<DailyMetricsData> };
+export type CollectMetricsRequestType = { 'force' : null } |
+  { 'normal' : null };
 export interface CreatePageUpdateInput {
   'content' : ShareableBlockContent,
   'uuid' : UUID,
@@ -98,19 +123,78 @@ export interface CreatePageUpdateOutputResult {
   'properties' : ShareableBlockProperties,
   'parent' : [] | [UUID],
 }
+export interface DailyMetricsData {
+  'updateCalls' : bigint,
+  'canisterHeapMemorySize' : NumericEntity,
+  'canisterCycles' : NumericEntity,
+  'canisterMemorySize' : NumericEntity,
+  'timeMillis' : bigint,
+}
 export interface DeletePageUpdateInput { 'uuid' : UUID }
 export type DeletePageUpdateOutput = { 'ok' : DeletePageUpdateOutputResult } |
   { 'err' : DeletePageUpdateOutputError };
 export type DeletePageUpdateOutputError = null;
 export type DeletePageUpdateOutputResult = null;
 export interface Edge { 'node' : ShareableBlock }
+export interface GetInformationRequest {
+  'status' : [] | [StatusRequest],
+  'metrics' : [] | [MetricsRequest],
+  'logs' : [] | [CanisterLogRequest],
+  'version' : boolean,
+}
+export interface GetInformationResponse {
+  'status' : [] | [StatusResponse],
+  'metrics' : [] | [MetricsResponse],
+  'logs' : [] | [CanisterLogResponse],
+  'version' : [] | [bigint],
+}
+export interface GetLatestLogMessagesParameters {
+  'upToTimeNanos' : [] | [Nanos],
+  'count' : number,
+  'filter' : [] | [GetLogMessagesFilter],
+}
+export interface GetLogMessagesFilter {
+  'analyzeCount' : number,
+  'messageRegex' : [] | [string],
+  'messageContains' : [] | [string],
+}
+export interface GetLogMessagesParameters {
+  'count' : number,
+  'filter' : [] | [GetLogMessagesFilter],
+  'fromTimeNanos' : [] | [Nanos],
+}
+export interface GetMetricsParameters {
+  'dateToMillis' : bigint,
+  'granularity' : MetricsGranularity,
+  'dateFromMillis' : bigint,
+}
+export interface HourlyMetricsData {
+  'updateCalls' : UpdateCallsAggregatedData,
+  'canisterHeapMemorySize' : CanisterHeapMemoryAggregatedData,
+  'canisterCycles' : CanisterCyclesAggregatedData,
+  'canisterMemorySize' : CanisterMemoryAggregatedData,
+  'timeMillis' : bigint,
+}
 export type List = [] | [[ShareableBlock, List]];
+export interface LogMessagesData { 'timeNanos' : Nanos, 'message' : string }
+export type MetricsGranularity = { 'hourly' : null } |
+  { 'daily' : null };
+export interface MetricsRequest { 'parameters' : GetMetricsParameters }
+export interface MetricsResponse { 'metrics' : [] | [CanisterMetrics] }
+export type Nanos = bigint;
 export type NodeBase = number;
 export type NodeBoundary = number;
 export type NodeDepth = number;
 export type NodeIdentifier = Uint16Array | number[];
 export type NodeIndex = number;
 export type NodeValue = string;
+export interface NumericEntity {
+  'avg' : bigint,
+  'max' : bigint,
+  'min' : bigint,
+  'first' : bigint,
+  'last' : bigint,
+}
 export interface PaginatedResults { 'edges' : Array<Edge> }
 export type PrimaryKey = bigint;
 export type PrimaryKey__1 = bigint;
@@ -165,6 +249,16 @@ export interface ShareableNode {
 export type SortDirection = { 'asc' : null } |
   { 'desc' : null };
 export interface SortOrder { 'direction' : SortDirection, 'fieldName' : string }
+export interface StatusRequest {
+  'memory_size' : boolean,
+  'cycles' : boolean,
+  'heap_memory_size' : boolean,
+}
+export interface StatusResponse {
+  'memory_size' : [] | [bigint],
+  'cycles' : [] | [bigint],
+  'heap_memory_size' : [] | [bigint],
+}
 export type Time = bigint;
 export type TreeEvent = {
     'delete' : {
@@ -199,6 +293,10 @@ export interface UpdateBlockUpdateOutputResult {
   'properties' : ShareableBlockProperties,
   'parent' : [] | [UUID],
 }
+export type UpdateCallsAggregatedData = BigUint64Array | bigint[];
+export interface UpdateInformationRequest {
+  'metrics' : [] | [CollectMetricsRequestType],
+}
 export interface Workspace {
   'addBlock' : ActorMethod<[AddBlockUpdateInput], AddBlockUpdateOutput>,
   'blockByUuid' : ActorMethod<[UUID], Result_1>,
@@ -209,6 +307,10 @@ export interface Workspace {
     { 'balance' : bigint, 'capacity' : bigint }
   >,
   'deletePage' : ActorMethod<[DeletePageUpdateInput], DeletePageUpdateOutput>,
+  'getCanistergeekInformation' : ActorMethod<
+    [GetInformationRequest],
+    GetInformationResponse
+  >,
   'getInitArgs' : ActorMethod<[], { 'owner' : Principal, 'capacity' : bigint }>,
   'getInitData' : ActorMethod<
     [],
@@ -239,6 +341,10 @@ export interface Workspace {
   'updateBlock' : ActorMethod<
     [UpdateBlockUpdateInput],
     UpdateBlockUpdateOutput
+  >,
+  'updateCanistergeekInformation' : ActorMethod<
+    [UpdateInformationRequest],
+    undefined
   >,
   'walletReceive' : ActorMethod<[], { 'accepted' : bigint }>,
 }

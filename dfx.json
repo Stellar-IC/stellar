@@ -11,16 +11,19 @@
     "cycles_dispenser": {
       "dependencies": ["user_index", "workspace_index"],
       "main": "src/backend/canisters/cycles_dispenser/main.mo",
-      "type": "motoko"
+      "type": "motoko",
+      "optimize": "size"
     },
     "workspace_index": {
       "main": "src/backend/canisters/workspace_index/main.mo",
-      "type": "motoko"
+      "type": "motoko",
+      "optimize": "size"
     },
     "user_index": {
       "dependencies": ["workspace_index"],
       "main": "src/backend/canisters/user_index/main.mo",
-      "type": "motoko"
+      "type": "motoko",
+      "optimize": "size"
     },
     "internet_identity": {
       "__0": "The development build of Internet Identity. For more information, see https://github.com/dfinity/internet-identity#build-features-and-flavors",

@@ -40,4 +40,4 @@ export const createActor = (canisterId, options = {}) => {
   });
 };
 
-export const workspace_index = createActor(canisterId);
+export const workspace_index = canisterId ? createActor(canisterId) : undefined;
