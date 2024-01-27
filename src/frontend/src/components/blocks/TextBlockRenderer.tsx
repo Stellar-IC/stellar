@@ -1,4 +1,4 @@
-import { Box, Text } from '@mantine/core';
+import { Box } from '@mantine/core';
 
 import { useDataStoreContext } from '@/contexts/DataStoreContext/useDataStoreContext';
 import { Block } from '@/types';
@@ -37,9 +37,6 @@ export const TextBlockRenderer = ({
         placeholder={placeholder}
         value={block.properties.title}
       />
-      <Text size="xs" c="gray.7">
-        {blockExternalId}
-      </Text>
     </Box>
   );
 };

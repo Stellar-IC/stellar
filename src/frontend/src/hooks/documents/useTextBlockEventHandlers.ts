@@ -107,13 +107,18 @@ export const useTextBlockEventHandlers = ({
     });
   };
 
-  const onCharactersRemoved = (characterIndexes: number[]) => {
-    // Sort indexes in descending order so that we don't have to worry about
-    // the index changing as we remove characters
-    const allEvents: TreeEvent[] = [];
-    const sorted = characterIndexes.sort((a, b) => b - a);
+  const onCharactersRemoved = (startPosition: number, endPosition?: number) => {
+    if (endPosition === undefined) return onCharacterRemoved(startPosition);
 
-    sorted.forEach((index) => {
+    // Build index array in descending order so that we don't have to worry about
+    // the index changing as we remove characters
+    const characterIndexes = Array.from(
+      { length: endPosition - startPosition },
+      (_, i) => endPosition - i
+    );
+    const allEvents: TreeEvent[] = [];
+
+    characterIndexes.forEach((index) => {
       Tree.removeCharacter(block.properties.title, index, (event) => {
         allEvents.push(event);
       });

@@ -11,6 +11,7 @@ import { useShiftTabHandler } from './useShiftTabHandler';
 import { useArrowDownHandler } from './useArrowDownHandler';
 import { useArrowUpHandler } from './useArrowUpHandler';
 import { useTextBlockEventHandlers } from '../useTextBlockEventHandlers';
+import { useCutHandler } from './useCutHandler';
 
 type UseTextBlockKeyboardEventHandlersProps = {
   blockExternalId: ExternalId;
@@ -33,7 +34,7 @@ export const useTextBlockKeyboardEventHandlers = ({
 }: UseTextBlockKeyboardEventHandlersProps) => {
   const { removeBlock } = usePagesContext();
 
-  const { onCharacterInserted, onCharacterRemoved, onCharactersInserted } =
+  const { onCharacterInserted, onCharactersRemoved, onCharactersInserted } =
     useTextBlockEventHandlers({
       blockExternalId,
     });
@@ -51,7 +52,11 @@ export const useTextBlockKeyboardEventHandlers = ({
   const handleArrowDown = useArrowDownHandler();
   const handleArrowUp = useArrowUpHandler();
   const handleBackspace = useBackspaceHandler({
-    onRemove: onCharacterRemoved,
+    onRemove: onCharactersRemoved,
+    showPlaceholder,
+  });
+  const handleCut = useCutHandler({
+    onRemove: onCharactersRemoved,
     showPlaceholder,
   });
   const handleEnter = useEnterHandler({
@@ -78,8 +83,6 @@ export const useTextBlockKeyboardEventHandlers = ({
   };
 
   const onKeyDown = (e: KeyboardEvent<HTMLSpanElement>) => {
-    if (e.metaKey || e.ctrlKey) return false;
-
     if (e.key === 'Enter') {
       e.preventDefault();
       return handleEnter();
@@ -94,6 +97,10 @@ export const useTextBlockKeyboardEventHandlers = ({
     }
 
     if (e.key === 'Backspace') {
+      const selection = window.getSelection();
+      if (selection?.type === 'Range') {
+        e.preventDefault();
+      }
       const cursorPosition = window.getSelection()?.anchorOffset;
       const shouldRemoveBlock =
         Boolean(parentBlockExternalId) && e.currentTarget.innerText === '';
@@ -120,7 +127,7 @@ export const useTextBlockKeyboardEventHandlers = ({
       return handleArrowUp();
     }
 
-    if (e.key.match(/^[\w\W]$/g)) {
+    if (e.key.match(/^[\w\W]$/g) && !e.metaKey && !e.ctrlKey) {
       const cursorPosition = window.getSelection()?.anchorOffset;
       const shouldHidePlaceholder =
         cursorPosition === 0 && e.currentTarget.innerText.length === 0;
@@ -129,6 +136,20 @@ export const useTextBlockKeyboardEventHandlers = ({
         shouldHidePlaceholder,
       });
     }
+  };
+
+  const onCut = (e: React.ClipboardEvent<HTMLSpanElement>) => {
+    e.preventDefault();
+    return handleCut({
+      shouldRemoveBlock: false,
+      shouldShowPlaceholder: false,
+      onRemoveBlock: () => {
+        if (!parentBlockExternalId) return;
+        // Note: We add 1 to the block index because the current functionality
+        // for removing a block is to remove the block before the given position.
+        removeBlock(parse(parentBlockExternalId), blockIndex + 1);
+      },
+    });
   };
 
   const onPaste = (e: React.ClipboardEvent<HTMLSpanElement>) => {
@@ -165,5 +186,6 @@ export const useTextBlockKeyboardEventHandlers = ({
   return {
     onKeyDown,
     onPaste,
+    onCut,
   };
 };

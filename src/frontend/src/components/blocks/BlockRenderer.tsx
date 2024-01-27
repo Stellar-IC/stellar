@@ -35,7 +35,7 @@ const NestedBlocks = ({
   if (nestedBlockIds.length === 0) return null;
 
   return (
-    <Box pos="relative" w="100%" pt="sm">
+    <Box pos="relative" w="100%">
       {nestedBlockIds.map((externalId, i) => (
         <Box key={externalId}>
           {/* eslint-disable-next-line @typescript-eslint/no-use-before-define */}

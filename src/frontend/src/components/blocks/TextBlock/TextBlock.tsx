@@ -34,7 +34,7 @@ export const TextBlock = ({
     }
   }, [initialText, textBoxRef, value, hidePlaceholder]);
 
-  const { onKeyDown, onPaste } = useTextBlockKeyboardEventHandlers({
+  const { onKeyDown, onCut, onPaste } = useTextBlockKeyboardEventHandlers({
     blockExternalId,
     blockIndex,
     blockType,
@@ -72,6 +72,7 @@ export const TextBlock = ({
         suppressContentEditableWarning
         onKeyDown={onKeyDown}
         onPaste={onPaste}
+        onCut={onCut}
       />
     </Box>
   );

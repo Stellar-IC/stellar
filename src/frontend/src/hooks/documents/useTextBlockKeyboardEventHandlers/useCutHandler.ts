@@ -1,26 +1,26 @@
 import { useCallback } from 'react';
 
-type UseBackspaceHandlerProps = {
+type UseCutHandlerProps = {
   onRemove: (startCursor: number, endCursor?: number) => void;
   showPlaceholder?: () => void;
 };
 
-type DoBackspaceOperationArgs = {
+type DoCutOperationArgs = {
   shouldRemoveBlock?: boolean;
   shouldShowPlaceholder?: boolean;
   onRemoveBlock?: () => void;
 };
 
-export const useBackspaceHandler = ({
+export const useCutHandler = ({
   onRemove,
   showPlaceholder,
-}: UseBackspaceHandlerProps) => {
-  const doBackspaceOperation = useCallback(
+}: UseCutHandlerProps) => {
+  const doCutOperation = useCallback(
     ({
       shouldRemoveBlock,
       shouldShowPlaceholder,
       onRemoveBlock,
-    }: DoBackspaceOperationArgs) => {
+    }: DoCutOperationArgs) => {
       if (shouldRemoveBlock) {
         if (!onRemoveBlock) return;
         onRemoveBlock();
@@ -39,10 +39,8 @@ export const useBackspaceHandler = ({
         }
 
         onRemove(startCursor, endCursor);
-        selection?.deleteFromDocument();
-      } else {
-        const cursorPosition = selection?.anchorOffset;
-        if (cursorPosition) onRemove(cursorPosition);
+        document.execCommand('copy');
+        selection.deleteFromDocument();
       }
 
       // If the block will be empty, show the placeholder
@@ -53,5 +51,5 @@ export const useBackspaceHandler = ({
     [onRemove, showPlaceholder]
   );
 
-  return doBackspaceOperation;
+  return doCutOperation;
 };
