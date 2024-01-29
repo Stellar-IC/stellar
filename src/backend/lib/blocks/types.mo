@@ -7,8 +7,7 @@ module {
     public type PrimaryKey = Nat;
     public type BlockText = Tree.Tree;
     public type ShareableBlockText = LseqTypes.ShareableTree;
-    public type BlockContent = [UUID.UUID];
-    public type BlockContent_v2 = Tree.Tree;
+    public type BlockContent = Tree.Tree;
     public type ShareableBlockContent = LseqTypes.ShareableTree;
 
     public type BlockProperties = {
@@ -40,30 +39,13 @@ module {
         uuid : UUID.UUID;
         var blockType : BlockType;
         content : BlockContent;
-        parent : ?UUID.UUID;
-        properties : BlockProperties;
-    };
-    public type UnsavedBlock_v2 = {
-        uuid : UUID.UUID;
-        var blockType : BlockType;
-        content : BlockContent_v2;
         var parent : ?UUID.UUID;
         properties : BlockProperties;
     };
     public type Block = UnsavedBlock and {
         id : PrimaryKey;
     };
-    public type Block_v2 = UnsavedBlock_v2 and {
-        id : PrimaryKey;
-    };
     public type ShareableUnsavedBlock = {
-        uuid : UUID.UUID;
-        blockType : BlockType;
-        content : BlockContent;
-        parent : ?UUID.UUID;
-        properties : ShareableBlockProperties;
-    };
-    public type ShareableUnsavedBlock_v2 = {
         uuid : UUID.UUID;
         blockType : BlockType;
         content : ShareableBlockContent;
@@ -71,9 +53,6 @@ module {
         properties : ShareableBlockProperties;
     };
     public type ShareableBlock = ShareableUnsavedBlock and {
-        id : PrimaryKey;
-    };
-    public type ShareableBlock_v2 = ShareableUnsavedBlock_v2 and {
         id : PrimaryKey;
     };
 

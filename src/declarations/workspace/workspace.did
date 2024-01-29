@@ -26,7 +26,7 @@ type WorkspaceDescription = text;
 type Workspace = 
  service {
    addBlock: (AddBlockUpdateInput) -> (AddBlockUpdateOutput);
-   blockByUuid: (UUID) -> (Result_1) query;
+   blockByUuid: (UUID) -> (Result_3) query;
    blocksByPageUuid: (text) -> (List) query;
    /// ***********************************************************************
    ///      * Updates
@@ -42,8 +42,7 @@ type Workspace =
    ///      ************************************************************************
    /// * Returns canister information based on passed parameters.
    ///     * Called from browser.
-   getCanistergeekInformation: (GetInformationRequest) ->
-    (GetInformationResponse) query;
+   getCanistergeekInformation: (GetInformationRequest) -> (Result_2) query;
    /// ***********************************************************************
    ///      * Initialization helper methods
    ///      ************************************************************************
@@ -59,7 +58,7 @@ type Workspace =
        updatedAt: Time;
        uuid: UUID;
      });
-   pageByUuid: (UUID) -> (Result) query;
+   pageByUuid: (UUID) -> (Result_1) query;
    pages:
     (record {
        cursor: opt PrimaryKey__1;
@@ -74,8 +73,8 @@ type Workspace =
    toObject: () -> (Workspace__1) query;
    updateBlock: (UpdateBlockUpdateInput) -> (UpdateBlockUpdateOutput);
    /// * Updates canister information based on passed parameters at current time.
-   ///     * Called from browser or any canister "update" method.
-   updateCanistergeekInformation: (UpdateInformationRequest) -> ();
+   ///      * Called from browser or any canister "update" method.
+   updateCanistergeekInformation: (UpdateInformationRequest) -> (Result);
    walletReceive: () -> (record {accepted: nat64;});
  };
 type UpdateInformationRequest = record {
@@ -204,15 +203,25 @@ type SaveEventTransactionUpdateOutput =
  };
 type SaveEventTransactionUpdateInput = record {
                                          transaction: BlockEventTransaction;};
-type Result_1 = 
+type Result_3 = 
  variant {
    err: variant {blockNotFound;};
    ok: ShareableBlock;
  };
-type Result = 
+type Result_2 = 
+ variant {
+   err: variant {unauthorized;};
+   ok: GetInformationResponse;
+ };
+type Result_1 = 
  variant {
    err: variant {pageNotFound;};
    ok: ShareableBlock;
+ };
+type Result = 
+ variant {
+   err: variant {unauthorized;};
+   ok;
  };
 type PrimaryKey__2 = nat;
 type PrimaryKey__1 = nat;

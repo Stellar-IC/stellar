@@ -27,7 +27,6 @@ import Guards "./guards";
 shared ({ caller = initializer }) actor class User(
     initArgs : Types.UserInitArgs
 ) = self {
-    stable let USER_MIN_BALANCE = Constants.USER__MIN_BALANCE;
     stable let WORKSPACE__CAPACITY = Constants.WORKSPACE__CAPACITY;
     stable let userIndexCanisterId = initializer;
 
@@ -197,15 +196,14 @@ shared ({ caller = initializer }) actor class User(
     };
 
     private func checkCyclesBalance() : async () {
-        if (Cycles.balance() < USER_MIN_BALANCE) {
-            let amount : Nat = stable_capacity - Cycles.balance();
-            let userIndexCanister = actor (Principal.toText(userIndexCanisterId)) : actor {
-                requestCycles : (amount : Nat) -> async {
-                    accepted : Nat64;
-                };
+        let amount : Nat = stable_capacity - Cycles.balance();
+        let userIndexCanister = actor (Principal.toText(userIndexCanisterId)) : actor {
+            requestCycles : (amount : Nat) -> async {
+                accepted : Nat64;
             };
-            let result = await userIndexCanister.requestCycles(amount);
         };
+        let result = await userIndexCanister.requestCycles(amount);
+        let accepted = result.accepted;
     };
 
     let personalWorkspaceTopUp : CanisterTopUp.CanisterTopUp = {
@@ -221,17 +219,11 @@ shared ({ caller = initializer }) actor class User(
         switch (stable_personalWorkspace) {
             case (null) {};
             case (?workspace) {
-                let workspaceCyclesInfo = await (workspace.cyclesInformation());
-                let workspaceCapacity = workspaceCyclesInfo.capacity;
-                let workspaceBalance = workspaceCyclesInfo.balance;
-
-                if (workspaceBalance < Constants.WORKSPACE__MIN_BALANCE) {
-                    personalWorkspaceTopUp.topUpInProgress := true;
-                    let amount = Constants.WORKSPACE__TOP_UP_AMOUNT;
-                    ExperimentalCycles.add(amount);
-                    let result = await workspace.walletReceive();
-                    personalWorkspaceTopUp.topUpInProgress := false;
-                };
+                personalWorkspaceTopUp.topUpInProgress := true;
+                let amount = Constants.WORKSPACE__TOP_UP_AMOUNT;
+                ExperimentalCycles.add(amount);
+                let result = await workspace.walletReceive();
+                personalWorkspaceTopUp.topUpInProgress := false;
             };
         };
     };
@@ -311,10 +303,10 @@ shared ({ caller = initializer }) actor class User(
     };
 
     system func postupgrade() {
+        doCanisterGeekPostUpgrade();
         timersHaveBeenStarted := false;
         // Restart timers
         startRecurringTimers();
 
-        doCanisterGeekPostUpgrade();
     };
 };

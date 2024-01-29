@@ -2,8 +2,6 @@ import CreateBlock "../services/create_block";
 import Debug "mo:base/Debug";
 import Result "mo:base/Result";
 import UUID "mo:uuid/UUID";
-import Types "../types";
-import State "../model/state";
 import Nat "mo:base/Nat";
 import Buffer "mo:base/Buffer";
 import Iter "mo:base/Iter";
@@ -13,8 +11,11 @@ import BlocksTypes "../../../lib/blocks/types";
 import UpdateBlock "../services/update_block";
 import Tree "../../../utils/data/lseq/Tree";
 
+import State "../model/state";
+import Types "../types/v0";
+
 module BlockCreatedConsumer {
-    type Block = BlocksTypes.Block_v2;
+    type Block = BlocksTypes.Block;
 
     func _blockByUuid(state : State.State, uuid : UUID.UUID) : Result.Result<Block, { #blockNotFound }> {
         state.data.getBlockByUuid(uuid);

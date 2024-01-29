@@ -2,12 +2,12 @@ import { fromShareable } from '@/modules/serializers/block';
 
 import {
   Result_1 as BlockByUuidResult,
-  Result as PageByUuidResult,
+  Result_1 as PageByUuidResult,
   UUID,
 } from '../../../../declarations/workspace/workspace.did';
 
 export function getPageExternalId(result: PageByUuidResult): UUID | null {
-  return 'ok' in result ? result.ok.uuid : null;
+  return 'ok' in result ? result.ok?.uuid : null;
 }
 
 export function getBlockExternalId(result: BlockByUuidResult): UUID | null {

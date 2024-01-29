@@ -39,7 +39,6 @@ actor WorkspaceIndex {
 
     stable let MAX_TOP_UP_AMOUNT = 1_000_000_000_000_000;
     stable let MIN_INTERVAL = 3 * 60 * 60 * 1_000_000_000_000; // 3 hours
-    stable let MIN_BALANCE = 10_000_000_000_000; // 10 cycles
 
     /*************************************************************************
      * Stable data
@@ -196,7 +195,6 @@ actor WorkspaceIndex {
 
         let maxAmount = MAX_TOP_UP_AMOUNT;
         let minInterval = MIN_INTERVAL;
-        let minBalance = MIN_BALANCE;
         let currentBalance = Cycles.balance();
         let now = Time.now();
 
@@ -227,8 +225,6 @@ actor WorkspaceIndex {
             Debug.trap("Amount too high");
         } else if (shouldThrottle) {
             Debug.trap("Throttled");
-        } else if (currentBalance < minBalance + amount) {
-            Debug.trap("Balance too low");
         } else {
             CanisterTopUp.setTopUpInProgress(topUp, true);
             ExperimentalCycles.add(amount);

@@ -199,9 +199,13 @@ export interface PaginatedResults { 'edges' : Array<Edge> }
 export type PrimaryKey = bigint;
 export type PrimaryKey__1 = bigint;
 export type PrimaryKey__2 = bigint;
-export type Result = { 'ok' : ShareableBlock } |
-  { 'err' : { 'pageNotFound' : null } };
+export type Result = { 'ok' : null } |
+  { 'err' : { 'unauthorized' : null } };
 export type Result_1 = { 'ok' : ShareableBlock } |
+  { 'err' : { 'pageNotFound' : null } };
+export type Result_2 = { 'ok' : GetInformationResponse } |
+  { 'err' : { 'unauthorized' : null } };
+export type Result_3 = { 'ok' : ShareableBlock } |
   { 'err' : { 'blockNotFound' : null } };
 export interface SaveEventTransactionUpdateInput {
   'transaction' : BlockEventTransaction,
@@ -299,7 +303,7 @@ export interface UpdateInformationRequest {
 }
 export interface Workspace {
   'addBlock' : ActorMethod<[AddBlockUpdateInput], AddBlockUpdateOutput>,
-  'blockByUuid' : ActorMethod<[UUID], Result_1>,
+  'blockByUuid' : ActorMethod<[UUID], Result_3>,
   'blocksByPageUuid' : ActorMethod<[string], List>,
   'createPage' : ActorMethod<[CreatePageUpdateInput], CreatePageUpdateOutput>,
   'cyclesInformation' : ActorMethod<
@@ -307,10 +311,7 @@ export interface Workspace {
     { 'balance' : bigint, 'capacity' : bigint }
   >,
   'deletePage' : ActorMethod<[DeletePageUpdateInput], DeletePageUpdateOutput>,
-  'getCanistergeekInformation' : ActorMethod<
-    [GetInformationRequest],
-    GetInformationResponse
-  >,
+  'getCanistergeekInformation' : ActorMethod<[GetInformationRequest], Result_2>,
   'getInitArgs' : ActorMethod<[], { 'owner' : Principal, 'capacity' : bigint }>,
   'getInitData' : ActorMethod<
     [],
@@ -322,7 +323,7 @@ export interface Workspace {
       'updatedAt' : Time,
     }
   >,
-  'pageByUuid' : ActorMethod<[UUID], Result>,
+  'pageByUuid' : ActorMethod<[UUID], Result_1>,
   'pages' : ActorMethod<
     [
       {
@@ -344,7 +345,7 @@ export interface Workspace {
   >,
   'updateCanistergeekInformation' : ActorMethod<
     [UpdateInformationRequest],
-    undefined
+    Result
   >,
   'walletReceive' : ActorMethod<[], { 'accepted' : bigint }>,
 }

@@ -89,7 +89,7 @@ export const idlFactory = ({ IDL }) => {
     'properties' : ShareableBlockProperties,
     'parent' : IDL.Opt(UUID),
   });
-  const Result_1 = IDL.Variant({
+  const Result_3 = IDL.Variant({
     'ok' : ShareableBlock,
     'err' : IDL.Variant({ 'blockNotFound' : IDL.Null }),
   });
@@ -236,7 +236,11 @@ export const idlFactory = ({ IDL }) => {
     'logs' : IDL.Opt(CanisterLogResponse),
     'version' : IDL.Opt(IDL.Nat),
   });
-  const Result = IDL.Variant({
+  const Result_2 = IDL.Variant({
+    'ok' : GetInformationResponse,
+    'err' : IDL.Variant({ 'unauthorized' : IDL.Null }),
+  });
+  const Result_1 = IDL.Variant({
     'ok' : ShareableBlock,
     'err' : IDL.Variant({ 'pageNotFound' : IDL.Null }),
   });
@@ -369,9 +373,13 @@ export const idlFactory = ({ IDL }) => {
   const UpdateInformationRequest = IDL.Record({
     'metrics' : IDL.Opt(CollectMetricsRequestType),
   });
+  const Result = IDL.Variant({
+    'ok' : IDL.Null,
+    'err' : IDL.Variant({ 'unauthorized' : IDL.Null }),
+  });
   const Workspace = IDL.Service({
     'addBlock' : IDL.Func([AddBlockUpdateInput], [AddBlockUpdateOutput], []),
-    'blockByUuid' : IDL.Func([UUID], [Result_1], ['query']),
+    'blockByUuid' : IDL.Func([UUID], [Result_3], ['query']),
     'blocksByPageUuid' : IDL.Func([IDL.Text], [List], ['query']),
     'createPage' : IDL.Func(
         [CreatePageUpdateInput],
@@ -390,7 +398,7 @@ export const idlFactory = ({ IDL }) => {
       ),
     'getCanistergeekInformation' : IDL.Func(
         [GetInformationRequest],
-        [GetInformationResponse],
+        [Result_2],
         ['query'],
       ),
     'getInitArgs' : IDL.Func(
@@ -411,7 +419,7 @@ export const idlFactory = ({ IDL }) => {
         ],
         [],
       ),
-    'pageByUuid' : IDL.Func([UUID], [Result], ['query']),
+    'pageByUuid' : IDL.Func([UUID], [Result_1], ['query']),
     'pages' : IDL.Func(
         [
           IDL.Record({
@@ -436,7 +444,7 @@ export const idlFactory = ({ IDL }) => {
       ),
     'updateCanistergeekInformation' : IDL.Func(
         [UpdateInformationRequest],
-        [],
+        [Result],
         [],
       ),
     'walletReceive' : IDL.Func(

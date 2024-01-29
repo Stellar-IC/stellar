@@ -12,9 +12,9 @@ module {
         #title : BlocksTypes.BlockProperyTitleUpdatedEvent;
         #checked : BlocksTypes.BlockProperyCheckedUpdatedEvent;
     };
-    type Block_v2 = BlocksTypes.Block_v2;
+    type Block = BlocksTypes.Block;
 
-    public func execute(event : BlockProperyUpdatedEvent, block : Block_v2) {
+    public func execute(event : BlockProperyUpdatedEvent, block : Block) {
         switch (event) {
             case (#title(event)) {
                 return handleTitle(event, block);
@@ -25,7 +25,7 @@ module {
         };
     };
 
-    private func handleTitle(event : BlockProperyTitleUpdatedEvent, block : Block_v2) {
+    private func handleTitle(event : BlockProperyTitleUpdatedEvent, block : Block) {
         let blockExternalId = event.data.blockExternalId;
         let title = block.properties.title;
 
@@ -55,7 +55,7 @@ module {
 
     };
 
-    private func handleChecked(event : BlockProperyCheckedUpdatedEvent, block : Block_v2) : () {
+    private func handleChecked(event : BlockProperyCheckedUpdatedEvent, block : Block) : () {
         let blockExternalId = event.data.blockExternalId;
         block.properties.checked := ?event.data.checked;
     };

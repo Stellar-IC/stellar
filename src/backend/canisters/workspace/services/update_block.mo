@@ -7,7 +7,7 @@ import UUID "mo:uuid/UUID";
 import BlocksTypes "../../../lib/blocks/types";
 
 import State "../model/state";
-import Types "../types";
+import Types "../types/v0";
 
 module {
     type Input = Types.Services.UpdateBlockService.UpdateBlockServiceInput;

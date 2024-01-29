@@ -12,25 +12,24 @@ import Stack "mo:base/Stack";
 import Text "mo:base/Text";
 import UUID "mo:uuid/UUID";
 
-import State "../../model/state";
-import UpdateBlock "../../services/update_block";
-import Types "../../types";
-
 import BlocksTypes "../../../../lib/blocks/types";
 import Tree "../../../../utils/data/lseq/Tree";
+
+import State "../../model/state";
+import UpdateBlock "../../services/update_block";
+import Types "../../types/v0";
 
 import UpdateParent "./UpdateParent";
 import UpdateProperty "./UpdateProperty";
 
 module BlockUpdatedConsumer {
     type Block = BlocksTypes.Block;
-    type Block_v2 = BlocksTypes.Block_v2;
 
-    func _blockByUuid(state : State.State, uuid : UUID.UUID) : Result.Result<Block_v2, { #blockNotFound }> {
+    func _blockByUuid(state : State.State, uuid : UUID.UUID) : Result.Result<Block, { #blockNotFound }> {
         state.data.getBlockByUuid(uuid);
     };
 
-    public func execute(event : BlocksTypes.BlockUpdatedEvent, state : State.State) : Result.Result<Block_v2, { #blockNotFound; #insufficientCycles; #inputTooLong; #invalidBlockType; #failedToUpdate; #anonymousUser }> {
+    public func execute(event : BlocksTypes.BlockUpdatedEvent, state : State.State) : Result.Result<Block, { #blockNotFound; #insufficientCycles; #inputTooLong; #invalidBlockType; #failedToUpdate; #anonymousUser }> {
         switch (event) {
             case (#updateParent(event)) {
                 let blockExternalId = event.data.blockExternalId;

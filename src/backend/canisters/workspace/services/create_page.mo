@@ -10,11 +10,10 @@ import BlocksTypes "../../../lib/blocks/types";
 import Tree "../../../utils/data/lseq/Tree";
 
 import State "../model/state";
-import Types "../types";
+import Types "../types/v0";
 
 module {
     type UnsavedBlock = BlocksTypes.UnsavedBlock;
-    type UnsavedBlock_v2 = BlocksTypes.UnsavedBlock_v2;
     type ShareableBlockContent = BlocksTypes.ShareableBlockContent;
     type ShareableBlockText = BlocksTypes.ShareableBlockText;
     type ShareableBlockProperties = BlocksTypes.ShareableBlockProperties;
@@ -34,7 +33,7 @@ module {
         };
 
         let contentBlockUuid = await Source.Source().new();
-        let contentBlock : UnsavedBlock_v2 = {
+        let contentBlock : UnsavedBlock = {
             var blockType = #paragraph;
             uuid = contentBlockUuid;
             content = Tree.Tree(null);
@@ -49,7 +48,7 @@ module {
 
         ignore Tree.insertCharacterAtStart(contentForNewPage, UUID.toText(contentBlockUuid));
 
-        let pageToCreate : UnsavedBlock_v2 = {
+        let pageToCreate : UnsavedBlock = {
             var blockType = #page;
             uuid = input.uuid;
             content = contentForNewPage;
@@ -107,7 +106,7 @@ module {
         };
     };
 
-    private func _validate(input : UnsavedBlock_v2) : Result.Result<(), { #anonymousUser; #inputTooLong; #invalidBlockType }> {
+    private func _validate(input : UnsavedBlock) : Result.Result<(), { #anonymousUser; #inputTooLong; #invalidBlockType }> {
         if (input.blockType != #page) {
             return #err(#invalidBlockType);
         };

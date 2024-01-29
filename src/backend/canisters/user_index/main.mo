@@ -27,7 +27,6 @@ import CoreTypes "../../types";
 
 actor UserIndex {
     type UserId = Principal;
-    stable let MIN_BALANCE = Constants.USER_INDEX__MIN_BALANCE;
     stable let MAX_TOP_UP_AMOUNT = Constants.USER__TOP_UP_AMOUNT;
     stable let USER_CAPACITY = Constants.USER__CAPACITY;
     stable let MIN_TOP_UP_INTERVAL = 3 * 60 * 60 * 1_000_000_000_000; // 3 hours
@@ -195,7 +194,6 @@ actor UserIndex {
 
         let maxAmount = MAX_TOP_UP_AMOUNT;
         let minInterval = MIN_TOP_UP_INTERVAL;
-        let minBalance = MIN_BALANCE;
         let currentBalance = Cycles.balance();
         let now = Time.now();
         let user = switch (state.data.getUserByUserId(caller)) {
@@ -221,8 +219,6 @@ actor UserIndex {
             Debug.trap("Amount too high");
         } else if (shouldThrottle) {
             Debug.trap("Throttled");
-        } else if (currentBalance < minBalance + amount) {
-            Debug.trap("Balance too low");
         } else {
             CanisterTopUp.setTopUpInProgress(topUp, true);
             ExperimentalCycles.add(amount);

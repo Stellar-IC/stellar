@@ -4,12 +4,12 @@ import Text "mo:base/Text";
 import Time "mo:base/Time";
 import UUID "mo:uuid/UUID";
 
-import BlocksTypes "../../lib/blocks/types";
+import BlocksTypes "../../../lib/blocks/types";
 
 module {
-    type Block = BlocksTypes.Block_v2;
-    type UnsavedBlock = BlocksTypes.UnsavedBlock_v2;
-    type ShareableBlock = BlocksTypes.ShareableBlock_v2;
+    type Block = BlocksTypes.Block;
+    type UnsavedBlock = BlocksTypes.UnsavedBlock;
+    type ShareableBlock = BlocksTypes.ShareableBlock;
     type ShareableBlockContent = BlocksTypes.ShareableBlockContent;
     type ShareableBlockProperties = BlocksTypes.ShareableBlockProperties;
 
