@@ -128,6 +128,21 @@ export function NavbarSearch({
         </div>
       </div>
 
+      <div className={classes.section}>
+        <div className={classes.pages}>
+          <Link
+            to="/settings"
+            className={classes.pageLink}
+            style={{
+              flexGrow: 1,
+              alignSelf: 'center',
+            }}
+          >
+            Settings
+          </Link>
+        </div>
+      </div>
+
       {workspaceId && <PageLinksSection />}
     </nav>
   );
