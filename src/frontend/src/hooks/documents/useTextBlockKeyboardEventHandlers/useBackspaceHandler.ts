@@ -1,4 +1,5 @@
 import { useCallback } from 'react';
+import { focusPreviousBlock } from '@/modules/editor/utils';
 
 type UseBackspaceHandlerProps = {
   onRemove: (startCursor: number, endCursor?: number) => void;
@@ -22,8 +23,12 @@ export const useBackspaceHandler = ({
       onRemoveBlock,
     }: DoBackspaceOperationArgs) => {
       if (shouldRemoveBlock) {
-        if (!onRemoveBlock) return;
-        onRemoveBlock();
+        if (onRemoveBlock) {
+          onRemoveBlock();
+        }
+
+        focusPreviousBlock(true);
+
         return false;
       }
 
