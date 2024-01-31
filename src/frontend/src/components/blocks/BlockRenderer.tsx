@@ -1,5 +1,5 @@
 import { DraggableProvidedDragHandleProps } from '@hello-pangea/dnd';
-import { Box, Flex, MantineTheme } from '@mantine/core';
+import { Box, Flex, MantineTheme, Text } from '@mantine/core';
 import { Tree } from '@stellar-ic/lseq-ts';
 import { useCallback } from 'react';
 
@@ -8,6 +8,7 @@ import { getNodeAtPosition } from '@stellar-ic/lseq-ts/Tree';
 import { Block } from '@/types';
 import { useDataStoreContext } from '@/contexts/DataStoreContext/useDataStoreContext';
 import { DATA_TYPES } from '@/constants';
+import { useSettingsContext } from '@/contexts/SettingsContext';
 import { BlockWithActions } from './BlockWithActions';
 import { BulletedListBlockRenderer } from './BulletedListBlockRenderer';
 import { TextBlockRenderer } from './TextBlockRenderer';
@@ -35,7 +36,7 @@ const NestedBlocks = ({
   if (nestedBlockIds.length === 0) return null;
 
   return (
-    <Box pos="relative" w="100%">
+    <Box pos="relative" w="100%" pt="0.25rem">
       {nestedBlockIds.map((externalId, i) => (
         <Box key={externalId}>
           {/* eslint-disable-next-line @typescript-eslint/no-use-before-define */}
@@ -202,6 +203,7 @@ export const BlockRenderer = ({
   placeholder,
 }: BlockRendererProps) => {
   const { get } = useDataStoreContext();
+  const { getSettingValue } = useSettingsContext();
   const block = get<Block>('block', externalId);
   const parentBlock = parentBlockExternalId
     ? get<Block>(DATA_TYPES.block, parentBlockExternalId)
@@ -286,7 +288,7 @@ export const BlockRenderer = ({
   });
 
   return (
-    <Box className="FocusableBlock">
+    <Box className="FocusableBlock" mb="0.25rem">
       <BlockWithActions
         key={block.uuid}
         blockExternalId={externalId}
@@ -303,6 +305,18 @@ export const BlockRenderer = ({
             externalId={externalId}
             numeral={calculateBlockNumeral()}
           />
+          {getSettingValue('developer.showBlockIds') && (
+            <Text
+              size="xs"
+              c="gray.7"
+              onClick={() => {
+                navigator.clipboard.writeText(externalId);
+              }}
+              style={{ cursor: 'pointer' }}
+            >
+              {externalId}
+            </Text>
+          )}
         </Box>
       </BlockWithActions>
       {!('page' in block.blockType) && (

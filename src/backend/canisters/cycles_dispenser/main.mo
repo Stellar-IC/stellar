@@ -22,7 +22,6 @@ actor CyclesDispenser {
 
     stable let MAX_TOP_UP_AMOUNT = 1_000_000_000_000_000;
     stable let MIN_INTERVAL = 3 * 60 * 60 * 1_000_000_000_000; // 3 hours
-    stable let MIN_BALANCE = 10_000_000_000_000; // 10 cycles
 
     stable var stable_capacity = 100_000_000_000_000;
     stable var stable_balance = 0;
@@ -70,7 +69,6 @@ actor CyclesDispenser {
     ) : async RequestCyclesUpdateOutput {
         let maxAmount = MAX_TOP_UP_AMOUNT;
         let minInterval = MIN_INTERVAL;
-        let minBalance = MIN_BALANCE;
         let now = Time.now();
         let topUp = switch (topUps.get((Principal.fromActor(canister)))) {
             case (null) { Debug.trap("Top-ups not set for canister") };
@@ -87,8 +85,6 @@ actor CyclesDispenser {
             return #err(#amountTooHigh);
         } else if (shouldThrottle) {
             return #err(#throttled);
-        } else if (stable_balance < minBalance + amount) {
-            return #err(#insufficientFunds);
         } else {
             CanisterTopUp.setTopUpInProgress(topUp, true);
             ExperimentalCycles.add(amount);
@@ -130,10 +126,8 @@ actor CyclesDispenser {
         let capacity = cyclesInfo.capacity;
         let balance = cyclesInfo.balance;
 
-        if (balance < Constants.USER_INDEX__MIN_BALANCE) {
-            let amount = Constants.USER_INDEX__TOP_UP_AMOUNT;
-            ignore depositCycles(UserIndex, amount);
-        };
+        let amount = Constants.USER_INDEX__TOP_UP_AMOUNT;
+        ignore depositCycles(UserIndex, amount);
     };
 
     private func topUpWorkspaceIndex() : async () {
@@ -141,10 +135,8 @@ actor CyclesDispenser {
         let capacity = cyclesInfo.capacity;
         let balance = cyclesInfo.balance;
 
-        if (balance < Constants.WORKSPACE_INDEX__MIN_BALANCE) {
-            let amount = Constants.WORKSPACE_INDEX__TOP_UP_AMOUNT;
-            ignore depositCycles(UserIndex, amount);
-        };
+        let amount = Constants.WORKSPACE_INDEX__TOP_UP_AMOUNT;
+        ignore depositCycles(UserIndex, amount);
     };
 
     private func startRecurringTimers() {

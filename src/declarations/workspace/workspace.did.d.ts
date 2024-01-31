@@ -11,9 +11,11 @@ export interface AddBlockUpdateInput {
 export type AddBlockUpdateOutput = { 'ok' : AddBlockUpdateOutputResult } |
   { 'err' : AddBlockUpdateOutputError };
 export type AddBlockUpdateOutputError = null;
-export interface AddBlockUpdateOutputResult { 'id' : PrimaryKey__2 }
+export interface AddBlockUpdateOutputResult { 'id' : PrimaryKey__1 }
 export type AllocationStrategy = { 'boundaryPlus' : null } |
   { 'boundaryMinus' : null };
+export type BlockByUuidResult = { 'ok' : ShareableBlock } |
+  { 'err' : { 'blockNotFound' : null } };
 export interface BlockContentUpdatedEvent {
   'data' : { 'transaction' : Array<TreeEvent>, 'blockExternalId' : UUID },
   'user' : Principal,
@@ -175,7 +177,7 @@ export interface HourlyMetricsData {
   'canisterMemorySize' : CanisterMemoryAggregatedData,
   'timeMillis' : bigint,
 }
-export type List = [] | [[ShareableBlock, List]];
+export type List = [] | [[ShareableBlock__1, List]];
 export interface LogMessagesData { 'timeNanos' : Nanos, 'message' : string }
 export type MetricsGranularity = { 'hourly' : null } |
   { 'daily' : null };
@@ -195,18 +197,20 @@ export interface NumericEntity {
   'first' : bigint,
   'last' : bigint,
 }
-export interface PaginatedResults { 'edges' : Array<Edge> }
+export type PageByUuidResult = { 'ok' : ShareableBlock } |
+  { 'err' : { 'pageNotFound' : null } };
+export interface PagesOptionsArg {
+  'order' : [] | [SortOrder],
+  'cursor' : [] | [PrimaryKey__1],
+  'limit' : [] | [bigint],
+}
+export interface PagesResult { 'edges' : Array<Edge> }
 export type PrimaryKey = bigint;
 export type PrimaryKey__1 = bigint;
-export type PrimaryKey__2 = bigint;
 export type Result = { 'ok' : null } |
   { 'err' : { 'unauthorized' : null } };
-export type Result_1 = { 'ok' : ShareableBlock } |
-  { 'err' : { 'pageNotFound' : null } };
-export type Result_2 = { 'ok' : GetInformationResponse } |
+export type Result_1 = { 'ok' : GetInformationResponse } |
   { 'err' : { 'unauthorized' : null } };
-export type Result_3 = { 'ok' : ShareableBlock } |
-  { 'err' : { 'blockNotFound' : null } };
 export interface SaveEventTransactionUpdateInput {
   'transaction' : BlockEventTransaction,
 }
@@ -242,6 +246,14 @@ export interface ShareableBlockText {
   'boundary' : NodeBoundary,
   'allocationStrategies' : Array<[NodeDepth, AllocationStrategy]>,
   'rootNode' : ShareableNode,
+}
+export interface ShareableBlock__1 {
+  'id' : PrimaryKey,
+  'content' : ShareableBlockContent,
+  'uuid' : UUID,
+  'blockType' : BlockType,
+  'properties' : ShareableBlockProperties,
+  'parent' : [] | [UUID],
 }
 export interface ShareableNode {
   'value' : NodeValue,
@@ -303,7 +315,7 @@ export interface UpdateInformationRequest {
 }
 export interface Workspace {
   'addBlock' : ActorMethod<[AddBlockUpdateInput], AddBlockUpdateOutput>,
-  'blockByUuid' : ActorMethod<[UUID], Result_3>,
+  'blockByUuid' : ActorMethod<[UUID], BlockByUuidResult>,
   'blocksByPageUuid' : ActorMethod<[string], List>,
   'createPage' : ActorMethod<[CreatePageUpdateInput], CreatePageUpdateOutput>,
   'cyclesInformation' : ActorMethod<
@@ -311,7 +323,7 @@ export interface Workspace {
     { 'balance' : bigint, 'capacity' : bigint }
   >,
   'deletePage' : ActorMethod<[DeletePageUpdateInput], DeletePageUpdateOutput>,
-  'getCanistergeekInformation' : ActorMethod<[GetInformationRequest], Result_2>,
+  'getCanistergeekInformation' : ActorMethod<[GetInformationRequest], Result_1>,
   'getInitArgs' : ActorMethod<[], { 'owner' : Principal, 'capacity' : bigint }>,
   'getInitData' : ActorMethod<
     [],
@@ -323,17 +335,8 @@ export interface Workspace {
       'updatedAt' : Time,
     }
   >,
-  'pageByUuid' : ActorMethod<[UUID], Result_1>,
-  'pages' : ActorMethod<
-    [
-      {
-        'order' : [] | [SortOrder],
-        'cursor' : [] | [PrimaryKey__1],
-        'limit' : [] | [bigint],
-      },
-    ],
-    PaginatedResults
-  >,
+  'pageByUuid' : ActorMethod<[UUID], PageByUuidResult>,
+  'pages' : ActorMethod<[PagesOptionsArg], PagesResult>,
   'saveEvents' : ActorMethod<
     [SaveEventTransactionUpdateInput],
     SaveEventTransactionUpdateOutput

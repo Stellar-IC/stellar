@@ -26,7 +26,7 @@ type WorkspaceDescription = text;
 type Workspace = 
  service {
    addBlock: (AddBlockUpdateInput) -> (AddBlockUpdateOutput);
-   blockByUuid: (UUID) -> (Result_3) query;
+   blockByUuid: (UUID) -> (BlockByUuidResult) query;
    blocksByPageUuid: (text) -> (List) query;
    /// ***********************************************************************
    ///      * Updates
@@ -42,7 +42,7 @@ type Workspace =
    ///      ************************************************************************
    /// * Returns canister information based on passed parameters.
    ///     * Called from browser.
-   getCanistergeekInformation: (GetInformationRequest) -> (Result_2) query;
+   getCanistergeekInformation: (GetInformationRequest) -> (Result_1) query;
    /// ***********************************************************************
    ///      * Initialization helper methods
    ///      ************************************************************************
@@ -58,13 +58,8 @@ type Workspace =
        updatedAt: Time;
        uuid: UUID;
      });
-   pageByUuid: (UUID) -> (Result_1) query;
-   pages:
-    (record {
-       cursor: opt PrimaryKey__1;
-       limit: opt nat;
-       order: opt SortOrder;
-     }) -> (PaginatedResults) query;
+   pageByUuid: (UUID) -> (PageByUuidResult) query;
+   pages: (PagesOptionsArg) -> (PagesResult) query;
    saveEvents: (SaveEventTransactionUpdateInput) ->
     (SaveEventTransactionUpdateOutput);
    /// ***********************************************************************
@@ -153,6 +148,15 @@ type ShareableNode =
    identifier: NodeIdentifier;
    value: NodeValue;
  };
+type ShareableBlock__1 = 
+ record {
+   blockType: BlockType;
+   content: ShareableBlockContent;
+   id: PrimaryKey;
+   parent: opt UUID;
+   properties: ShareableBlockProperties;
+   uuid: UUID;
+ };
 type ShareableBlockText = 
  record {
    allocationStrategies: vec record {
@@ -203,30 +207,30 @@ type SaveEventTransactionUpdateOutput =
  };
 type SaveEventTransactionUpdateInput = record {
                                          transaction: BlockEventTransaction;};
-type Result_3 = 
- variant {
-   err: variant {blockNotFound;};
-   ok: ShareableBlock;
- };
-type Result_2 = 
+type Result_1 = 
  variant {
    err: variant {unauthorized;};
    ok: GetInformationResponse;
- };
-type Result_1 = 
- variant {
-   err: variant {pageNotFound;};
-   ok: ShareableBlock;
  };
 type Result = 
  variant {
    err: variant {unauthorized;};
    ok;
  };
-type PrimaryKey__2 = nat;
 type PrimaryKey__1 = nat;
 type PrimaryKey = nat;
-type PaginatedResults = record {edges: vec Edge;};
+type PagesResult = record {edges: vec Edge;};
+type PagesOptionsArg = 
+ record {
+   cursor: opt PrimaryKey__1;
+   limit: opt nat;
+   order: opt SortOrder;
+ };
+type PageByUuidResult = 
+ variant {
+   err: variant {pageNotFound;};
+   ok: ShareableBlock;
+ };
 type NumericEntity = 
  record {
    avg: nat64;
@@ -256,7 +260,7 @@ type LogMessagesData =
  };
 type List = 
  opt record {
-       ShareableBlock;
+       ShareableBlock__1;
        List;
      };
 type HourlyMetricsData = 
@@ -485,12 +489,17 @@ type BlockContentUpdatedEvent =
    user: principal;
    uuid: UUID;
  };
+type BlockByUuidResult = 
+ variant {
+   err: variant {blockNotFound;};
+   ok: ShareableBlock;
+ };
 type AllocationStrategy = 
  variant {
    boundaryMinus;
    boundaryPlus;
  };
-type AddBlockUpdateOutputResult = record {id: PrimaryKey__2;};
+type AddBlockUpdateOutputResult = record {id: PrimaryKey__1;};
 type AddBlockUpdateOutputError = null;
 type AddBlockUpdateOutput = 
  variant {

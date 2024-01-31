@@ -38,6 +38,11 @@ shared ({ caller = initializer }) actor class Workspace(
      *************************************************************************/
 
     type BlockByUuidResult = Types.Queries.BlockByUuid.BlockByUuidResult;
+    type BlocksByPageUuidResult = Types.Queries.BlocksByPageUuid.BlocksByPageUuidResult;
+    type PageByUuidResult = Types.Queries.PageByUuid.PageByUuidResult;
+    type PagesOptionsArg = Types.Queries.Pages.PagesOptionsArg;
+    type PagesResult = Types.Queries.Pages.PagesResult;
+
     type PrimaryKey = Types.PrimaryKey;
     type ShareableBlock = BlocksTypes.ShareableBlock;
 
@@ -58,7 +63,6 @@ shared ({ caller = initializer }) actor class Workspace(
 
     stable let capacity : Nat = initArgs.capacity;
     stable var balance : Nat = ExperimentalCycles.balance();
-    var timersHaveBeenStarted = false;
 
     // CanisterGeek
     private let canistergeekMonitor = Canistergeek.Monitor();
@@ -70,6 +74,7 @@ shared ({ caller = initializer }) actor class Workspace(
      * Transient Data
      *************************************************************************/
 
+    var timersHaveBeenStarted = false;
     var data = State.Data({
         blocks = {
             id = blocksIdCounter;
@@ -117,7 +122,7 @@ shared ({ caller = initializer }) actor class Workspace(
         };
     };
 
-    public query func blockByUuid(uuid : UUID.UUID) : async Result.Result<ShareableBlock, { #blockNotFound }> {
+    public query func blockByUuid(uuid : UUID.UUID) : async BlockByUuidResult {
         let result = switch (state.data.getBlockByUuid(uuid)) {
             case (#err(err)) {
                 #err(err);
@@ -140,7 +145,7 @@ shared ({ caller = initializer }) actor class Workspace(
         return result;
     };
 
-    public query func pageByUuid(uuid : UUID.UUID) : async Result.Result<ShareableBlock, { #pageNotFound }> {
+    public query func pageByUuid(uuid : UUID.UUID) : async PageByUuidResult {
         let result = switch (state.data.getPageByUuid(uuid)) {
             case (#err(err)) {
                 #err(err);
@@ -153,13 +158,7 @@ shared ({ caller = initializer }) actor class Workspace(
         return result;
     };
 
-    public query ({ caller }) func pages(
-        options : {
-            cursor : ?PrimaryKey;
-            limit : ?Nat;
-            order : ?CoreTypes.SortOrder;
-        }
-    ) : async CoreTypes.PaginatedResults<ShareableBlock> {
+    public query ({ caller }) func pages(options : PagesOptionsArg) : async PagesResult {
         let { cursor; limit; order } = options;
         let pages = state.data.getPages(cursor, limit, order);
         let result = {
@@ -176,7 +175,6 @@ shared ({ caller = initializer }) actor class Workspace(
         return result;
     };
 
-    // Return the current cycle balance
     public shared func cyclesInformation() : async {
         balance : Nat;
         capacity : Nat;
@@ -191,13 +189,17 @@ shared ({ caller = initializer }) actor class Workspace(
      * Updates
      *************************************************************************/
 
-    public shared ({ caller }) func createPage(input : Types.Updates.CreatePageUpdate.CreatePageUpdateInput) : async Types.Updates.CreatePageUpdate.CreatePageUpdateOutput {
+    public shared ({ caller }) func createPage(
+        input : Types.Updates.CreatePageUpdate.CreatePageUpdateInput
+    ) : async Types.Updates.CreatePageUpdate.CreatePageUpdateOutput {
         let result = await CreatePage.execute(state, caller, input);
         canistergeekMonitor.updateInformation({ metrics = ? #normal });
         return result;
     };
 
-    public shared ({ caller }) func addBlock(input : Types.Updates.AddBlockUpdate.AddBlockUpdateInput) : async Types.Updates.AddBlockUpdate.AddBlockUpdateOutput {
+    public shared ({ caller }) func addBlock(
+        input : Types.Updates.AddBlockUpdate.AddBlockUpdateInput
+    ) : async Types.Updates.AddBlockUpdate.AddBlockUpdateOutput {
         var block_id = state.data.addBlock(BlocksModels.Block.fromShareableUnsaved(input));
         let result = switch (block_id) {
             case (#err(#keyAlreadyExists)) { #err };
@@ -208,7 +210,9 @@ shared ({ caller = initializer }) actor class Workspace(
 
     };
 
-    public shared ({ caller }) func updateBlock(input : Types.Updates.UpdateBlockUpdate.UpdateBlockUpdateInput) : async Types.Updates.UpdateBlockUpdate.UpdateBlockUpdateOutput {
+    public shared ({ caller }) func updateBlock(
+        input : Types.Updates.UpdateBlockUpdate.UpdateBlockUpdateInput
+    ) : async Types.Updates.UpdateBlockUpdate.UpdateBlockUpdateOutput {
         let result = state.data.updateBlock(BlocksModels.Block.fromShareable(input));
         let finalResult = switch (result) {
             case (#err(err)) { #err(err) };
@@ -220,7 +224,9 @@ shared ({ caller = initializer }) actor class Workspace(
         return finalResult;
     };
 
-    public shared ({ caller }) func deletePage(input : Types.Updates.DeletePageUpdate.DeletePageUpdateInput) : async Types.Updates.DeletePageUpdate.DeletePageUpdateOutput {
+    public shared ({ caller }) func deletePage(
+        input : Types.Updates.DeletePageUpdate.DeletePageUpdateInput
+    ) : async Types.Updates.DeletePageUpdate.DeletePageUpdateOutput {
         let result = #ok(state.data.deleteBlockByUuid(input.uuid));
         canistergeekMonitor.updateInformation({ metrics = ? #normal });
         return result;
@@ -362,7 +368,9 @@ shared ({ caller = initializer }) actor class Workspace(
     * Returns canister information based on passed parameters.
     * Called from browser.
     */
-    public query ({ caller }) func getCanistergeekInformation(request : Canistergeek.GetInformationRequest) : async Result.Result<Canistergeek.GetInformationResponse, { #unauthorized }> {
+    public query ({ caller }) func getCanistergeekInformation(
+        request : Canistergeek.GetInformationRequest
+    ) : async Result.Result<Canistergeek.GetInformationResponse, { #unauthorized }> {
         switch (validateCaller(caller)) {
             case (#err(err)) {
                 #err(err);
@@ -377,7 +385,9 @@ shared ({ caller = initializer }) actor class Workspace(
      * Updates canister information based on passed parameters at current time.
      * Called from browser or any canister "update" method.
      */
-    public shared ({ caller }) func updateCanistergeekInformation(request : Canistergeek.UpdateInformationRequest) : async Result.Result<(), { #unauthorized }> {
+    public shared ({ caller }) func updateCanistergeekInformation(
+        request : Canistergeek.UpdateInformationRequest
+    ) : async Result.Result<(), { #unauthorized }> {
         switch (validateCaller(caller)) {
             case (#err(err)) {
                 #err(err);
@@ -389,7 +399,9 @@ shared ({ caller = initializer }) actor class Workspace(
         };
     };
 
-    private func validateCaller(principal : Principal) : Result.Result<Principal, { #unauthorized }> {
+    private func validateCaller(
+        principal : Principal
+    ) : Result.Result<Principal, { #unauthorized }> {
         if (principal == Principal.fromActor(self)) {
             return #ok(principal);
         };

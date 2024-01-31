@@ -1,3 +1,4 @@
+import List "mo:base/List";
 import Nat "mo:base/Nat";
 import Result "mo:base/Result";
 import Text "mo:base/Text";
@@ -5,6 +6,7 @@ import Time "mo:base/Time";
 import UUID "mo:uuid/UUID";
 
 import BlocksTypes "../../../lib/blocks/types";
+import CoreTypes "../../../types";
 
 module {
     type Block = BlocksTypes.Block;
@@ -74,6 +76,20 @@ module {
     public module Queries {
         public module BlockByUuid {
             public type BlockByUuidResult = Result.Result<ShareableBlock, { #blockNotFound }>;
+        };
+        public module BlocksByPageUuid {
+            public type BlocksByPageUuidResult = List.List<ShareableBlock>;
+        };
+        public module PageByUuid {
+            public type PageByUuidResult = Result.Result<ShareableBlock, { #pageNotFound }>;
+        };
+        public module Pages {
+            public type PagesOptionsArg = {
+                cursor : ?PrimaryKey;
+                limit : ?Nat;
+                order : ?CoreTypes.SortOrder;
+            };
+            public type PagesResult = CoreTypes.PaginatedResults<ShareableBlock>;
         };
     };
 

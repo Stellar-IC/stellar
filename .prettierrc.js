@@ -12,6 +12,8 @@ module.exports = {
       options: {
         bracketSpacing: true,
         tabWidth: 4,
+        plugins: ['prettier-plugin-motoko'],
+        printWidth: 80,
       },
     },
   ],

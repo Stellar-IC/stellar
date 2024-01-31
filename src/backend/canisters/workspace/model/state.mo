@@ -6,6 +6,7 @@ import Order "mo:base/Order";
 import Debug "mo:base/Debug";
 import Iter "mo:base/Iter";
 import Array "mo:base/Array";
+import Stack "mo:base/Stack";
 import UUID "mo:uuid/UUID";
 
 import BlocksModels "../../../lib/blocks/models";
@@ -131,36 +132,75 @@ module {
         };
 
         public func getBlocksByPageUuid(uuid : Text) : List.List<Block> {
-            let page = Block.objects.indexFilter(
-                "uuid",
-                #text(uuid),
-            ).first();
+            var finalBlocks = List.fromArray<Block>([]);
 
-            let pageId = switch (page) {
+            func getReversedBlockContent(block : Block) : List.List<Text> {
+                List.fromArray(Array.reverse(Tree.toArray(block.content)));
+            };
+
+            func sendToFinalBlocks(blockUuid : Text) {
+                let blockUuid = stack.peek();
+                let block = Block.objects.indexFilter(
+                    "uuid",
+                    #text(uuid),
+                ).first();
+
+                switch block {
+                    case (null) {
+                        // This shouldn't ever happen
+                    };
+                    case (?block) {
+                        finalBlocks := List.push<Block>(block, finalBlocks);
+                    };
+                };
+            };
+
+            let page = switch (
+                Block.objects.indexFilter("uuid", #text(uuid)).first()
+            ) {
                 case (null) {
                     // Page not found, return empty list
                     return List.fromArray<Block>([]);
                 };
-                case (?page) { page.id };
+                case (?page) { page };
             };
 
-            let blocks = switch (blocks_by_parent_uuid.get(uuid)) {
-                case (null) { List.fromArray<Types.PrimaryKey>([]) };
-                case (?blocks) { blocks };
+            let pageId = page.id;
+            let content = getReversedBlockContent(page);
+            let stack : Stack.Stack<Text> = Stack.Stack<Text>();
+
+            for (block in (List.toIter<Text>(content))) {
+                stack.push(block);
             };
 
-            var final_blocks = List.fromArray<Block>([]);
+            var current : ?Text = null;
 
-            for (block_id in List.toIter(blocks)) {
-                switch (Block.objects.get(block_id)) {
-                    case (?block) {
-                        final_blocks := List.push<Block>(block, final_blocks);
-                    };
+            while (stack.isEmpty() == false) {
+                let blockUuid = stack.pop();
+
+                switch (blockUuid) {
                     case (null) {};
+                    case (?blockUuid) {
+                        let block = Block.objects.indexFilter(
+                            "uuid",
+                            #text(blockUuid),
+                        ).first();
+
+                        switch block {
+                            case (null) {};
+                            case (?block) {
+                                finalBlocks := List.push<Block>(block, finalBlocks);
+                                let nestedBlocks = getReversedBlockContent(block);
+                                for (nestedBlock in List.toIter<Text>(nestedBlocks)) {
+                                    stack.push(nestedBlock);
+                                };
+                            };
+                        };
+                    };
                 };
             };
 
-            return final_blocks;
+            return finalBlocks;
         };
 
         public func getPage(id : Types.PrimaryKey) : Result.Result<Block, { #pageNotFound }> {

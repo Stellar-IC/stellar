@@ -73,8 +73,8 @@ export const idlFactory = ({ IDL }) => {
     'properties' : ShareableBlockProperties,
     'parent' : IDL.Opt(UUID),
   });
-  const PrimaryKey__2 = IDL.Nat;
-  const AddBlockUpdateOutputResult = IDL.Record({ 'id' : PrimaryKey__2 });
+  const PrimaryKey__1 = IDL.Nat;
+  const AddBlockUpdateOutputResult = IDL.Record({ 'id' : PrimaryKey__1 });
   const AddBlockUpdateOutputError = IDL.Null;
   const AddBlockUpdateOutput = IDL.Variant({
     'ok' : AddBlockUpdateOutputResult,
@@ -89,11 +89,19 @@ export const idlFactory = ({ IDL }) => {
     'properties' : ShareableBlockProperties,
     'parent' : IDL.Opt(UUID),
   });
-  const Result_3 = IDL.Variant({
+  const BlockByUuidResult = IDL.Variant({
     'ok' : ShareableBlock,
     'err' : IDL.Variant({ 'blockNotFound' : IDL.Null }),
   });
-  List.fill(IDL.Opt(IDL.Tuple(ShareableBlock, List)));
+  const ShareableBlock__1 = IDL.Record({
+    'id' : PrimaryKey,
+    'content' : ShareableBlockContent,
+    'uuid' : UUID,
+    'blockType' : BlockType,
+    'properties' : ShareableBlockProperties,
+    'parent' : IDL.Opt(UUID),
+  });
+  List.fill(IDL.Opt(IDL.Tuple(ShareableBlock__1, List)));
   const ShareableBlockProperties__1 = IDL.Record({
     'title' : IDL.Opt(ShareableBlockText),
     'checked' : IDL.Opt(IDL.Bool),
@@ -236,11 +244,11 @@ export const idlFactory = ({ IDL }) => {
     'logs' : IDL.Opt(CanisterLogResponse),
     'version' : IDL.Opt(IDL.Nat),
   });
-  const Result_2 = IDL.Variant({
+  const Result_1 = IDL.Variant({
     'ok' : GetInformationResponse,
     'err' : IDL.Variant({ 'unauthorized' : IDL.Null }),
   });
-  const Result_1 = IDL.Variant({
+  const PageByUuidResult = IDL.Variant({
     'ok' : ShareableBlock,
     'err' : IDL.Variant({ 'pageNotFound' : IDL.Null }),
   });
@@ -249,9 +257,13 @@ export const idlFactory = ({ IDL }) => {
     'direction' : SortDirection,
     'fieldName' : IDL.Text,
   });
-  const PrimaryKey__1 = IDL.Nat;
+  const PagesOptionsArg = IDL.Record({
+    'order' : IDL.Opt(SortOrder),
+    'cursor' : IDL.Opt(PrimaryKey__1),
+    'limit' : IDL.Opt(IDL.Nat),
+  });
   const Edge = IDL.Record({ 'node' : ShareableBlock });
-  const PaginatedResults = IDL.Record({ 'edges' : IDL.Vec(Edge) });
+  const PagesResult = IDL.Record({ 'edges' : IDL.Vec(Edge) });
   const BlockCreatedEvent = IDL.Record({
     'data' : IDL.Record({
       'block' : IDL.Record({
@@ -379,7 +391,7 @@ export const idlFactory = ({ IDL }) => {
   });
   const Workspace = IDL.Service({
     'addBlock' : IDL.Func([AddBlockUpdateInput], [AddBlockUpdateOutput], []),
-    'blockByUuid' : IDL.Func([UUID], [Result_3], ['query']),
+    'blockByUuid' : IDL.Func([UUID], [BlockByUuidResult], ['query']),
     'blocksByPageUuid' : IDL.Func([IDL.Text], [List], ['query']),
     'createPage' : IDL.Func(
         [CreatePageUpdateInput],
@@ -398,7 +410,7 @@ export const idlFactory = ({ IDL }) => {
       ),
     'getCanistergeekInformation' : IDL.Func(
         [GetInformationRequest],
-        [Result_2],
+        [Result_1],
         ['query'],
       ),
     'getInitArgs' : IDL.Func(
@@ -419,18 +431,8 @@ export const idlFactory = ({ IDL }) => {
         ],
         [],
       ),
-    'pageByUuid' : IDL.Func([UUID], [Result_1], ['query']),
-    'pages' : IDL.Func(
-        [
-          IDL.Record({
-            'order' : IDL.Opt(SortOrder),
-            'cursor' : IDL.Opt(PrimaryKey__1),
-            'limit' : IDL.Opt(IDL.Nat),
-          }),
-        ],
-        [PaginatedResults],
-        ['query'],
-      ),
+    'pageByUuid' : IDL.Func([UUID], [PageByUuidResult], ['query']),
+    'pages' : IDL.Func([PagesOptionsArg], [PagesResult], ['query']),
     'saveEvents' : IDL.Func(
         [SaveEventTransactionUpdateInput],
         [SaveEventTransactionUpdateOutput],

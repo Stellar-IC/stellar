@@ -20,6 +20,7 @@ import Result "mo:base/Result";
 import Time "mo:base/Time";
 import Text "mo:base/Text";
 import Int8 "mo:base/Int8";
+import List "mo:base/List";
 
 import Interval "./Interval";
 import Node "./Node";
@@ -680,6 +681,34 @@ module Tree {
         };
 
         return buildText(tree.rootNode);
+    };
+
+    public func toArray(tree : Tree) : [Text] {
+        func buildArray(rootNode : Node.Node) : List.List<Text> {
+            var final = switch (rootNode.deletedAt) {
+                case (null) { List.fromArray([rootNode.value]) };
+                case (?deletedAt) { List.fromArray([]) };
+            };
+
+            if (rootNode.children.size() == 0) {
+                return final;
+            };
+
+            let rootNodeBase = Int16.toInt(Int16.fromNat16(rootNode.base));
+            label doLoop for (i in Iter.range(0, rootNodeBase)) {
+                let childNode = rootNode.children.get(Nat16.fromNat(i));
+                switch (childNode) {
+                    case (null) { continue doLoop };
+                    case (?childNode) {
+                        final := List.append(buildArray(childNode), final);
+                    };
+                };
+            };
+
+            return final;
+        };
+
+        return List.toArray(buildArray(tree.rootNode));
     };
 
     /**
