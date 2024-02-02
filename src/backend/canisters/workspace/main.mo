@@ -193,7 +193,7 @@ shared ({ caller = initializer }) actor class Workspace(
         input : Types.Updates.CreatePageUpdate.CreatePageUpdateInput
     ) : async Types.Updates.CreatePageUpdate.CreatePageUpdateOutput {
         let result = await CreatePage.execute(state, caller, input);
-        canistergeekMonitor.updateInformation({ metrics = ? #normal });
+        await updateCanistergeekInformation({ metrics = ? #normal });
         return result;
     };
 
@@ -205,7 +205,7 @@ shared ({ caller = initializer }) actor class Workspace(
             case (#err(#keyAlreadyExists)) { #err };
             case (#ok(id, block)) { #ok(block) };
         };
-        canistergeekMonitor.updateInformation({ metrics = ? #normal });
+        await updateCanistergeekInformation({ metrics = ? #normal });
         return result;
 
     };
@@ -220,7 +220,7 @@ shared ({ caller = initializer }) actor class Workspace(
                 #ok(BlocksModels.Block.toShareable(block));
             };
         };
-        canistergeekMonitor.updateInformation({ metrics = ? #normal });
+        await updateCanistergeekInformation({ metrics = ? #normal });
         return finalResult;
     };
 
@@ -228,7 +228,7 @@ shared ({ caller = initializer }) actor class Workspace(
         input : Types.Updates.DeletePageUpdate.DeletePageUpdateInput
     ) : async Types.Updates.DeletePageUpdate.DeletePageUpdateOutput {
         let result = #ok(state.data.deleteBlockByUuid(input.uuid));
-        canistergeekMonitor.updateInformation({ metrics = ? #normal });
+        await updateCanistergeekInformation({ metrics = ? #normal });
         return result;
     };
 
@@ -298,14 +298,14 @@ shared ({ caller = initializer }) actor class Workspace(
             };
         };
 
-        canistergeekMonitor.updateInformation({ metrics = ? #normal });
+        await updateCanistergeekInformation({ metrics = ? #normal });
         #ok();
     };
 
     // Returns the cycles received up to the capacity allowed
     public shared func walletReceive() : async { accepted : Nat64 } {
         let result = await CyclesUtils.walletReceive(capacity - ExperimentalCycles.balance());
-        canistergeekMonitor.updateInformation({ metrics = ? #normal });
+        await updateCanistergeekInformation({ metrics = ? #normal });
         return result;
     };
 
@@ -370,15 +370,8 @@ shared ({ caller = initializer }) actor class Workspace(
     */
     public query ({ caller }) func getCanistergeekInformation(
         request : Canistergeek.GetInformationRequest
-    ) : async Result.Result<Canistergeek.GetInformationResponse, { #unauthorized }> {
-        switch (validateCaller(caller)) {
-            case (#err(err)) {
-                #err(err);
-            };
-            case (#ok(_)) {
-                #ok(Canistergeek.getInformation(?canistergeekMonitor, ?canistergeekLogger, request));
-            };
-        };
+    ) : async Canistergeek.GetInformationResponse {
+        Canistergeek.getInformation(?canistergeekMonitor, ?canistergeekLogger, request);
     };
 
     /**
@@ -387,16 +380,8 @@ shared ({ caller = initializer }) actor class Workspace(
      */
     public shared ({ caller }) func updateCanistergeekInformation(
         request : Canistergeek.UpdateInformationRequest
-    ) : async Result.Result<(), { #unauthorized }> {
-        switch (validateCaller(caller)) {
-            case (#err(err)) {
-                #err(err);
-            };
-            case (#ok(_)) {
-                canistergeekMonitor.updateInformation(request);
-                #ok;
-            };
-        };
+    ) : async () {
+        canistergeekMonitor.updateInformation(request);
     };
 
     private func validateCaller(
