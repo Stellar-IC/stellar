@@ -37,6 +37,13 @@ export const useReorderHandler = ({
       const blockToMove = get<Block>(DATA_TYPES.block, blockExternalId);
       if (!blockToMove) return false;
 
+      const node = Tree.getNodeAtPosition(
+        parentBlock.content,
+        originalBlockIndex
+      );
+
+      if (!node) return false;
+
       // Remove the block from its current position
       updateBlock(parse(parentBlock.uuid), {
         updateContent: {
@@ -46,10 +53,7 @@ export const useReorderHandler = ({
               {
                 delete: {
                   transactionType: { delete: null },
-                  position: Tree.getNodeAtPosition(
-                    parentBlock.content,
-                    originalBlockIndex
-                  ).identifier.value,
+                  position: node.identifier.value,
                 },
               },
             ],
@@ -123,18 +127,13 @@ export const useReorderHandler = ({
 
       // Local updates
       // Remove the block from its current position
-      Tree.removeCharacter(
-        parentBlock.content,
-        originalBlockIndex + 1,
-        () => {}
-      );
+      Tree.removeCharacter(parentBlock.content, originalBlockIndex);
 
       // Add the block to the new position
       Tree.insertCharacter(
         parentBlock.content,
         updatedBlockIndex,
-        blockToMove.uuid,
-        () => {}
+        blockToMove.uuid
       );
 
       updateLocalBlock(parentBlock.uuid, parentBlock);

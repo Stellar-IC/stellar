@@ -71,14 +71,12 @@ export const useTextBlockEventHandlers = ({
   };
 
   const onCharacterInserted = (cursorPosition: number, character: string) => {
-    Tree.insertCharacter(
+    const events = Tree.insertCharacter(
       block.properties.title,
       cursorPosition,
-      character,
-      (events) => {
-        onSuccess(block.properties.title, events);
-      }
+      character
     );
+    onSuccess(block.properties.title, events);
   };
 
   const onCharactersInserted = (
@@ -88,23 +86,23 @@ export const useTextBlockEventHandlers = ({
     const allEvents: TreeEvent[] = [];
 
     characters.forEach((character, i) => {
-      Tree.insertCharacter(
+      const events = Tree.insertCharacter(
         block.properties.title,
         cursorPosition + i,
-        character,
-        (events) => {
-          allEvents.push(...events);
-        }
+        character
       );
+      allEvents.push(...events);
     });
 
     onSuccess(block.properties.title, allEvents);
   };
 
   const onCharacterRemoved = (cursorPosition: number) => {
-    Tree.removeCharacter(block.properties.title, cursorPosition, (event) => {
-      onSuccess(block.properties.title, [event]);
-    });
+    const event = Tree.removeCharacter(
+      block.properties.title,
+      cursorPosition - 1
+    );
+    if (event) onSuccess(block.properties.title, [event]);
   };
 
   const onCharactersRemoved = (startPosition: number, endPosition?: number) => {
@@ -119,9 +117,8 @@ export const useTextBlockEventHandlers = ({
     const allEvents: TreeEvent[] = [];
 
     characterIndexes.forEach((index) => {
-      Tree.removeCharacter(block.properties.title, index, (event) => {
-        allEvents.push(event);
-      });
+      const event = Tree.removeCharacter(block.properties.title, index - 1);
+      if (event) allEvents.push(event);
     });
 
     onSuccess(block.properties.title, allEvents);

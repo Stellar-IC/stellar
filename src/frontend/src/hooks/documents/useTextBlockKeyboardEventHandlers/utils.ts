@@ -32,9 +32,8 @@ export const insertBlockTitleCharacters = (
   const { title } = block.properties;
 
   characters.split('').forEach((character, index) => {
-    Tree.insertCharacter(title, index, character, (events) => {
-      allEvents.push(...events);
-    });
+    const events = Tree.insertCharacter(title, index, character);
+    allEvents.push(...events);
   });
 
   const updatedBlock = {
@@ -62,9 +61,8 @@ export const removeBlockTitleCharacters = (
   const newTitle = Tree.clone(title);
 
   characterIndexes.forEach((characterIndex) => {
-    Tree.removeCharacter(newTitle, characterIndex, (event) => {
-      allEvents.push(event);
-    });
+    const event = Tree.removeCharacter(newTitle, characterIndex - 1);
+    if (event) allEvents.push(event);
   });
 
   const updatedBlock = {
@@ -90,9 +88,8 @@ export const insertBlockContent = (
   const allEvents: TreeEvent[] = [];
   data.forEach((x) => {
     const { index, item } = x;
-    Tree.insertCharacter(block.content, index, item, (events) => {
-      allEvents.push(...events);
-    });
+    const events = Tree.insertCharacter(block.content, index, item);
+    allEvents.push(...events);
   });
   onUpdateLocal(block);
   onUpdateRemote(block, allEvents);
@@ -109,11 +106,8 @@ export const removeBlockContent = (
   const { onUpdateLocal, onUpdateRemote } = opts;
   const allEvents: TreeEvent[] = [];
   indexes.forEach((index) => {
-    // We are removing the character at index + 1 because we want to remove the
-    // character before the "cursor"
-    Tree.removeCharacter(block.content, index + 1, (event) => {
-      allEvents.push(event);
-    });
+    const event = Tree.removeCharacter(block.content, index);
+    if (event) allEvents.push(event);
   });
   onUpdateLocal(block);
   onUpdateRemote(block, allEvents);

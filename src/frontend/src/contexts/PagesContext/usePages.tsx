@@ -102,32 +102,30 @@ export const usePages = (props: {
       }
 
       // Add block to parent block's content
-      Tree.insertCharacter(
+      const events = Tree.insertCharacter(
         parentBlock.content,
         Number(event.data.index),
-        blockExternalId,
-        (_events) => {
-          const contentUpdatedEvent: BlockContentUpdatedEvent = {
-            uuid: parse(v4()),
-            user: event.user,
-            data: {
-              blockExternalId: parse(parentBlock.uuid),
-              transaction: _events,
-            },
-          };
-          sendUpdate([
-            {
-              transaction: [
-                {
-                  blockUpdated: {
-                    updateContent: contentUpdatedEvent,
-                  },
-                },
-              ],
-            },
-          ]);
-        }
+        blockExternalId
       );
+      const contentUpdatedEvent: BlockContentUpdatedEvent = {
+        uuid: parse(v4()),
+        user: event.user,
+        data: {
+          blockExternalId: parse(parentBlock.uuid),
+          transaction: events,
+        },
+      };
+      sendUpdate([
+        {
+          transaction: [
+            {
+              blockUpdated: {
+                updateContent: contentUpdatedEvent,
+              },
+            },
+          ],
+        },
+      ]);
 
       updateLocalBlock(parentExternalId, parentBlock);
       if ('page' in parentBlock.blockType) {
