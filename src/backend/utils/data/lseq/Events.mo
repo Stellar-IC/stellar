@@ -2,6 +2,7 @@ import List "mo:base/List";
 import Deque "mo:base/Deque";
 import TrieMap "mo:base/TrieMap";
 import Text "mo:base/Text";
+import Debug "mo:base/Debug";
 
 module {
     public type EventListener<EventT> = (event : EventT) -> ();
@@ -11,6 +12,11 @@ module {
         listener : EventListener<EventT>;
     };
 
+    public type EventHistory = {
+        processed : Bool;
+        processing : Bool;
+    };
+
     public class EventStream<EventT>(
         helpers : {
             getEventId : (event : EventT) -> Text;
@@ -18,7 +24,7 @@ module {
     ) {
         var subscribers = List.fromArray<Subscriber<EventT>>([]);
         var events = Deque.empty<EventT>();
-        var eventProcessingHistory = TrieMap.TrieMap<Text, { processed : Bool }>(Text.equal, Text.hash);
+        var eventProcessingHistory = TrieMap.TrieMap<Text, EventHistory>(Text.equal, Text.hash);
         var currentlyProcessing = false;
 
         public func addEventListener(name : Text, listener : EventListener<EventT>) {
@@ -38,8 +44,9 @@ module {
         };
 
         public func publish(event : EventT) {
-            events := Deque.pushFront<EventT>(events, event);
-            eventProcessingHistory.put(helpers.getEventId(event), { processed = false });
+            addEventToQueue(event);
+            createEventProcessingHistory(event);
+            processEvents();
         };
 
         /**
@@ -53,9 +60,12 @@ module {
                 return;
             };
 
-            currentlyProcessing := true;
-
             var iteration = 0;
+
+            if (Deque.isEmpty(events)) {
+                currentlyProcessing := false;
+                return;
+            };
 
             label doLoop while (Deque.isEmpty(events) == false and iteration < 100) {
                 let event = switch (Deque.peekBack<EventT>(events)) {
@@ -64,7 +74,7 @@ module {
                 };
                 let eventId = helpers.getEventId(event);
                 let eventHistory = switch (eventProcessingHistory.get(eventId)) {
-                    case null { { processed = false } };
+                    case null { { processed = false; processing = false } };
                     case (?eventHistory) { eventHistory };
                 };
 
@@ -75,14 +85,18 @@ module {
                             events := newEvents;
                         };
                     };
+                } else if (eventHistory.processing) {
+                    break doLoop;
                 } else {
                     switch (Deque.popBack<EventT>(events)) {
                         case null {};
                         case (?(newEvents, popped)) {
+                            currentlyProcessing := true;
+                            eventProcessingHistory.put(eventId, { processed = false; processing = true });
                             for (subscriber in List.toIter(subscribers)) {
                                 subscriber.listener(event);
                             };
-                            eventProcessingHistory.put(eventId, { processed = true });
+                            eventProcessingHistory.put(eventId, { processed = true; processing = false });
                             events := newEvents;
                         };
                     };
@@ -92,6 +106,20 @@ module {
             };
 
             currentlyProcessing := false;
+        };
+
+        private func defaultEventHistory() : EventHistory {
+            { processed = false; processing = false };
+        };
+
+        private func addEventToQueue(event : EventT) {
+            events := Deque.pushFront<EventT>(events, event);
+        };
+
+        private func createEventProcessingHistory(event : EventT) {
+            let history = defaultEventHistory();
+            let eventId = helpers.getEventId(event);
+            eventProcessingHistory.put(eventId, history);
         };
     };
 };
