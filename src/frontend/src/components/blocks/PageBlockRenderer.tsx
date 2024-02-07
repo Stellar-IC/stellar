@@ -1,4 +1,4 @@
-import { Box, Text } from '@mantine/core';
+import { Anchor, Box } from '@mantine/core';
 
 import { useDataStoreContext } from '@/contexts/DataStoreContext/useDataStoreContext';
 import { Block } from '@/types';
@@ -28,7 +28,11 @@ export const PageBlockRenderer = ({
 
   return (
     <Box>
-      <Link to={`/pages/${block.uuid}`}>
+      <Anchor
+        component={Link}
+        to={`/pages/${block.uuid}`}
+        style={{ color: 'inherit' }}
+      >
         <TextBlock
           blockIndex={index}
           blockType={blockType}
@@ -38,10 +42,7 @@ export const PageBlockRenderer = ({
           placeholder={placeholder}
           value={block.properties.title}
         />
-      </Link>
-      <Text size="xs" c="gray.7">
-        {blockExternalId}
-      </Text>
+      </Anchor>
     </Box>
   );
 };

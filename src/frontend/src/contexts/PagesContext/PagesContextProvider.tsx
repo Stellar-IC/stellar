@@ -68,19 +68,18 @@ export function PagesContextProvider({ children }: PropsWithChildren<{}>) {
         );
       }
 
-      Tree.removeCharacter(parentBlock.content, index, (event) => {
-        handleBlockEvent(stringify(parentBlockExternalId), {
-          blockUpdated: {
-            updateContent: {
-              uuid: parse(v4()),
-              user: identity.getPrincipal(),
-              data: {
-                blockExternalId: parentBlockExternalId,
-                transaction: [event],
-              },
+      const event = Tree.removeCharacter(parentBlock.content, index - 1);
+      handleBlockEvent(stringify(parentBlockExternalId), {
+        blockUpdated: {
+          updateContent: {
+            uuid: parse(v4()),
+            user: identity.getPrincipal(),
+            data: {
+              blockExternalId: parentBlockExternalId,
+              transaction: [event],
             },
           },
-        });
+        },
       });
 
       blocksContext.updateLocal(stringify(parentBlockExternalId), parentBlock);

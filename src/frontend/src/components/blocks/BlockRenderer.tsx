@@ -214,17 +214,12 @@ export const BlockRenderer = ({
       if (currentBlockIndex === 0) return undefined;
       if (!parentBlock) return undefined;
 
-      try {
-        const previousSinblingNode = getNodeAtPosition(
-          parentBlock.content,
-          currentBlockIndex - 1
-        );
+      const previousSinblingNode = getNodeAtPosition(
+        parentBlock.content,
+        currentBlockIndex - 1
+      );
 
-        return previousSinblingNode.value;
-      } catch (e) {
-        // Previous sibling node does not exist
-        return undefined;
-      }
+      return previousSinblingNode?.value;
     },
     [parentBlock]
   );
