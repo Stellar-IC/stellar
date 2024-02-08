@@ -3,59 +3,78 @@ import { focusPreviousBlock } from '@/modules/editor/utils';
 
 type UseBackspaceHandlerProps = {
   onRemove: (startCursor: number, endCursor?: number) => void;
-  showPlaceholder?: () => void;
+  showPlaceholder: () => void;
 };
 
 type DoBackspaceOperationArgs = {
-  shouldRemoveBlock?: boolean;
-  shouldShowPlaceholder?: boolean;
-  onRemoveBlock?: () => void;
+  hasParentBlock: boolean;
+  onRemoveBlock: () => void;
 };
+
+function getRangeSelectionEndpoints(selection: Selection) {
+  let startCursor = selection.anchorOffset;
+  let endCursor = selection.focusOffset;
+
+  if (startCursor > endCursor) {
+    startCursor = selection.focusOffset;
+    endCursor = selection.anchorOffset;
+  }
+
+  return [startCursor, endCursor];
+}
 
 export const useBackspaceHandler = ({
   onRemove,
   showPlaceholder,
 }: UseBackspaceHandlerProps) => {
-  const doBackspaceOperation = useCallback(
-    ({
-      shouldRemoveBlock,
-      shouldShowPlaceholder,
-      onRemoveBlock,
-    }: DoBackspaceOperationArgs) => {
-      if (shouldRemoveBlock) {
-        if (onRemoveBlock) {
-          onRemoveBlock();
-        }
+  const deleteCharactersInSelectionRange = useCallback(
+    (selection: Selection) => {
+      const [startCursor, endCursor] = getRangeSelectionEndpoints(selection);
 
+      onRemove(startCursor, endCursor);
+      selection?.deleteFromDocument();
+
+      return false;
+    },
+    [onRemove]
+  );
+
+  const doBackspaceOperation = useCallback(
+    (
+      e: React.KeyboardEvent<HTMLSpanElement>,
+      args: DoBackspaceOperationArgs
+    ) => {
+      const { hasParentBlock, onRemoveBlock } = args;
+      const selection = window.getSelection();
+      const cursorPosition = selection?.anchorOffset;
+      const target = e.currentTarget;
+      const shouldRemoveBlock = hasParentBlock && target.innerText === '';
+      const isLastCharacter =
+        target.innerText.length === 1 && cursorPosition === 1;
+
+      if (cursorPosition === undefined) return;
+
+      if (shouldRemoveBlock) {
+        e.preventDefault();
+        onRemoveBlock();
         focusPreviousBlock(true);
 
         return false;
       }
 
-      const selection = window.getSelection();
-
       if (selection?.type === 'Range') {
-        let startCursor = selection.anchorOffset;
-        let endCursor = selection.focusOffset;
+        e.preventDefault();
 
-        if (startCursor > endCursor) {
-          startCursor = selection.focusOffset;
-          endCursor = selection.anchorOffset;
-        }
-
-        onRemove(startCursor, endCursor);
-        selection?.deleteFromDocument();
-      } else {
-        const cursorPosition = selection?.anchorOffset;
-        if (cursorPosition) onRemove(cursorPosition);
+        return deleteCharactersInSelectionRange(selection);
       }
 
-      // If the block will be empty, show the placeholder
-      if (shouldShowPlaceholder && showPlaceholder) {
+      onRemove(cursorPosition);
+
+      if (isLastCharacter) {
         showPlaceholder();
       }
     },
-    [onRemove, showPlaceholder]
+    [deleteCharactersInSelectionRange, onRemove, showPlaceholder]
   );
 
   return doBackspaceOperation;

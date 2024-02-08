@@ -12,6 +12,7 @@ import { useArrowDownHandler } from './useArrowDownHandler';
 import { useArrowUpHandler } from './useArrowUpHandler';
 import { useTextBlockEventHandlers } from '../useTextBlockEventHandlers';
 import { useCutHandler } from './useCutHandler';
+import { useWordCharacterHandler } from './useWordCharacterHandler';
 
 type UseTextBlockKeyboardEventHandlersProps = {
   blockExternalId: ExternalId;
@@ -19,9 +20,49 @@ type UseTextBlockKeyboardEventHandlersProps = {
   blockType: BlockType;
   parentBlockExternalId?: ExternalId | null;
   parentBlockIndex?: number;
-  showPlaceholder?: () => void;
-  hidePlaceholder?: () => void;
+  showPlaceholder: () => void;
+  hidePlaceholder: () => void;
 };
+
+function getClipboardText(clipboardData: DataTransfer) {
+  return clipboardData.getData('text/plain');
+}
+
+function getCursorPosition() {
+  const cursorPosition = window.getSelection()?.anchorOffset;
+
+  if (cursorPosition === undefined) {
+    throw new Error('No cursor position');
+  }
+
+  return cursorPosition;
+}
+
+function insertTextAtPosition(
+  clipboardText: string,
+  position: number,
+  target: HTMLSpanElement
+) {
+  const characters = target.innerText.split('');
+  const clipboardCharacters = clipboardText.split('');
+
+  characters.splice(position, 0, ...clipboardCharacters);
+  target.innerText = characters.join(''); // eslint-disable-line no-param-reassign
+}
+
+function setCursorAtEnd(target: HTMLSpanElement) {
+  const selection = window.getSelection();
+
+  if (selection) {
+    const range = document.createRange();
+
+    range.setStart(target.childNodes[0], target.innerText.length);
+    range.collapse(true);
+
+    selection.removeAllRanges();
+    selection.addRange(range);
+  }
+}
 
 export const useTextBlockKeyboardEventHandlers = ({
   blockIndex,
@@ -34,153 +75,123 @@ export const useTextBlockKeyboardEventHandlers = ({
 }: UseTextBlockKeyboardEventHandlersProps) => {
   const { removeBlock } = usePagesContext();
 
+  const onRemoveBlock = () => {
+    if (!parentBlockExternalId) return;
+
+    // Note: We add 1 to the block index because the current functionality
+    // for removing a block is to remove the block before the given position.
+    removeBlock(parse(parentBlockExternalId), blockIndex + 1);
+  };
+
   const { onCharacterInserted, onCharactersRemoved, onCharactersInserted } =
     useTextBlockEventHandlers({
       blockExternalId,
     });
+
   const handleTab = useTabHandler({
     blockIndex,
     blockExternalId,
     parentBlockExternalId,
   });
+
   const handleShiftTab = useShiftTabHandler({
     blockIndex,
     blockExternalId,
     parentBlockExternalId,
     parentBlockIndex,
   });
+
   const handleArrowDown = useArrowDownHandler();
+
   const handleArrowUp = useArrowUpHandler();
+
   const handleBackspace = useBackspaceHandler({
     onRemove: onCharactersRemoved,
     showPlaceholder,
   });
+
   const handleCut = useCutHandler({
     onRemove: onCharactersRemoved,
     showPlaceholder,
   });
+
   const handleEnter = useEnterHandler({
     blockExternalId,
     blockIndex,
     blockType,
     parentBlockExternalId,
   });
-  const handleWordCharacter = (
-    character: string,
-    { shouldHidePlaceholder }: { shouldHidePlaceholder?: boolean } = {}
-  ) => {
-    const cursorPosition = window.getSelection()?.anchorOffset;
 
-    if (cursorPosition === undefined) {
-      throw new Error('No cursor position');
-    }
-
-    if (shouldHidePlaceholder && hidePlaceholder) {
-      hidePlaceholder();
-    }
-
-    onCharacterInserted(cursorPosition, character);
-  };
+  const handleWordCharacter = useWordCharacterHandler({
+    onCharacterInserted,
+    hidePlaceholder,
+  });
 
   const onKeyDown = (e: KeyboardEvent<HTMLSpanElement>) => {
-    if (e.key === 'Enter') {
+    const { key, shiftKey, metaKey, ctrlKey } = e;
+
+    if (key === 'Enter' && !shiftKey) {
       e.preventDefault();
+
       return handleEnter();
     }
 
-    if (e.key === 'Tab') {
+    if (key === 'Tab') {
       e.preventDefault();
-      if (e.shiftKey) {
+
+      if (shiftKey) {
         return handleShiftTab();
       }
+
       return handleTab();
     }
 
-    if (e.key === 'Backspace') {
-      const selection = window.getSelection();
-      if (selection?.type === 'Range') {
-        e.preventDefault();
-      }
-      const cursorPosition = window.getSelection()?.anchorOffset;
-      const shouldRemoveBlock =
-        Boolean(parentBlockExternalId) && e.currentTarget.innerText === '';
-      const shouldShowPlaceholder =
-        e.currentTarget.innerText.length === 1 && cursorPosition === 1;
-
-      return handleBackspace({
-        shouldRemoveBlock,
-        shouldShowPlaceholder,
-        onRemoveBlock: () => {
-          if (!parentBlockExternalId) return;
-          // Note: We add 1 to the block index because the current functionality
-          // for removing a block is to remove the block before the given position.
-          removeBlock(parse(parentBlockExternalId), blockIndex + 1);
-        },
+    if (key === 'Backspace') {
+      return handleBackspace(e, {
+        hasParentBlock: Boolean(parentBlockExternalId),
+        onRemoveBlock,
       });
     }
 
-    if (e.key === 'ArrowDown') {
+    if (key === 'ArrowDown') {
       return handleArrowDown();
     }
 
-    if (e.key === 'ArrowUp') {
+    if (key === 'ArrowUp') {
       return handleArrowUp();
     }
 
-    if (e.key.match(/^[\w\W]$/g) && !e.metaKey && !e.ctrlKey) {
-      const cursorPosition = window.getSelection()?.anchorOffset;
-      const shouldHidePlaceholder =
-        cursorPosition === 0 && e.currentTarget.innerText.length === 0;
-
-      return handleWordCharacter(e.key, {
-        shouldHidePlaceholder,
-      });
+    if (key.match(/^[\w\W]$/g) && !metaKey && !ctrlKey) {
+      return handleWordCharacter(key, e.currentTarget);
     }
   };
 
   const onCut = (e: React.ClipboardEvent<HTMLSpanElement>) => {
     e.preventDefault();
+
     return handleCut({
       shouldRemoveBlock: false,
       shouldShowPlaceholder: false,
-      onRemoveBlock: () => {
-        if (!parentBlockExternalId) return;
-        // Note: We add 1 to the block index because the current functionality
-        // for removing a block is to remove the block before the given position.
-        removeBlock(parse(parentBlockExternalId), blockIndex + 1);
-      },
+      onRemoveBlock,
     });
   };
 
   const onPaste = (e: React.ClipboardEvent<HTMLSpanElement>) => {
     e.preventDefault();
 
-    const text = e.clipboardData.getData('text/plain');
-    const cursorPosition = window.getSelection()?.anchorOffset;
+    const { clipboardData } = e;
+    const clipboardText = getClipboardText(clipboardData);
+    const cursorPosition = getCursorPosition();
+    const target = e.currentTarget;
 
-    if (cursorPosition === undefined) {
-      throw new Error('No cursor position');
+    if (clipboardText.length === 0) {
+      return;
     }
 
-    // Since we're using a contenteditable span and preventing default behavior,
-    // we need to manually insert the text at the cursor position.
-    const spliced = e.currentTarget.innerText.split('');
-    spliced.splice(cursorPosition, 0, ...text.split(''));
-    e.currentTarget.innerText = spliced.join('');
-
-    // Insert the characters into the tree
-    onCharactersInserted(cursorPosition, text.split(''));
-
-    // Set the cursor position to the end of the pasted text
-    const newCursorPosition = cursorPosition + text.length;
-    const selection = window.getSelection();
-    if (selection) {
-      const range = document.createRange();
-      range.setStart(e.currentTarget.childNodes[0], newCursorPosition);
-      range.collapse(true);
-      selection.removeAllRanges();
-      selection.addRange(range);
-    }
+    insertTextAtPosition(clipboardText, cursorPosition, target);
+    onCharactersInserted(clipboardText.split(''), cursorPosition);
+    setCursorAtEnd(target);
+    hidePlaceholder();
   };
 
   return {

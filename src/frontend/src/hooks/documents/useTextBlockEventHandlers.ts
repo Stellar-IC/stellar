@@ -80,8 +80,8 @@ export const useTextBlockEventHandlers = ({
   };
 
   const onCharactersInserted = (
-    cursorPosition: number,
-    characters: string[]
+    characters: string[],
+    cursorPosition: number
   ) => {
     const allEvents: TreeEvent[] = [];
 
