@@ -53,6 +53,8 @@ export const useTabHandler = ({
       parentBlock.content,
       blockIndex - 1
     )?.value;
+    if (!previousBlockExternalId) return false;
+
     const previousBlock = get<Block>(DATA_TYPES.block, previousBlockExternalId);
     if (!previousBlock) return false;
 

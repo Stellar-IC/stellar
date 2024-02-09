@@ -1,9 +1,9 @@
-import { defineConfig } from 'vite';
-import { fileURLToPath, URL } from 'url';
-
-import * as path from 'path';
-import * as dotenv from 'dotenv';
 import react from '@vitejs/plugin-react-swc';
+import * as dotenv from 'dotenv';
+import { fileURLToPath, URL } from 'url';
+import { defineConfig } from 'vite';
+import { VitePWA } from 'vite-plugin-pwa';
+
 const network =
   process.env.DFX_NETWORK ||
   (process.env.NODE_ENV === 'production' ? 'ic' : 'local');
@@ -31,7 +31,22 @@ export default defineConfig({
     'process.env.DFX_NETWORK': `"${process.env.DFX_NETWORK}"`,
     'process.env.DFX_VERSION': `"${process.env.DFX_VERSION}"`,
   },
-  plugins: [react()],
+  plugins: [
+    react(),
+    VitePWA({
+      // mode: network === 'local' ? 'development' : 'production',
+      mode: 'development',
+      base: '/',
+      registerType: 'autoUpdate',
+      devOptions: {
+        enabled: true,
+        type: 'module',
+      },
+      strategies: 'injectManifest',
+      filename: 'sw.js',
+      srcDir: 'src/frontend/src',
+    }),
+  ],
   build: {
     outDir: './src/frontend/dist',
   },

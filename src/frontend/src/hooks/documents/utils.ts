@@ -1,8 +1,8 @@
 import { fromShareable } from '@/modules/serializers/block';
 
 import {
-  Result_1 as BlockByUuidResult,
-  Result_1 as PageByUuidResult,
+  BlockByUuidResult,
+  PageByUuidResult,
   UUID,
 } from '../../../../declarations/workspace/workspace.did';
 

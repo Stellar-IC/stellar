@@ -19,7 +19,8 @@
     "paths": {
       "@/*": ["./src/frontend/src/*"],
       "@test-utils": ["./src/frontend//test-utils"]
-    }
+    },
+    "types": ["vite-plugin-pwa/client"]
   },
   "include": [
     "./src/e2e",
