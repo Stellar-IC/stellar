@@ -18,9 +18,9 @@ import Source "mo:uuid/async/SourceV4";
 import BlocksModels "../../lib/blocks/models";
 import BlocksTypes "../../lib/blocks/types";
 import BlocksUtils "../../lib/blocks/utils";
+import EventStream "../../lib/events/EventStream";
 import CoreTypes "../../types";
 import CyclesUtils "../../utils/cycles";
-import LseqEvents "../../utils/data/lseq/Events";
 import LseqTree "../../utils/data/lseq/Tree";
 
 import BlockCreatedConsumer "./consumers/BlockCreatedConsumer";
@@ -70,6 +70,12 @@ shared ({ caller = initializer }) actor class Workspace(
     stable var _canistergeekMonitorUD : ?Canistergeek.UpgradeData = null;
     stable var _canistergeekLoggerUD : ?Canistergeek.LoggerUpgradeData = null;
 
+    // Event Stream
+    let eventStream = EventStream.EventStream<BlocksTypes.BlockEvent>({
+        getEventId = BlocksUtils.getEventId;
+    });
+    stable var _eventStreamUpgradeData : ?EventStream.UpgradeData<BlocksTypes.BlockEvent> = null;
+
     /*************************************************************************
      * Transient Data
      *************************************************************************/
@@ -82,9 +88,6 @@ shared ({ caller = initializer }) actor class Workspace(
         };
     });
     var state = State.State(data);
-    let eventStream = LseqEvents.EventStream<BlocksTypes.BlockEvent>({
-        getEventId = BlocksUtils.getEventId;
-    });
 
     /*************************************************************************
      * Initialization helper methods
@@ -285,7 +288,6 @@ shared ({ caller = initializer }) actor class Workspace(
                     );
 
                     eventStream.publish(eventToPublish);
-                    return #ok();
                 };
                 case (#blockUpdated(event)) {
                     canistergeekLogger.logMessage(
@@ -293,11 +295,11 @@ shared ({ caller = initializer }) actor class Workspace(
                         debug_show BlocksUtils.getEventId(#blockUpdated(event))
                     );
                     eventStream.publish(#blockUpdated(event));
-                    return #ok();
                 };
             };
         };
 
+        eventStream.processEvents();
         await updateCanistergeekInformation({ metrics = ? #normal });
         #ok();
     };
@@ -354,9 +356,7 @@ shared ({ caller = initializer }) actor class Workspace(
                 };
             },
         );
-    };
 
-    private func startProcessingEvents() : async () {
         eventStream.processEvents();
     };
 
@@ -421,13 +421,10 @@ shared ({ caller = initializer }) actor class Workspace(
         if (timersHaveBeenStarted) {
             return;
         };
+
         ignore Timer.setTimer(
             #nanoseconds(0),
             startListeningForEvents,
-        );
-        ignore Timer.recurringTimer(
-            #nanoseconds(500_000_000),
-            startProcessingEvents,
         );
     };
 
@@ -446,8 +443,8 @@ shared ({ caller = initializer }) actor class Workspace(
 
         blocks := shareableBlocks.share();
         blocksIdCounter := state.data.Block.id_manager.current();
-
         doCanisterGeekPreUpgrade();
+        _eventStreamUpgradeData := ?eventStream.preupgrade();
     };
 
     system func postupgrade() {
@@ -461,6 +458,14 @@ shared ({ caller = initializer }) actor class Workspace(
             let block = entry.1;
             state.data.Block.objects.data.put(blockId, BlocksModels.Block.fromShareable(block));
             state.data.addBlockToBlocksByParentIdIndex(BlocksModels.Block.fromShareable(block));
+        };
+
+        switch (_eventStreamUpgradeData) {
+            case (null) {};
+            case (?upgradeData) {
+                eventStream.postupgrade(upgradeData);
+                _eventStreamUpgradeData := null;
+            };
         };
 
         // Restart timers
