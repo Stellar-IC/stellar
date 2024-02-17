@@ -22,4 +22,13 @@ module Types {
         value_type : { #text; #uuid };
         add_value_to_index : (Text, DataT, Index<Text, PrimaryKeyT>) -> ();
     };
+
+    public type FilterValue = {
+        #nat : Nat;
+        #text : Text;
+    };
+
+    public type FilterPredicate = {
+        #equals : (other_value : FilterValue) -> Bool;
+    };
 };

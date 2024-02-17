@@ -1,7 +1,7 @@
 import UUID "mo:uuid/UUID";
 
-import Tree "../../utils/data/lseq/Tree";
-import LseqTypes "../../utils/data/lseq/types";
+import Tree "../../../utils/data/lseq/Tree";
+import LseqTypes "../../../utils/data/lseq/types";
 
 module {
     public type PrimaryKey = Nat;
@@ -86,7 +86,7 @@ module {
         user : Principal;
     };
 
-    public type BlockProperyCheckedUpdatedEvent = {
+    public type BlockPropertyCheckedUpdatedEvent = {
         uuid : UUID.UUID;
         data : {
             blockExternalId : UUID.UUID;
@@ -95,7 +95,7 @@ module {
         user : Principal;
     };
 
-    public type BlockProperyTitleUpdatedEvent = {
+    public type BlockPropertyTitleUpdatedEvent = {
         uuid : UUID.UUID;
         data : {
             blockExternalId : UUID.UUID;
@@ -114,8 +114,8 @@ module {
     };
 
     public type BlockUpdatedEvent = {
-        #updatePropertyChecked : BlockProperyCheckedUpdatedEvent;
-        #updatePropertyTitle : BlockProperyTitleUpdatedEvent;
+        #updatePropertyChecked : BlockPropertyCheckedUpdatedEvent;
+        #updatePropertyTitle : BlockPropertyTitleUpdatedEvent;
         #updateBlockType : BlockTypeUpdatedEvent;
         #updateContent : BlockContentUpdatedEvent;
         #updateParent : BlockParentUpdatedEvent;

@@ -16,8 +16,8 @@ import {
   SaveEventTransactionUpdateInput,
   SaveEventTransactionUpdateOutput,
   BlockTypeUpdatedEvent,
-  BlockProperyTitleUpdatedEvent,
-  BlockProperyCheckedUpdatedEvent,
+  BlockPropertyTitleUpdatedEvent,
+  BlockPropertyCheckedUpdatedEvent,
   BlockCreatedEvent,
   BlockContentUpdatedEvent,
 } from '../../../../declarations/workspace/workspace.did';
@@ -169,7 +169,7 @@ export const usePages = (props: {
   );
 
   const updatePropertyChecked = useCallback(
-    (event: BlockProperyCheckedUpdatedEvent) => {
+    (event: BlockPropertyCheckedUpdatedEvent) => {
       const blockExternalId = stringify(event.data.blockExternalId);
       const currentBlock = get<Block>(DATA_TYPES.block, blockExternalId);
       if (!currentBlock) {
@@ -188,7 +188,7 @@ export const usePages = (props: {
   );
 
   const updatePropertyTitle = useCallback(
-    (_event: BlockProperyTitleUpdatedEvent) => {
+    (_event: BlockPropertyTitleUpdatedEvent) => {
       // Do Nothing. This is handled in the Blocks component.
       // TODO: We should probably move that logic here.
     },

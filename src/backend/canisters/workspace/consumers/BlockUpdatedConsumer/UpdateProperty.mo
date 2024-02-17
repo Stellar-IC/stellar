@@ -1,16 +1,17 @@
 import UUID "mo:uuid/UUID";
 import Array "mo:base/Array";
 
-import Tree "../../../../utils/data/lseq/Tree";
-import LseqTypes "../../../../utils/data/lseq/types";
 import BlocksTypes "../../../../lib/blocks/types";
 
+import Tree "../../../../utils/data/lseq/Tree";
+import LseqTypes "../../../../utils/data/lseq/types";
+
 module {
-    type BlockProperyCheckedUpdatedEvent = BlocksTypes.BlockProperyCheckedUpdatedEvent;
-    type BlockProperyTitleUpdatedEvent = BlocksTypes.BlockProperyTitleUpdatedEvent;
+    type BlockProperyCheckedUpdatedEvent = BlocksTypes.BlockPropertyCheckedUpdatedEvent;
+    type BlockProperyTitleUpdatedEvent = BlocksTypes.BlockPropertyTitleUpdatedEvent;
     type BlockProperyUpdatedEvent = {
-        #title : BlocksTypes.BlockProperyTitleUpdatedEvent;
-        #checked : BlocksTypes.BlockProperyCheckedUpdatedEvent;
+        #title : BlocksTypes.BlockPropertyTitleUpdatedEvent;
+        #checked : BlocksTypes.BlockPropertyCheckedUpdatedEvent;
     };
     type Block = BlocksTypes.Block;
 

@@ -9,11 +9,11 @@ import BlocksTypes "../../../lib/blocks/types";
 import CoreTypes "../../../types";
 
 module {
-    type Block = BlocksTypes.Block;
-    type UnsavedBlock = BlocksTypes.UnsavedBlock;
-    type ShareableBlock = BlocksTypes.ShareableBlock;
-    type ShareableBlockContent = BlocksTypes.ShareableBlockContent;
-    type ShareableBlockProperties = BlocksTypes.ShareableBlockProperties;
+    public type Block = BlocksTypes.Block;
+    public type UnsavedBlock = BlocksTypes.UnsavedBlock;
+    public type ShareableBlock = BlocksTypes.ShareableBlock;
+    public type ShareableBlockContent = BlocksTypes.ShareableBlockContent;
+    public type ShareableBlockProperties = BlocksTypes.ShareableBlockProperties;
 
     public type PrimaryKey = Nat;
     public type Username = Text;

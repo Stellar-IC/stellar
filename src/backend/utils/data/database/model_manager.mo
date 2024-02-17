@@ -11,14 +11,8 @@ import Nat "mo:base/Nat";
 import Debug "mo:base/Debug";
 
 module ModelManager {
-    type FilterValue = {
-        #nat : Nat;
-        #text : Text;
-    };
-
-    type FilterPredicate = {
-        #equals : (other_value : FilterValue) -> Bool;
-    };
+    type FilterValue = Types.FilterValue;
+    type FilterPredicate = Types.FilterPredicate;
 
     class Filterable() {
         public func nat(val : Nat) : FilterValue {
