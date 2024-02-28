@@ -53,7 +53,7 @@ export const useBackspaceHandler = ({
       const isLastCharacter =
         target.innerText.length === 1 && cursorPosition === 1;
 
-      if (cursorPosition === undefined) return;
+      if (cursorPosition === undefined) return false;
 
       if (shouldRemoveBlock) {
         e.preventDefault();
@@ -74,6 +74,8 @@ export const useBackspaceHandler = ({
       if (isLastCharacter) {
         showPlaceholder();
       }
+
+      return true;
     },
     [deleteCharactersInSelectionRange, onRemove, showPlaceholder]
   );

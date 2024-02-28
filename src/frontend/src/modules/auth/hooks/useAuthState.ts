@@ -3,12 +3,12 @@ import { DelegationIdentity } from '@dfinity/identity';
 import { Principal } from '@dfinity/principal';
 import { useEffect, useState } from 'react';
 
-import { useHydrate } from './useHydrate';
-import { getUserProfile, registerUser } from './utils';
-
 import { UserProfile } from '../../../../../declarations/user/user.did';
 import { getAuthClient } from '../client';
 import { login as _login } from '../commands';
+
+import { useHydrate } from './useHydrate';
+import { getUserProfile, registerUser } from './utils';
 
 export class AnonymousUserProfile implements UserProfile {
   username = 'Anonymous';

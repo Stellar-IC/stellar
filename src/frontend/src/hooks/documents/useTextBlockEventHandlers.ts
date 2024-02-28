@@ -107,7 +107,10 @@ export const useTextBlockEventHandlers = ({
     if (event) onSuccess(block.properties.title, [event]);
   };
 
-  const onCharactersRemoved = (startPosition: number, endPosition?: number) => {
+  const onCharactersRemoved = (
+    startPosition: number,
+    endPosition?: number
+  ): void => {
     if (endPosition === undefined) return onCharacterRemoved(startPosition);
 
     // Build index array in descending order so that we don't have to worry about
@@ -124,6 +127,8 @@ export const useTextBlockEventHandlers = ({
     });
 
     onSuccess(block.properties.title, allEvents);
+
+    return undefined;
   };
 
   return {

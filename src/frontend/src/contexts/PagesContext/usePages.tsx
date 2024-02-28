@@ -12,8 +12,6 @@ import { useUpdate } from '@/hooks/useUpdate';
 import * as blockSerializers from '@/modules/blocks/serializers';
 import { Page, Block, CanisterId } from '@/types';
 
-import { usePageEvents } from './usePageEvents';
-
 import {
   BlockBlockTypeUpdatedEventData,
   BlockContentUpdatedEventData,
@@ -26,6 +24,8 @@ import {
   UUID,
 } from '../../../../declarations/workspace/workspace.did';
 import { useDataStoreContext } from '../DataStoreContext/useDataStoreContext';
+
+import { usePageEvents } from './usePageEvents';
 
 type CoreBlockEvent = {
   user: Principal;

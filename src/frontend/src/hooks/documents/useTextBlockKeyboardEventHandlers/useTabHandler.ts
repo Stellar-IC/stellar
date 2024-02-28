@@ -131,6 +131,8 @@ export const useTabHandler = ({
         });
       },
     });
+
+    return true;
   }, [
     blockIndex,
     blockExternalId,

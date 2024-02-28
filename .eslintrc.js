@@ -5,7 +5,6 @@ module.exports = {
   },
   plugins: ['react', 'react-hooks'],
   rules: {
-    'consistent-return': 'off',
     'import/order': [
       1,
       {
@@ -13,8 +12,8 @@ module.exports = {
           'external',
           'builtin',
           'internal',
-          'sibling',
           'parent',
+          'sibling',
           'index',
         ],
         pathGroups: [
@@ -23,10 +22,8 @@ module.exports = {
             group: 'internal',
           },
         ],
-        // pathGroupsExcludedImportTypes: ['internal'],
         alphabetize: {
           order: 'asc',
-          // caseInsensitive: false,
         },
         'newlines-between': 'always',
       },

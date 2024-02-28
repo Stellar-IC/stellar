@@ -23,10 +23,10 @@ import { useDeletePage } from '@/hooks/ic/workspace/updates/useDeletePage';
 import { useAuthContext } from '@/modules/auth/contexts/AuthContext';
 import { Block } from '@/types';
 
-import classes from './NavbarSearch.module.css';
-
 import { AuthButton } from '../AuthButton/AuthButton';
 import { PrincipalBadge } from '../PrincipalBadge';
+
+import classes from './NavbarSearch.module.css';
 
 function PageLinksSection() {
   const { store } = useDataStoreContext();

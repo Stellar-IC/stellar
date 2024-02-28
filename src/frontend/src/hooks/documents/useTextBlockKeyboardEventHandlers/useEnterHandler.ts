@@ -7,12 +7,12 @@ import { usePagesContext } from '@/contexts/PagesContext/usePagesContext';
 import { focusNextBlock as _focusNextBlock } from '@/modules/editor/utils';
 import { Block, ExternalId } from '@/types';
 
+import { BlockType } from '../../../../../declarations/workspace/workspace.did';
+
 import {
   insertBlockTitleCharacters,
   removeBlockTitleCharacters,
 } from './utils';
-
-import { BlockType } from '../../../../../declarations/workspace/workspace.did';
 
 type UseEnterHandlerProps = {
   blockExternalId?: ExternalId | null;

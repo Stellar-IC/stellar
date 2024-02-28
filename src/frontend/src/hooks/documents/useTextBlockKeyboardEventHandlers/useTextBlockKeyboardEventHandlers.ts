@@ -4,6 +4,9 @@ import { parse } from 'uuid';
 import { usePagesContext } from '@/contexts/PagesContext/usePagesContext';
 import { ExternalId } from '@/types';
 
+import { BlockType } from '../../../../../declarations/workspace/workspace.did';
+import { useTextBlockEventHandlers } from '../useTextBlockEventHandlers';
+
 import { useArrowDownHandler } from './useArrowDownHandler';
 import { useArrowUpHandler } from './useArrowUpHandler';
 import { useBackspaceHandler } from './useBackspaceHandler';
@@ -12,9 +15,6 @@ import { useEnterHandler } from './useEnterHandler';
 import { useShiftTabHandler } from './useShiftTabHandler';
 import { useTabHandler } from './useTabHandler';
 import { useWordCharacterHandler } from './useWordCharacterHandler';
-
-import { BlockType } from '../../../../../declarations/workspace/workspace.did';
-import { useTextBlockEventHandlers } from '../useTextBlockEventHandlers';
 
 type UseTextBlockKeyboardEventHandlersProps = {
   blockExternalId: ExternalId;
@@ -166,6 +166,8 @@ export const useTextBlockKeyboardEventHandlers = ({
     if (key.match(/^[\w\W]$/g) && !metaKey && !ctrlKey) {
       return handleWordCharacter(key, e.currentTarget);
     }
+
+    return false;
   };
 
   const onCut = (e: React.ClipboardEvent<HTMLSpanElement>) => {

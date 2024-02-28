@@ -232,7 +232,7 @@ export const BlockRenderer = ({
       numeral = 0
     ): number | undefined => {
       if (!('numberedList' in _block.blockType)) {
-        return;
+        throw new Error('Block is not a numberedList block');
       }
 
       const previousSiblingBlockExternalId =
@@ -259,7 +259,9 @@ export const BlockRenderer = ({
       );
     };
 
-    if (!block) return;
+    if (!block) {
+      throw new Error('Block is not set');
+    }
 
     return doTheThing(block, index);
   }, [block, get, getPeviousSiblingBlockExternalId, index]);

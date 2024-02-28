@@ -141,6 +141,8 @@ export const useReorderHandler = ({
       if ('page' in parentBlock.blockType) {
         updateLocalPage(parentBlock.uuid, parentBlock);
       }
+
+      return true;
     },
     [get, parentBlock, updateBlock, updateLocalBlock, updateLocalPage]
   );

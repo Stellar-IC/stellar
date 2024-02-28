@@ -8,9 +8,9 @@ import { parse } from 'uuid';
 import { AddBlockModal } from '@/components/Editor/AddBlockModal';
 import { usePagesContext } from '@/contexts/PagesContext/usePagesContext';
 
-import { TransformBlockModal } from './TransformBlockModal';
-
 import { BlockType } from '../../../../declarations/workspace/workspace.did';
+
+import { TransformBlockModal } from './TransformBlockModal';
 
 type BlockWithActionsProps = PropsWithChildren<{
   blockIndex: number;

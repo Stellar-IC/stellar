@@ -24,7 +24,7 @@ export const useCutHandler = ({
       if (shouldRemoveBlock) {
         if (!onRemoveBlock) return;
         onRemoveBlock();
-        return false;
+        return;
       }
 
       const selection = window.getSelection();

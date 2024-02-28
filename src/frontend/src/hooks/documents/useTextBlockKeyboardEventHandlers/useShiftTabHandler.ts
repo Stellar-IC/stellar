@@ -249,6 +249,8 @@ export const useShiftTabHandler = ({
       parentBlockIndex + 1
     );
     removeBlockFromParentBlockContent(parentBlock, blockIndex);
+
+    return true;
   }, [
     blockExternalId,
     blockIndex,
