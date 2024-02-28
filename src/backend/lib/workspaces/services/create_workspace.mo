@@ -15,9 +15,13 @@ module CreateWorkspace {
     type Result = Types.Services.CreateWorkspace.CreateWorkspaceResult;
 
     public func execute({ owner } : Input) : async Result {
-        let initialWorkspaceCycles = Constants.WORKSPACE__INITIAL_CYCLES_BALANCE;
+        let CONSTANTS = Constants.Constants();
+        let WORKSPACE_CAPACITY = CONSTANTS.WORKSPACE__CAPACITY.scalar;
+        let WORKSPACE_FREEZING_THRESHOLD = CONSTANTS.WORKSPACE__FREEZING_THRESHOLD.scalar;
+        let WORKSPACE_INITIAL_CYCLES_BALANCE = CONSTANTS.WORKSPACE__INITIAL_CYCLES_BALANCE.scalar;
+        let WORKSPACE_MEMORY_ALLOCATION = CONSTANTS.WORKSPACE__MEMORY_ALLOCATION.scalar;
 
-        if (Cycles.balance() < initialWorkspaceCycles) {
+        if (Cycles.balance() < WORKSPACE_INITIAL_CYCLES_BALANCE) {
             return #err(#insufficientCycles);
         };
 
@@ -26,27 +30,26 @@ module CreateWorkspace {
         };
 
         let workspaceInitArgs = {
-            capacity = Constants.WORKSPACE__CAPACITY;
+            capacity = WORKSPACE_CAPACITY;
             owner = owner;
         };
-        let now = Time.now();
         let workspaceInitData = {
             uuid = await Source.Source().new();
             name = "";
             description = "";
-            createdAt = now;
-            updatedAt = now;
+            createdAt = Time.now();
+            updatedAt = Time.now();
         };
 
-        Cycles.add(initialWorkspaceCycles);
+        Cycles.add(WORKSPACE_INITIAL_CYCLES_BALANCE);
 
         let workspace = await (system Workspace.Workspace)(
             #new {
                 settings = ?{
                     controllers = ?[owner];
-                    compute_allocation = ?Constants.WORKSPACE__COMPUTE_ALLOCATION;
-                    memory_allocation = ?Constants.WORKSPACE__MEMORY_ALLOCATION;
-                    freezing_threshold = ?Constants.WORKSPACE__FREEZING_THRESHOLD;
+                    compute_allocation = null;
+                    memory_allocation = ?WORKSPACE_MEMORY_ALLOCATION;
+                    freezing_threshold = ?WORKSPACE_FREEZING_THRESHOLD;
                 };
             }
         )(workspaceInitArgs, workspaceInitData);

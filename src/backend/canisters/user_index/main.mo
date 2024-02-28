@@ -27,8 +27,10 @@ import CoreTypes "../../types";
 
 actor UserIndex {
     type UserId = Principal;
-    stable let MAX_TOP_UP_AMOUNT = Constants.USER__TOP_UP_AMOUNT;
-    stable let USER_CAPACITY = Constants.USER__CAPACITY;
+
+    stable let CONSTANTS = Constants.Constants();
+    stable let USER_CAPACITY = CONSTANTS.USER__CAPACITY;
+    stable let MAX_TOP_UP_AMOUNT = CONSTANTS.USER__TOP_UP_AMOUNT.scalar;
     stable let MIN_TOP_UP_INTERVAL = 3 * 60 * 60 * 1_000_000_000_000; // 3 hours
 
     stable var stable_username_to_user_id : RBTree.Tree<Text, UserId> = #leaf;

@@ -20,10 +20,13 @@ import Types "types";
 actor CyclesDispenser {
     type RegisterableCanister = Types.RegisterableCanister;
 
+    stable let CONSTANTS = Constants.Constants();
+    stable let USER_INDEX__TOP_UP_AMOUNT = CONSTANTS.USER_INDEX__TOP_UP_AMOUNT.scalar;
+    stable let WORKSPACE_INDEX__TOP_UP_AMOUNT = CONSTANTS.WORKSPACE_INDEX__TOP_UP_AMOUNT.scalar;
+
     stable let MAX_TOP_UP_AMOUNT = 1_000_000_000_000_000;
     stable let MIN_INTERVAL = 3 * 60 * 60 * 1_000_000_000_000; // 3 hours
 
-    stable var stable_capacity = 100_000_000_000_000;
     stable var stable_balance = 0;
     stable var stable_timerIds : [Timer.TimerId] = [];
     stable var stable_canisters : RbTree.Tree<Principal, RegisterableCanister> = #leaf;
@@ -123,10 +126,8 @@ actor CyclesDispenser {
 
     private func topUpUserIndex() : async () {
         let cyclesInfo = await UserIndex.cyclesInformation();
-        let capacity = cyclesInfo.capacity;
         let balance = cyclesInfo.balance;
-
-        let amount = Constants.USER_INDEX__TOP_UP_AMOUNT;
+        let amount = USER_INDEX__TOP_UP_AMOUNT;
         ignore depositCycles(UserIndex, amount);
     };
 
@@ -134,8 +135,7 @@ actor CyclesDispenser {
         let cyclesInfo = await WorkspaceIndex.cyclesInformation();
         let capacity = cyclesInfo.capacity;
         let balance = cyclesInfo.balance;
-
-        let amount = Constants.WORKSPACE_INDEX__TOP_UP_AMOUNT;
+        let amount = WORKSPACE_INDEX__TOP_UP_AMOUNT;
         ignore depositCycles(UserIndex, amount);
     };
 
@@ -171,7 +171,6 @@ actor CyclesDispenser {
     * Called from browser.
     */
     public query ({ caller }) func getCanistergeekInformation(request : Canistergeek.GetInformationRequest) : async Canistergeek.GetInformationResponse {
-        validateCaller(caller);
         Canistergeek.getInformation(?canistergeekMonitor, ?canistergeekLogger, request);
     };
 
@@ -180,12 +179,7 @@ actor CyclesDispenser {
     * Called from browser or any canister "update" method.
     */
     public shared ({ caller }) func updateCanistergeekInformation(request : Canistergeek.UpdateInformationRequest) : async () {
-        validateCaller(caller);
         canistergeekMonitor.updateInformation(request);
-    };
-
-    private func validateCaller(principal : Principal) : () {
-        //limit access here!
     };
 
     private func doCanisterGeekPreUpgrade() {

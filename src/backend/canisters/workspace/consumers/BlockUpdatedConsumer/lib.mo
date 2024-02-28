@@ -12,121 +12,172 @@ import Stack "mo:base/Stack";
 import Text "mo:base/Text";
 import UUID "mo:uuid/UUID";
 
+import ActivitiesTypes "../../../../lib/activities/types";
 import BlocksTypes "../../../../lib/blocks/types";
+import UUIDGenerator "../../../../lib/shared/UUIDGenerator";
 import Tree "../../../../utils/data/lseq/Tree";
 
 import State "../../model/state";
+import CreateActivity "../../services/create_activity";
+import ExtendActivity "../../services/extend_activity";
 import UpdateBlock "../../services/update_block";
 import Types "../../types/v0";
 
-import UpdateParent "./UpdateParent";
 import UpdateProperty "./UpdateProperty";
 
 module BlockUpdatedConsumer {
     type Block = BlocksTypes.Block;
 
-    func _blockByUuid(state : State.State, uuid : UUID.UUID) : Result.Result<Block, { #blockNotFound }> {
+    func _blockByUuid(state : State.State, uuid : UUID.UUID) : Block {
         state.data.getBlockByUuid(uuid);
     };
 
-    public func execute(event : BlocksTypes.BlockUpdatedEvent, state : State.State) : Result.Result<Block, { #blockNotFound; #insufficientCycles; #inputTooLong; #invalidBlockType; #failedToUpdate; #anonymousUser }> {
-        switch (event) {
-            case (#updateParent(event)) {
-                let blockExternalId = event.data.blockExternalId;
-                let currentBlock = _blockByUuid(state, blockExternalId);
-
-                switch (currentBlock) {
-                    case (#err(#blockNotFound)) {
-                        return #err(#blockNotFound);
+    public func execute(
+        state : State.State,
+        event : BlocksTypes.BlockUpdatedEvent,
+        deps : { uuidGenerator : UUIDGenerator.UUIDGenerator },
+    ) : Result.Result<Block, { #blockNotFound; #insufficientCycles; #inputTooLong; #invalidBlockType; #failedToUpdate; #anonymousUser }> {
+        switch (event.data) {
+            case (#updateParent(data)) {
+                let blockBeforeEdit = _blockByUuid(state, data.blockExternalId);
+                let result = updateParent(state, event, data);
+                let blockAfterEdit = _blockByUuid(state, data.blockExternalId);
+                let pageBlock = state.data.getFirstAncestorPage(blockBeforeEdit);
+                let mostRecentActivity : ?ActivitiesTypes.Activity = switch (pageBlock) {
+                    case (?pageBlock) {
+                        state.data.getMostRecentActivityForPage(pageBlock.uuid);
                     };
-                    case (#ok(currentBlock)) {
-                        UpdateParent.execute(event, currentBlock);
-                        return #ok(currentBlock);
-                    };
-                };
-            };
-            case (#updateBlockType(event)) {
-                let blockExternalId = event.data.blockExternalId;
-                let currentBlock = _blockByUuid(state, blockExternalId);
-
-                switch (currentBlock) {
-                    case (#err(#blockNotFound)) {
-                        return #err(#blockNotFound);
-                    };
-                    case (#ok(currentBlock)) {
-                        currentBlock.blockType := event.data.blockType;
-                        return #ok(currentBlock);
-                    };
-                };
-            };
-            case (#updateContent(event)) {
-                let blockExternalId = event.data.blockExternalId;
-                let currentBlock = switch (_blockByUuid(state, blockExternalId)) {
-                    case (#err(#blockNotFound)) {
-                        return #err(#blockNotFound);
-                    };
-                    case (#ok(block)) { block };
+                    case (null) { null };
                 };
 
-                for (event in Array.vals(event.data.transaction)) {
-                    switch (event) {
-                        case (#insert(event)) {
-                            let res = currentBlock.content.insert({
-                                identifier = event.position;
-                                value = event.value;
-                            });
-                            switch (res) {
-                                case (#err(#identifierAlreadyInUse)) {
-                                    return #err(#failedToUpdate);
-                                };
-                                case (#err(#invalidIdentifier)) {
-                                    return #err(#failedToUpdate);
-                                };
-                                case (#err(#outOfOrder)) {
-                                    return #err(#failedToUpdate);
-                                };
-                                case (#ok) {};
-                            };
-                        };
-                        case (#delete(event)) {
-                            currentBlock.content.deleteNode(
-                                event.position
+                switch (mostRecentActivity) {
+                    case (null) {
+                        let activity = CreateActivity.execute(
+                            state,
+                            {
+                                edits = [{
+                                    startTime = event.timestamp;
+                                    blockValue = {
+                                        before = ?blockBeforeEdit;
+                                        after = blockAfterEdit;
+                                    };
+                                }];
+                                blockExternalId = blockBeforeEdit.uuid;
+                            },
+                            { uuidGenerator = deps.uuidGenerator },
+                        );
+                    };
+                    case (?mostRecentActivity) {
+                        if (mostRecentActivity.blockExternalId == blockBeforeEdit.uuid) {
+                            let updatedActivity = ExtendActivity.execute(
+                                state,
+                                {
+                                    activityId = mostRecentActivity.uuid;
+                                    edits = [{
+                                        startTime = event.timestamp;
+                                        blockValue = {
+                                            before = ?blockBeforeEdit;
+                                            after = blockAfterEdit;
+                                        };
+                                    }];
+                                },
                             );
+                            state.data.Activity.objects.upsert(updatedActivity);
                         };
                     };
                 };
 
-                return #ok(currentBlock);
+                #ok(blockAfterEdit);
             };
-            case (#updatePropertyTitle(event)) {
-                let blockExternalId = event.data.blockExternalId;
-                let currentBlock = _blockByUuid(state, blockExternalId);
+            case (#updateBlockType(data)) {
+                #ok(updateBlockType(state, event, data));
+            };
+            case (#updateContent(data)) {
+                updateContent(state, event, data);
+            };
+            case (#updatePropertyTitle(data)) {
+                #ok(updateTitleProperty(state, event, data));
+            };
+            case (#updatePropertyChecked(data)) {
+                #ok(updateCheckedProperty(state, event, data));
+            };
+        };
+    };
 
-                switch (currentBlock) {
-                    case (#err(#blockNotFound)) {
-                        return #err(#blockNotFound);
-                    };
-                    case (#ok(currentBlock)) {
-                        UpdateProperty.execute(#title(event), currentBlock);
-                        return #ok(currentBlock);
+    func updateBlockType(
+        state : State.State,
+        event : BlocksTypes.BlockUpdatedEvent,
+        data : BlocksTypes.BlockBlockTypeUpdatedEventData,
+    ) : Block {
+        let blockExternalId = data.blockExternalId;
+        let currentBlock = _blockByUuid(state, blockExternalId);
+        currentBlock.blockType := data.blockType;
+        return currentBlock;
+    };
+
+    func updateContent(
+        state : State.State,
+        event : BlocksTypes.BlockUpdatedEvent,
+        data : BlocksTypes.BlockContentUpdatedEventData,
+    ) : Result.Result<Block, { #failedToUpdate }> {
+        let blockExternalId = data.blockExternalId;
+        let currentBlock = _blockByUuid(state, blockExternalId);
+
+        for (event in Array.vals(data.transaction)) {
+            switch (event) {
+                case (#insert(event)) {
+                    let result = currentBlock.content.insert({
+                        identifier = event.position;
+                        value = event.value;
+                    });
+                    switch (result) {
+                        case (#ok) {};
+                        case (#err(_)) {
+                            return #err(#failedToUpdate);
+                        };
                     };
                 };
-            };
-            case (#updatePropertyChecked(event)) {
-                let blockExternalId = event.data.blockExternalId;
-                let currentBlock = _blockByUuid(state, blockExternalId);
-
-                switch (currentBlock) {
-                    case (#err(#blockNotFound)) {
-                        return #err(#blockNotFound);
-                    };
-                    case (#ok(currentBlock)) {
-                        UpdateProperty.execute(#checked(event), currentBlock);
-                        return #ok(currentBlock);
-
-                    };
+                case (#delete(event)) {
+                    currentBlock.content.deleteNode(
+                        event.position
+                    );
                 };
             };
         };
+
+        return #ok(currentBlock);
+    };
+
+    func updateParent(
+        state : State.State,
+        event : BlocksTypes.BlockUpdatedEvent,
+        data : BlocksTypes.BlockParentUpdatedEventData,
+    ) : Block {
+        let blockExternalId = data.blockExternalId;
+        let currentBlock = _blockByUuid(state, blockExternalId);
+        currentBlock.parent := ?data.parentBlockExternalId;
+        return currentBlock;
+    };
+
+    func updateTitleProperty(
+        state : State.State,
+        event : BlocksTypes.BlockUpdatedEvent,
+        data : BlocksTypes.BlockPropertyTitleUpdatedEventData,
+    ) : Block {
+        let blockExternalId = data.blockExternalId;
+        let currentBlock = _blockByUuid(state, blockExternalId);
+        UpdateProperty.execute({ event with data = #title(data) }, currentBlock);
+        return currentBlock;
+    };
+
+    func updateCheckedProperty(
+        state : State.State,
+        event : BlocksTypes.BlockUpdatedEvent,
+        data : BlocksTypes.BlockPropertyCheckedUpdatedEventData,
+    ) : Block {
+        let blockExternalId = data.blockExternalId;
+        let currentBlock = _blockByUuid(state, blockExternalId);
+        UpdateProperty.execute({ event with data = #checked(data) }, currentBlock);
+        return currentBlock;
     };
 };

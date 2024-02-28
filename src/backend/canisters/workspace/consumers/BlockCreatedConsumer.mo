@@ -1,27 +1,30 @@
-import CreateBlock "../services/create_block";
+import Array "mo:base/Array";
+import Buffer "mo:base/Buffer";
 import Debug "mo:base/Debug";
+import Iter "mo:base/Iter";
+import Nat "mo:base/Nat";
 import Result "mo:base/Result";
 import UUID "mo:uuid/UUID";
-import Nat "mo:base/Nat";
-import Buffer "mo:base/Buffer";
-import Iter "mo:base/Iter";
-import Array "mo:base/Array";
 
+import ActivityBuilder "../../../lib/activities/ActivityBuilder";
 import BlocksTypes "../../../lib/blocks/types";
-import UpdateBlock "../services/update_block";
+import UUIDGenerator "../../../lib/shared/UUIDGenerator";
 import Tree "../../../utils/data/lseq/Tree";
 
 import State "../model/state";
+import CreateActivity "../services/create_activity";
+import CreateBlock "../services/create_block";
+import UpdateBlock "../services/update_block";
 import Types "../types/v0";
 
 module BlockCreatedConsumer {
     type Block = BlocksTypes.Block;
 
-    func _blockByUuid(state : State.State, uuid : UUID.UUID) : Result.Result<Block, { #blockNotFound }> {
-        state.data.getBlockByUuid(uuid);
-    };
-
-    public func execute(event : BlocksTypes.BlockCreatedEvent, state : State.State) : () {
+    public func execute(
+        state : State.State,
+        event : BlocksTypes.BlockCreatedEvent,
+        deps : { uuidGenerator : UUIDGenerator.UUIDGenerator },
+    ) : () {
         let result = CreateBlock.execute(
             state,
             event.user,
@@ -38,43 +41,26 @@ module BlockCreatedConsumer {
         );
 
         let block = switch (result) {
-            case (#err(#anonymousUser)) {
-                return ();
-            };
-            case (#err(#failedToCreate)) {
-                return ();
-            };
-            case (#err(#inputTooLong)) {
-                return ();
-            };
-            case (#err(#insufficientCycles)) {
-                return ();
-            };
-            case (#err(#invalidBlockType)) {
-                return ();
-            };
-            case (#ok(block)) {
-                block;
-            };
+            // TODO: Handle errors
+            case (#err(_)) { return () };
+            case (#ok(block)) { block };
         };
 
-        let parentBlock = switch (event.data.block.parent) {
-            case (null) {
-                return ();
-            };
-            case (?parent) {
-                let parentBlock = _blockByUuid(state, parent);
-
-                switch (parentBlock) {
-                    case (#err(#blockNotFound)) {
-                        return ();
+        let activity = CreateActivity.execute(
+            state,
+            {
+                edits = [{
+                    blockValue = {
+                        before = null;
+                        after = block;
                     };
-                    case (#ok(parentBlock)) {
-                        parentBlock;
-                    };
-                };
-            };
-        };
+                    startTime = event.timestamp;
+                }];
+                blockExternalId = block.uuid;
+            },
+            { uuidGenerator = deps.uuidGenerator },
+        );
 
+        ();
     };
 };

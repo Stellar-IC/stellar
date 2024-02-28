@@ -45,6 +45,16 @@ module QuerySet {
             return null;
         };
 
+        public func sort(
+            predicate : (DataT, DataT) -> Order.Order
+        ) : QuerySet<DataT> {
+            var instances = List.fromArray<DataT>([]);
+            for (item in List.toIter<DataT>(_items)) {
+                instances := List.push<DataT>(item, instances);
+            };
+            return QuerySet<DataT>(?Array.sort<DataT>(List.toArray(instances), predicate));
+        };
+
         public func first() : ?DataT {
             return List.get<DataT>(_items, 0);
         };

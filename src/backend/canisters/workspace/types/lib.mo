@@ -5,18 +5,28 @@ import Text "mo:base/Text";
 import Time "mo:base/Time";
 import UUID "mo:uuid/UUID";
 
-import Types "./v0";
+import Types "./v1";
 
 module {
     public type PrimaryKey = Types.PrimaryKey;
     public type Username = Types.Username;
 
     public module Services {
+        public module CreateActivityService {
+            public type CreateActivityServiceInput = Types.Services.CreateActivityService.CreateActivityServiceInput;
+            public type CreateActivityServiceOutput = Types.Services.CreateActivityService.CreateActivityServiceOutput;
+        };
+
         public module CreateBlockService {
             public type CreateBlockServiceInput = Types.Services.CreateBlockService.CreateBlockServiceInput;
             public type CreateBlockServiceOutputError = Types.Services.CreateBlockService.CreateBlockServiceOutputError;
             public type CreateBlockServiceOutputResult = Types.Services.CreateBlockService.CreateBlockServiceOutputResult;
             public type CreateBlockServiceOutput = Types.Services.CreateBlockService.CreateBlockServiceOutput;
+        };
+
+        public module ExtendActivityService {
+            public type ExtendActivityServiceInput = Types.Services.ExtendActivityService.ExtendActivityServiceInput;
+            public type ExtendActivityServiceOutput = Types.Services.ExtendActivityService.ExtendActivityServiceOutput;
         };
 
         public module UpdateBlockService {

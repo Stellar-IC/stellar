@@ -27,7 +27,9 @@ import Guards "./guards";
 shared ({ caller = initializer }) actor class User(
     initArgs : Types.UserInitArgs
 ) = self {
-    stable let WORKSPACE__CAPACITY = Constants.WORKSPACE__CAPACITY;
+    stable let CONSTANTS = Constants.Constants();
+    stable let WORKSPACE__TOP_UP_AMOUNT = CONSTANTS.WORKSPACE__TOP_UP_AMOUNT.scalar;
+    stable let WORKSPACE__CAPACITY = CONSTANTS.WORKSPACE__CAPACITY.scalar;
     stable let userIndexCanisterId = initializer;
 
     stable var stable_balance = 0;
@@ -220,7 +222,7 @@ shared ({ caller = initializer }) actor class User(
             case (null) {};
             case (?workspace) {
                 personalWorkspaceTopUp.topUpInProgress := true;
-                let amount = Constants.WORKSPACE__TOP_UP_AMOUNT;
+                let amount = WORKSPACE__TOP_UP_AMOUNT;
                 ExperimentalCycles.add(amount);
                 let result = await workspace.walletReceive();
                 personalWorkspaceTopUp.topUpInProgress := false;

@@ -1,19 +1,38 @@
-import { PropsWithChildren, useCallback } from 'react';
-import { usePages } from '@/contexts/PagesContext/usePages';
-import { useAuthContext } from '@/modules/auth/contexts/AuthContext';
-
-import { parse, stringify, v4 } from 'uuid';
+import { Identity } from '@dfinity/agent';
 import { Tree } from '@stellar-ic/lseq-ts';
+import { PropsWithChildren, useCallback } from 'react';
+import { parse, stringify, v4 } from 'uuid';
+
+import { usePages } from '@/contexts/PagesContext/usePages';
 import { DATA_TYPES } from '@/constants';
+import { useAuthContext } from '@/modules/auth/contexts/AuthContext';
 import { Block } from '@/types';
-import { PagesContext } from './PagesContext';
-import { useWorkspaceContext } from '../WorkspaceContext/useWorkspaceContext';
+
 import {
+  BlockBlockTypeUpdatedEventData,
+  BlockContentUpdatedEventData,
+  BlockParentUpdatedEventData,
+  BlockPropertyCheckedUpdatedEventData,
+  BlockPropertyTitleUpdatedEventData,
   BlockType,
   UUID,
 } from '../../../../declarations/workspace/workspace.did';
-import { BlockEvent } from './types';
+
 import { useDataStoreContext } from '../DataStoreContext/useDataStoreContext';
+import { useWorkspaceContext } from '../WorkspaceContext/useWorkspaceContext';
+
+import { PagesContext } from './PagesContext';
+
+function buildEvent<DataT>(data: DataT, userIdentity: Identity) {
+  const now = BigInt(Date.now()) * BigInt(1_000_000); // convert to nanoseconds
+
+  return {
+    data,
+    user: userIdentity.getPrincipal(),
+    uuid: parse(v4()),
+    timestamp: now,
+  };
+}
 
 export function PagesContextProvider({ children }: PropsWithChildren<{}>) {
   const { identity } = useAuthContext();
@@ -33,10 +52,10 @@ export function PagesContextProvider({ children }: PropsWithChildren<{}>) {
       const parsedExternalId = parse(blockExternalId);
 
       const block = handleBlockEvent(blockExternalId, {
-        blockCreated: {
-          user: identity.getPrincipal(),
-          uuid: parse(eventExternalId),
-          data: {
+        user: identity.getPrincipal(),
+        uuid: parse(eventExternalId),
+        data: {
+          blockCreated: {
             block: {
               uuid: parsedExternalId,
               parent: [parentBlockExternalId],
@@ -45,6 +64,7 @@ export function PagesContextProvider({ children }: PropsWithChildren<{}>) {
             index: BigInt(index),
           },
         },
+        timestamp: BigInt(Date.now()),
       });
 
       if (!block) {
@@ -69,18 +89,20 @@ export function PagesContextProvider({ children }: PropsWithChildren<{}>) {
       }
 
       const event = Tree.removeCharacter(parentBlock.content, index - 1);
-      handleBlockEvent(stringify(parentBlockExternalId), {
-        blockUpdated: {
-          updateContent: {
-            uuid: parse(v4()),
-            user: identity.getPrincipal(),
-            data: {
-              blockExternalId: parentBlockExternalId,
-              transaction: [event],
+      handleBlockEvent(
+        stringify(parentBlockExternalId),
+        buildEvent(
+          {
+            blockUpdated: {
+              updateContent: {
+                blockExternalId: parentBlockExternalId,
+                transaction: [event],
+              },
             },
           },
-        },
-      });
+          identity
+        )
+      );
 
       blocksContext.updateLocal(stringify(parentBlockExternalId), parentBlock);
       if ('page' in parentBlock.blockType) {
@@ -91,59 +113,89 @@ export function PagesContextProvider({ children }: PropsWithChildren<{}>) {
   );
 
   const updateBlock = useCallback(
-    (blockExternalId: UUID, event: BlockEvent) => {
-      if ('updateProperty' in event) {
-        if ('title' in event.updateProperty) {
-          handleBlockEvent(stringify(blockExternalId), {
-            blockUpdated: {
-              updatePropertyTitle: {
-                ...event.updateProperty.title,
-                user: identity.getPrincipal(),
-                uuid: parse(v4()),
+    (
+      blockExternalId: UUID,
+      event:
+        | { updateContent: { data: BlockContentUpdatedEventData } }
+        | { updateBlockType: { data: BlockBlockTypeUpdatedEventData } }
+        | { updateParent: { data: BlockParentUpdatedEventData } }
+        | {
+            updatePropertyChecked: {
+              data: BlockPropertyCheckedUpdatedEventData;
+            };
+          }
+        | { updatePropertyTitle: { data: BlockPropertyTitleUpdatedEventData } }
+    ) => {
+      if ('updatePropertyChecked' in event) {
+        handleBlockEvent(
+          stringify(blockExternalId),
+          buildEvent(
+            {
+              blockUpdated: {
+                updatePropertyChecked: {
+                  ...event.updatePropertyChecked.data,
+                },
               },
             },
-          });
-        } else if ('checked' in event.updateProperty) {
-          handleBlockEvent(stringify(blockExternalId), {
-            blockUpdated: {
-              updatePropertyChecked: {
-                ...event.updateProperty.checked,
-                user: identity.getPrincipal(),
-                uuid: parse(v4()),
+            identity
+          )
+        );
+      } else if ('updatePropertyTitle' in event) {
+        handleBlockEvent(
+          stringify(blockExternalId),
+          buildEvent(
+            {
+              blockUpdated: {
+                updatePropertyTitle: {
+                  ...event.updatePropertyTitle.data,
+                },
               },
             },
-          });
-        }
+            identity
+          )
+        );
       } else if ('updateBlockType' in event) {
-        handleBlockEvent(stringify(blockExternalId), {
-          blockUpdated: {
-            updateBlockType: {
-              ...event.updateBlockType,
-              user: identity.getPrincipal(),
-              uuid: parse(v4()),
+        handleBlockEvent(
+          stringify(blockExternalId),
+          buildEvent(
+            {
+              blockUpdated: {
+                updateBlockType: {
+                  ...event.updateBlockType.data,
+                },
+              },
             },
-          },
-        });
+            identity
+          )
+        );
       } else if ('updateParent' in event) {
-        handleBlockEvent(stringify(blockExternalId), {
-          blockUpdated: {
-            updateParent: {
-              ...event.updateParent,
-              user: identity.getPrincipal(),
-              uuid: parse(v4()),
+        handleBlockEvent(
+          stringify(blockExternalId),
+          buildEvent(
+            {
+              blockUpdated: {
+                updateParent: {
+                  ...event.updateParent.data,
+                },
+              },
             },
-          },
-        });
+            identity
+          )
+        );
       } else if ('updateContent' in event) {
-        handleBlockEvent(stringify(blockExternalId), {
-          blockUpdated: {
-            updateContent: {
-              ...event.updateContent,
-              user: identity.getPrincipal(),
-              uuid: parse(v4()),
+        handleBlockEvent(
+          stringify(blockExternalId),
+          buildEvent(
+            {
+              blockUpdated: {
+                updateContent: {
+                  ...event.updateContent.data,
+                },
+              },
             },
-          },
-        });
+            identity
+          )
+        );
       }
     },
     [handleBlockEvent, identity]

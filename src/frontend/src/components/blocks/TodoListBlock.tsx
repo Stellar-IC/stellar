@@ -37,12 +37,10 @@ export const TodoListBlock = ({
         mr="md"
         onChange={(e) => {
           updateBlock(parsedExternalId, {
-            updateProperty: {
-              checked: {
-                data: {
-                  checked: e.target.checked,
-                  blockExternalId: parsedExternalId,
-                },
+            updatePropertyChecked: {
+              data: {
+                checked: e.target.checked,
+                blockExternalId: parsedExternalId,
               },
             },
           });

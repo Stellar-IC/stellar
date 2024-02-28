@@ -46,16 +46,17 @@ export const useTextBlockEventHandlers = ({
       {
         transaction: [
           {
-            blockUpdated: {
-              updatePropertyTitle: {
-                user: identity.getPrincipal(),
-                uuid: parse(v4()),
-                data: {
+            user: identity.getPrincipal(),
+            uuid: parse(v4()),
+            data: {
+              blockUpdated: {
+                updatePropertyTitle: {
                   blockExternalId: parse(block.uuid),
                   transaction: events,
                 },
               },
             },
+            timestamp: BigInt(Date.now()),
           },
         ],
       },

@@ -4,7 +4,6 @@ import Text "mo:base/Text";
 import UUID "mo:uuid/UUID";
 
 import QuerySet "../../../utils/data/database/query_set";
-import Tree "../../../utils/data/lseq/Tree";
 
 module UUIDModelManager {
     public class UUIDModelManager<DataT <: { uuid : UUID.UUID }>() {

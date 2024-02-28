@@ -18,9 +18,9 @@
     "storybook:build": "storybook build"
   },
   "dependencies": {
-    "@dfinity/agent": "^0.19.3",
-    "@dfinity/auth-client": "^0.19.3",
-    "@dfinity/identity": "^0.19.3",
+    "@dfinity/agent": "^0.21.4",
+    "@dfinity/auth-client": "^0.21.4",
+    "@dfinity/identity": "^0.21.4",
     "@hello-pangea/dnd": "^16.5.0",
     "@mantine/core": "7.4.2",
     "@mantine/hooks": "7.4.2",
@@ -35,7 +35,7 @@
     "uuid": "^9.0.1"
   },
   "devDependencies": {
-    "@dfinity/identity-secp256k1": "^0.19.3",
+    "@dfinity/identity-secp256k1": "^0.21.4",
     "@jest/globals": "^29.7.0",
     "@storybook/addon-essentials": "^7.0.18",
     "@storybook/addon-interactions": "^7.0.18",

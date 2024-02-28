@@ -1,25 +1,27 @@
 import Array "mo:base/Array";
-import Debug "mo:base/Debug";
+import Deque "mo:base/Deque";
+import ExperimentalCycles "mo:base/ExperimentalCycles";
 import List "mo:base/List";
+import Nat "mo:base/Nat";
+import Nat64 "mo:base/Nat64";
+import Principal "mo:base/Principal";
 import Result "mo:base/Result";
 import RBTree "mo:base/RBTree";
-import Nat "mo:base/Nat";
-import Principal "mo:base/Principal";
+import Text "mo:base/Text";
 import Time = "mo:base/Time";
 import Timer = "mo:base/Timer";
-import ExperimentalCycles "mo:base/ExperimentalCycles";
-import Nat64 "mo:base/Nat64";
-import Error "mo:base/Error";
-import Text "mo:base/Text";
-import Canistergeek "mo:canistergeek/canistergeek";
-import UUID "mo:uuid/UUID";
-import Source "mo:uuid/async/SourceV4";
 
+import Canistergeek "mo:canistergeek/canistergeek";
+
+import UUID "mo:uuid/UUID";
+
+import ActivityBuilder "../../lib/activities/ActivityBuilder";
 import BlocksModels "../../lib/blocks/models";
 import BlocksTypes "../../lib/blocks/types";
-import BlocksUtils "../../lib/blocks/utils";
-import EventStream "../../lib/events/EventStream";
+import UUIDGenerator "../../lib/shared/UUIDGenerator";
+
 import CoreTypes "../../types";
+
 import CyclesUtils "../../utils/cycles";
 import LseqTree "../../utils/data/lseq/Tree";
 
@@ -27,7 +29,7 @@ import BlockCreatedConsumer "./consumers/BlockCreatedConsumer";
 import BlockUpdatedConsumer "./consumers/BlockUpdatedConsumer";
 import State "./model/state";
 import CreatePage "./services/create_page";
-import Types "./types/v0";
+import Types "./types";
 
 shared ({ caller = initializer }) actor class Workspace(
     initArgs : CoreTypes.Workspaces.WorkspaceInitArgs,
@@ -42,9 +44,11 @@ shared ({ caller = initializer }) actor class Workspace(
     type PageByUuidResult = Types.Queries.PageByUuid.PageByUuidResult;
     type PagesOptionsArg = Types.Queries.Pages.PagesOptionsArg;
     type PagesResult = Types.Queries.Pages.PagesResult;
-
     type PrimaryKey = Types.PrimaryKey;
+
+    type Block = BlocksTypes.Block;
     type ShareableBlock = BlocksTypes.ShareableBlock;
+    type BlockEvent = BlocksTypes.BlockEvent;
 
     /*************************************************************************
      * Stable Data
@@ -52,7 +56,7 @@ shared ({ caller = initializer }) actor class Workspace(
 
     stable var blocks : RBTree.Tree<PrimaryKey, ShareableBlock> = #leaf;
     stable var blocksIdCounter : Nat = 0;
-
+    stable var events : RBTree.Tree<Text, BlockEvent> = #leaf;
     stable var owner : CoreTypes.Workspaces.WorkspaceOwner = initArgs.owner;
     stable var uuid : UUID.UUID = initData.uuid;
     stable var name : CoreTypes.Workspaces.WorkspaceName = initData.name;
@@ -70,12 +74,6 @@ shared ({ caller = initializer }) actor class Workspace(
     stable var _canistergeekMonitorUD : ?Canistergeek.UpgradeData = null;
     stable var _canistergeekLoggerUD : ?Canistergeek.LoggerUpgradeData = null;
 
-    // Event Stream
-    let eventStream = EventStream.EventStream<BlocksTypes.BlockEvent>({
-        getEventId = BlocksUtils.getEventId;
-    });
-    stable var _eventStreamUpgradeData : ?EventStream.UpgradeData<BlocksTypes.BlockEvent> = null;
-
     /*************************************************************************
      * Transient Data
      *************************************************************************/
@@ -86,8 +84,10 @@ shared ({ caller = initializer }) actor class Workspace(
             id = blocksIdCounter;
             data = blocks;
         };
+        events = events;
     });
     var state = State.State(data);
+    let uuidGenerator = UUIDGenerator.UUIDGenerator();
 
     /*************************************************************************
      * Initialization helper methods
@@ -126,13 +126,9 @@ shared ({ caller = initializer }) actor class Workspace(
     };
 
     public query func blockByUuid(uuid : UUID.UUID) : async BlockByUuidResult {
-        let result = switch (state.data.getBlockByUuid(uuid)) {
-            case (#err(err)) {
-                #err(err);
-            };
-            case (#ok(block)) {
-                #ok(BlocksModels.Block.toShareable(block));
-            };
+        let result = switch (state.data.findBlockByUuid(uuid)) {
+            case (#err(err)) { #err(err) };
+            case (#ok(block)) { #ok(BlocksModels.Block.toShareable(block)) };
         };
 
         return result;
@@ -149,26 +145,33 @@ shared ({ caller = initializer }) actor class Workspace(
     };
 
     public query func pageByUuid(uuid : UUID.UUID) : async PageByUuidResult {
-        let result = switch (state.data.getPageByUuid(uuid)) {
-            case (#err(err)) {
-                #err(err);
-            };
-            case (#ok(block)) {
-                #ok(BlocksModels.Block.toShareable(block));
-            };
+        let page = switch (state.data.getPageByUuid(uuid)) {
+            case (#err(err)) { return #err(err) };
+            case (#ok(page)) { page };
         };
+        let content = LseqTree.toArray(page.content);
+        let blocks = state.data.getBlocksByPageUuid(UUID.toText(page.uuid));
+        let shareableBlocks = List.map<BlocksTypes.Block, ShareableBlock>(
+            blocks,
+            BlocksModels.Block.toShareable,
+        );
 
-        return result;
+        return #ok({
+            page = BlocksModels.Block.toShareable(page);
+            _records = {
+                blocks = List.toArray(shareableBlocks);
+            };
+        });
     };
 
     public query ({ caller }) func pages(options : PagesOptionsArg) : async PagesResult {
         let { cursor; limit; order } = options;
         let pages = state.data.getPages(cursor, limit, order);
         let result = {
-            edges = List.toArray<CoreTypes.Edge<ShareableBlock>>(
-                List.map<BlocksTypes.Block, CoreTypes.Edge<ShareableBlock>>(
+            edges = List.toArray(
+                List.map(
                     pages,
-                    func(block) {
+                    func(block : BlocksTypes.Block) : CoreTypes.Edge<ShareableBlock> {
                         { node = BlocksModels.Block.toShareable(block) };
                     },
                 )
@@ -239,69 +242,55 @@ shared ({ caller = initializer }) actor class Workspace(
         input : Types.Updates.SaveEventTransactionUpdate.SaveEventTransactionUpdateInput
     ) : async Types.Updates.SaveEventTransactionUpdate.SaveEventTransactionUpdateOutput {
         for (event in input.transaction.vals()) {
-            switch (event) {
-                case (#empty) {};
-                case (#blockCreated(event)) {
-                    let block = BlocksModels.Block.fromShareableUnsaved({
-                        event.data.block and {} with content = LseqTree.toShareableTree(
-                            LseqTree.Tree(null)
+            state.data.Event.objects.upsert(event);
+            processEvent(event);
+        };
+
+        await updateCanistergeekInformation({ metrics = ? #normal });
+
+        return #ok();
+    };
+
+    func processEvent(event : BlockEvent) : () {
+        canistergeekLogger.logMessage("Received event: " # debug_show event);
+
+        switch (event.data) {
+            case (#blockCreated(blockCreatedEvent)) {
+                canistergeekLogger.logMessage("Processing blockCreated event: " # debug_show (event.uuid));
+
+                BlockCreatedConsumer.execute(state, { event with data = blockCreatedEvent }, { uuidGenerator });
+
+                canistergeekLogger.logMessage("Processed blockCreated event: " # debug_show UUID.toText(event.uuid));
+            };
+            case (#blockUpdated(blockUpdatedEvent)) {
+                canistergeekLogger.logMessage(
+                    "Processing blockUpdated event: "
+                    # debug_show (event.uuid)
+                    # "\n"
+                    # debug_show event
+                );
+
+                let res = BlockUpdatedConsumer.execute(state, { event with data = blockUpdatedEvent }, { uuidGenerator });
+                let uuid = event.uuid;
+
+                switch (res) {
+                    case (#err(err)) {
+                        canistergeekLogger.logMessage(
+                            "Error processing blockUpdated event: " #
+                            debug_show uuid #
+                            "\n\t" #
+                            debug_show err
                         );
-                        properties = {
-                            title = ?LseqTree.toShareableTree(LseqTree.Tree(null));
-                            checked = ?false;
-                        };
-                    });
-
-                    let eventToPublish : {
-                        #blockCreated : BlocksTypes.BlockCreatedEvent;
-                    } = #blockCreated({
-                        uuid = event.uuid;
-                        user = event.user;
-                        data = {
-                            block = {
-                                block and {} with
-                                content = block.content;
-                                blockType = block.blockType;
-                                parent = block.parent;
-                                properties = {
-                                    block.properties and {} with
-                                    title = switch (block.properties.title) {
-                                        case (null) {
-                                            ?LseqTree.toShareableTree(LseqTree.Tree(null));
-                                        };
-                                        case (?title) {
-                                            ?LseqTree.toShareableTree(title);
-                                        };
-                                    };
-                                    checked = block.properties.checked;
-                                };
-                            };
-                            index = event.data.index;
-                        };
-                    });
-
-                    canistergeekLogger.logMessage(
-                        "Publishing blockCreated event: " #
-                        debug_show UUID.toText(event.uuid) #
-                        "\n\tblock id: " #
-                        debug_show UUID.toText(event.data.block.uuid)
-                    );
-
-                    eventStream.publish(eventToPublish);
-                };
-                case (#blockUpdated(event)) {
-                    canistergeekLogger.logMessage(
-                        "Publishing blockUpdated event: " #
-                        debug_show BlocksUtils.getEventId(#blockUpdated(event))
-                    );
-                    eventStream.publish(#blockUpdated(event));
+                    };
+                    case (#ok(_)) {
+                        canistergeekLogger.logMessage(
+                            "Processed blockUpdated event: " #
+                            debug_show uuid
+                        );
+                    };
                 };
             };
         };
-
-        eventStream.processEvents();
-        await updateCanistergeekInformation({ metrics = ? #normal });
-        #ok();
     };
 
     // Returns the cycles received up to the capacity allowed
@@ -309,55 +298,6 @@ shared ({ caller = initializer }) actor class Workspace(
         let result = await CyclesUtils.walletReceive(capacity - ExperimentalCycles.balance());
         await updateCanistergeekInformation({ metrics = ? #normal });
         return result;
-    };
-
-    /*************************************************************************
-     * Event Handling
-     *************************************************************************/
-
-    func startListeningForEvents() : async () {
-        canistergeekLogger.logMessage("Listening for events...");
-        eventStream.addEventListener(
-            "BlockEventListener",
-            func(event) {
-                canistergeekLogger.logMessage("Received event: " # debug_show event);
-                switch (event) {
-                    case (#empty) {};
-                    case (#blockCreated(blockCreatedEvent)) {
-                        canistergeekLogger.logMessage("Processing blockCreated event: " # debug_show (BlocksUtils.getEventId(event)));
-                        BlockCreatedConsumer.execute(blockCreatedEvent, state);
-                        canistergeekLogger.logMessage(
-                            "Processed blockCreated event: " #
-                            debug_show UUID.toText(blockCreatedEvent.uuid)
-                        );
-                    };
-                    case (#blockUpdated(blockUpdatedEvent)) {
-                        canistergeekLogger.logMessage("Processing blockUpdated event: " # debug_show (BlocksUtils.getEventId(event)) # "\n" # debug_show event);
-                        let res = BlockUpdatedConsumer.execute(blockUpdatedEvent, state);
-                        let uuid = BlocksUtils.getEventId(event);
-
-                        switch (res) {
-                            case (#err(err)) {
-                                canistergeekLogger.logMessage(
-                                    "Error processing blockUpdated event: " #
-                                    debug_show uuid #
-                                    "\n\t" #
-                                    debug_show err
-                                );
-                            };
-                            case (#ok(_)) {
-                                canistergeekLogger.logMessage(
-                                    "Processed blockUpdated event: " #
-                                    debug_show uuid
-                                );
-                            };
-                        };
-                    };
-                };
-            },
-        );
-
-        eventStream.processEvents();
     };
 
     /*************************************************************************
@@ -422,9 +362,9 @@ shared ({ caller = initializer }) actor class Workspace(
             return;
         };
 
-        ignore Timer.setTimer(
-            #nanoseconds(0),
-            startListeningForEvents,
+        ignore Timer.recurringTimer(
+            #seconds(1),
+            uuidGenerator.generateIds,
         );
     };
 
@@ -444,7 +384,6 @@ shared ({ caller = initializer }) actor class Workspace(
         blocks := shareableBlocks.share();
         blocksIdCounter := state.data.Block.id_manager.current();
         doCanisterGeekPreUpgrade();
-        _eventStreamUpgradeData := ?eventStream.preupgrade();
     };
 
     system func postupgrade() {
@@ -458,14 +397,6 @@ shared ({ caller = initializer }) actor class Workspace(
             let block = entry.1;
             state.data.Block.objects.data.put(blockId, BlocksModels.Block.fromShareable(block));
             state.data.addBlockToBlocksByParentIdIndex(BlocksModels.Block.fromShareable(block));
-        };
-
-        switch (_eventStreamUpgradeData) {
-            case (null) {};
-            case (?upgradeData) {
-                eventStream.postupgrade(upgradeData);
-                _eventStreamUpgradeData := null;
-            };
         };
 
         // Restart timers

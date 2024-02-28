@@ -4,14 +4,10 @@ import { useCallback } from 'react';
 import { DATA_TYPES } from '@/constants';
 import { useDataStoreContext } from '@/contexts/DataStoreContext/useDataStoreContext';
 import { useWorkspaceActor } from '@/hooks/ic/workspace/useWorkspaceActor';
-import * as blockSerializers from '@/modules/serializers/block';
-import { IcResultSerializer } from '@/modules/ic-serializers/IcResultSerializer';
-import { Block, CanisterId } from '@/types';
+import * as blockSerializers from '@/modules/blocks/serializers';
+import { CanisterId } from '@/types';
 
-import {
-  ShareableBlock,
-  UUID,
-} from '../../../../../../declarations/workspace/workspace.did';
+import { UUID } from '../../../../../../declarations/workspace/workspace.did';
 
 export const usePageByUuid = (opts: {
   identity: Identity;
@@ -26,15 +22,20 @@ export const usePageByUuid = (opts: {
       actor
         .pageByUuid(arg_0)
         .then((result) => {
-          const serializer = new IcResultSerializer<
-            ShareableBlock,
-            { pageNotFound: null },
-            Block
-          >();
+          if (!('ok' in result)) {
+            return null;
+          }
 
-          return serializer.serialize(result, {
-            fromShareable: blockSerializers.fromShareable,
-          });
+          const pageId = result.ok.page.uuid;
+          const page = result.ok._records.blocks.find(
+            (block) => block.uuid === pageId
+          );
+
+          if (!page) {
+            return null;
+          }
+
+          return blockSerializers.fromShareable(page);
         })
         .then((block) => {
           if (!block) return null;

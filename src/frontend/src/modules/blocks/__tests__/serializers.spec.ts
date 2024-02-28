@@ -2,7 +2,7 @@ import { Block } from '@/types';
 import { parse, stringify, v4 } from 'uuid';
 import { describe } from 'vitest';
 import { ShareableBlock } from '../../../../../declarations/workspace/workspace.did';
-import { fromShareable, serializeBlock } from '../block';
+import { fromShareable, serializeBlock } from '../serializers';
 
 const mockBlock: Omit<ShareableBlock, 'id'> = {
   uuid: parse(v4()),

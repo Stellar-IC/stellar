@@ -1,14 +1,16 @@
 import { Box, Button, Stack, Text } from '@mantine/core';
-import { useAuthContext } from '@/modules/auth/contexts/AuthContext';
-import { useCreatePage } from '@/hooks/documents/updates/useCreatePage';
-import { useNavigate } from 'react-router-dom';
-import { useCallback, useEffect, useState } from 'react';
-import { stringify } from 'uuid';
-import { useWorkspaceContext } from '@/contexts/WorkspaceContext/useWorkspaceContext';
-import { toText } from '@stellar-ic/lseq-ts/Tree';
-import { fromShareable } from '@/modules/serializers/block';
 import { DEFAULT_BOUNDARY } from '@stellar-ic/lseq-ts/constants';
 import { base } from '@stellar-ic/lseq-ts/utils';
+import { toText } from '@stellar-ic/lseq-ts/Tree';
+import { useCallback, useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { stringify } from 'uuid';
+
+import { useWorkspaceContext } from '@/contexts/WorkspaceContext/useWorkspaceContext';
+import { useCreatePage } from '@/hooks/documents/updates/useCreatePage';
+import { useAuthContext } from '@/modules/auth/contexts/AuthContext';
+import { fromShareable } from '@/modules/blocks/serializers';
+
 import { Edge } from '../../../declarations/workspace/workspace.did';
 
 function WorkspaceContent() {

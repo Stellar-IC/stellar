@@ -35,7 +35,6 @@ export function QueryContextProvider({ children }: PropsWithChildren) {
       const { arguments: args } = options || {};
       // const cacheKey = getCacheKey(canisterId, query, options);
       const result = await query(...(args || ([] as unknown[] as ArgsT)));
-
       // cache[cacheKey] = result;
 
       return result;

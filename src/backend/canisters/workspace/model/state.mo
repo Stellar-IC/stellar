@@ -1,22 +1,29 @@
+import Array "mo:base/Array";
+import Debug "mo:base/Debug";
+import Int "mo:base/Int";
+import Iter "mo:base/Iter";
 import List "mo:base/List";
+import Order "mo:base/Order";
 import RBTree "mo:base/RBTree";
 import Result "mo:base/Result";
-import Text "mo:base/Text";
-import Order "mo:base/Order";
-import Debug "mo:base/Debug";
-import Iter "mo:base/Iter";
-import Array "mo:base/Array";
 import Stack "mo:base/Stack";
+import Text "mo:base/Text";
+import Time "mo:base/Time";
 import UUID "mo:uuid/UUID";
 
+import ActivitiesTypes "../../../lib/activities/types";
 import BlocksModels "../../../lib/blocks/models";
-import WorkspacesTypes "../../../lib/workspaces/types";
 import BlocksTypes "../../../lib/blocks/types";
+import EventsTypes "../../../lib/events/types";
+import WorkspacesTypes "../../../lib/workspaces/types";
+
+import Models "../../../utils/data/database/models";
 import IdManager "../../../utils/data/id_manager";
+import Tree "../../../utils/data/lseq/Tree";
+
 import CoreTypes "../../../types";
 
 import Types "../types/v0";
-import Tree "../../../utils/data/lseq/Tree";
 
 module {
     type Workspace = WorkspacesTypes.Workspace;
@@ -26,6 +33,9 @@ module {
     type UnsavedBlock = BlocksTypes.UnsavedBlock;
     type BlockContent = BlocksTypes.BlockContent;
     type BlockProperties = BlocksTypes.BlockProperties;
+    type BlockEvent = BlocksTypes.BlockEvent;
+
+    type ActivityItem = ActivitiesTypes.ActivityItem;
 
     public class State(_data : Data) {
         public var data = _data;
@@ -37,9 +47,15 @@ module {
                 id : Nat;
                 data : RBTree.Tree<PrimaryKey, ShareableBlock>;
             };
+            events : RBTree.Tree<Text, BlockEvent>;
         }
     ) {
         public var Block = BlocksModels.Block.Model(initial_value.blocks.id, initial_value.blocks.data);
+
+        public var Event = Models.UUIDModel<BlockEvent>();
+        Event.objects.postupgrade(initial_value.events);
+
+        public var Activity = Models.UUIDModel<ActivitiesTypes.Activity>();
 
         // Red-black trees to index orders by product ID and products by order ID
         public var blocks_by_parent_uuid = RBTree.RBTree<Text, List.List<PrimaryKey>>(Text.compare);
@@ -115,7 +131,23 @@ module {
             });
         };
 
-        public func getBlockByUuid(uuid : UUID.UUID) : Result.Result<Block, { #blockNotFound }> {
+        public func getBlockByUuid(uuid : UUID.UUID) : Block {
+            let block = Block.objects.indexFilter(
+                "uuid",
+                #text(UUID.toText(uuid)),
+            ).first();
+
+            switch block {
+                case (?block) {
+                    return block;
+                };
+                case (null) {
+                    Debug.trap("Block not found: " # UUID.toText(uuid));
+                };
+            };
+        };
+
+        public func findBlockByUuid(uuid : UUID.UUID) : Result.Result<Block, { #blockNotFound }> {
             let block = Block.objects.indexFilter(
                 "uuid",
                 #text(UUID.toText(uuid)),
@@ -343,7 +375,90 @@ module {
                     return #err(#blockNotFound);
                 };
             };
+        };
 
+        public func getFirstAncestorPage(block : Block) : ?Block {
+            var current_block = block;
+
+            while (true) {
+                let parent = switch (current_block.parent) {
+                    case (null) { return null };
+                    case (?parent) { parent };
+                };
+                let parent_block = findBlockByUuid(parent);
+                switch parent_block {
+                    case (#ok(parent_block)) {
+                        if (parent_block.blockType == #page) {
+                            return ?parent_block;
+                        } else {
+                            current_block := parent_block;
+                        };
+                    };
+                    case (#err(_)) {
+                        return null;
+                    };
+                };
+            };
+
+            return null;
+        };
+
+        public func getMostRecentActivityForPage(
+            pageId : UUID.UUID
+        ) : ?ActivitiesTypes.Activity {
+            let page = switch (
+                Block.objects.indexFilter(
+                    "uuid",
+                    #text(UUID.toText(pageId)),
+                ).first()
+            ) {
+                case (?page) { page };
+                case (null) { return null };
+            };
+            let content = page.content;
+
+            return Activity.objects.filter(
+                func(activity) {
+                    return activity.blockExternalId == pageId or Array.indexOf<Text>(
+                        UUID.toText(activity.blockExternalId),
+                        Tree.toArray(content),
+                        Text.equal,
+                    ) != null;
+                }
+            ).sort(
+                func(itemA, itemB) {
+                    return Int.compare(itemA.endTime, itemB.endTime);
+                }
+            ).first();
+        };
+
+        public func getActivitiesForPage(
+            pageId : UUID.UUID
+        ) : List.List<ActivitiesTypes.Activity> {
+            let page = switch (
+                Block.objects.indexFilter(
+                    "uuid",
+                    #text(UUID.toText(pageId)),
+                ).first()
+            ) {
+                case (?page) { page };
+                case (null) { return null };
+            };
+            let content = page.content;
+
+            let activities = Activity.objects.filter(
+                func(activity) {
+                    return activity.blockExternalId == pageId or Array.indexOf<Text>(
+                        UUID.toText(activity.blockExternalId),
+                        Tree.toArray(content),
+                        Text.equal,
+                    ) != null;
+                }
+            ).sort(
+                func(itemA, itemB) {
+                    return Int.compare(itemA.endTime, itemB.endTime);
+                }
+            ).value();
         };
     };
 };

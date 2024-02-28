@@ -78,13 +78,12 @@ export function useEnterHandler({
       },
       onUpdateRemote: (updatedBlock, events) => {
         const updatedBlockExternalId = parse(updatedBlock.uuid);
+        if (events.length === 0) return;
         updateBlock(updatedBlockExternalId, {
-          updateProperty: {
-            title: {
-              data: {
-                blockExternalId: updatedBlockExternalId,
-                transaction: events,
-              },
+          updatePropertyTitle: {
+            data: {
+              blockExternalId: updatedBlockExternalId,
+              transaction: events,
             },
           },
         });
@@ -106,13 +105,12 @@ export function useEnterHandler({
       },
       onUpdateRemote: (updatedBlock, events) => {
         const blockExternalId = parse(updatedBlock.uuid);
+        if (events.length === 0) return;
         updateBlock(blockExternalId, {
-          updateProperty: {
-            title: {
-              data: {
-                blockExternalId,
-                transaction: events,
-              },
+          updatePropertyTitle: {
+            data: {
+              blockExternalId,
+              transaction: events,
             },
           },
         });

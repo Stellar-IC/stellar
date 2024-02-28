@@ -13,17 +13,19 @@ import User "../../user/main";
 import State "../model/state";
 
 module CreateUser {
-    let intialUserCycles = Constants.USER__INITIAL_CYCLES_BALANCE;
-    let userCapacity = Constants.USER__CAPACITY;
-
     public func execute(
         state : State.State,
         owner : Principal,
         userIndexPrincipal : Principal,
     ) : async Result.Result<{ #created : (Principal, User.User); #existing : (Principal, User.User) }, { #anonymousUser; #insufficientCycles; #canisterNotFoundForRegisteredUser }> {
+        let CONSTANTS = Constants.Constants();
+        let USER__CAPACITY = CONSTANTS.USER__CAPACITY.scalar;
+        let USER__FREEZING_THRESHOLD = CONSTANTS.USER__FREEZING_THRESHOLD.scalar;
+        let USER__INITIAL_CYCLES_BALANCE = CONSTANTS.USER__INITIAL_CYCLES_BALANCE.scalar;
+
         var balance = Cycles.balance();
 
-        if (balance < intialUserCycles) {
+        if (balance < USER__INITIAL_CYCLES_BALANCE) {
             return #err(#insufficientCycles);
         };
 
@@ -48,19 +50,19 @@ module CreateUser {
         };
 
         let userInitArgs = {
-            capacity = userCapacity;
             owner = owner;
+            capacity = USER__CAPACITY;
         };
 
-        Cycles.add(intialUserCycles);
+        Cycles.add(USER__INITIAL_CYCLES_BALANCE);
 
         let user = await (system User.User)(
             #new {
                 settings = ?{
                     controllers = ?[owner, userIndexPrincipal];
-                    compute_allocation = ?Constants.USER__COMPUTE_ALLOCATION;
-                    memory_allocation = ?Constants.USER__MEMORY_ALLOCATION;
-                    freezing_threshold = ?Constants.USER__FREEZING_THRESHOLD;
+                    compute_allocation = null;
+                    memory_allocation = null;
+                    freezing_threshold = ?USER__FREEZING_THRESHOLD;
                 };
             }
         )(userInitArgs);

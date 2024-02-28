@@ -1,18 +1,9 @@
 import { useCallback, useState } from 'react';
-import { serializeBlock } from '@/modules/serializers/block';
-import { Block } from '@/types';
-import { DEFAULT_BOUNDARY } from '@stellar-ic/lseq-ts/constants';
-import { base } from '@stellar-ic/lseq-ts/utils';
-import { BlockEvent } from '../../../../declarations/workspace/workspace.did';
 
-type SerializedBlockEvent = {
-  blockCreated: {
-    payload: {
-      block: Omit<Block, 'id'>;
-      index: number;
-    };
-  };
-};
+import { serializeBlockEvent } from '@/modules/events/serializers';
+import { SerializedBlockEvent } from '@/modules/events/types';
+
+import { BlockEvent } from '../../../../declarations/workspace/workspace.did';
 
 export const usePageEvents = () => {
   const [events, setEvents] = useState<Record<string, SerializedBlockEvent[]>>(
@@ -22,55 +13,25 @@ export const usePageEvents = () => {
   const serializeAndStoreEventLocally = useCallback(
     (pageExternalId: string, event: BlockEvent) => {
       setEvents((prev) => {
-        if ('blockCreated' in event) {
-          const serializedEvent: SerializedBlockEvent = {
-            ...event,
-            blockCreated: {
-              payload: {
-                ...event.blockCreated.data,
-                block: serializeBlock({
-                  ...event.blockCreated.data.block,
-                  content: {
-                    allocationStrategies: [],
-                    boundary: DEFAULT_BOUNDARY,
-                    rootNode: {
-                      base: base(0),
-                      children: [],
-                      deletedAt: [],
-                      identifier: [],
-                      value: '',
-                    },
-                  },
-                  properties: {
-                    title: [],
-                    checked: [],
-                  },
-                }),
-                index: Number(event.blockCreated.data.index),
-              },
-            },
-          };
-          const updatedData = { ...prev };
+        const serializedEvent = serializeBlockEvent(event);
+        const updatedData = { ...prev };
 
-          if (pageExternalId in updatedData) {
-            updatedData[pageExternalId].push(serializedEvent);
-          } else {
-            updatedData[pageExternalId] = [serializedEvent];
-          }
-
-          // Store event in local storage
-          localStorage.setItem(
-            `events.${pageExternalId}`,
-            JSON.stringify({
-              ...updatedData,
-              index: updatedData.index,
-            })
-          );
-
-          return updatedData;
+        if (pageExternalId in updatedData) {
+          updatedData[pageExternalId].push(serializedEvent);
+        } else {
+          updatedData[pageExternalId] = [serializedEvent];
         }
 
-        return prev;
+        // Store event in local storage
+        localStorage.setItem(
+          `events.${pageExternalId}`,
+          JSON.stringify({
+            ...updatedData,
+            index: updatedData.index,
+          })
+        );
+
+        return updatedData;
       });
     },
     []

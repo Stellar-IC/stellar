@@ -1,5 +1,5 @@
-import UUID "mo:uuid/UUID";
 import Array "mo:base/Array";
+import UUID "mo:uuid/UUID";
 
 import BlocksTypes "../../../../lib/blocks/types";
 
@@ -7,30 +7,28 @@ import Tree "../../../../utils/data/lseq/Tree";
 import LseqTypes "../../../../utils/data/lseq/types";
 
 module {
-    type BlockProperyCheckedUpdatedEvent = BlocksTypes.BlockPropertyCheckedUpdatedEvent;
-    type BlockProperyTitleUpdatedEvent = BlocksTypes.BlockPropertyTitleUpdatedEvent;
-    type BlockProperyUpdatedEvent = {
-        #title : BlocksTypes.BlockPropertyTitleUpdatedEvent;
-        #checked : BlocksTypes.BlockPropertyCheckedUpdatedEvent;
+    type BlockPropertyTitleUpdatedEventData = BlocksTypes.BlockPropertyTitleUpdatedEventData;
+    type BlockPropertyCheckedUpdatedEventData = BlocksTypes.BlockPropertyCheckedUpdatedEventData;
+    type BlockPropertyUpdatedEvent = BlocksTypes.CoreBlockEventData and {
+        data : {
+            #title : BlocksTypes.BlockPropertyTitleUpdatedEventData;
+            #checked : BlocksTypes.BlockPropertyCheckedUpdatedEventData;
+        };
     };
     type Block = BlocksTypes.Block;
 
-    public func execute(event : BlockProperyUpdatedEvent, block : Block) {
-        switch (event) {
-            case (#title(event)) {
-                return handleTitle(event, block);
-            };
-            case (#checked(event)) {
-                return handleChecked(event, block);
-            };
+    public func execute(event : BlockPropertyUpdatedEvent, block : Block) {
+        switch (event.data) {
+            case (#title(data)) { handleTitle(data, block) };
+            case (#checked(data)) { handleChecked(data, block) };
         };
     };
 
-    private func handleTitle(event : BlockProperyTitleUpdatedEvent, block : Block) {
-        let blockExternalId = event.data.blockExternalId;
+    private func handleTitle(data : BlockPropertyTitleUpdatedEventData, block : Block) {
+        let blockExternalId = data.blockExternalId;
         let title = block.properties.title;
 
-        for (event in Array.vals(event.data.transaction)) {
+        for (event in Array.vals(data.transaction)) {
             switch (event) {
                 case (#insert(treeEvent)) {
                     switch (title) {
@@ -56,8 +54,8 @@ module {
 
     };
 
-    private func handleChecked(event : BlockProperyCheckedUpdatedEvent, block : Block) : () {
-        let blockExternalId = event.data.blockExternalId;
-        block.properties.checked := ?event.data.checked;
+    private func handleChecked(data : BlockPropertyCheckedUpdatedEventData, block : Block) : () {
+        let blockExternalId = data.blockExternalId;
+        block.properties.checked := ?data.checked;
     };
 };

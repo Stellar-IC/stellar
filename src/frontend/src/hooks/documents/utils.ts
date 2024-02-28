@@ -1,4 +1,4 @@
-import { fromShareable } from '@/modules/serializers/block';
+import { fromShareable } from '@/modules/blocks/serializers';
 
 import {
   BlockByUuidResult,
@@ -7,7 +7,7 @@ import {
 } from '../../../../declarations/workspace/workspace.did';
 
 export function getPageExternalId(result: PageByUuidResult): UUID | null {
-  return 'ok' in result ? result.ok?.uuid : null;
+  return 'ok' in result ? result.ok?.page.uuid : null;
 }
 
 export function getBlockExternalId(result: BlockByUuidResult): UUID | null {
@@ -16,7 +16,11 @@ export function getBlockExternalId(result: BlockByUuidResult): UUID | null {
 
 export function serializePage(result: PageByUuidResult) {
   if (!('ok' in result)) return null;
-  return fromShareable(result.ok);
+  const pageId = result.ok.page.uuid;
+  const page = result.ok._records.blocks.filter(
+    (block) => block.uuid === pageId
+  )[0];
+  return fromShareable(page);
 }
 
 export function serializeBlock(result: BlockByUuidResult) {
