@@ -301,7 +301,11 @@ export const BlockRenderer = ({
             parentBlockIndex={parentBlockIndex}
             placeholder={placeholder}
             externalId={externalId}
-            numeral={calculateBlockNumeral()}
+            numeral={
+              'numberedList' in block.blockType
+                ? calculateBlockNumeral()
+                : undefined
+            }
           />
           {getSettingValue('developer.showBlockIds') && (
             <Text
