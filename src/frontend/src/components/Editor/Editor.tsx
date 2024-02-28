@@ -13,7 +13,7 @@ import { usePagesContext } from '@/contexts/PagesContext/usePagesContext';
 import { BlockRenderer } from './BlockRenderer';
 import { TextBlock } from './TextBlock';
 
-export const Blocks = ({ page }: { page: Page }) => {
+export const Editor = ({ page }: { page: Page }) => {
   const blocksToRender = Tree.toArray(page.content);
   const [state, handlers] = useListState(blocksToRender);
   const { workspaceId } = useWorkspaceContext();

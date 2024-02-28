@@ -1,6 +1,6 @@
 import { Container, Stack } from '@mantine/core';
 import { useParams } from 'react-router-dom';
-import { Blocks } from '@/components/blocks/Blocks';
+import { Editor } from '@/components/Editor/Editor';
 import { Page } from '@/components/layout/page/Page';
 import { useEffect } from 'react';
 import { parse } from 'uuid';
@@ -39,7 +39,7 @@ export function PageDetailPage() {
     <Page>
       <Container maw="container.sm">
         <Stack mt="100" gap="xs" pl="10rem">
-          <Blocks page={page} />
+          <Editor page={page} />
         </Stack>
       </Container>
     </Page>

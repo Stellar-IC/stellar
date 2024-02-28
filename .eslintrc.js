@@ -35,6 +35,7 @@ module.exports = {
     'react-hooks/exhaustive-deps': 'warn',
     '@typescript-eslint/no-shadow': 'off',
     '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
+    '@typescript-eslint/no-use-before-define': ['error', { functions: false }],
   },
   settings: {
     'import/resolver': {

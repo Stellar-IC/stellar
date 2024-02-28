@@ -4,7 +4,7 @@ import { IconPlus, IconGridDots } from '@tabler/icons-react';
 import { PropsWithChildren, useCallback } from 'react';
 import { parse } from 'uuid';
 
-import { AddBlockModal } from '@/components/blocks/AddBlockModal';
+import { AddBlockModal } from '@/components/Editor/AddBlockModal';
 import { usePagesContext } from '@/contexts/PagesContext/usePagesContext';
 
 import { DraggableProvidedDragHandleProps } from '@hello-pangea/dnd';
