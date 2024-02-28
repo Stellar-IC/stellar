@@ -1,8 +1,9 @@
 import { Anchor, Box } from '@mantine/core';
+import { Link } from 'react-router-dom';
 
 import { useDataStoreContext } from '@/contexts/DataStoreContext/useDataStoreContext';
 import { Block } from '@/types';
-import { Link } from 'react-router-dom';
+
 import { TextBlock } from './TextBlock';
 
 interface PageBlockRendererProps {

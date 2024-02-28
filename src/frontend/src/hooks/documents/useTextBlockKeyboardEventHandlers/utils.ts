@@ -1,6 +1,7 @@
-import { Block, ExternalId } from '@/types';
 import { Tree } from '@stellar-ic/lseq-ts';
 import { TreeEvent } from '@stellar-ic/lseq-ts/types';
+
+import { Block, ExternalId } from '@/types';
 
 export const updateBlockParent = (
   block: Block,

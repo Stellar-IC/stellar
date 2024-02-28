@@ -1,5 +1,6 @@
 import type { Principal } from '@dfinity/principal';
 import { TreeEvent } from '@stellar-ic/lseq-ts/types';
+
 import {
   BlockBlockTypeUpdatedEventData,
   BlockContentUpdatedEventData,

@@ -1,4 +1,5 @@
 import { Identity } from '@dfinity/agent';
+
 import { useWorkspaceActor } from '@/hooks/ic/workspace/useWorkspaceActor';
 import { useUpdate } from '@/hooks/useUpdate';
 import { CanisterId } from '@/types';

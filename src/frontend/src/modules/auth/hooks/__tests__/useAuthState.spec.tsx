@@ -1,12 +1,13 @@
+import { AnonymousIdentity } from '@dfinity/agent';
+import { AuthClient } from '@dfinity/auth-client';
+import { Principal } from '@dfinity/principal';
 import { act, renderHook } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { vi } from 'vitest';
-import { AuthClient } from '@dfinity/auth-client';
-import { Principal } from '@dfinity/principal';
-import { AnonymousIdentity } from '@dfinity/agent';
+
+import * as client from '../../client';
 import { AnonymousUserProfile, useAuthState } from '../useAuthState';
 import * as useHydrate from '../useHydrate';
-import * as client from '../../client';
 
 vi.mock('@/modules/logger', () => ({
   logger: {

@@ -1,20 +1,21 @@
 import { DraggableProvidedDragHandleProps } from '@hello-pangea/dnd';
 import { Box, Flex, MantineTheme, Text } from '@mantine/core';
 import { Tree } from '@stellar-ic/lseq-ts';
+import { getNodeAtPosition } from '@stellar-ic/lseq-ts/Tree';
+import { IconBulbFilled } from '@tabler/icons-react';
 import { useCallback } from 'react';
 
-import { IconBulbFilled } from '@tabler/icons-react';
-import { getNodeAtPosition } from '@stellar-ic/lseq-ts/Tree';
-import { Block } from '@/types';
-import { useDataStoreContext } from '@/contexts/DataStoreContext/useDataStoreContext';
 import { DATA_TYPES } from '@/constants';
+import { useDataStoreContext } from '@/contexts/DataStoreContext/useDataStoreContext';
 import { useSettingsContext } from '@/contexts/SettingsContext';
+import { Block } from '@/types';
+
 import { BlockWithActions } from './BlockWithActions';
 import { BulletedListBlockRenderer } from './BulletedListBlockRenderer';
-import { TextBlockRenderer } from './TextBlockRenderer';
-import { TodoListBlockRenderer } from './TodoListBlockRenderer';
 import { NumberedListBlockRenderer } from './NumberedListBlockRenderer';
 import { PageBlockRenderer } from './PageBlockRenderer';
+import { TextBlockRenderer } from './TextBlockRenderer';
+import { TodoListBlockRenderer } from './TodoListBlockRenderer';
 
 interface NestedBlocksProps {
   blockExternalId: string;

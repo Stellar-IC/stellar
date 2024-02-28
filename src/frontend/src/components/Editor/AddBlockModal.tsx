@@ -9,6 +9,7 @@ import {
   ModalOverlay,
   ModalProps,
 } from '@mantine/core';
+
 import { BlockType } from '../../../../declarations/workspace/workspace.did';
 
 type AddBlockModalProps = {

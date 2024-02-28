@@ -1,6 +1,8 @@
-import { CanisterId } from '@/types';
 import { Identity } from '@dfinity/agent';
 import { useMemo } from 'react';
+
+import { CanisterId } from '@/types';
+
 import { createActor } from '../../../../../declarations/workspace';
 
 export const useWorkspaceActor = (options: {

@@ -3,16 +3,18 @@ import { parse } from 'uuid';
 
 import { usePagesContext } from '@/contexts/PagesContext/usePagesContext';
 import { ExternalId } from '@/types';
-import { BlockType } from '../../../../../declarations/workspace/workspace.did';
-import { useTabHandler } from './useTabHandler';
-import { useBackspaceHandler } from './useBackspaceHandler';
-import { useEnterHandler } from './useEnterHandler';
-import { useShiftTabHandler } from './useShiftTabHandler';
+
 import { useArrowDownHandler } from './useArrowDownHandler';
 import { useArrowUpHandler } from './useArrowUpHandler';
-import { useTextBlockEventHandlers } from '../useTextBlockEventHandlers';
+import { useBackspaceHandler } from './useBackspaceHandler';
 import { useCutHandler } from './useCutHandler';
+import { useEnterHandler } from './useEnterHandler';
+import { useShiftTabHandler } from './useShiftTabHandler';
+import { useTabHandler } from './useTabHandler';
 import { useWordCharacterHandler } from './useWordCharacterHandler';
+
+import { BlockType } from '../../../../../declarations/workspace/workspace.did';
+import { useTextBlockEventHandlers } from '../useTextBlockEventHandlers';
 
 type UseTextBlockKeyboardEventHandlersProps = {
   blockExternalId: ExternalId;

@@ -1,5 +1,6 @@
 import { AuthClient } from '@dfinity/auth-client';
 import { describe, vi } from 'vitest';
+
 import { getAuthClient } from '../client';
 
 describe('client', () => {

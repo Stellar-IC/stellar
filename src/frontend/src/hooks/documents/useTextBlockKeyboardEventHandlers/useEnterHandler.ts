@@ -1,15 +1,18 @@
+import { Tree } from '@stellar-ic/lseq-ts';
+import { parse } from 'uuid';
+
 import { DATA_TYPES } from '@/constants';
 import { useDataStoreContext } from '@/contexts/DataStoreContext/useDataStoreContext';
 import { usePagesContext } from '@/contexts/PagesContext/usePagesContext';
 import { focusNextBlock as _focusNextBlock } from '@/modules/editor/utils';
 import { Block, ExternalId } from '@/types';
-import { Tree } from '@stellar-ic/lseq-ts';
-import { parse } from 'uuid';
-import { BlockType } from '../../../../../declarations/workspace/workspace.did';
+
 import {
   insertBlockTitleCharacters,
   removeBlockTitleCharacters,
 } from './utils';
+
+import { BlockType } from '../../../../../declarations/workspace/workspace.did';
 
 type UseEnterHandlerProps = {
   blockExternalId?: ExternalId | null;

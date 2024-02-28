@@ -1,4 +1,5 @@
 import React from 'react';
+
 import { QueryContext } from './QueryContext';
 
 export function useQueryContext() {

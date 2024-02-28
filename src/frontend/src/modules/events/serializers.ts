@@ -1,8 +1,7 @@
-import { DEFAULT_BOUNDARY } from '@stellar-ic/lseq-ts/constants';
 import { base } from '@stellar-ic/lseq-ts/Node';
+import { DEFAULT_BOUNDARY } from '@stellar-ic/lseq-ts/constants';
 import { stringify } from 'uuid';
-import { BlockEvent } from '../../../../declarations/workspace/workspace.did';
-import { serializeBlock } from '../blocks/serializers';
+
 import {
   BlockBlockTypeUpdatedEvent,
   BlockContentUpdatedEvent,
@@ -16,6 +15,9 @@ import {
   SerializedBlockPropertyCheckedUpdatedEvent,
   SerializedBlockPropertyTitleUpdatedEvent,
 } from './types';
+
+import { BlockEvent } from '../../../../declarations/workspace/workspace.did';
+import { serializeBlock } from '../blocks/serializers';
 
 export function serializeBlockEvent(event: BlockEvent): SerializedBlockEvent {
   if ('blockCreated' in event.data) {

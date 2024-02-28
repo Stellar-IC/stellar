@@ -2,6 +2,7 @@ import { Box } from '@mantine/core';
 
 import { useDataStoreContext } from '@/contexts/DataStoreContext/useDataStoreContext';
 import { Block } from '@/types';
+
 import { TextBlock } from './TextBlock';
 import { TextBlockBlockType } from './TextBlock/types';
 

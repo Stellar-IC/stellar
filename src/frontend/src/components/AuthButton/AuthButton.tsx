@@ -10,10 +10,13 @@ import {
   //  MenuList
 } from '@mantine/core';
 import { useCallback } from 'react';
+
 import { INTERNET_IDENTITY_HOST } from '@/config';
 import { logout } from '@/modules/auth/commands';
 import { useAuthContext } from '@/modules/auth/contexts/AuthContext';
+
 import classes from './AuthButton.module.css';
+
 import { PrincipalBadge } from '../PrincipalBadge';
 
 export function AuthButton() {

@@ -10,6 +10,7 @@ import { useWorkspaceActor } from '@/hooks/ic/workspace/useWorkspaceActor';
 import { useUpdate } from '@/hooks/useUpdate';
 import { useAuthContext } from '@/modules/auth/contexts/AuthContext';
 import { Block, ExternalId } from '@/types';
+
 import {
   SaveEventTransactionUpdateInput,
   SaveEventTransactionUpdateOutput,

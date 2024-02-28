@@ -1,5 +1,6 @@
 import { Principal } from '@dfinity/principal';
 import * as Lseq from '@stellar-ic/lseq-ts';
+
 import { BlockType } from '../../declarations/workspace/workspace.did';
 
 export type CanisterId = string | Principal;

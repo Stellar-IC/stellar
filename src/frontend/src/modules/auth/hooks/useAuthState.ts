@@ -1,13 +1,14 @@
-import { useEffect, useState } from 'react';
+import { AnonymousIdentity, Identity } from '@dfinity/agent';
 import { DelegationIdentity } from '@dfinity/identity';
 import { Principal } from '@dfinity/principal';
-import { AnonymousIdentity, Identity } from '@dfinity/agent';
-import { getAuthClient } from '../client';
-import { login as _login } from '../commands';
+import { useEffect, useState } from 'react';
 
 import { useHydrate } from './useHydrate';
 import { getUserProfile, registerUser } from './utils';
+
 import { UserProfile } from '../../../../../declarations/user/user.did';
+import { getAuthClient } from '../client';
+import { login as _login } from '../commands';
 
 export class AnonymousUserProfile implements UserProfile {
   username = 'Anonymous';

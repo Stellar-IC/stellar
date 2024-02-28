@@ -6,6 +6,31 @@ module.exports = {
   plugins: ['react', 'react-hooks'],
   rules: {
     'consistent-return': 'off',
+    'import/order': [
+      1,
+      {
+        groups: [
+          'external',
+          'builtin',
+          'internal',
+          'sibling',
+          'parent',
+          'index',
+        ],
+        pathGroups: [
+          {
+            pattern: '@/**',
+            group: 'internal',
+          },
+        ],
+        // pathGroupsExcludedImportTypes: ['internal'],
+        alphabetize: {
+          order: 'asc',
+          // caseInsensitive: false,
+        },
+        'newlines-between': 'always',
+      },
+    ],
     'no-commented-out-code': 'off',
     'no-continue': 'off',
     'no-restricted-syntax': [

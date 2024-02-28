@@ -1,9 +1,9 @@
+import { DelegationIdentity } from '@dfinity/identity';
 import { PropsWithChildren } from 'react';
 
+import { useWorkspaceActor } from '@/hooks/ic/workspace/useWorkspaceActor';
 import { CanisterId } from '@/types';
 
-import { useWorkspaceActor } from '@/hooks/ic/workspace/useWorkspaceActor';
-import { DelegationIdentity } from '@dfinity/identity';
 import { WorkspaceContext } from './WorkspaceContext';
 
 export function WorkspaceContextProvider({

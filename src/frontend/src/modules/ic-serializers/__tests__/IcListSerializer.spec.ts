@@ -1,4 +1,5 @@
 import { describe, expect } from 'vitest';
+
 import { IcListSerializer } from '../IcListSerializer';
 import { IcShareableList } from '../types';
 

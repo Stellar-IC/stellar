@@ -2,14 +2,14 @@ import { Divider, Stack } from '@mantine/core';
 import { useListState } from '@mantine/hooks';
 import { Tree } from '@stellar-ic/lseq-ts';
 import { useEffect } from 'react';
+import { parse } from 'uuid';
 
+import { usePagesContext } from '@/contexts/PagesContext/usePagesContext';
+import { useWorkspaceContext } from '@/contexts/WorkspaceContext/useWorkspaceContext';
+import { useBlockByUuid } from '@/hooks/documents/queries/useBlockByUuid';
+import { useAuthContext } from '@/modules/auth/contexts/AuthContext';
 import { Page } from '@/types';
 
-import { useBlockByUuid } from '@/hooks/documents/queries/useBlockByUuid';
-import { useWorkspaceContext } from '@/contexts/WorkspaceContext/useWorkspaceContext';
-import { useAuthContext } from '@/modules/auth/contexts/AuthContext';
-import { parse } from 'uuid';
-import { usePagesContext } from '@/contexts/PagesContext/usePagesContext';
 import { BlockRenderer } from './BlockRenderer';
 import { TextBlock } from './TextBlock';
 

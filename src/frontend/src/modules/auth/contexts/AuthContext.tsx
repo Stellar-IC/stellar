@@ -1,6 +1,7 @@
 import { Identity } from '@dfinity/agent';
 import { Principal } from '@dfinity/principal';
 import { createContext, PropsWithChildren, useContext } from 'react';
+
 import { UserProfile } from '../../../../../declarations/user/user.did';
 import { useAuthState } from '../hooks/useAuthState';
 

@@ -1,7 +1,7 @@
 import { Box } from '@mantine/core';
+import { Node, Tree } from '@stellar-ic/lseq-ts';
 import { createRef, useEffect, useMemo } from 'react';
 
-import { Node, Tree } from '@stellar-ic/lseq-ts';
 import { NodeRenderer } from './NodeRenderer';
 
 type TreeViewerProps = {

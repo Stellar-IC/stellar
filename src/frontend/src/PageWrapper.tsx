@@ -2,6 +2,7 @@ import { DelegationIdentity } from '@dfinity/identity';
 import type { Principal } from '@dfinity/principal';
 import { Loader, Box, Flex, Text } from '@mantine/core';
 import { PropsWithChildren, useState, useEffect } from 'react';
+
 import { NavbarSearch } from './components/Navbars/NavbarSearch';
 import { PagesContextProvider } from './contexts/PagesContext/PagesContextProvider';
 import { WorkspaceContextProvider } from './contexts/WorkspaceContext/WorkspaceContextProvider';

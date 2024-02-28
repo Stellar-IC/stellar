@@ -1,5 +1,6 @@
 import { useCallback, useState } from 'react';
 import { stringify } from 'uuid';
+
 import { UUID } from '../../../declarations/workspace/workspace.did';
 
 export function useQuery<

@@ -1,3 +1,4 @@
+import { DraggableProvidedDragHandleProps } from '@hello-pangea/dnd';
 import { Box, Button, Flex, Group, useMantineTheme } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
 import { IconPlus, IconGridDots } from '@tabler/icons-react';
@@ -7,8 +8,8 @@ import { parse } from 'uuid';
 import { AddBlockModal } from '@/components/Editor/AddBlockModal';
 import { usePagesContext } from '@/contexts/PagesContext/usePagesContext';
 
-import { DraggableProvidedDragHandleProps } from '@hello-pangea/dnd';
 import { TransformBlockModal } from './TransformBlockModal';
+
 import { BlockType } from '../../../../declarations/workspace/workspace.did';
 
 type BlockWithActionsProps = PropsWithChildren<{

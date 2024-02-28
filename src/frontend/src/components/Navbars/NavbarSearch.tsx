@@ -1,5 +1,4 @@
 import type { Principal } from '@dfinity/principal';
-import { Tree } from '@stellar-ic/lseq-ts';
 import {
   Text,
   Group,
@@ -10,19 +9,23 @@ import {
   Button,
   Flex,
 } from '@mantine/core';
-import { IconPlus, IconTrash } from '@tabler/icons-react';
-import { useCreatePageWithRedirect } from '@/hooks/documents/updates/useCreatePageWithRedirect';
-import { Link } from 'react-router-dom';
-import { useDataStoreContext } from '@/contexts/DataStoreContext/useDataStoreContext';
-import { DATA_TYPES } from '@/constants';
-import { Block } from '@/types';
-import { useDeletePage } from '@/hooks/ic/workspace/updates/useDeletePage';
-import { useWorkspaceContext } from '@/contexts/WorkspaceContext/useWorkspaceContext';
-import { useAuthContext } from '@/modules/auth/contexts/AuthContext';
-import { parse } from 'uuid';
 import { notifications } from '@mantine/notifications';
-import { AuthButton } from '../AuthButton/AuthButton';
+import { Tree } from '@stellar-ic/lseq-ts';
+import { IconPlus, IconTrash } from '@tabler/icons-react';
+import { Link } from 'react-router-dom';
+import { parse } from 'uuid';
+
+import { DATA_TYPES } from '@/constants';
+import { useDataStoreContext } from '@/contexts/DataStoreContext/useDataStoreContext';
+import { useWorkspaceContext } from '@/contexts/WorkspaceContext/useWorkspaceContext';
+import { useCreatePageWithRedirect } from '@/hooks/documents/updates/useCreatePageWithRedirect';
+import { useDeletePage } from '@/hooks/ic/workspace/updates/useDeletePage';
+import { useAuthContext } from '@/modules/auth/contexts/AuthContext';
+import { Block } from '@/types';
+
 import classes from './NavbarSearch.module.css';
+
+import { AuthButton } from '../AuthButton/AuthButton';
 import { PrincipalBadge } from '../PrincipalBadge';
 
 function PageLinksSection() {

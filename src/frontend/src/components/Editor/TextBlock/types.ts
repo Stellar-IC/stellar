@@ -1,5 +1,6 @@
-import { ExternalId } from '@/types';
 import { Tree } from '@stellar-ic/lseq-ts';
+
+import { ExternalId } from '@/types';
 
 export type TextBlockBlockType =
   | { page: null }

@@ -1,6 +1,7 @@
 import { Identity } from '@dfinity/agent';
 import type { Principal } from '@dfinity/principal';
 import { useMemo } from 'react';
+
 import { createActor } from '../../../../../declarations/user';
 
 export const useUserActor = (options: {

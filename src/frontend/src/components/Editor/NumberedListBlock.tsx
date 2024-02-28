@@ -1,11 +1,12 @@
 import { Box, Flex } from '@mantine/core';
+import { useDisclosure } from '@mantine/hooks';
+import { Tree } from '@stellar-ic/lseq-ts';
 import { createRef, useEffect, useMemo, useState } from 'react';
 
-import { Tree } from '@stellar-ic/lseq-ts';
-import { useDisclosure } from '@mantine/hooks';
-import { Block, ExternalId } from '@/types';
-import { useTextBlockKeyboardEventHandlers } from '@/hooks/documents/useTextBlockKeyboardEventHandlers';
 import { useDataStoreContext } from '@/contexts/DataStoreContext/useDataStoreContext';
+import { useTextBlockKeyboardEventHandlers } from '@/hooks/documents/useTextBlockKeyboardEventHandlers';
+import { Block, ExternalId } from '@/types';
+
 import { useTextStyles } from './TextBlock/hooks/useTextStyles';
 
 export type NumberedListBlockInnerProps = {

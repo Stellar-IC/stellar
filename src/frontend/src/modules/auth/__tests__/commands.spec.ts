@@ -1,7 +1,8 @@
-import { describe, vi } from 'vitest';
 import { AuthClient } from '@dfinity/auth-client';
-import { login, logout } from '../commands';
+import { describe, vi } from 'vitest';
+
 import * as client from '../client';
+import { login, logout } from '../commands';
 
 describe('client', () => {
   beforeEach(() => {

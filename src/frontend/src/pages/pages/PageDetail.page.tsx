@@ -1,16 +1,17 @@
 import { Container, Stack } from '@mantine/core';
+import { useEffect } from 'react';
 import { useParams } from 'react-router-dom';
+import { parse } from 'uuid';
+
 import { Editor } from '@/components/Editor/Editor';
 import { Page } from '@/components/layout/page/Page';
-import { useEffect } from 'react';
-import { parse } from 'uuid';
+import { DATA_TYPES } from '@/constants';
+import { useDataStoreContext } from '@/contexts/DataStoreContext/useDataStoreContext';
 import { useWorkspaceContext } from '@/contexts/WorkspaceContext/useWorkspaceContext';
 import { useBlocksByPageUuid } from '@/hooks/documents/queries/useBlocksByPageUuid';
-import { useAuthContext } from '@/modules/auth/contexts/AuthContext';
-import { useDataStoreContext } from '@/contexts/DataStoreContext/useDataStoreContext';
-import { DATA_TYPES } from '@/constants';
-import { Block } from '@/types';
 import { usePageByUuid } from '@/hooks/ic/workspace/queries/usePageByUuid';
+import { useAuthContext } from '@/modules/auth/contexts/AuthContext';
+import { Block } from '@/types';
 
 export function PageDetailPage() {
   const { pageId } = useParams<{ pageId: string }>();

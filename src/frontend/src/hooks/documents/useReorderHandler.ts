@@ -1,11 +1,11 @@
+import { Node, Tree } from '@stellar-ic/lseq-ts';
+import { useCallback } from 'react';
 import { parse } from 'uuid';
 
-import { usePagesContext } from '@/contexts/PagesContext/usePagesContext';
-import { Node, Tree } from '@stellar-ic/lseq-ts';
-import { Block, ExternalId } from '@/types';
-import { useCallback } from 'react';
-import { useDataStoreContext } from '@/contexts/DataStoreContext/useDataStoreContext';
 import { DATA_TYPES } from '@/constants';
+import { useDataStoreContext } from '@/contexts/DataStoreContext/useDataStoreContext';
+import { usePagesContext } from '@/contexts/PagesContext/usePagesContext';
+import { Block, ExternalId } from '@/types';
 
 type UseReorderHandler = {
   parentBlockExternalId?: ExternalId | null;

@@ -1,10 +1,10 @@
 import { Checkbox, Flex } from '@mantine/core';
 import { parse } from 'uuid';
 
-import { usePagesContext } from '@/contexts/PagesContext/usePagesContext';
-
 import { useDataStoreContext } from '@/contexts/DataStoreContext/useDataStoreContext';
+import { usePagesContext } from '@/contexts/PagesContext/usePagesContext';
 import { Block } from '@/types';
+
 import { TextBlock } from './TextBlock';
 
 interface TodoListBlockProps {

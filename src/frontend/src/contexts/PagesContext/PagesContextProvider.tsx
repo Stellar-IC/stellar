@@ -3,10 +3,12 @@ import { Tree } from '@stellar-ic/lseq-ts';
 import { PropsWithChildren, useCallback } from 'react';
 import { parse, stringify, v4 } from 'uuid';
 
-import { usePages } from '@/contexts/PagesContext/usePages';
 import { DATA_TYPES } from '@/constants';
+import { usePages } from '@/contexts/PagesContext/usePages';
 import { useAuthContext } from '@/modules/auth/contexts/AuthContext';
 import { Block } from '@/types';
+
+import { PagesContext } from './PagesContext';
 
 import {
   BlockBlockTypeUpdatedEventData,
@@ -17,11 +19,8 @@ import {
   BlockType,
   UUID,
 } from '../../../../declarations/workspace/workspace.did';
-
 import { useDataStoreContext } from '../DataStoreContext/useDataStoreContext';
 import { useWorkspaceContext } from '../WorkspaceContext/useWorkspaceContext';
-
-import { PagesContext } from './PagesContext';
 
 function buildEvent<DataT>(data: DataT, userIdentity: Identity) {
   const now = BigInt(Date.now()) * BigInt(1_000_000); // convert to nanoseconds

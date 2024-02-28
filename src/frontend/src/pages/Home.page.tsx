@@ -1,7 +1,7 @@
 import { Box, Button, Stack, Text } from '@mantine/core';
+import { toText } from '@stellar-ic/lseq-ts/Tree';
 import { DEFAULT_BOUNDARY } from '@stellar-ic/lseq-ts/constants';
 import { base } from '@stellar-ic/lseq-ts/utils';
-import { toText } from '@stellar-ic/lseq-ts/Tree';
 import { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { stringify } from 'uuid';

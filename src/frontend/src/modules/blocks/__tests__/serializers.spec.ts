@@ -1,6 +1,8 @@
-import { Block } from '@/types';
 import { parse, stringify, v4 } from 'uuid';
 import { describe } from 'vitest';
+
+import { Block } from '@/types';
+
 import { ShareableBlock } from '../../../../../declarations/workspace/workspace.did';
 import { fromShareable, serializeBlock } from '../serializers';
 

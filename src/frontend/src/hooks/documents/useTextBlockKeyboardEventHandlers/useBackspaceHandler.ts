@@ -1,4 +1,5 @@
 import { useCallback } from 'react';
+
 import { focusPreviousBlock } from '@/modules/editor/utils';
 
 type UseBackspaceHandlerProps = {

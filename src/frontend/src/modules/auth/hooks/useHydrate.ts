@@ -1,10 +1,12 @@
 import { AnonymousIdentity } from '@dfinity/agent';
 import { DelegationIdentity } from '@dfinity/identity';
-import { logger as baseLogger } from '@/modules/logger';
 import { useCallback, useState } from 'react';
-import { getAuthClient } from '../client';
+
+import { logger as baseLogger } from '@/modules/logger';
 
 import { getUserProfile, registerUser } from './utils';
+
+import { getAuthClient } from '../client';
 
 const logger = baseLogger.getLogger('auth');
 logger.setDefaultLevel(baseLogger.levels.INFO);

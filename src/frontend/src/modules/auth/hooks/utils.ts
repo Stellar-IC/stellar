@@ -1,12 +1,14 @@
 import { DelegationIdentity } from '@dfinity/identity';
 import { Principal } from '@dfinity/principal';
+
 import { logger as baseLogger } from '@/modules/logger';
+
 import { createActor } from '../../../../../declarations/user';
+import { Result as ProfileQueryResult } from '../../../../../declarations/user/user.did';
 import {
   canisterId as canisterIdForUserIndex,
   createActor as createActorForUserIndex,
 } from '../../../../../declarations/user_index';
-import { Result as ProfileQueryResult } from '../../../../../declarations/user/user.did';
 
 const createAuthenticatedUserIndexActor = (identity: DelegationIdentity) =>
   createActorForUserIndex(canisterIdForUserIndex, {

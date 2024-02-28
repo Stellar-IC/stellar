@@ -1,11 +1,12 @@
+import { Tree } from '@stellar-ic/lseq-ts';
+import { useCallback, useMemo } from 'react';
 import { parse } from 'uuid';
 
-import { usePagesContext } from '@/contexts/PagesContext/usePagesContext';
-import { Tree } from '@stellar-ic/lseq-ts';
-import { Block, ExternalId } from '@/types';
-import { useCallback, useMemo } from 'react';
-import { useDataStoreContext } from '@/contexts/DataStoreContext/useDataStoreContext';
 import { DATA_TYPES } from '@/constants';
+import { useDataStoreContext } from '@/contexts/DataStoreContext/useDataStoreContext';
+import { usePagesContext } from '@/contexts/PagesContext/usePagesContext';
+import { Block, ExternalId } from '@/types';
+
 import {
   insertBlockContent,
   removeBlockContent,

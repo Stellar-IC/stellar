@@ -1,4 +1,5 @@
 import { Box, Card, Checkbox, Stack, Text } from '@mantine/core';
+
 import { useSettingsContext } from '@/contexts/SettingsContext';
 
 enum SettingsValueType {

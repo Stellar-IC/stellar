@@ -1,4 +1,5 @@
 import React from 'react';
+
 import { PagesContext } from './PagesContext';
 
 export function usePagesContext() {
