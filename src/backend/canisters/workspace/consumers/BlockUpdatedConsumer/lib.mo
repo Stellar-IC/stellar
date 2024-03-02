@@ -11,10 +11,13 @@ import Result "mo:base/Result";
 import Stack "mo:base/Stack";
 import Text "mo:base/Text";
 import UUID "mo:uuid/UUID";
+import Source "mo:uuid/async/SourceV4";
 
+import Activity "../../../../lib/activities/Activity";
 import ActivitiesTypes "../../../../lib/activities/types";
+import BlocksModels "../../../../lib/blocks/models";
 import BlocksTypes "../../../../lib/blocks/types";
-import UUIDGenerator "../../../../lib/shared/UUIDGenerator";
+import BlocksUtils "../../../../lib/blocks/utils";
 import Tree "../../../../utils/data/lseq/Tree";
 
 import State "../../model/state";
@@ -27,6 +30,7 @@ import UpdateProperty "./UpdateProperty";
 
 module BlockUpdatedConsumer {
     type Block = BlocksTypes.Block;
+    type ShareableBlock = BlocksTypes.ShareableBlock;
 
     func _blockByUuid(state : State.State, uuid : UUID.UUID) : Block {
         state.data.getBlockByUuid(uuid);
@@ -35,71 +39,156 @@ module BlockUpdatedConsumer {
     public func execute(
         state : State.State,
         event : BlocksTypes.BlockUpdatedEvent,
-        deps : { uuidGenerator : UUIDGenerator.UUIDGenerator },
-    ) : Result.Result<Block, { #blockNotFound; #insufficientCycles; #inputTooLong; #invalidBlockType; #failedToUpdate; #anonymousUser }> {
+    ) : async Result.Result<ShareableBlock, { #blockNotFound; #insufficientCycles; #inputTooLong; #invalidBlockType; #failedToUpdate; #anonymousUser }> {
         switch (event.data) {
             case (#updateParent(data)) {
                 let blockBeforeEdit = _blockByUuid(state, data.blockExternalId);
+                let clonedBlockBeforeEdit = BlocksUtils.clone(blockBeforeEdit);
                 let result = updateParent(state, event, data);
                 let blockAfterEdit = _blockByUuid(state, data.blockExternalId);
+                let clonedBlockAfterEdit = BlocksUtils.clone(blockAfterEdit);
                 let pageBlock = state.data.getFirstAncestorPage(blockBeforeEdit);
-                let mostRecentActivity : ?ActivitiesTypes.Activity = switch (pageBlock) {
-                    case (?pageBlock) {
-                        state.data.getMostRecentActivityForPage(pageBlock.uuid);
-                    };
-                    case (null) { null };
-                };
-
-                switch (mostRecentActivity) {
-                    case (null) {
-                        let activity = CreateActivity.execute(
-                            state,
-                            {
-                                edits = [{
-                                    startTime = event.timestamp;
-                                    blockValue = {
-                                        before = ?blockBeforeEdit;
-                                        after = blockAfterEdit;
-                                    };
-                                }];
-                                blockExternalId = blockBeforeEdit.uuid;
-                            },
-                            { uuidGenerator = deps.uuidGenerator },
-                        );
-                    };
-                    case (?mostRecentActivity) {
-                        if (mostRecentActivity.blockExternalId == blockBeforeEdit.uuid) {
-                            let updatedActivity = ExtendActivity.execute(
-                                state,
-                                {
-                                    activityId = mostRecentActivity.uuid;
-                                    edits = [{
-                                        startTime = event.timestamp;
-                                        blockValue = {
-                                            before = ?blockBeforeEdit;
-                                            after = blockAfterEdit;
-                                        };
-                                    }];
-                                },
-                            );
-                            state.data.Activity.objects.upsert(updatedActivity);
-                        };
-                    };
-                };
-
-                #ok(blockAfterEdit);
+                let activity = await createOrExtendActivityForEvent(
+                    state,
+                    pageBlock,
+                    event,
+                    clonedBlockBeforeEdit,
+                    clonedBlockAfterEdit,
+                );
+                #ok(BlocksModels.Block.toShareable(clonedBlockAfterEdit));
             };
             case (#updateBlockType(data)) {
-                #ok(updateBlockType(state, event, data));
+                let blockBeforeEdit = _blockByUuid(state, data.blockExternalId);
+                let clonedBlockBeforeEdit = BlocksUtils.clone(blockBeforeEdit);
+                let result = updateBlockType(state, event, data);
+                let blockAfterEdit = _blockByUuid(state, data.blockExternalId);
+                let clonedBlockAfterEdit = BlocksUtils.clone(blockAfterEdit);
+                let pageBlock = state.data.getFirstAncestorPage(blockBeforeEdit);
+                let activity = await createOrExtendActivityForEvent(
+                    state,
+                    pageBlock,
+                    event,
+                    clonedBlockBeforeEdit,
+                    clonedBlockAfterEdit,
+                );
+                #ok(BlocksModels.Block.toShareable(clonedBlockAfterEdit));
             };
             case (#updateContent(data)) {
-                updateContent(state, event, data);
+                // let blockBeforeEdit = _blockByUuid(state, data.blockExternalId);
+                // let clonedBlockBeforeEdit = BlocksUtils.clone(blockBeforeEdit);
+                let result = updateContent(state, event, data);
+                let blockAfterEdit = _blockByUuid(state, data.blockExternalId);
+                let clonedBlockAfterEdit = BlocksUtils.clone(blockAfterEdit);
+                // let pageBlock = state.data.getFirstAncestorPage(blockBeforeEdit);
+                // let activity = createOrExtendActivityForEvent(
+                //     state,
+                //     pageBlock,
+                //     event,
+                //     blockBeforeEdit,
+                //     blockAfterEdit,
+                //     deps,
+                // );
+                #ok(BlocksModels.Block.toShareable(clonedBlockAfterEdit));
             };
             case (#updatePropertyTitle(data)) {
-                #ok(updateTitleProperty(state, event, data));
+                let blockBeforeEdit = _blockByUuid(state, data.blockExternalId);
+                let clonedBlockBeforeEdit = BlocksUtils.clone(blockBeforeEdit);
+                let result = updateTitleProperty(state, event, data);
+                let blockAfterEdit = _blockByUuid(state, data.blockExternalId);
+                let clonedBlockAfterEdit = BlocksUtils.clone(blockAfterEdit);
+                let pageBlock = state.data.getFirstAncestorPage(blockBeforeEdit);
+                let activity = await createOrExtendActivityForEvent(
+                    state,
+                    pageBlock,
+                    event,
+                    clonedBlockBeforeEdit,
+                    clonedBlockAfterEdit,
+                );
+                #ok(BlocksModels.Block.toShareable(clonedBlockAfterEdit));
             };
             case (#updatePropertyChecked(data)) {
-                #ok(updateCheckedProperty(state, event, data));
+                let blockBeforeEdit = _blockByUuid(state, data.blockExternalId);
+                let clonedBlockBeforeEdit = BlocksUtils.clone(blockBeforeEdit);
+                let result = updateCheckedProperty(state, event, data);
+                let blockAfterEdit = _blockByUuid(state, data.blockExternalId);
+                let clonedBlockAfterEdit = BlocksUtils.clone(blockAfterEdit);
+                let pageBlock = state.data.getFirstAncestorPage(blockBeforeEdit);
+                let activity = await createOrExtendActivityForEvent(
+                    state,
+                    pageBlock,
+                    event,
+                    clonedBlockBeforeEdit,
+                    clonedBlockAfterEdit,
+                );
+                #ok(BlocksModels.Block.toShareable(clonedBlockAfterEdit));
+            };
+        };
+    };
+
+    func createOrExtendActivityForEvent(
+        state : State.State,
+        pageBlock : ?Block,
+        event : BlocksTypes.BlockUpdatedEvent,
+        blockBeforeEdit : Block,
+        blockAfterEdit : Block,
+    ) : async () {
+        Debug.print("\n\nCreating or extending activity for event.");
+        let mostRecentActivity : ?ActivitiesTypes.Activity = switch (pageBlock) {
+            case (?pageBlock) {
+                state.data.getMostRecentActivityForPage(pageBlock.uuid);
+            };
+            case (null) { null };
+        };
+
+        switch (mostRecentActivity) {
+            case (null) {
+                let activity = CreateActivity.execute(
+                    state,
+                    {
+                        uuid = await Source.Source().new();
+                        edits = [{
+                            startTime = event.timestamp;
+                            blockValue = {
+                                before = ?blockBeforeEdit;
+                                after = blockAfterEdit;
+                            };
+                        }];
+                        blockExternalId = blockBeforeEdit.uuid;
+                    },
+                );
+            };
+            case (?mostRecentActivity) {
+                if (mostRecentActivity.blockExternalId == blockBeforeEdit.uuid) {
+                    let updatedActivity = ExtendActivity.execute(
+                        state,
+                        {
+                            activityId = mostRecentActivity.uuid;
+                            edits = [{
+                                startTime = event.timestamp;
+                                blockValue = {
+                                    before = ?blockBeforeEdit;
+                                    after = blockAfterEdit;
+                                };
+                            }];
+                        },
+                    );
+                    state.data.Activity.objects.upsert(updatedActivity);
+                } else {
+                    let activity = CreateActivity.execute(
+                        state,
+                        {
+                            uuid = await Source.Source().new();
+                            edits = [{
+                                startTime = event.timestamp;
+                                blockValue = {
+                                    before = ?blockBeforeEdit;
+                                    after = blockAfterEdit;
+                                };
+                            }];
+                            blockExternalId = blockBeforeEdit.uuid;
+                        },
+                    );
+                };
             };
         };
     };

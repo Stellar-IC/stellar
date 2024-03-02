@@ -23,8 +23,13 @@ module {
         };
 
         public func generateIds() : async () {
-            while (List.size(queue.0) < TARGET_ID_COUNT) {
+            let MAX_ITERATIONS = 1000;
+            var iteration = 0;
+
+            while (List.size(queue.0) < TARGET_ID_COUNT and iteration < MAX_ITERATIONS) {
+                Debug.print("Generating new UUIDs.........");
                 queue := Deque.pushBack<UUID.UUID>(queue, await Source.Source().new());
+                iteration := iteration + 1;
             };
 
             return;

@@ -4,6 +4,8 @@ import { Loader, Box, Flex, Text } from '@mantine/core';
 import { PropsWithChildren, useState, useEffect } from 'react';
 
 import { NavbarSearch } from './components/Navbars/NavbarSearch';
+import { PageActionBar } from './components/PageActionBar';
+import { PageInfoPanel } from './components/PageInfoPanel';
 import { PagesContextProvider } from './contexts/PagesContext/PagesContextProvider';
 import { WorkspaceContextProvider } from './contexts/WorkspaceContext/WorkspaceContextProvider';
 import { useUserActor } from './hooks/ic/user/useUserActor';
@@ -45,6 +47,7 @@ export function PageWrapper({ children }: PropsWithChildren) {
             justifyContent: 'center',
             flexGrow: 1,
             paddingLeft: '300px', // TODO: Convert this to rems
+            paddingRight: '300px', // TODO: Convert this to rems
           }}
         >
           <Loader />
@@ -66,6 +69,7 @@ export function PageWrapper({ children }: PropsWithChildren) {
             justifyContent: 'center',
             flexGrow: 1,
             paddingLeft: '300px', // TODO: Convert this to rems
+            paddingRight: '300px', // TODO: Convert this to rems
           }}
         />
       </Flex>
@@ -85,6 +89,7 @@ export function PageWrapper({ children }: PropsWithChildren) {
             justifyContent: 'center',
             flexGrow: 1,
             paddingLeft: '300px', // TODO: Convert this to rems
+            paddingRight: '300px', // TODO: Convert this to rems
           }}
         >
           <Text>No Workspace</Text>
@@ -97,6 +102,7 @@ export function PageWrapper({ children }: PropsWithChildren) {
     <WorkspaceContextProvider identity={identity} workspaceId={workspaceId}>
       <PagesContextProvider>
         <Box w="100%">
+          <PageActionBar openActivityLog={() => {}} />
           <Flex>
             <NavbarSearch workspaceId={workspaceId} />
             <div
@@ -107,11 +113,14 @@ export function PageWrapper({ children }: PropsWithChildren) {
                 alignContent: 'center',
                 justifyContent: 'center',
                 flexGrow: 1,
+                marginTop: '45px',
                 paddingLeft: '300px', // TODO: Convert this to rems
+                paddingRight: '300px', // TODO: Convert this to rems
               }}
             >
               {children}
             </div>
+            <PageInfoPanel />
           </Flex>
         </Box>
       </PagesContextProvider>

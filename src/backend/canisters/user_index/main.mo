@@ -1,5 +1,3 @@
-import WorkspaceIndex "canister:workspace_index";
-
 import Debug "mo:base/Debug";
 import Cycles "mo:base/ExperimentalCycles";
 import Principal "mo:base/Principal";
@@ -18,8 +16,6 @@ import Canistergeek "mo:canistergeek/canistergeek";
 import Constants "../../constants";
 import CanisterTopUp "../../lib/shared/CanisterTopUp";
 
-import User "../user/main";
-
 import State "./model/state";
 import CreateUser "./services/create_user";
 import Types "./types";
@@ -34,9 +30,8 @@ actor UserIndex {
     stable let MIN_TOP_UP_INTERVAL = 3 * 60 * 60 * 1_000_000_000_000; // 3 hours
 
     stable var stable_username_to_user_id : RBTree.Tree<Text, UserId> = #leaf;
-    stable var stable_principal_to_user_id : RBTree.Tree<Principal, UserId> = #leaf;
-    stable var stable_user_id_to_principal : RBTree.Tree<UserId, Principal> = #leaf;
-    stable var stable_user_id_to_user_canister : RBTree.Tree<UserId, User.User> = #leaf;
+    stable var stable_owner_to_user_id : RBTree.Tree<Principal, UserId> = #leaf;
+    stable var stable_user_id_to_owner : RBTree.Tree<UserId, Principal> = #leaf;
     stable var stable_topUps : RBTree.Tree<Principal, CanisterTopUp.CanisterTopUp> = #leaf;
 
     stable let stable_capacity = 100_000_000_000_000;
@@ -44,9 +39,8 @@ actor UserIndex {
 
     var stable_data = {
         username_to_user_id = stable_username_to_user_id;
-        principal_to_user_id = stable_principal_to_user_id;
-        user_id_to_principal = stable_user_id_to_principal;
-        user_id_to_user_canister = stable_user_id_to_user_canister;
+        owner_to_user_id = stable_owner_to_user_id;
+        user_id_to_owner = stable_user_id_to_owner;
     };
 
     var state = State.State(State.Data(stable_data));
@@ -70,12 +64,12 @@ actor UserIndex {
             case (#err(#canisterNotFoundForRegisteredUser)) {
                 return #err(#canisterNotFoundForRegisteredUser);
             };
-            case (#ok(#existing(principal, user))) {
-                return #ok(principal);
+            case (#ok(#existing(owner, user))) {
+                return #ok(owner);
             };
-            case (#ok(#created(principal, user))) {
-                ignore initializeTopUpsForCanister(principal);
-                return #ok(principal);
+            case (#ok(#created(owner, user))) {
+                ignore initializeTopUpsForCanister(owner);
+                return #ok(owner);
             };
         };
     };
@@ -125,7 +119,7 @@ actor UserIndex {
 
         let sender_canister_version : ?Nat64 = null;
 
-        for (entry in state.data.user_id_to_user_canister.entries()) {
+        for (entry in state.data.user_id_to_owner.entries()) {
             var userId = entry.0;
 
             try {
@@ -159,9 +153,9 @@ actor UserIndex {
 
         let sender_canister_version : ?Nat64 = null;
 
-        for (entry in state.data.user_id_to_user_canister.entries()) {
+        for (entry in state.data.user_id_to_owner.entries()) {
             var userId = entry.0;
-            var userCanister = entry.1;
+            var userCanister = actor (Principal.toText(userId)) : Types.UserActor;
 
             try {
                 await userCanister.upgradePersonalWorkspaceCanisterWasm(wasm_module);
@@ -198,12 +192,7 @@ actor UserIndex {
         let minInterval = MIN_TOP_UP_INTERVAL;
         let currentBalance = Cycles.balance();
         let now = Time.now();
-        let user = switch (state.data.getUserByUserId(caller)) {
-            case (null) {
-                Debug.trap("Caller is not a registered user");
-            };
-            case (?user) { user };
-        };
+        let user = state.data.getUserByUserId(caller);
         let topUp = switch (topUps.get(caller)) {
             case (null) {
                 Debug.trap("Top-ups not set for canister");
@@ -268,7 +257,7 @@ actor UserIndex {
         canistergeekMonitor.updateInformation(request);
     };
 
-    private func validateCaller(principal : Principal) : () {
+    private func validateCaller(owner : Principal) : () {
         //limit access here!
     };
 
@@ -294,9 +283,8 @@ actor UserIndex {
 
     system func preupgrade() {
         stable_username_to_user_id := state.data.username_to_user_id.share();
-        stable_principal_to_user_id := state.data.principal_to_user_id.share();
-        stable_user_id_to_principal := state.data.user_id_to_principal.share();
-        stable_user_id_to_user_canister := state.data.user_id_to_user_canister.share();
+        stable_owner_to_user_id := state.data.owner_to_user_id.share();
+        stable_user_id_to_owner := state.data.user_id_to_owner.share();
         stable_topUps := topUps.share();
 
         doCanisterGeekPreUpgrade();
@@ -304,9 +292,8 @@ actor UserIndex {
 
     system func postupgrade() {
         stable_username_to_user_id := #leaf;
-        stable_principal_to_user_id := #leaf;
-        stable_user_id_to_principal := #leaf;
-        stable_user_id_to_user_canister := #leaf;
+        stable_owner_to_user_id := #leaf;
+        stable_user_id_to_owner := #leaf;
         stable_topUps := #leaf;
 
         doCanisterGeekPostUpgrade();

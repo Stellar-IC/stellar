@@ -25,6 +25,7 @@ module {
     public module Services {
         public module CreateActivityService {
             public type CreateActivityServiceInput = {
+                uuid : UUID.UUID;
                 edits : [ActivitiesTypes.EditItem];
                 blockExternalId : UUID.UUID;
             };

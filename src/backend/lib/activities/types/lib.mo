@@ -2,6 +2,7 @@ import Types "./v0";
 
 module {
     public type Activity = Types.Activity;
-    public type ActivityItem = Types.ActivityItem;
     public type EditItem = Types.EditItem;
+    public type ShareableActivity = Types.ShareableActivity;
+    public type ShareableEditItem = Types.ShareableEditItem;
 };

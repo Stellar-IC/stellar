@@ -1,3 +1,4 @@
+import Debug "mo:base/Debug";
 import List "mo:base/List";
 import RBTree "mo:base/RBTree";
 import Text "mo:base/Text";
@@ -8,6 +9,20 @@ import QuerySet "../../../utils/data/database/query_set";
 module UUIDModelManager {
     public class UUIDModelManager<DataT <: { uuid : UUID.UUID }>() {
         private var data = RBTree.RBTree<Text, DataT>(Text.compare);
+
+        public func all() : QuerySet.QuerySet<DataT> {
+            var instances = List.fromArray<DataT>([]);
+
+            for (entry in data.entries()) {
+                let pk = entry.0;
+                let instance = entry.1;
+                instances := List.push<DataT>(instance, instances);
+            };
+
+            Debug.print("all: " # debug_show List.size<DataT>(instances));
+
+            return QuerySet.QuerySet<DataT>(?List.toArray<DataT>(instances));
+        };
 
         public func get(id : Text) : ?DataT {
             return data.get(id);

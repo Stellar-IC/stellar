@@ -4,9 +4,9 @@ import Principal "mo:base/Principal";
 import RBTree "mo:base/RBTree";
 import Text "mo:base/Text";
 
-import Types "../../../types";
-
+import CoreTypes "../../../types";
 import User "../../user/main";
+import Types "../types";
 
 module {
     public class State(_data : Data) {
@@ -15,33 +15,30 @@ module {
 
     public class Data(
         stable_data : {
-            username_to_user_id : RBTree.Tree<Text, Types.UserId>;
-            principal_to_user_id : RBTree.Tree<Principal, Types.UserId>;
-            user_id_to_principal : RBTree.Tree<Types.UserId, Principal>;
-            user_id_to_user_canister : RBTree.Tree<Types.UserId, User.User>;
+            username_to_user_id : RBTree.Tree<Text, CoreTypes.UserId>;
+            owner_to_user_id : RBTree.Tree<Principal, CoreTypes.UserId>;
+            user_id_to_owner : RBTree.Tree<CoreTypes.UserId, Principal>;
         }
     ) {
-        public let username_to_user_id = RBTree.RBTree<Text, Types.UserId>(Text.compare);
-        public let principal_to_user_id = RBTree.RBTree<Principal, Types.UserId>(Principal.compare);
-        public let user_id_to_principal = RBTree.RBTree<Types.UserId, Principal>(Principal.compare);
-        public let user_id_to_user_canister = RBTree.RBTree<Types.UserId, User.User>(Principal.compare);
+        public let username_to_user_id = RBTree.RBTree<Text, CoreTypes.UserId>(Text.compare);
+        public let owner_to_user_id = RBTree.RBTree<Principal, CoreTypes.UserId>(Principal.compare);
+        public let user_id_to_owner = RBTree.RBTree<CoreTypes.UserId, Principal>(Principal.compare);
 
-        principal_to_user_id.unshare(stable_data.principal_to_user_id);
+        owner_to_user_id.unshare(stable_data.owner_to_user_id);
         username_to_user_id.unshare(stable_data.username_to_user_id);
-        user_id_to_principal.unshare(stable_data.user_id_to_principal);
-        user_id_to_user_canister.unshare(stable_data.user_id_to_user_canister);
+        user_id_to_owner.unshare(stable_data.user_id_to_owner);
 
         public func addUser(
             args : {
                 user : User.User;
-                user_id : Types.UserId;
-                principal : Principal;
+                user_id : CoreTypes.UserId;
+                owner : Principal;
             }
         ) : async () {
-            var principal = args.principal;
+            var owner = args.owner;
             var user = args.user;
             var user_id = args.user_id;
-            var existing_user_id : ?Types.UserId = getUserIdByPrincipal(principal);
+            var existing_user_id : ?CoreTypes.UserId = getUserIdByOwner(owner);
 
             switch existing_user_id {
                 case null {};
@@ -49,23 +46,22 @@ module {
                     Debug.trap("User already added");
                 };
             };
-            principal_to_user_id.put((principal, user_id));
-            user_id_to_principal.put((user_id, principal));
-            user_id_to_user_canister.put((user_id, user));
+            owner_to_user_id.put((owner, user_id));
+            user_id_to_owner.put((user_id, owner));
 
             return;
         };
 
-        public func getUserIdByPrincipal(principal : Principal) : ?Types.UserId {
-            return principal_to_user_id.get(principal);
+        public func getUserIdByOwner(owner : Principal) : ?CoreTypes.UserId {
+            return owner_to_user_id.get(owner);
         };
 
-        public func getPrincipalByUserId(user_id : Types.UserId) : ?Principal {
-            return user_id_to_principal.get(user_id);
+        public func getOwnerByUserId(user_id : CoreTypes.UserId) : ?Principal {
+            return user_id_to_owner.get(user_id);
         };
 
-        public func getUserByUserId(user_id : Types.UserId) : ?User.User {
-            return user_id_to_user_canister.get(user_id);
+        public func getUserByUserId(user_id : CoreTypes.UserId) : Types.UserActor {
+            return actor (Principal.toText(user_id)) : Types.UserActor;
         };
     };
 };

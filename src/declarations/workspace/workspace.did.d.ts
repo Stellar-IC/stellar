@@ -40,13 +40,6 @@ export interface BlockEvent {
   'timestamp' : Time,
 }
 export type BlockEventTransaction = Array<BlockEvent>;
-export interface BlockEvent__1 {
-  'data' : { 'blockCreated' : BlockCreatedEventData } |
-    { 'blockUpdated' : BlockUpdatedEventData },
-  'user' : Principal,
-  'uuid' : UUID,
-  'timestamp' : Time,
-}
 export interface BlockParentUpdatedEventData {
   'parentBlockExternalId' : UUID,
   'blockExternalId' : UUID,
@@ -210,6 +203,7 @@ export interface HourlyMetricsData {
   'timeMillis' : bigint,
 }
 export type List = [] | [[ShareableBlock__2, List]];
+export type List_1 = [] | [[ShareableActivity, List_1]];
 export interface LogMessagesData { 'timeNanos' : Nanos, 'message' : string }
 export type MetricsGranularity = { 'hourly' : null } |
   { 'daily' : null };
@@ -232,10 +226,7 @@ export interface NumericEntity {
 export type PageByUuidResult = {
     'ok' : {
       'page' : { 'uuid' : UUID },
-      '_records' : {
-        'events' : Array<BlockEvent__1>,
-        'blocks' : Array<ShareableBlock__1>,
-      },
+      '_records' : { 'blocks' : Array<ShareableBlock__1> },
     }
   } |
   { 'err' : { 'pageNotFound' : null } };
@@ -257,6 +248,13 @@ export type SaveEventTransactionUpdateOutput = {
 export type SaveEventTransactionUpdateOutputError = { 'anonymousUser' : null } |
   { 'insufficientCycles' : null };
 export type SaveEventTransactionUpdateOutputResult = null;
+export interface ShareableActivity {
+  'startTime' : Time,
+  'endTime' : Time,
+  'uuid' : UUID,
+  'edits' : Array<ShareableEditItem>,
+  'blockExternalId' : UUID,
+}
 export interface ShareableBlock {
   'id' : PrimaryKey,
   'content' : ShareableBlockContent,
@@ -307,6 +305,21 @@ export interface ShareableBlock__2 {
   'blockType' : BlockType,
   'properties' : ShareableBlockProperties,
   'parent' : [] | [UUID],
+}
+export interface ShareableBlock__3 {
+  'id' : PrimaryKey,
+  'content' : ShareableBlockContent,
+  'uuid' : UUID,
+  'blockType' : BlockType,
+  'properties' : ShareableBlockProperties,
+  'parent' : [] | [UUID],
+}
+export interface ShareableEditItem {
+  'startTime' : Time,
+  'blockValue' : {
+    'after' : ShareableBlock__3,
+    'before' : [] | [ShareableBlock__3],
+  },
 }
 export interface ShareableNode {
   'value' : NodeValue,
@@ -367,6 +380,7 @@ export interface UpdateInformationRequest {
   'metrics' : [] | [CollectMetricsRequestType],
 }
 export interface Workspace {
+  'activityLog' : ActorMethod<[UUID], List_1>,
   'addBlock' : ActorMethod<[AddBlockUpdateInput], AddBlockUpdateOutput>,
   'blockByUuid' : ActorMethod<[UUID], BlockByUuidResult>,
   'blocksByPageUuid' : ActorMethod<[string], List>,

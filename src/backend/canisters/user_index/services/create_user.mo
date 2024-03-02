@@ -11,13 +11,14 @@ import Constants "../../../constants";
 import User "../../user/main";
 
 import State "../model/state";
+import Types "../types";
 
 module CreateUser {
     public func execute(
         state : State.State,
         owner : Principal,
         userIndexPrincipal : Principal,
-    ) : async Result.Result<{ #created : (Principal, User.User); #existing : (Principal, User.User) }, { #anonymousUser; #insufficientCycles; #canisterNotFoundForRegisteredUser }> {
+    ) : async Result.Result<{ #created : (Principal, Types.UserActor); #existing : (Principal, Types.UserActor) }, { #anonymousUser; #insufficientCycles; #canisterNotFoundForRegisteredUser }> {
         let CONSTANTS = Constants.Constants();
         let USER__CAPACITY = CONSTANTS.USER__CAPACITY.scalar;
         let USER__FREEZING_THRESHOLD = CONSTANTS.USER__FREEZING_THRESHOLD.scalar;
@@ -33,19 +34,11 @@ module CreateUser {
             return #err(#anonymousUser);
         };
 
-        switch (state.data.getUserIdByPrincipal(owner)) {
+        switch (state.data.getUserIdByOwner(owner)) {
             case null {};
             case (?userId) {
                 let user = state.data.getUserByUserId(userId);
-
-                switch (user) {
-                    case null {
-                        return #err(#canisterNotFoundForRegisteredUser);
-                    };
-                    case (?user) {
-                        return #ok(#existing(userId, user));
-                    };
-                };
+                return #ok(#existing(userId, user));
             };
         };
 
@@ -72,7 +65,7 @@ module CreateUser {
         await state.data.addUser({
             user = user;
             user_id = userPrincipal;
-            principal = owner;
+            owner = owner;
         });
 
         #ok(#created(userPrincipal, user));

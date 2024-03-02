@@ -25,6 +25,7 @@ type WorkspaceInitArgs =
 type WorkspaceDescription = text;
 type Workspace = 
  service {
+   activityLog: (UUID) -> (List_1) query;
    addBlock: (AddBlockUpdateInput) -> (AddBlockUpdateOutput);
    blockByUuid: (UUID) -> (BlockByUuidResult) query;
    blocksByPageUuid: (text) -> (List) query;
@@ -149,6 +150,24 @@ type ShareableNode =
    identifier: NodeIdentifier;
    value: NodeValue;
  };
+type ShareableEditItem = 
+ record {
+   blockValue:
+    record {
+      after: ShareableBlock__3;
+      before: opt ShareableBlock__3;
+    };
+   startTime: Time;
+ };
+type ShareableBlock__3 = 
+ record {
+   blockType: BlockType;
+   content: ShareableBlockContent;
+   id: PrimaryKey;
+   parent: opt UUID;
+   properties: ShareableBlockProperties;
+   uuid: UUID;
+ };
 type ShareableBlock__2 = 
  record {
    blockType: BlockType;
@@ -218,6 +237,14 @@ type ShareableBlock =
    properties: ShareableBlockProperties;
    uuid: UUID;
  };
+type ShareableActivity = 
+ record {
+   blockExternalId: UUID;
+   edits: vec ShareableEditItem;
+   endTime: Time;
+   startTime: Time;
+   uuid: UUID;
+ };
 type SaveEventTransactionUpdateOutputResult = null;
 type SaveEventTransactionUpdateOutputError = 
  variant {
@@ -245,11 +272,7 @@ type PageByUuidResult =
    err: variant {pageNotFound;};
    ok:
     record {
-      _records:
-       record {
-         blocks: vec ShareableBlock__1;
-         events: vec BlockEvent__1;
-       };
+      _records: record {blocks: vec ShareableBlock__1;};
       page: record {uuid: UUID;};
     };
  };
@@ -280,6 +303,11 @@ type LogMessagesData =
    message: text;
    timeNanos: Nanos;
  };
+type List_1 = 
+ opt record {
+       ShareableActivity;
+       List_1;
+     };
 type List = 
  opt record {
        ShareableBlock__2;
@@ -495,17 +523,6 @@ type BlockParentUpdatedEventData =
  record {
    blockExternalId: UUID;
    parentBlockExternalId: UUID;
- };
-type BlockEvent__1 = 
- record {
-   data:
-    variant {
-      blockCreated: BlockCreatedEventData;
-      blockUpdated: BlockUpdatedEventData;
-    };
-   timestamp: Time;
-   user: principal;
-   uuid: UUID;
  };
 type BlockEventTransaction = vec BlockEvent;
 type BlockEvent = 

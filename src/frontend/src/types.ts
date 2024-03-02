@@ -7,6 +7,8 @@ export type CanisterId = string | Principal;
 
 export type ExternalId = string;
 
+export type Time = bigint;
+
 export type LocalBlockProperties = {
   title: Lseq.Tree.Tree;
   checked?: boolean | null;
@@ -49,4 +51,20 @@ export type Page = {
   blockType: BlockType;
   properties: LocalBlockProperties;
   parent?: ExternalId | null;
+};
+
+export type Activity = {
+  startTime: Time;
+  endTime: Time;
+  uuid: ExternalId;
+  edits: EditItem[];
+  blockExternalId: ExternalId;
+};
+
+export type EditItem = {
+  startTime: Time;
+  blockValue: {
+    after: Block;
+    before: Block | null;
+  };
 };

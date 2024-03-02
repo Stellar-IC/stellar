@@ -18,6 +18,7 @@ import EventsTypes "../../../lib/events/types";
 import WorkspacesTypes "../../../lib/workspaces/types";
 
 import Models "../../../utils/data/database/models";
+import QuerySet "../../../utils/data/database/query_set";
 import IdManager "../../../utils/data/id_manager";
 import Tree "../../../utils/data/lseq/Tree";
 
@@ -34,8 +35,6 @@ module {
     type BlockContent = BlocksTypes.BlockContent;
     type BlockProperties = BlocksTypes.BlockProperties;
     type BlockEvent = BlocksTypes.BlockEvent;
-
-    type ActivityItem = ActivitiesTypes.ActivityItem;
 
     public class State(_data : Data) {
         public var data = _data;
@@ -132,34 +131,25 @@ module {
         };
 
         public func getBlockByUuid(uuid : UUID.UUID) : Block {
-            let block = Block.objects.indexFilter(
-                "uuid",
-                #text(UUID.toText(uuid)),
-            ).first();
+            let block = findBlockByUuid(uuid);
 
             switch block {
-                case (?block) {
-                    return block;
-                };
+                case (?block) { return block };
                 case (null) {
                     Debug.trap("Block not found: " # UUID.toText(uuid));
                 };
             };
         };
 
-        public func findBlockByUuid(uuid : UUID.UUID) : Result.Result<Block, { #blockNotFound }> {
+        public func findBlockByUuid(uuid : UUID.UUID) : ?Block {
             let block = Block.objects.indexFilter(
                 "uuid",
                 #text(UUID.toText(uuid)),
             ).first();
 
             switch block {
-                case (?block) {
-                    return #ok(block);
-                };
-                case (null) {
-                    return #err(#blockNotFound);
-                };
+                case (?block) { return ?block };
+                case (null) { return null };
             };
         };
 
@@ -248,11 +238,7 @@ module {
         };
 
         public func getPageByUuid(uuid : UUID.UUID) : Result.Result<Block, { #pageNotFound }> {
-            let page = Block.objects.indexFilter(
-                "uuid",
-                #text(UUID.toText(uuid)),
-            ).first();
-
+            let page = findBlockByUuid(uuid);
             switch page {
                 case (?page) {
                     return #ok(page);
@@ -272,85 +258,29 @@ module {
                 func block = block.blockType == #page
             );
 
-            func sortBlocksByIdAsc(blockA : Block, blockB : Block) : Order.Order {
-                if (blockA.id < blockB.id) { return #less } else {
-                    return #greater;
-                };
-            };
-
-            func sortBlocksByIdDesc(blockA : Block, blockB : Block) : Order.Order {
-                if (blockA.id > blockB.id) { return #less } else {
-                    return #greater;
-                };
-            };
-
-            switch (order) {
-                case (null) {};
-                case (?order) {
-                    switch (order.direction) {
-                        case (#asc) {
-                            pages := pages.orderBy(
-                                sortBlocksByIdAsc
-                            );
-                        };
-                        case (#desc) {
-                            pages := pages.orderBy(
-                                sortBlocksByIdDesc
-                            );
-                        };
-                    };
-                };
-            };
-
-            switch (cursor) {
-                case (null) {};
-                case (?cursor) {
-                    // Find index of page with id equal to cursor within pages
-                    let cursor_index = pages.findIndex<Block>(
-                        func hasMatchingId(page : Block) : Bool {
-                            return page.id == cursor;
-                        }
-                    );
-                    switch cursor_index {
-                        case (null) {};
-                        case (?cursor_index) {
-                            pages := pages.fromCursor(cursor, func(cursor, page) = page.id == cursor);
-                        };
-                    };
-                };
-            };
-
-            switch (limit) {
-                case (null) {};
-                case (?limit) {
-                    pages := pages.limit(limit);
-                };
-            };
+            pages := applySortOrder(pages, order);
+            pages := applyCursor(pages, cursor);
+            pages := applyLimit(pages, limit);
 
             return pages.value();
         };
 
         public func addBlockToBlocksByParentIdIndex(block : Block) {
             let block_parent = switch (block.parent) {
-                case (null) {
-                    return;
-                };
-                case (?parent) {
-                    parent;
-                };
+                case (null) { return };
+                case (?parent) { parent };
             };
-
-            var current_blocks = blocks_by_parent_uuid.get(UUID.toText(block_parent));
-            let typed_current_blocks = switch (current_blocks) {
+            let current_blocks = switch (blocks_by_parent_uuid.get(UUID.toText(block_parent))) {
                 case (null) { List.fromArray<Types.PrimaryKey>([]) };
                 case (?current_blocks) { current_blocks };
             };
-            let updated_blocks = List.append<Types.PrimaryKey>(typed_current_blocks, List.fromArray<Types.PrimaryKey>([block.id]));
+            let updated_blocks = List.append<Types.PrimaryKey>(current_blocks, List.fromArray<Types.PrimaryKey>([block.id]));
             blocks_by_parent_uuid.put(UUID.toText(block_parent), updated_blocks);
         };
 
         private func _removeBlockFromBlocksByParentIdIndex(block_id : Types.PrimaryKey) : Result.Result<(), { #blockNotFound }> {
             let block = Block.objects.get(block_id);
+
             switch block {
                 case (?block) {
                     let block_parent = switch (block.parent) {
@@ -378,25 +308,27 @@ module {
         };
 
         public func getFirstAncestorPage(block : Block) : ?Block {
+            let MAX_ITERATIONS = 1000;
             var current_block = block;
+            var iteration = 0;
 
-            while (true) {
+            while (true and iteration < MAX_ITERATIONS) {
+                iteration := iteration + 1;
                 let parent = switch (current_block.parent) {
                     case (null) { return null };
                     case (?parent) { parent };
                 };
                 let parent_block = findBlockByUuid(parent);
+
                 switch parent_block {
-                    case (#ok(parent_block)) {
+                    case (?parent_block) {
                         if (parent_block.blockType == #page) {
                             return ?parent_block;
                         } else {
                             current_block := parent_block;
                         };
                     };
-                    case (#err(_)) {
-                        return null;
-                    };
+                    case (null) { return null };
                 };
             };
 
@@ -406,59 +338,122 @@ module {
         public func getMostRecentActivityForPage(
             pageId : UUID.UUID
         ) : ?ActivitiesTypes.Activity {
-            let page = switch (
-                Block.objects.indexFilter(
-                    "uuid",
-                    #text(UUID.toText(pageId)),
-                ).first()
-            ) {
+            let page = switch (findBlockByUuid(pageId)) {
                 case (?page) { page };
                 case (null) { return null };
             };
             let content = page.content;
 
-            return Activity.objects.filter(
-                func(activity) {
-                    return activity.blockExternalId == pageId or Array.indexOf<Text>(
-                        UUID.toText(activity.blockExternalId),
-                        Tree.toArray(content),
-                        Text.equal,
-                    ) != null;
-                }
-            ).sort(
-                func(itemA, itemB) {
-                    return Int.compare(itemA.endTime, itemB.endTime);
-                }
-            ).first();
+            func isRelevantActivity(activity : ActivitiesTypes.Activity) : Bool {
+                return isActivityOnBlock(activity, page);
+            };
+
+            func compareByEndTime(activityA : ActivitiesTypes.Activity, activityB : ActivitiesTypes.Activity) : Order.Order {
+                return Int.compare(activityB.endTime, activityA.endTime);
+            };
+
+            return Activity.objects.filter(isRelevantActivity).sort(compareByEndTime).first();
         };
 
         public func getActivitiesForPage(
             pageId : UUID.UUID
         ) : List.List<ActivitiesTypes.Activity> {
-            let page = switch (
-                Block.objects.indexFilter(
-                    "uuid",
-                    #text(UUID.toText(pageId)),
-                ).first()
-            ) {
+            let page = switch (findBlockByUuid(pageId)) {
                 case (?page) { page };
                 case (null) { return null };
             };
             let content = page.content;
 
-            let activities = Activity.objects.filter(
-                func(activity) {
-                    return activity.blockExternalId == pageId or Array.indexOf<Text>(
-                        UUID.toText(activity.blockExternalId),
-                        Tree.toArray(content),
-                        Text.equal,
-                    ) != null;
-                }
-            ).sort(
-                func(itemA, itemB) {
-                    return Int.compare(itemA.endTime, itemB.endTime);
-                }
-            ).value();
+            func isRelevantActivity(activity : ActivitiesTypes.Activity) : Bool {
+                return isActivityOnBlock(activity, page);
+            };
+
+            return Activity.objects.filter(isRelevantActivity).sort(compareActivitiesByEndTimeDesc).value();
+        };
+
+        private func sortBlocksByIdAsc(blockA : Block, blockB : Block) : Order.Order {
+            if (blockA.id < blockB.id) { return #less } else {
+                return #greater;
+            };
+        };
+
+        func sortBlocksByIdDesc(blockA : Block, blockB : Block) : Order.Order {
+            if (blockA.id > blockB.id) { return #less } else {
+                return #greater;
+            };
+        };
+
+        func applySortOrder(
+            pages : QuerySet.QuerySet<Block>,
+            order : ?CoreTypes.SortOrder,
+        ) : QuerySet.QuerySet<Block> {
+            switch (order) {
+                case (null) { return pages };
+                case (?order) {
+                    switch (order.direction) {
+                        case (#asc) {
+                            return pages.sort(sortBlocksByIdAsc);
+                        };
+                        case (#desc) {
+                            return pages.sort(sortBlocksByIdDesc);
+                        };
+                    };
+                };
+            };
+        };
+
+        func applyCursor(
+            pages : QuerySet.QuerySet<Block>,
+            cursor : ?Types.PrimaryKey,
+        ) : QuerySet.QuerySet<Block> {
+            switch (cursor) {
+                case (null) { return pages };
+                case (?cursor) {
+                    // Find index of page with id equal to cursor within pages
+                    let cursor_index = pages.findIndex<Block>(
+                        func hasMatchingId(page : Block) : Bool {
+                            return page.id == cursor;
+                        }
+                    );
+                    switch cursor_index {
+                        case (null) { return pages };
+                        case (?cursor_index) {
+                            return pages.fromCursor(cursor, func(cursor, page) = page.id == cursor);
+                        };
+                    };
+                };
+            };
+        };
+
+        func applyLimit(
+            pages : QuerySet.QuerySet<Block>,
+            limit : ?Nat,
+        ) : QuerySet.QuerySet<Block> {
+            switch (limit) {
+                case (null) { return pages };
+                case (?limit) {
+                    return pages.limit(limit);
+                };
+            };
+        };
+
+        func compareActivitiesByEndTimeAsc(activityA : ActivitiesTypes.Activity, activityB : ActivitiesTypes.Activity) : Order.Order {
+            return Int.compare(activityA.endTime, activityB.endTime);
+        };
+
+        func compareActivitiesByEndTimeDesc(activityA : ActivitiesTypes.Activity, activityB : ActivitiesTypes.Activity) : Order.Order {
+            return Int.compare(activityB.endTime, activityA.endTime);
+        };
+
+        private func isActivityOnBlock(
+            activity : ActivitiesTypes.Activity,
+            block : Block,
+        ) : Bool {
+            return activity.blockExternalId == block.uuid or Array.indexOf<Text>(
+                UUID.toText(activity.blockExternalId),
+                Tree.toArray(block.content),
+                Text.equal,
+            ) != null;
         };
     };
 };

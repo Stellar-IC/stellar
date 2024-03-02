@@ -1,4 +1,5 @@
 import Array "mo:base/Array";
+import Debug "mo:base/Debug";
 import Deque "mo:base/Deque";
 import ExperimentalCycles "mo:base/ExperimentalCycles";
 import List "mo:base/List";
@@ -15,9 +16,14 @@ import Canistergeek "mo:canistergeek/canistergeek";
 
 import UUID "mo:uuid/UUID";
 
+import Activity "../../lib/activities/Activity";
 import ActivityBuilder "../../lib/activities/ActivityBuilder";
+import ActivitiesTypes "../../lib/activities/types";
 import BlocksModels "../../lib/blocks/models";
 import BlocksTypes "../../lib/blocks/types";
+import EventUtils "../../lib/events/Utils";
+import EventStream "../../lib/events/EventStream";
+import Logger "../../lib/Logger";
 import UUIDGenerator "../../lib/shared/UUIDGenerator";
 
 import CoreTypes "../../types";
@@ -74,6 +80,22 @@ shared ({ caller = initializer }) actor class Workspace(
     stable var _canistergeekMonitorUD : ?Canistergeek.UpgradeData = null;
     stable var _canistergeekLoggerUD : ?Canistergeek.LoggerUpgradeData = null;
 
+    private let logger = Logger.Logger([
+        Logger.CanisterGeekLoggerAdapter(canistergeekLogger),
+        Logger.DebugLoggerAdapter(),
+    ]);
+
+    // Event Stream
+    let eventStream = EventStream.EventStream<BlocksTypes.BlockEvent>(
+        {
+            getEventId = func(event) {
+                UUID.toText(EventUtils.getEventId(event));
+            };
+        },
+        { logger },
+    );
+    stable var _eventStreamUpgradeData : ?EventStream.UpgradeData<BlocksTypes.BlockEvent> = null;
+
     /*************************************************************************
      * Transient Data
      *************************************************************************/
@@ -87,7 +109,6 @@ shared ({ caller = initializer }) actor class Workspace(
         events = events;
     });
     var state = State.State(data);
-    let uuidGenerator = UUIDGenerator.UUIDGenerator();
 
     /*************************************************************************
      * Initialization helper methods
@@ -127,8 +148,8 @@ shared ({ caller = initializer }) actor class Workspace(
 
     public query func blockByUuid(uuid : UUID.UUID) : async BlockByUuidResult {
         let result = switch (state.data.findBlockByUuid(uuid)) {
-            case (#err(err)) { #err(err) };
-            case (#ok(block)) { #ok(BlocksModels.Block.toShareable(block)) };
+            case (null) { #err(#blockNotFound) };
+            case (?block) { #ok(BlocksModels.Block.toShareable(block)) };
         };
 
         return result;
@@ -191,6 +212,15 @@ shared ({ caller = initializer }) actor class Workspace(
         };
     };
 
+    public query func activityLog(pageUuid : UUID.UUID) : async List.List<ActivitiesTypes.ShareableActivity> {
+        let activities = List.map<ActivitiesTypes.Activity, ActivitiesTypes.ShareableActivity>(
+            state.data.getActivitiesForPage(pageUuid),
+            Activity.toShareable,
+        );
+
+        return activities;
+    };
+
     /*************************************************************************
      * Updates
      *************************************************************************/
@@ -243,7 +273,8 @@ shared ({ caller = initializer }) actor class Workspace(
     ) : async Types.Updates.SaveEventTransactionUpdate.SaveEventTransactionUpdateOutput {
         for (event in input.transaction.vals()) {
             state.data.Event.objects.upsert(event);
-            processEvent(event);
+            // await processEvent(event);
+            eventStream.publish(event);
         };
 
         await updateCanistergeekInformation({ metrics = ? #normal });
@@ -251,44 +282,33 @@ shared ({ caller = initializer }) actor class Workspace(
         return #ok();
     };
 
-    func processEvent(event : BlockEvent) : () {
-        canistergeekLogger.logMessage("Received event: " # debug_show event);
+    /*************************************************************************
+     * Event Handling
+     *************************************************************************/
 
+    func startListeningForEvents() : async () {
+        eventStream.addEventListener(
+            "BlockEventListener",
+            func(event : BlockEvent) : async () {
+                logger.info("Received event: " # debug_show event);
+                await processEvent(event);
+                ();
+            },
+        );
+        await eventStream.processEvents();
+    };
+
+    func processEvent(event : BlockEvent) : async () {
         switch (event.data) {
             case (#blockCreated(blockCreatedEvent)) {
-                canistergeekLogger.logMessage("Processing blockCreated event: " # debug_show (event.uuid));
-
-                BlockCreatedConsumer.execute(state, { event with data = blockCreatedEvent }, { uuidGenerator });
-
-                canistergeekLogger.logMessage("Processed blockCreated event: " # debug_show UUID.toText(event.uuid));
+                logger.info("Processing blockCreated event: " # debug_show UUID.toText(event.uuid));
+                let res = await BlockCreatedConsumer.execute(state, { event with data = blockCreatedEvent });
+                logger.info("Processed blockCreated event: " # debug_show UUID.toText(event.uuid));
             };
             case (#blockUpdated(blockUpdatedEvent)) {
-                canistergeekLogger.logMessage(
-                    "Processing blockUpdated event: "
-                    # debug_show (event.uuid)
-                    # "\n"
-                    # debug_show event
-                );
-
-                let res = BlockUpdatedConsumer.execute(state, { event with data = blockUpdatedEvent }, { uuidGenerator });
-                let uuid = event.uuid;
-
-                switch (res) {
-                    case (#err(err)) {
-                        canistergeekLogger.logMessage(
-                            "Error processing blockUpdated event: " #
-                            debug_show uuid #
-                            "\n\t" #
-                            debug_show err
-                        );
-                    };
-                    case (#ok(_)) {
-                        canistergeekLogger.logMessage(
-                            "Processed blockUpdated event: " #
-                            debug_show uuid
-                        );
-                    };
-                };
+                logger.info("Processing blockUpdated event: " # debug_show UUID.toText(event.uuid));
+                let res = await BlockUpdatedConsumer.execute(state, { event with data = blockUpdatedEvent });
+                logger.info("Processed blockUpdated event: " # debug_show UUID.toText(event.uuid));
             };
         };
     };
@@ -357,16 +377,15 @@ shared ({ caller = initializer }) actor class Workspace(
     /*************************************************************************
      * Timers
      *************************************************************************/
-    private func startTimers() {
-        if (timersHaveBeenStarted) {
-            return;
-        };
+    ignore Timer.setTimer(
+        #seconds(0),
+        startListeningForEvents,
+    );
 
-        ignore Timer.recurringTimer(
-            #seconds(1),
-            uuidGenerator.generateIds,
-        );
-    };
+    ignore Timer.recurringTimer(
+        #seconds(1),
+        eventStream.processEvents,
+    );
 
     /*************************************************************************
      * System Functions
@@ -384,6 +403,7 @@ shared ({ caller = initializer }) actor class Workspace(
         blocks := shareableBlocks.share();
         blocksIdCounter := state.data.Block.id_manager.current();
         doCanisterGeekPreUpgrade();
+        _eventStreamUpgradeData := ?eventStream.preupgrade();
     };
 
     system func postupgrade() {
@@ -399,7 +419,13 @@ shared ({ caller = initializer }) actor class Workspace(
             state.data.addBlockToBlocksByParentIdIndex(BlocksModels.Block.fromShareable(block));
         };
 
-        // Restart timers
-        startTimers();
+        switch (_eventStreamUpgradeData) {
+            case (null) {};
+            case (?upgradeData) {
+                eventStream.postupgrade(upgradeData);
+                _eventStreamUpgradeData := null;
+            };
+        };
+
     };
 };

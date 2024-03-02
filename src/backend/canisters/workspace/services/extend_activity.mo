@@ -5,6 +5,7 @@ import Principal "mo:base/Principal";
 import List "mo:base/List";
 import UUID "mo:uuid/UUID";
 
+import Activity "../../../lib/activities/Activity";
 import ActivityBuilder "../../../lib/activities/ActivityBuilder";
 import BlocksTypes "../../../lib/blocks/types";
 import UUIDGenerator "../../../lib/shared/UUIDGenerator";
@@ -30,13 +31,8 @@ module ExtendActivity {
         };
 
         var activityBuilder = ActivityBuilder.fromActivity(
-            initialActivity,
-            // { uuidGenerator = deps.uuidGenerator },
+            initialActivity
         );
-
-        for (edit in initialActivity.edits.vals()) {
-            activityBuilder := activityBuilder.addEdit(edit);
-        };
 
         for (edit in input.edits.vals()) {
             activityBuilder := activityBuilder.addEdit(edit);

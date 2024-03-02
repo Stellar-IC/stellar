@@ -3,6 +3,7 @@ import Blob "mo:base/Blob";
 import Bool "mo:base/Bool";
 import Buffer "mo:base/Buffer";
 import Debug "mo:base/Debug";
+import Deque "mo:base/Deque";
 import Float "mo:base/Float";
 import HashMap "mo:base/HashMap";
 import Iter "mo:base/Iter";
@@ -315,6 +316,38 @@ module Tree {
 
     public func base(depth : NodeDepth) : NodeBase {
         return 2 ** (4 + depth);
+    };
+
+    public func clone(tree : Tree) : Tree {
+        let clonedTree = Tree(
+            ?{
+                rootNode = null;
+                allocationStrategies = ?Iter.toArray(tree.allocationStrategies.entries());
+                boundary = ?tree.boundary;
+            }
+        );
+
+        iterate(
+            tree,
+            func(node) {
+                ignore clonedTree.insert({
+                    identifier = node.identifier.value;
+                    value = node.value;
+                });
+
+                if (node.deletedAt != null) {
+                    let clonedNode = clonedTree.get(node.identifier.value);
+                    switch (clonedNode) {
+                        case (null) { Debug.trap("Unable to get cloned node") };
+                        case (?clonedNode) {
+                            clonedNode.deletedAt := node.deletedAt;
+                        };
+                    };
+                };
+            },
+        );
+
+        return clonedTree;
     };
 
     func getRandomNumberBetween(min : Nat, max : Nat) : Nat {
@@ -1013,6 +1046,33 @@ module Tree {
                 let range = Iter.revRange(originalIndex - 1, 0);
 
                 return doRecursiveFind(parentNode, range);
+            };
+        };
+    };
+
+    func iterate(tree : Tree, callback : (node : Node.Node) -> ()) {
+        var stack = Deque.empty<Node.Node>();
+        stack := Deque.pushFront<Node.Node>(stack, tree.rootNode);
+
+        while (Deque.isEmpty(stack) == false) {
+            let node = switch (Deque.peekFront(stack)) {
+                case (null) { Debug.trap("Found a null node in the stack") };
+                case (?node) { node };
+            };
+
+            callback(node);
+
+            switch (Deque.popFront(stack)) {
+                case (null) { Debug.trap("Found a null node in the stack") };
+                case (?(popped, updatedStack)) {
+                    stack := updatedStack;
+                };
+            };
+
+            let children = Array.reverse(Array.sort(Iter.toArray(node.children.vals()), Node.compare));
+
+            for (child in children.vals()) {
+                stack := Deque.pushFront(stack, child);
             };
         };
     };
