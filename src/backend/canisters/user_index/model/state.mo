@@ -5,7 +5,6 @@ import RBTree "mo:base/RBTree";
 import Text "mo:base/Text";
 
 import CoreTypes "../../../types";
-import User "../../user/main";
 import Types "../types";
 
 module {
@@ -15,30 +14,27 @@ module {
 
     public class Data(
         stable_data : {
-            username_to_user_id : RBTree.Tree<Text, CoreTypes.UserId>;
-            owner_to_user_id : RBTree.Tree<Principal, CoreTypes.UserId>;
-            user_id_to_owner : RBTree.Tree<CoreTypes.UserId, Principal>;
+            user_identity_to_canister_id : RBTree.Tree<Principal, Principal>;
+            user_canister_id_to_identity : RBTree.Tree<Principal, Principal>;
         }
     ) {
-        public let username_to_user_id = RBTree.RBTree<Text, CoreTypes.UserId>(Text.compare);
-        public let owner_to_user_id = RBTree.RBTree<Principal, CoreTypes.UserId>(Principal.compare);
-        public let user_id_to_owner = RBTree.RBTree<CoreTypes.UserId, Principal>(Principal.compare);
+        public let user_identity_to_canister_id = RBTree.RBTree<Principal, Principal>(Principal.compare);
+        public let user_canister_id_to_identity = RBTree.RBTree<Principal, Principal>(Principal.compare);
 
-        owner_to_user_id.unshare(stable_data.owner_to_user_id);
-        username_to_user_id.unshare(stable_data.username_to_user_id);
-        user_id_to_owner.unshare(stable_data.user_id_to_owner);
+        user_identity_to_canister_id.unshare(stable_data.user_identity_to_canister_id);
+        user_canister_id_to_identity.unshare(stable_data.user_canister_id_to_identity);
 
         public func addUser(
             args : {
-                user : User.User;
-                user_id : CoreTypes.UserId;
+                user : Types.UserActor;
+                user_id : Principal;
                 owner : Principal;
             }
         ) : async () {
             var owner = args.owner;
             var user = args.user;
             var user_id = args.user_id;
-            var existing_user_id : ?CoreTypes.UserId = getUserIdByOwner(owner);
+            var existing_user_id : ?Principal = getUserIdByOwner(owner);
 
             switch existing_user_id {
                 case null {};
@@ -46,21 +42,21 @@ module {
                     Debug.trap("User already added");
                 };
             };
-            owner_to_user_id.put((owner, user_id));
-            user_id_to_owner.put((user_id, owner));
+            user_identity_to_canister_id.put((owner, user_id));
+            user_canister_id_to_identity.put((user_id, owner));
 
             return;
         };
 
-        public func getUserIdByOwner(owner : Principal) : ?CoreTypes.UserId {
-            return owner_to_user_id.get(owner);
+        public func getUserIdByOwner(owner : Principal) : ?Principal {
+            return user_identity_to_canister_id.get(owner);
         };
 
-        public func getOwnerByUserId(user_id : CoreTypes.UserId) : ?Principal {
-            return user_id_to_owner.get(user_id);
+        public func getOwnerByUserId(user_id : Principal) : ?Principal {
+            return user_canister_id_to_identity.get(user_id);
         };
 
-        public func getUserByUserId(user_id : CoreTypes.UserId) : Types.UserActor {
+        public func getUserByUserId(user_id : Principal) : Types.UserActor {
             return actor (Principal.toText(user_id)) : Types.UserActor;
         };
     };

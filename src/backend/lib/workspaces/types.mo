@@ -13,6 +13,12 @@ module {
     public type WorkspaceDescription = Text;
     public type WorkspaceOwner = Principal;
     public type WorkspaceMember = Principal;
+
+    public type WorkspaceInitArgs = {
+        capacity : Nat;
+        owner : Principal;
+    };
+
     public type MockWorkspaceActor = actor {
         toObject : shared query () -> async Workspace;
         walletReceive : shared () -> async ({ accepted : Nat64 });
@@ -20,10 +26,7 @@ module {
             capacity : Nat;
             balance : Nat;
         };
-        getInitArgs() : async {
-            capacity : Nat;
-            owner : Principal;
-        };
+        getInitArgs() : async WorkspaceInitArgs;
         getInitData() : async {
             uuid : UUID.UUID;
             name : WorkspaceName;
@@ -44,7 +47,17 @@ module {
 
     public module Services {
         public module CreateWorkspace {
-            public type CreateWorkspaceInput = { owner : WorkspaceOwner };
+            public type CreateWorkspaceInput = {
+                owner : WorkspaceOwner;
+                controllers : [Principal];
+                initialUsers : [(
+                    Principal,
+                    {
+                        canisterId : Principal;
+                        username : Text;
+                    },
+                )];
+            };
             public type CreateWorkspaceResult = Result.Result<MockWorkspaceActor, { #anonymousUser; #insufficientCycles }>;
         };
     };

@@ -1,40 +1,15 @@
-import { DraggableProvidedDragHandleProps } from '@hello-pangea/dnd';
-import { Anchor, Box, Checkbox, Flex, MantineTheme, Text } from '@mantine/core';
+import { Anchor, Box, Checkbox, Flex, Text } from '@mantine/core';
 import { Tree } from '@stellar-ic/lseq-ts';
-import { getNodeAtPosition } from '@stellar-ic/lseq-ts/Tree';
 import { IconBulbFilled } from '@tabler/icons-react';
-import { useCallback } from 'react';
 import { Link } from 'react-router-dom';
 
-import { DATA_TYPES } from '@/constants';
-import { useDataStoreContext } from '@/contexts/DataStoreContext/useDataStoreContext';
-import { useSettingsContext } from '@/contexts/SettingsContext';
 import { Block } from '@/types';
 
-import { BlockWithActions } from './BlockWithActions';
-import { BulletedListBlockRenderer } from './BulletedListBlockRenderer';
-import { NumberedListBlockRenderer } from './NumberedListBlockRenderer';
-import { PageBlockRenderer } from './PageBlockRenderer';
-import { TextBlockRenderer } from './TextBlockRenderer';
-import { TodoListBlockRenderer } from './TodoListBlockRenderer';
-
 interface BlockRendererInnerProps {
-  // externalId: string;
-  // index: number;
-  // parentBlockIndex?: number;
-  // placeholder?: string;
-  // numeral?: number;
   block: Block;
 }
 
-const BlockRendererInner = ({
-  // externalId,
-  // index,
-  // parentBlockIndex,
-  // placeholder,
-  // numeral,
-  block,
-}: BlockRendererInnerProps) => {
+const BlockRendererInner = ({ block }: BlockRendererInnerProps) => {
   if ('page' in block.blockType) {
     return (
       <Box>
@@ -146,51 +121,13 @@ export const ActivityLogBlockRenderer = ({
   blockValue,
 }: BlockRendererProps) => {
   const { before, after } = blockValue;
-  // const parentBlock = parentBlockExternalId
-  //   ? get<Block>(DATA_TYPES.block, parentBlockExternalId)
-  //   : undefined;
-
-  // const getPeviousSiblingBlockExternalId = useCallback(
-  //   (currentBlockIndex: number) => {
-  //     if (currentBlockIndex === 0) return undefined;
-  //     if (!parentBlock) return undefined;
-
-  //     const previousSiblingNode = getNodeAtPosition(
-  //       parentBlock.content,
-  //       currentBlockIndex - 1
-  //     );
-
-  //     return previousSiblingNode?.value;
-  //   },
-  //   [parentBlock]
-  // );
 
   return (
     <Box className="FocusableBlock" mb="0.25rem">
-      {/* <BlockWithActions
-        key={before.uuid}
-        blockExternalId={externalId}
-        blockIndex={index}
-        blockType={block.blockType}
-        parentBlockExternalId={parentBlockExternalId}
-        dragHandleProps={dragHandleProps}
-      > */}
       <div>
+        {before ? <BlockRendererInner block={before} /> : 'Null'}
         <BlockRendererInner block={after} />
-        {/* {getSettingValue('developer.showBlockIds') && (
-          <Text
-            size="xs"
-            c="gray.7"
-            onClick={() => {
-              navigator.clipboard.writeText(externalId);
-            }}
-            style={{ cursor: 'pointer' }}
-          >
-            {externalId}
-          </Text>
-        )} */}
       </div>
-      {/* </BlockWithActions> */}
     </Box>
   );
 };

@@ -139,6 +139,11 @@ export const idlFactory = ({ IDL }) => {
         [GetInformationResponse],
         ['query'],
       ),
+    'publicUserProfile' : IDL.Func(
+        [IDL.Principal],
+        [IDL.Record({ 'canisterId' : IDL.Principal })],
+        [],
+      ),
     'registerUser' : IDL.Func([], [RegisterUserResult], []),
     'requestCycles' : IDL.Func(
         [IDL.Nat],

@@ -20,13 +20,17 @@ type WorkspaceInitData =
 type WorkspaceInitArgs = 
  record {
    capacity: nat;
-   owner: principal;
+   owner: WorkspaceOwner;
  };
 type WorkspaceDescription = text;
 type Workspace = 
  service {
-   activityLog: (UUID) -> (List_1) query;
+   activityLog: (UUID) -> (PaginatedResults) query;
    addBlock: (AddBlockUpdateInput) -> (AddBlockUpdateOutput);
+   addUsers: (vec record {
+                    principal;
+                    PublicUserProfile;
+                  }) -> ();
    blockByUuid: (UUID) -> (BlockByUuidResult) query;
    blocksByPageUuid: (text) -> (List) query;
    /// ***********************************************************************
@@ -48,10 +52,7 @@ type Workspace =
    /// ***********************************************************************
    ///      * Initialization helper methods
    ///      ************************************************************************
-   getInitArgs: () -> (record {
-                         capacity: nat;
-                         owner: principal;
-                       });
+   getInitArgs: () -> (WorkspaceInitArgs);
    getInitData: () ->
     (record {
        createdAt: Time;
@@ -150,15 +151,6 @@ type ShareableNode =
    identifier: NodeIdentifier;
    value: NodeValue;
  };
-type ShareableEditItem = 
- record {
-   blockValue:
-    record {
-      after: ShareableBlock__3;
-      before: opt ShareableBlock__3;
-    };
-   startTime: Time;
- };
 type ShareableBlock__3 = 
  record {
    blockType: BlockType;
@@ -237,14 +229,6 @@ type ShareableBlock =
    properties: ShareableBlockProperties;
    uuid: UUID;
  };
-type ShareableActivity = 
- record {
-   blockExternalId: UUID;
-   edits: vec ShareableEditItem;
-   endTime: Time;
-   startTime: Time;
-   uuid: UUID;
- };
 type SaveEventTransactionUpdateOutputResult = null;
 type SaveEventTransactionUpdateOutputError = 
  variant {
@@ -258,8 +242,14 @@ type SaveEventTransactionUpdateOutput =
  };
 type SaveEventTransactionUpdateInput = record {
                                          transaction: BlockEventTransaction;};
+type PublicUserProfile = 
+ record {
+   canisterId: principal;
+   username: text;
+ };
 type PrimaryKey__1 = nat;
 type PrimaryKey = nat;
+type PaginatedResults = record {edges: vec Edge_1;};
 type PagesResult = record {edges: vec Edge;};
 type PagesOptionsArg = 
  record {
@@ -303,16 +293,35 @@ type LogMessagesData =
    message: text;
    timeNanos: Nanos;
  };
-type List_1 = 
- opt record {
-       ShareableActivity;
-       List_1;
-     };
 type List = 
  opt record {
        ShareableBlock__2;
        List;
      };
+type HydratedEditItemUser = 
+ record {
+   canisterId: principal;
+   username: text;
+ };
+type HydratedEditItem = 
+ record {
+   blockValue:
+    record {
+      after: ShareableBlock__3;
+      before: opt ShareableBlock__3;
+    };
+   startTime: Time;
+   user: HydratedEditItemUser;
+ };
+type HydratedActivity = 
+ record {
+   blockExternalId: UUID;
+   edits: vec HydratedEditItem;
+   endTime: Time;
+   startTime: Time;
+   users: vec HydratedEditItemUser;
+   uuid: UUID;
+ };
 type HourlyMetricsData = 
  record {
    canisterCycles: CanisterCyclesAggregatedData;
@@ -359,6 +368,7 @@ type GetInformationRequest =
    status: opt StatusRequest;
    version: bool;
  };
+type Edge_1 = record {node: HydratedActivity;};
 type Edge = record {node: ShareableBlock;};
 type DeletePageUpdateOutputResult = null;
 type DeletePageUpdateOutputError = null;

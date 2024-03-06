@@ -10,7 +10,6 @@
 
 .actions {
   padding: var(--mantine-spacing-xs);
-  width: 300px;
   justify-self: flex-end;
   display: flex;
 }

@@ -11,8 +11,10 @@ import Activity "../../../lib/activities/Activity";
 import ActivityBuilder "../../../lib/activities/ActivityBuilder";
 import ActivitiesTypes "../../../lib/activities/types";
 import BlocksTypes "../../../lib/blocks/types";
+import BlocksUtils "../../../lib/blocks/utils";
 import UUIDGenerator "../../../lib/shared/UUIDGenerator";
 import Tree "../../../utils/data/lseq/Tree";
+import CoreTypes "../../../types";
 
 import State "../model/state";
 import CreateActivity "../services/create_activity";
@@ -44,7 +46,7 @@ module BlockCreatedConsumer {
 
         let block = switch (result) {
             case (#err(err)) { return #err(err) };
-            case (#ok(block)) { block };
+            case (#ok(block)) { BlocksUtils.clone(block) };
         };
 
         let activity = CreateActivity.execute(
@@ -52,6 +54,7 @@ module BlockCreatedConsumer {
             {
                 uuid = await Source.Source().new();
                 edits = [{
+                    user = event.user;
                     blockValue = {
                         before = null;
                         after = block;

@@ -1,6 +1,6 @@
 import Array "mo:base/Array";
 import Debug "mo:base/Debug";
-import Deque "mo:base/Deque";
+import Error "mo:base/Error";
 import ExperimentalCycles "mo:base/ExperimentalCycles";
 import List "mo:base/List";
 import Nat "mo:base/Nat";
@@ -11,9 +11,7 @@ import RBTree "mo:base/RBTree";
 import Text "mo:base/Text";
 import Time = "mo:base/Time";
 import Timer = "mo:base/Timer";
-
 import Canistergeek "mo:canistergeek/canistergeek";
-
 import UUID "mo:uuid/UUID";
 
 import Activity "../../lib/activities/Activity";
@@ -23,8 +21,10 @@ import BlocksModels "../../lib/blocks/models";
 import BlocksTypes "../../lib/blocks/types";
 import EventUtils "../../lib/events/Utils";
 import EventStream "../../lib/events/EventStream";
-import Logger "../../lib/Logger";
+import Paginator "../../lib/pagination/Paginator";
 import UUIDGenerator "../../lib/shared/UUIDGenerator";
+import Logger "../../lib/Logger";
+import UserRegistry "../../lib/UserRegistry";
 
 import CoreTypes "../../types";
 
@@ -85,6 +85,16 @@ shared ({ caller = initializer }) actor class Workspace(
         Logger.DebugLoggerAdapter(),
     ]);
 
+    type UserRegistryEntry = {
+        membershipStatus : {
+            isActive : Bool;
+        };
+        profile : CoreTypes.User.PublicUserProfile;
+    };
+
+    private let userRegistry = UserRegistry.UserRegistry<UserRegistryEntry>();
+    private stable var _userRegistryUpgradeData : RBTree.Tree<Principal, UserRegistryEntry> = #leaf;
+
     // Event Stream
     let eventStream = EventStream.EventStream<BlocksTypes.BlockEvent>(
         {
@@ -114,10 +124,7 @@ shared ({ caller = initializer }) actor class Workspace(
      * Initialization helper methods
      *************************************************************************/
 
-    public func getInitArgs() : async {
-        capacity : Nat;
-        owner : Principal;
-    } {
+    public func getInitArgs() : async CoreTypes.Workspaces.WorkspaceInitArgs {
         return initArgs;
     };
 
@@ -212,13 +219,47 @@ shared ({ caller = initializer }) actor class Workspace(
         };
     };
 
-    public query func activityLog(pageUuid : UUID.UUID) : async List.List<ActivitiesTypes.ShareableActivity> {
-        let activities = List.map<ActivitiesTypes.Activity, ActivitiesTypes.ShareableActivity>(
-            state.data.getActivitiesForPage(pageUuid),
-            Activity.toShareable,
-        );
+    public query func activityLog(pageUuid : UUID.UUID) : async CoreTypes.PaginatedResults<ActivitiesTypes.HydratedActivity> {
+        var activities = List.fromArray<ActivitiesTypes.HydratedActivity>([]);
 
-        return activities;
+        for (activity in List.toIter(state.data.getActivitiesForPage(pageUuid))) {
+            let shareableActivity = Activity.toShareable(activity);
+            var edits = List.fromArray<ActivitiesTypes.HydratedEditItem>([]);
+            var users = List.fromArray<ActivitiesTypes.HydratedEditItemUser>([]);
+
+            for (edit in shareableActivity.edits.vals()) {
+                let user = UserRegistry.getUser(userRegistry, edit.user);
+                let hydratedEdit = { edit with user = user.profile };
+
+                edits := List.append(edits, List.fromArray([hydratedEdit]));
+
+                // Add user to the list if it's not already there
+                if (
+                    List.some<ActivitiesTypes.HydratedEditItemUser>(
+                        users,
+                        func(u) { u.canisterId == user.profile.canisterId },
+                    ) == false
+                ) {
+                    users := List.push<ActivitiesTypes.HydratedEditItemUser>(user.profile, users);
+                };
+            };
+
+            activities := List.push<ActivitiesTypes.HydratedActivity>(
+                {
+                    shareableActivity with edits = List.toArray(edits);
+                    users = List.toArray(users);
+                },
+                activities,
+            );
+        };
+
+        return Paginator.paginateList(activities);
+    };
+
+    public shared func addUsers(users : [(Principal, CoreTypes.User.PublicUserProfile)]) : async () {
+        for (user in users.vals()) {
+            UserRegistry.addUser<UserRegistryEntry>(userRegistry, user.0, { membershipStatus = { isActive = false }; profile = user.1 });
+        };
     };
 
     /*************************************************************************
@@ -273,7 +314,6 @@ shared ({ caller = initializer }) actor class Workspace(
     ) : async Types.Updates.SaveEventTransactionUpdate.SaveEventTransactionUpdateOutput {
         for (event in input.transaction.vals()) {
             state.data.Event.objects.upsert(event);
-            // await processEvent(event);
             eventStream.publish(event);
         };
 
@@ -295,7 +335,10 @@ shared ({ caller = initializer }) actor class Workspace(
                 ();
             },
         );
-        await eventStream.processEvents();
+        ignore Timer.recurringTimer(
+            #seconds(1),
+            eventStream.processEvents,
+        );
     };
 
     func processEvent(event : BlockEvent) : async () {
@@ -382,11 +425,6 @@ shared ({ caller = initializer }) actor class Workspace(
         startListeningForEvents,
     );
 
-    ignore Timer.recurringTimer(
-        #seconds(1),
-        eventStream.processEvents,
-    );
-
     /*************************************************************************
      * System Functions
      *************************************************************************/
@@ -404,6 +442,7 @@ shared ({ caller = initializer }) actor class Workspace(
         blocksIdCounter := state.data.Block.id_manager.current();
         doCanisterGeekPreUpgrade();
         _eventStreamUpgradeData := ?eventStream.preupgrade();
+        _userRegistryUpgradeData := userRegistry.preupgrade();
     };
 
     system func postupgrade() {
@@ -427,5 +466,6 @@ shared ({ caller = initializer }) actor class Workspace(
             };
         };
 
+        userRegistry.postupgrade(_userRegistryUpgradeData);
     };
 };

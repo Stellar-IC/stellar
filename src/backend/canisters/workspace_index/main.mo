@@ -1,3 +1,5 @@
+import UserIndex "canister:user_index";
+
 import Debug "mo:base/Debug";
 import Cycles "mo:base/ExperimentalCycles";
 import Principal "mo:base/Principal";
@@ -24,6 +26,7 @@ import CyclesUtils "../../utils/cycles";
 
 import Workspace "../workspace/main";
 import Constants "../../constants";
+import Paginator "../../lib/pagination/Paginator";
 
 actor WorkspaceIndex {
     type WorkspaceId = Types.WorkspaceId;
@@ -99,18 +102,7 @@ actor WorkspaceIndex {
             workspaces := List.append<Types.Workspace>(workspaces, List.fromArray([workspace]));
         };
 
-        let result = {
-            edges = List.toArray<CoreTypes.Edge<Types.Workspace>>(
-                List.map<Types.Workspace, CoreTypes.Edge<Types.Workspace>>(
-                    workspaces,
-                    func(workspace) {
-                        { node = workspace };
-                    },
-                )
-            );
-        };
-
-        return result;
+        return Paginator.paginateList(workspaces);
     };
 
     /*************************************************************************
@@ -123,7 +115,11 @@ actor WorkspaceIndex {
     public shared ({ caller }) func createWorkspace(
         input : { owner : Principal }
     ) : async Result.Result<Principal, { #anonymousCaller; #anonymousUser; #unauthorizedCaller; #insufficientCycles }> {
-        let result = await CreateWorkspace.execute({ owner = input.owner });
+        let result = await CreateWorkspace.execute({
+            owner = input.owner;
+            controllers = [input.owner, Principal.fromActor(WorkspaceIndex)];
+            initialUsers = [];
+        });
 
         switch (result) {
             case (#err(error)) { #err(error) };

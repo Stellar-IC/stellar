@@ -11,7 +11,10 @@ module {
         var endTime : Time.Time;
     };
 
+    public type EditItemUser = Principal;
+
     public type EditItem = {
+        user : EditItemUser;
         startTime : Time.Time;
         blockValue : {
             before : ?BlocksTypes.Block;
@@ -28,10 +31,34 @@ module {
     };
 
     public type ShareableEditItem = {
+        user : EditItemUser;
         startTime : Time.Time;
         blockValue : {
             before : ?BlocksTypes.ShareableBlock;
             after : BlocksTypes.ShareableBlock;
         };
+    };
+
+    public type HydratedEditItemUser = {
+        canisterId : Principal;
+        username : Text;
+    };
+
+    public type HydratedEditItem = {
+        user : HydratedEditItemUser;
+        startTime : Time.Time;
+        blockValue : {
+            before : ?BlocksTypes.ShareableBlock;
+            after : BlocksTypes.ShareableBlock;
+        };
+    };
+
+    public type HydratedActivity = {
+        uuid : UUID.UUID;
+        users : [HydratedEditItemUser];
+        edits : [HydratedEditItem];
+        blockExternalId : UUID.UUID;
+        startTime : Time.Time;
+        endTime : Time.Time;
     };
 };

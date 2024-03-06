@@ -34,7 +34,7 @@ function buildEvent<DataT>(data: DataT, userIdentity: Identity) {
 }
 
 export function PagesContextProvider({ children }: PropsWithChildren<{}>) {
-  const { identity } = useAuthContext();
+  const { identity, userId } = useAuthContext();
   const { workspaceId } = useWorkspaceContext();
   const { get } = useDataStoreContext();
 
@@ -51,7 +51,7 @@ export function PagesContextProvider({ children }: PropsWithChildren<{}>) {
       const parsedExternalId = parse(blockExternalId);
 
       const block = handleBlockEvent(blockExternalId, {
-        user: identity.getPrincipal(),
+        user: userId,
         uuid: parse(eventExternalId),
         data: {
           blockCreated: {

@@ -89,7 +89,7 @@ module {
 
         public type WorkspaceInitArgs = {
             capacity : Nat;
-            owner : Principal;
+            owner : WorkspaceOwner;
         };
 
         public type WorkspaceInitData = {
@@ -98,6 +98,13 @@ module {
             description : WorkspaceDescription;
             createdAt : Time.Time;
             updatedAt : Time.Time;
+        };
+    };
+
+    public module User {
+        public type PublicUserProfile = {
+            canisterId : Principal;
+            username : Text;
         };
     };
 };

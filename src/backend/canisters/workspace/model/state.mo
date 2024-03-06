@@ -449,8 +449,11 @@ module {
             activity : ActivitiesTypes.Activity,
             block : Block,
         ) : Bool {
-            return activity.blockExternalId == block.uuid or Array.indexOf<Text>(
-                UUID.toText(activity.blockExternalId),
+            let activityBlock = UUID.toText(activity.blockExternalId);
+            let inputBlock = UUID.toText(block.uuid);
+
+            return activityBlock == inputBlock or Array.indexOf<Text>(
+                activityBlock,
                 Tree.toArray(block.content),
                 Text.equal,
             ) != null;

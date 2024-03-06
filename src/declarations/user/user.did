@@ -20,6 +20,7 @@ type User =
     (GetInformationResponse) query;
    personalWorkspace: () -> (Result_1);
    profile: () -> (Result) query;
+   publicProfile: () -> (PublicUserProfile) query;
    /// * Updates canister information based on passed parameters at current time.
    ///     * Called from browser or any canister "update" method.
    updateCanistergeekInformation: (UpdateInformationRequest) -> ();
@@ -58,6 +59,11 @@ type Result =
  variant {
    err: variant {unauthorized;};
    ok: UserProfile;
+ };
+type PublicUserProfile = 
+ record {
+   canisterId: principal;
+   username: text;
  };
 type ProfileInput = record {username: Username;};
 type NumericEntity = 

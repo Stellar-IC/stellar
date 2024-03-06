@@ -20,7 +20,6 @@
       "optimize": "size"
     },
     "user_index": {
-      "dependencies": ["workspace_index"],
       "main": "src/backend/canisters/user_index/main.mo",
       "type": "motoko",
       "optimize": "size"
@@ -28,8 +27,8 @@
     "internet_identity": {
       "__0": "The development build of Internet Identity. For more information, see https://github.com/dfinity/internet-identity#build-features-and-flavors",
       "type": "custom",
-      "candid": "https://github.com/dfinity/internet-identity/releases/latest/download/internet_identity.did",
-      "wasm": "https://github.com/dfinity/internet-identity/releases/latest/download/internet_identity_dev.wasm.gz",
+      "candid": "https://github.com/dfinity/internet-identity/releases/download/release-2024-03-01/internet_identity.did",
+      "wasm": "https://github.com/dfinity/internet-identity/releases/download/release-2024-03-01/internet_identity_dev.wasm.gz",
       "frontend": {},
 
       "__2": "The remote block indicates that this canister is only used locally and should not be deployed on the IC.",

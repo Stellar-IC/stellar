@@ -33,7 +33,7 @@ export const useTextBlockEventHandlers = ({
 
   if (!block) throw new Error(`Block not found: ${blockExternalId}`);
 
-  const { identity } = useAuthContext();
+  const { identity, userId } = useAuthContext();
   const { workspaceId } = useWorkspaceContext();
   const { actor } = useWorkspaceActor({ identity, workspaceId });
 
@@ -47,7 +47,7 @@ export const useTextBlockEventHandlers = ({
       {
         transaction: [
           {
-            user: identity.getPrincipal(),
+            user: userId,
             uuid: parse(v4()),
             data: {
               blockUpdated: {

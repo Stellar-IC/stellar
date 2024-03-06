@@ -1,3 +1,4 @@
+import Array "mo:base/Array";
 import Cycles "mo:base/ExperimentalCycles";
 import Principal "mo:base/Principal";
 import Result "mo:base/Result";
@@ -14,7 +15,7 @@ module CreateWorkspace {
     type Input = Types.Services.CreateWorkspace.CreateWorkspaceInput;
     type Result = Types.Services.CreateWorkspace.CreateWorkspaceResult;
 
-    public func execute({ owner } : Input) : async Result {
+    public func execute({ controllers; owner; initialUsers } : Input) : async Result {
         let CONSTANTS = Constants.Constants();
         let WORKSPACE_CAPACITY = CONSTANTS.WORKSPACE__CAPACITY.scalar;
         let WORKSPACE_FREEZING_THRESHOLD = CONSTANTS.WORKSPACE__FREEZING_THRESHOLD.scalar;
@@ -31,7 +32,7 @@ module CreateWorkspace {
 
         let workspaceInitArgs = {
             capacity = WORKSPACE_CAPACITY;
-            owner = owner;
+            owner;
         };
         let workspaceInitData = {
             uuid = await Source.Source().new();
@@ -46,13 +47,17 @@ module CreateWorkspace {
         let workspace = await (system Workspace.Workspace)(
             #new {
                 settings = ?{
-                    controllers = ?[owner];
+                    controllers = ?controllers;
                     compute_allocation = null;
                     memory_allocation = ?WORKSPACE_MEMORY_ALLOCATION;
                     freezing_threshold = ?WORKSPACE_FREEZING_THRESHOLD;
                 };
             }
         )(workspaceInitArgs, workspaceInitData);
+
+        if (Array.size(initialUsers) > 0) {
+            await workspace.addUsers(initialUsers);
+        };
 
         #ok(workspace);
     };

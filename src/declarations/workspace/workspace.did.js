@@ -1,9 +1,9 @@
 export const idlFactory = ({ IDL }) => {
   const List = IDL.Rec();
-  const List_1 = IDL.Rec();
   const ShareableNode = IDL.Rec();
+  const WorkspaceOwner = IDL.Principal;
   const WorkspaceInitArgs = IDL.Record({
-    'owner' : IDL.Principal,
+    'owner' : WorkspaceOwner,
     'capacity' : IDL.Nat,
   });
   const WorkspaceName = IDL.Text;
@@ -76,21 +76,28 @@ export const idlFactory = ({ IDL }) => {
     'properties' : ShareableBlockProperties,
     'parent' : IDL.Opt(UUID),
   });
-  const ShareableEditItem = IDL.Record({
+  const HydratedEditItemUser = IDL.Record({
+    'username' : IDL.Text,
+    'canisterId' : IDL.Principal,
+  });
+  const HydratedEditItem = IDL.Record({
     'startTime' : Time,
     'blockValue' : IDL.Record({
       'after' : ShareableBlock__3,
       'before' : IDL.Opt(ShareableBlock__3),
     }),
+    'user' : HydratedEditItemUser,
   });
-  const ShareableActivity = IDL.Record({
+  const HydratedActivity = IDL.Record({
     'startTime' : Time,
     'endTime' : Time,
     'uuid' : UUID,
-    'edits' : IDL.Vec(ShareableEditItem),
+    'edits' : IDL.Vec(HydratedEditItem),
+    'users' : IDL.Vec(HydratedEditItemUser),
     'blockExternalId' : UUID,
   });
-  List_1.fill(IDL.Opt(IDL.Tuple(ShareableActivity, List_1)));
+  const Edge_1 = IDL.Record({ 'node' : HydratedActivity });
+  const PaginatedResults = IDL.Record({ 'edges' : IDL.Vec(Edge_1) });
   const ShareableBlockContent__1 = IDL.Record({
     'boundary' : NodeBoundary,
     'allocationStrategies' : IDL.Vec(IDL.Tuple(NodeDepth, AllocationStrategy)),
@@ -130,6 +137,10 @@ export const idlFactory = ({ IDL }) => {
   const AddBlockUpdateOutput = IDL.Variant({
     'ok' : AddBlockUpdateOutputResult,
     'err' : AddBlockUpdateOutputError,
+  });
+  const PublicUserProfile = IDL.Record({
+    'username' : IDL.Text,
+    'canisterId' : IDL.Principal,
   });
   const ShareableBlock = IDL.Record({
     'id' : PrimaryKey,
@@ -406,7 +417,6 @@ export const idlFactory = ({ IDL }) => {
     'ok' : SaveEventTransactionUpdateOutputResult,
     'err' : SaveEventTransactionUpdateOutputError,
   });
-  const WorkspaceOwner = IDL.Principal;
   const Workspace__1 = IDL.Record({
     'owner' : WorkspaceOwner,
     'name' : WorkspaceName,
@@ -446,8 +456,13 @@ export const idlFactory = ({ IDL }) => {
     'metrics' : IDL.Opt(CollectMetricsRequestType),
   });
   const Workspace = IDL.Service({
-    'activityLog' : IDL.Func([UUID], [List_1], ['query']),
+    'activityLog' : IDL.Func([UUID], [PaginatedResults], ['query']),
     'addBlock' : IDL.Func([AddBlockUpdateInput], [AddBlockUpdateOutput], []),
+    'addUsers' : IDL.Func(
+        [IDL.Vec(IDL.Tuple(IDL.Principal, PublicUserProfile))],
+        [],
+        [],
+      ),
     'blockByUuid' : IDL.Func([UUID], [BlockByUuidResult], ['query']),
     'blocksByPageUuid' : IDL.Func([IDL.Text], [List], ['query']),
     'createPage' : IDL.Func(
@@ -470,11 +485,7 @@ export const idlFactory = ({ IDL }) => {
         [GetInformationResponse],
         ['query'],
       ),
-    'getInitArgs' : IDL.Func(
-        [],
-        [IDL.Record({ 'owner' : IDL.Principal, 'capacity' : IDL.Nat })],
-        [],
-      ),
+    'getInitArgs' : IDL.Func([], [WorkspaceInitArgs], []),
     'getInitData' : IDL.Func(
         [],
         [
@@ -515,8 +526,9 @@ export const idlFactory = ({ IDL }) => {
   return Workspace;
 };
 export const init = ({ IDL }) => {
+  const WorkspaceOwner = IDL.Principal;
   const WorkspaceInitArgs = IDL.Record({
-    'owner' : IDL.Principal,
+    'owner' : WorkspaceOwner,
     'capacity' : IDL.Nat,
   });
   const WorkspaceName = IDL.Text;

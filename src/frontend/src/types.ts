@@ -53,12 +53,18 @@ export type Page = {
   parent?: ExternalId | null;
 };
 
+export type ActivityUser = {
+  canisterId: Principal;
+  username: string;
+};
+
 export type Activity = {
   startTime: Time;
   endTime: Time;
   uuid: ExternalId;
   edits: EditItem[];
   blockExternalId: ExternalId;
+  users: ActivityUser[];
 };
 
 export type EditItem = {
@@ -67,4 +73,5 @@ export type EditItem = {
     after: Block;
     before: Block | null;
   };
+  user: ActivityUser;
 };

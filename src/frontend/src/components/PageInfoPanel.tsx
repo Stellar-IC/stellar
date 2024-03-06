@@ -7,7 +7,7 @@ import { parse } from 'uuid';
 import { useWorkspaceContext } from '@/contexts/WorkspaceContext/useWorkspaceContext';
 import { useActivityLog } from '@/hooks/documents/queries/useActivityLog';
 import { useAuthContext } from '@/modules/auth/contexts/AuthContext';
-import { Activity } from '@/types';
+import { Activity, ActivityUser } from '@/types';
 
 import { ActivityLogBlockRenderer } from './Editor/ActivityLogBlockRenderer';
 import classes from './PageInfoPanel.module.css';
@@ -28,6 +28,20 @@ export function PageInfoPanel() {
     });
   }, [pageId, getActivityLog]);
 
+  const getContributorsMessage = (users: ActivityUser[]) => {
+    if (users.length === 1) {
+      return `Edited by ${users[0].username}`;
+    }
+
+    if (users.length === 2) {
+      return `Edited by ${users[0].username} and ${users[1].username}`;
+    }
+
+    return `Edited by ${users[0].username}, ${users[1].username}, and ${
+      users.length - 2
+    } others`;
+  };
+
   return (
     <div className={classes.panel}>
       <div className={classes.inner}>
@@ -42,7 +56,8 @@ export function PageInfoPanel() {
               activity.edits[activity.edits.length - 1].blockValue.after;
 
             return (
-              <div className={classes.activity}>
+              <div className={classes.activity} key={activity.uuid}>
+                <Text>{getContributorsMessage(activity.users)}</Text>
                 <Text size="sm">
                   {dayjs(new Date(Number(activity.endTime))).fromNow()}
                 </Text>

@@ -1,5 +1,4 @@
 import Array "mo:base/Array";
-import Debug "mo:base/Debug";
 import Buffer "mo:base/Buffer";
 import Char "mo:base/Char";
 import Hash "mo:base/Hash";
@@ -19,6 +18,7 @@ import BlocksModels "../../../../lib/blocks/models";
 import BlocksTypes "../../../../lib/blocks/types";
 import BlocksUtils "../../../../lib/blocks/utils";
 import Tree "../../../../utils/data/lseq/Tree";
+import CoreTypes "../../../../types";
 
 import State "../../model/state";
 import CreateActivity "../../services/create_activity";
@@ -132,7 +132,6 @@ module BlockUpdatedConsumer {
         blockBeforeEdit : Block,
         blockAfterEdit : Block,
     ) : async () {
-        Debug.print("\n\nCreating or extending activity for event.");
         let mostRecentActivity : ?ActivitiesTypes.Activity = switch (pageBlock) {
             case (?pageBlock) {
                 state.data.getMostRecentActivityForPage(pageBlock.uuid);
@@ -147,6 +146,7 @@ module BlockUpdatedConsumer {
                     {
                         uuid = await Source.Source().new();
                         edits = [{
+                            user = event.user;
                             startTime = event.timestamp;
                             blockValue = {
                                 before = ?blockBeforeEdit;
@@ -164,6 +164,7 @@ module BlockUpdatedConsumer {
                         {
                             activityId = mostRecentActivity.uuid;
                             edits = [{
+                                user = event.user;
                                 startTime = event.timestamp;
                                 blockValue = {
                                     before = ?blockBeforeEdit;
@@ -179,6 +180,7 @@ module BlockUpdatedConsumer {
                         {
                             uuid = await Source.Source().new();
                             edits = [{
+                                user = event.user;
                                 startTime = event.timestamp;
                                 blockValue = {
                                     before = ?blockBeforeEdit;

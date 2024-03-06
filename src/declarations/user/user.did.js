@@ -129,6 +129,10 @@ export const idlFactory = ({ IDL }) => {
     'ok' : UserProfile,
     'err' : IDL.Variant({ 'unauthorized' : IDL.Null }),
   });
+  const PublicUserProfile = IDL.Record({
+    'username' : IDL.Text,
+    'canisterId' : IDL.Principal,
+  });
   const CollectMetricsRequestType = IDL.Variant({
     'force' : IDL.Null,
     'normal' : IDL.Null,
@@ -152,6 +156,7 @@ export const idlFactory = ({ IDL }) => {
       ),
     'personalWorkspace' : IDL.Func([], [Result_1], []),
     'profile' : IDL.Func([], [Result], ['query']),
+    'publicProfile' : IDL.Func([], [PublicUserProfile], ['query']),
     'updateCanistergeekInformation' : IDL.Func(
         [UpdateInformationRequest],
         [],

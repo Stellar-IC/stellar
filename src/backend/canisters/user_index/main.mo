@@ -15,11 +15,11 @@ import Canistergeek "mo:canistergeek/canistergeek";
 
 import Constants "../../constants";
 import CanisterTopUp "../../lib/shared/CanisterTopUp";
+import CoreTypes "../../types";
 
 import State "./model/state";
 import CreateUser "./services/create_user";
 import Types "./types";
-import CoreTypes "../../types";
 
 actor UserIndex {
     type UserId = Principal;
@@ -29,18 +29,16 @@ actor UserIndex {
     stable let MAX_TOP_UP_AMOUNT = CONSTANTS.USER__TOP_UP_AMOUNT.scalar;
     stable let MIN_TOP_UP_INTERVAL = 3 * 60 * 60 * 1_000_000_000_000; // 3 hours
 
-    stable var stable_username_to_user_id : RBTree.Tree<Text, UserId> = #leaf;
-    stable var stable_owner_to_user_id : RBTree.Tree<Principal, UserId> = #leaf;
-    stable var stable_user_id_to_owner : RBTree.Tree<UserId, Principal> = #leaf;
+    stable var stable_user_identity_to_canister_id : RBTree.Tree<Principal, UserId> = #leaf;
+    stable var stable_user_canister_id_to_identity : RBTree.Tree<UserId, Principal> = #leaf;
     stable var stable_topUps : RBTree.Tree<Principal, CanisterTopUp.CanisterTopUp> = #leaf;
 
     stable let stable_capacity = 100_000_000_000_000;
     stable var stable_balance = 0 : Nat;
 
     var stable_data = {
-        username_to_user_id = stable_username_to_user_id;
-        owner_to_user_id = stable_owner_to_user_id;
-        user_id_to_owner = stable_user_id_to_owner;
+        user_identity_to_canister_id = stable_user_identity_to_canister_id;
+        user_canister_id_to_identity = stable_user_canister_id_to_identity;
     };
 
     var state = State.State(State.Data(stable_data));
@@ -119,7 +117,7 @@ actor UserIndex {
 
         let sender_canister_version : ?Nat64 = null;
 
-        for (entry in state.data.user_id_to_owner.entries()) {
+        for (entry in state.data.user_canister_id_to_identity.entries()) {
             var userId = entry.0;
 
             try {
@@ -153,7 +151,7 @@ actor UserIndex {
 
         let sender_canister_version : ?Nat64 = null;
 
-        for (entry in state.data.user_id_to_owner.entries()) {
+        for (entry in state.data.user_canister_id_to_identity.entries()) {
             var userId = entry.0;
             var userCanister = actor (Principal.toText(userId)) : Types.UserActor;
 
@@ -187,7 +185,6 @@ actor UserIndex {
     public shared ({ caller }) func requestCycles(amount : Nat) : async {
         accepted : Nat64;
     } {
-
         let maxAmount = MAX_TOP_UP_AMOUNT;
         let minInterval = MIN_TOP_UP_INTERVAL;
         let currentBalance = Cycles.balance();
@@ -282,18 +279,16 @@ actor UserIndex {
      *************************************************************************/
 
     system func preupgrade() {
-        stable_username_to_user_id := state.data.username_to_user_id.share();
-        stable_owner_to_user_id := state.data.owner_to_user_id.share();
-        stable_user_id_to_owner := state.data.user_id_to_owner.share();
+        stable_user_identity_to_canister_id := state.data.user_identity_to_canister_id.share();
+        stable_user_canister_id_to_identity := state.data.user_canister_id_to_identity.share();
         stable_topUps := topUps.share();
 
         doCanisterGeekPreUpgrade();
     };
 
     system func postupgrade() {
-        stable_username_to_user_id := #leaf;
-        stable_owner_to_user_id := #leaf;
-        stable_user_id_to_owner := #leaf;
+        stable_user_identity_to_canister_id := #leaf;
+        stable_user_canister_id_to_identity := #leaf;
         stable_topUps := #leaf;
 
         doCanisterGeekPostUpgrade();

@@ -1,5 +1,6 @@
 import type { Principal } from '@dfinity/principal';
 import type { ActorMethod } from '@dfinity/agent';
+import type { IDL } from '@dfinity/candid';
 
 export interface AddBlockUpdateInput {
   'content' : ShareableBlockContent__1,
@@ -163,6 +164,7 @@ export type DeletePageUpdateOutput = { 'ok' : DeletePageUpdateOutputResult } |
 export type DeletePageUpdateOutputError = null;
 export type DeletePageUpdateOutputResult = null;
 export interface Edge { 'node' : ShareableBlock }
+export interface Edge_1 { 'node' : HydratedActivity }
 export interface GetInformationRequest {
   'status' : [] | [StatusRequest],
   'metrics' : [] | [MetricsRequest],
@@ -202,8 +204,27 @@ export interface HourlyMetricsData {
   'canisterMemorySize' : CanisterMemoryAggregatedData,
   'timeMillis' : bigint,
 }
+export interface HydratedActivity {
+  'startTime' : Time,
+  'endTime' : Time,
+  'uuid' : UUID,
+  'edits' : Array<HydratedEditItem>,
+  'users' : Array<HydratedEditItemUser>,
+  'blockExternalId' : UUID,
+}
+export interface HydratedEditItem {
+  'startTime' : Time,
+  'blockValue' : {
+    'after' : ShareableBlock__3,
+    'before' : [] | [ShareableBlock__3],
+  },
+  'user' : HydratedEditItemUser,
+}
+export interface HydratedEditItemUser {
+  'username' : string,
+  'canisterId' : Principal,
+}
 export type List = [] | [[ShareableBlock__2, List]];
-export type List_1 = [] | [[ShareableActivity, List_1]];
 export interface LogMessagesData { 'timeNanos' : Nanos, 'message' : string }
 export type MetricsGranularity = { 'hourly' : null } |
   { 'daily' : null };
@@ -236,8 +257,13 @@ export interface PagesOptionsArg {
   'limit' : [] | [bigint],
 }
 export interface PagesResult { 'edges' : Array<Edge> }
+export interface PaginatedResults { 'edges' : Array<Edge_1> }
 export type PrimaryKey = bigint;
 export type PrimaryKey__1 = bigint;
+export interface PublicUserProfile {
+  'username' : string,
+  'canisterId' : Principal,
+}
 export interface SaveEventTransactionUpdateInput {
   'transaction' : BlockEventTransaction,
 }
@@ -248,13 +274,6 @@ export type SaveEventTransactionUpdateOutput = {
 export type SaveEventTransactionUpdateOutputError = { 'anonymousUser' : null } |
   { 'insufficientCycles' : null };
 export type SaveEventTransactionUpdateOutputResult = null;
-export interface ShareableActivity {
-  'startTime' : Time,
-  'endTime' : Time,
-  'uuid' : UUID,
-  'edits' : Array<ShareableEditItem>,
-  'blockExternalId' : UUID,
-}
 export interface ShareableBlock {
   'id' : PrimaryKey,
   'content' : ShareableBlockContent,
@@ -313,13 +332,6 @@ export interface ShareableBlock__3 {
   'blockType' : BlockType,
   'properties' : ShareableBlockProperties,
   'parent' : [] | [UUID],
-}
-export interface ShareableEditItem {
-  'startTime' : Time,
-  'blockValue' : {
-    'after' : ShareableBlock__3,
-    'before' : [] | [ShareableBlock__3],
-  },
 }
 export interface ShareableNode {
   'value' : NodeValue,
@@ -380,8 +392,9 @@ export interface UpdateInformationRequest {
   'metrics' : [] | [CollectMetricsRequestType],
 }
 export interface Workspace {
-  'activityLog' : ActorMethod<[UUID], List_1>,
+  'activityLog' : ActorMethod<[UUID], PaginatedResults>,
   'addBlock' : ActorMethod<[AddBlockUpdateInput], AddBlockUpdateOutput>,
+  'addUsers' : ActorMethod<[Array<[Principal, PublicUserProfile]>], undefined>,
   'blockByUuid' : ActorMethod<[UUID], BlockByUuidResult>,
   'blocksByPageUuid' : ActorMethod<[string], List>,
   'createPage' : ActorMethod<[CreatePageUpdateInput], CreatePageUpdateOutput>,
@@ -394,7 +407,7 @@ export interface Workspace {
     [GetInformationRequest],
     GetInformationResponse
   >,
-  'getInitArgs' : ActorMethod<[], { 'owner' : Principal, 'capacity' : bigint }>,
+  'getInitArgs' : ActorMethod<[], WorkspaceInitArgs>,
   'getInitData' : ActorMethod<
     [],
     {
@@ -423,7 +436,10 @@ export interface Workspace {
   'walletReceive' : ActorMethod<[], { 'accepted' : bigint }>,
 }
 export type WorkspaceDescription = string;
-export interface WorkspaceInitArgs { 'owner' : Principal, 'capacity' : bigint }
+export interface WorkspaceInitArgs {
+  'owner' : WorkspaceOwner,
+  'capacity' : bigint,
+}
 export interface WorkspaceInitData {
   'name' : WorkspaceName,
   'createdAt' : Time,
@@ -442,3 +458,5 @@ export interface Workspace__1 {
   'updatedAt' : Time,
 }
 export interface _SERVICE extends Workspace {}
+export declare const idlFactory: IDL.InterfaceFactory;
+export declare const init: ({ IDL }: { IDL: IDL }) => IDL.Type[];

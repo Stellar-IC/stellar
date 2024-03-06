@@ -92,6 +92,10 @@ export interface NumericEntity {
   'last' : bigint,
 }
 export interface ProfileInput { 'username' : Username }
+export interface PublicUserProfile {
+  'username' : string,
+  'canisterId' : Principal,
+}
 export type Result = { 'ok' : UserProfile } |
   { 'err' : { 'unauthorized' : null } };
 export type Result_1 = { 'ok' : WorkspaceId } |
@@ -122,6 +126,7 @@ export interface User {
   >,
   'personalWorkspace' : ActorMethod<[], Result_1>,
   'profile' : ActorMethod<[], Result>,
+  'publicProfile' : ActorMethod<[], PublicUserProfile>,
   'updateCanistergeekInformation' : ActorMethod<
     [UpdateInformationRequest],
     undefined

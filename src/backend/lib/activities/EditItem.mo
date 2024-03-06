@@ -4,7 +4,7 @@ import Types "./types";
 module EditItem {
     public func fromShareable(input : Types.ShareableEditItem) : Types.EditItem {
         return {
-            startTime = input.startTime;
+            input with
             blockValue = {
                 before = switch (input.blockValue.before) {
                     case (null) { null };
@@ -19,7 +19,7 @@ module EditItem {
 
     public func toShareable(input : Types.EditItem) : Types.ShareableEditItem {
         return {
-            startTime = input.startTime;
+            input with
             blockValue = {
                 before = switch (input.blockValue.before) {
                     case (null) { null };

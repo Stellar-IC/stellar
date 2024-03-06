@@ -52,6 +52,13 @@ shared ({ caller = initializer }) actor class User(
         return #ok(UserProfile.fromMutableUserProfile(stable_profile));
     };
 
+    public query func publicProfile() : async CoreTypes.User.PublicUserProfile {
+        {
+            canisterId = Principal.fromActor(self);
+            username = stable_profile.username;
+        };
+    };
+
     public shared ({ caller }) func personalWorkspace() : async Result.Result<WorkspacesTypes.WorkspaceId, { #anonymousUser; #insufficientCycles; #unauthorized }> {
         if (caller != stable_owner) {
             return #err(#unauthorized);
@@ -60,8 +67,17 @@ shared ({ caller = initializer }) actor class User(
         switch (stable_personalWorkspaceId) {
             case (null) {
                 let result = await CreateWorkspace.execute({
-                    owner = Principal.fromActor(self);
+                    owner = stable_owner;
+                    controllers = [stable_owner, Principal.fromActor(self)];
+                    initialUsers = [(
+                        Principal.fromActor(self),
+                        {
+                            canisterId = Principal.fromActor(self);
+                            username = stable_profile.username;
+                        },
+                    )];
                 });
+
                 switch (result) {
                     case (#err(error)) { #err(error) };
                     case (#ok(workspace)) {

@@ -2,6 +2,7 @@ import Time "mo:base/Time";
 import UUID "mo:uuid/UUID";
 
 import CoreTypes "../../types";
+import WorkspacesTypes "../../lib/workspaces/types";
 
 module {
     public type UserInitArgs = {
@@ -17,10 +18,7 @@ module {
         walletReceive : () -> async {
             accepted : Nat64;
         };
-        getInitArgs() : async {
-            capacity : Nat;
-            owner : Principal;
-        };
+        getInitArgs() : async WorkspacesTypes.WorkspaceInitArgs;
         getInitData() : async {
             uuid : UUID.UUID;
             name : CoreTypes.Workspaces.WorkspaceName;

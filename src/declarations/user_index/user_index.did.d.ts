@@ -1,5 +1,6 @@
 import type { Principal } from '@dfinity/principal';
 import type { ActorMethod } from '@dfinity/agent';
+import type { IDL } from '@dfinity/candid';
 
 export type CanisterCyclesAggregatedData = BigUint64Array | bigint[];
 export type CanisterHeapMemoryAggregatedData = BigUint64Array | bigint[];
@@ -120,6 +121,7 @@ export interface _SERVICE {
     [GetInformationRequest],
     GetInformationResponse
   >,
+  'publicUserProfile' : ActorMethod<[Principal], { 'canisterId' : Principal }>,
   'registerUser' : ActorMethod<[], RegisterUserResult>,
   'requestCycles' : ActorMethod<[bigint], { 'accepted' : bigint }>,
   'updateCanistergeekInformation' : ActorMethod<
@@ -137,3 +139,5 @@ export interface _SERVICE {
   >,
   'walletReceive' : ActorMethod<[], { 'accepted' : bigint }>,
 }
+export declare const idlFactory: IDL.InterfaceFactory;
+export declare const init: ({ IDL }: { IDL: IDL }) => IDL.Type[];
