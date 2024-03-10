@@ -1,13 +1,12 @@
 import { Anchor, Box } from '@mantine/core';
 import { Link } from 'react-router-dom';
 
-import { useDataStoreContext } from '@/contexts/DataStoreContext/useDataStoreContext';
 import { Block } from '@/types';
 
 import { TextBlock } from './TextBlock';
 
 interface PageBlockRendererProps {
-  blockExternalId: string;
+  block: Block;
   index: number;
   parentBlockIndex?: number;
   placeholder?: string;
@@ -15,17 +14,13 @@ interface PageBlockRendererProps {
 }
 
 export const PageBlockRenderer = ({
-  blockExternalId,
+  block,
   blockType,
   index,
   parentBlockIndex,
   placeholder,
 }: PageBlockRendererProps) => {
-  const { get } = useDataStoreContext();
-  const block = get<Block>('block', blockExternalId);
-  const parentExternalId = block?.parent;
-
-  if (!block) return <div />;
+  const parentExternalId = block.parent;
 
   return (
     <Box>
@@ -37,7 +32,7 @@ export const PageBlockRenderer = ({
         <TextBlock
           blockIndex={index}
           blockType={blockType}
-          blockExternalId={blockExternalId}
+          blockExternalId={block.uuid}
           parentBlockExternalId={parentExternalId}
           parentBlockIndex={parentBlockIndex}
           placeholder={placeholder}

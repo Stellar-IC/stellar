@@ -1,7 +1,7 @@
 import { DelegationIdentity } from '@dfinity/identity';
 import { PropsWithChildren } from 'react';
 
-import { useWorkspaceActor } from '@/hooks/ic/workspace/useWorkspaceActor';
+import { useWorkspaceActor } from '@/hooks/canisters/workspace/useWorkspaceActor';
 import { CanisterId } from '@/types';
 
 import { WorkspaceContext } from './WorkspaceContext';

@@ -9,7 +9,6 @@ import Source "mo:uuid/async/SourceV4";
 import Activity "../../../lib/activities/Activity";
 import ActivityBuilder "../../../lib/activities/ActivityBuilder";
 import BlocksTypes "../../../lib/blocks/types";
-import UUIDGenerator "../../../lib/shared/UUIDGenerator";
 
 import State "../model/state";
 import Types "../types";
@@ -38,8 +37,6 @@ module CreateActivity {
         let activity = activityBuilder.build();
 
         state.data.Activity.objects.upsert(activity);
-
-        Debug.print("Activity created: " # Activity.toText(activity));
 
         return activity;
     };

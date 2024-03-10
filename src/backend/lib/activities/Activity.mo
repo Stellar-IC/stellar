@@ -2,7 +2,6 @@ import Array "mo:base/Array";
 import UUID "mo:uuid/UUID";
 
 import EditItem "../../lib/activities/EditItem";
-import BlocksModels "../../lib/blocks/models";
 import LseqTree "../../utils/data/lseq/Tree";
 
 import Types "./types";

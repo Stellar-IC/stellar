@@ -1,4 +1,3 @@
-import { DraggableProvidedDragHandleProps } from '@hello-pangea/dnd';
 import { Box, Button, Flex, Group, useMantineTheme } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
 import { IconPlus, IconGridDots } from '@tabler/icons-react';
@@ -17,7 +16,6 @@ type BlockWithActionsProps = PropsWithChildren<{
   blockExternalId: string;
   blockType: BlockType;
   parentBlockExternalId?: string;
-  dragHandleProps?: DraggableProvidedDragHandleProps | null;
 }>;
 
 export const BlockWithActions = ({
@@ -25,7 +23,6 @@ export const BlockWithActions = ({
   blockIndex,
   blockExternalId,
   blockType,
-  dragHandleProps,
   parentBlockExternalId,
 }: BlockWithActionsProps) => {
   const { addBlock, removeBlock, updateBlock } = usePagesContext();
@@ -114,7 +111,6 @@ export const BlockWithActions = ({
             onClick={() => {
               onTransformModalOpen();
             }}
-            {...dragHandleProps}
             size="xs"
           >
             <IconGridDots size="12px" />

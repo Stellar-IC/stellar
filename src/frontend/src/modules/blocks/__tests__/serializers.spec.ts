@@ -83,11 +83,8 @@ describe('block', () => {
 
   describe('fromShareable', () => {
     it('should work', () => {
-      const result = fromShareable({ ...mockBlock, id: BigInt(1) });
-      const expected: Block = {
-        id: '1',
-        ...expectedSerialized,
-      };
+      const result = fromShareable(mockBlock);
+      const expected: Block = expectedSerialized;
 
       expect(result).toEqual(expected);
     });

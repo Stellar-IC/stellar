@@ -1,13 +1,12 @@
 import { Box } from '@mantine/core';
 
-import { useDataStoreContext } from '@/contexts/DataStoreContext/useDataStoreContext';
 import { Block } from '@/types';
 
 import { TextBlock } from './TextBlock';
 import { TextBlockBlockType } from './TextBlock/types';
 
 interface TextBlockRendererProps {
-  blockExternalId: string;
+  block: Block;
   index: number;
   parentBlockIndex?: number;
   placeholder?: string;
@@ -15,29 +14,21 @@ interface TextBlockRendererProps {
 }
 
 export const TextBlockRenderer = ({
-  blockExternalId,
+  block,
   blockType,
   index,
   parentBlockIndex,
   placeholder,
-}: TextBlockRendererProps) => {
-  const { get } = useDataStoreContext();
-  const block = get<Block>('block', blockExternalId);
-  const parentExternalId = block?.parent;
-
-  if (!block) return <div />;
-
-  return (
-    <Box>
-      <TextBlock
-        blockIndex={index}
-        blockType={blockType}
-        blockExternalId={blockExternalId}
-        parentBlockExternalId={parentExternalId}
-        parentBlockIndex={parentBlockIndex}
-        placeholder={placeholder}
-        value={block.properties.title}
-      />
-    </Box>
-  );
-};
+}: TextBlockRendererProps) => (
+  <Box>
+    <TextBlock
+      blockIndex={index}
+      blockType={blockType}
+      blockExternalId={block.uuid}
+      parentBlockExternalId={block.parent}
+      parentBlockIndex={parentBlockIndex}
+      placeholder={placeholder}
+      value={block.properties.title}
+    />
+  </Box>
+);

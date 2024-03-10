@@ -2,7 +2,7 @@ import { Identity } from '@dfinity/agent';
 import { useCallback } from 'react';
 import { v4 as uuidv4, parse as uuidParse } from 'uuid';
 
-import { useWorkspaceActor } from '@/hooks/ic/workspace/useWorkspaceActor';
+import { useWorkspaceActor } from '@/hooks/canisters/workspace/useWorkspaceActor';
 import { useUpdate } from '@/hooks/useUpdate';
 import { CanisterId } from '@/types';
 
@@ -20,12 +20,19 @@ export const useCreatePage = (options: {
   ) => Promise<CreatePageUpdateOutput>,
   { data: CreatePageUpdateOutput | null; isLoading: boolean }
 ] => {
-  const { actor, canisterId } = useWorkspaceActor(options);
-  const [_createPage, ...other] = useUpdate(canisterId, actor.createPage);
+  const { actor } = useWorkspaceActor(options);
+  const [_createPage, ...other] = useUpdate(
+    options.workspaceId,
+    actor.createPage
+  );
   const createPage = useCallback(
     (input: Omit<CreatePageUpdateInput, 'uuid'>) => {
       const uuid = uuidv4();
-      return _createPage([{ ...input, uuid: uuidParse(uuid) }]);
+      const page = { ...input, uuid: uuidParse(uuid) };
+
+      // TODO: Add initial block creation here
+
+      return _createPage([page]);
     },
     [_createPage]
   );

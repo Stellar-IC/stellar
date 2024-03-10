@@ -1,11 +1,10 @@
 import { Tree } from '@stellar-ic/lseq-ts';
 import { parse } from 'uuid';
 
-import { DATA_TYPES } from '@/constants';
-import { useDataStoreContext } from '@/contexts/DataStoreContext/useDataStoreContext';
 import { usePagesContext } from '@/contexts/PagesContext/usePagesContext';
-import { focusNextBlock as _focusNextBlock } from '@/modules/editor/utils';
-import { Block, ExternalId } from '@/types';
+import { db } from '@/db';
+import { focusBlock } from '@/modules/editor/utils';
+import { ExternalId } from '@/types';
 
 import { BlockType } from '../../../../../declarations/workspace/workspace.did';
 
@@ -21,12 +20,6 @@ type UseEnterHandlerProps = {
   parentBlockExternalId?: ExternalId | null;
 };
 
-function focusNextBlock() {
-  setTimeout(() => {
-    _focusNextBlock();
-  }, 100);
-}
-
 export function useEnterHandler({
   blockIndex,
   blockType,
@@ -37,15 +30,12 @@ export function useEnterHandler({
     addBlock,
     updateBlock,
     blocks: { updateLocal: updateLocalBlock },
-    pages: { updateLocal: updateLocalPage },
   } = usePagesContext();
-  const { get } = useDataStoreContext();
-
-  const onEnterPressed = () => {
+  const onEnterPressed = async () => {
     if (!blockExternalId) return;
     if (!parentBlockExternalId) return;
 
-    const block = get<Block>(DATA_TYPES.block, blockExternalId);
+    const block = await db.blocks.get(blockExternalId);
     if (!block) return;
 
     const cursorPosition = window.getSelection()?.anchorOffset;
@@ -57,27 +47,30 @@ export function useEnterHandler({
 
     if (blockTitleLength === 0) {
       // Create a new block
-      addBlock(parse(parentBlockExternalId), blockType, blockIndex + 1);
-      focusNextBlock();
+      const newBlock = await addBlock(
+        parse(parentBlockExternalId),
+        blockType,
+        blockIndex + 1
+      );
+
+      focusBlock(newBlock.uuid);
+
       return;
     }
 
     // Create a new block with the text after the cursor
-    const newBlock = addBlock(
+    const newBlock = await addBlock(
       parse(parentBlockExternalId),
       blockType,
       blockIndex + 1
     );
 
     // Focus on the new block
-    focusNextBlock();
+    focusBlock(newBlock.uuid);
 
     insertBlockTitleCharacters(newBlock, blockTitleAfterCursor, {
       onUpdateLocal: (updatedBlock) => {
         updateLocalBlock(updatedBlock.uuid, updatedBlock);
-        if ('page' in updatedBlock.blockType) {
-          updateLocalPage(updatedBlock.uuid, updatedBlock);
-        }
       },
       onUpdateRemote: (updatedBlock, events) => {
         const updatedBlockExternalId = parse(updatedBlock.uuid);
@@ -102,9 +95,6 @@ export function useEnterHandler({
     removeBlockTitleCharacters(block, charactersToRemove.reverse(), {
       onUpdateLocal: (updatedBlock) => {
         updateLocalBlock(updatedBlock.uuid, updatedBlock);
-        if ('page' in updatedBlock.blockType) {
-          updateLocalPage(updatedBlock.uuid, updatedBlock);
-        }
       },
       onUpdateRemote: (updatedBlock, events) => {
         const blockExternalId = parse(updatedBlock.uuid);

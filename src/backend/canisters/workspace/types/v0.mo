@@ -1,3 +1,4 @@
+import HashMap "mo:base/HashMap";
 import List "mo:base/List";
 import Nat "mo:base/Nat";
 import Result "mo:base/Result";
@@ -89,7 +90,10 @@ module {
                 limit : ?Nat;
                 order : ?CoreTypes.SortOrder;
             };
-            public type PagesResult = CoreTypes.PaginatedResults<ShareableBlock>;
+            public type PagesResult = {
+                pages : CoreTypes.PaginatedResults<Text>;
+                recordMap : { blocks : [(Text, ShareableBlock)] };
+            };
         };
     };
 

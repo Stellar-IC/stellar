@@ -19,7 +19,6 @@ module UserRegistry {
     };
 
     public func addUser<UserT>(userRegistry : UserRegistry<UserT>, userIdentity : Principal, user : UserT) {
-        Debug.print("Adding user: " # Principal.toText(userIdentity));
         userRegistry.users.put(userIdentity, user);
     };
 
@@ -28,10 +27,6 @@ module UserRegistry {
     };
 
     public func getUser<UserT>(userRegistry : UserRegistry<UserT>, userIdentity : Principal) : UserT {
-        for (entry in userRegistry.users.entries()) {
-            Debug.print(Principal.toText(entry.0));
-        };
-
         let user = switch (findUser(userRegistry, userIdentity)) {
             case (null) { Debug.trap("User not found") };
             case (?user) { user };

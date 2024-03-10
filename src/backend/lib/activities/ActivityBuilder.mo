@@ -3,7 +3,6 @@ import Buffer "mo:base/Buffer";
 import Time "mo:base/Time";
 import UUID "mo:uuid/UUID";
 
-import UUIDGenerator "../shared/UUIDGenerator";
 import Types "./types";
 
 module {

@@ -1,10 +1,10 @@
-import { Identity } from '@dfinity/agent';
+import { Principal } from '@dfinity/principal';
 import { Tree } from '@stellar-ic/lseq-ts';
 import { PropsWithChildren, useCallback } from 'react';
 import { parse, stringify, v4 } from 'uuid';
 
-import { DATA_TYPES } from '@/constants';
 import { usePages } from '@/contexts/PagesContext/usePages';
+import { db } from '@/db';
 import { useAuthContext } from '@/modules/auth/contexts/AuthContext';
 import { Block } from '@/types';
 
@@ -17,17 +17,16 @@ import {
   BlockType,
   UUID,
 } from '../../../../declarations/workspace/workspace.did';
-import { useDataStoreContext } from '../DataStoreContext/useDataStoreContext';
 import { useWorkspaceContext } from '../WorkspaceContext/useWorkspaceContext';
 
 import { PagesContext } from './PagesContext';
 
-function buildEvent<DataT>(data: DataT, userIdentity: Identity) {
+function buildEvent<DataT>(data: DataT, userId: Principal) {
   const now = BigInt(Date.now()) * BigInt(1_000_000); // convert to nanoseconds
 
   return {
     data,
-    user: userIdentity.getPrincipal(),
+    user: userId,
     uuid: parse(v4()),
     timestamp: now,
   };
@@ -36,21 +35,23 @@ function buildEvent<DataT>(data: DataT, userIdentity: Identity) {
 export function PagesContextProvider({ children }: PropsWithChildren<{}>) {
   const { identity, userId } = useAuthContext();
   const { workspaceId } = useWorkspaceContext();
-  const { get } = useDataStoreContext();
 
-  const {
-    pages: pagesContext,
-    blocks: blocksContext,
-    handleBlockEvent,
-  } = usePages({ identity, workspaceId });
+  const { blocks: blocksContext, handleBlockEvent } = usePages({
+    identity,
+    workspaceId,
+  });
 
   const addBlock = useCallback(
-    (parentBlockExternalId: UUID, blockType: BlockType, index: number) => {
+    async (
+      parentBlockExternalId: UUID,
+      blockType: BlockType,
+      index: number
+    ): Promise<Block> => {
       const blockExternalId = v4();
       const eventExternalId = v4();
       const parsedExternalId = parse(blockExternalId);
 
-      const block = handleBlockEvent(blockExternalId, {
+      const block = await handleBlockEvent(blockExternalId, {
         user: userId,
         uuid: parse(eventExternalId),
         data: {
@@ -72,18 +73,21 @@ export function PagesContextProvider({ children }: PropsWithChildren<{}>) {
 
       return block;
     },
-    [handleBlockEvent, identity]
+    [handleBlockEvent, userId]
   );
 
   const removeBlock = useCallback(
-    (parentBlockExternalId: UUID, index: number) => {
-      const parentBlock =
-        get<Block>(DATA_TYPES.page, stringify(parentBlockExternalId)) ||
-        get<Block>(DATA_TYPES.block, stringify(parentBlockExternalId));
+    async (parentBlockExternalId: UUID, index: number): Promise<void> => {
+      const parentBlock = await db.blocks
+        .where('uuid')
+        .equals(stringify(parentBlockExternalId))
+        .first();
 
       if (!parentBlock) {
         throw new Error(
-          `Could not find parent block with external id ${parentBlockExternalId}`
+          `Could not find parent block with external id ${stringify(
+            parentBlockExternalId
+          )}`
         );
       }
 
@@ -99,16 +103,13 @@ export function PagesContextProvider({ children }: PropsWithChildren<{}>) {
               },
             },
           },
-          identity
+          userId
         )
       );
 
       blocksContext.updateLocal(stringify(parentBlockExternalId), parentBlock);
-      if ('page' in parentBlock.blockType) {
-        pagesContext.updateLocal(stringify(parentBlockExternalId), parentBlock);
-      }
     },
-    [get, blocksContext, pagesContext, handleBlockEvent, identity]
+    [blocksContext, handleBlockEvent, userId]
   );
 
   const updateBlock = useCallback(
@@ -136,7 +137,7 @@ export function PagesContextProvider({ children }: PropsWithChildren<{}>) {
                 },
               },
             },
-            identity
+            userId
           )
         );
       } else if ('updatePropertyTitle' in event) {
@@ -150,7 +151,7 @@ export function PagesContextProvider({ children }: PropsWithChildren<{}>) {
                 },
               },
             },
-            identity
+            userId
           )
         );
       } else if ('updateBlockType' in event) {
@@ -164,7 +165,7 @@ export function PagesContextProvider({ children }: PropsWithChildren<{}>) {
                 },
               },
             },
-            identity
+            userId
           )
         );
       } else if ('updateParent' in event) {
@@ -178,7 +179,7 @@ export function PagesContextProvider({ children }: PropsWithChildren<{}>) {
                 },
               },
             },
-            identity
+            userId
           )
         );
       } else if ('updateContent' in event) {
@@ -192,18 +193,17 @@ export function PagesContextProvider({ children }: PropsWithChildren<{}>) {
                 },
               },
             },
-            identity
+            userId
           )
         );
       }
     },
-    [handleBlockEvent, identity]
+    [handleBlockEvent, userId]
   );
 
   return (
     <PagesContext.Provider
       value={{
-        pages: pagesContext,
         blocks: blocksContext,
         addBlock,
         removeBlock,

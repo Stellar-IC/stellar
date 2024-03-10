@@ -1,5 +1,6 @@
 import type { Principal } from '@dfinity/principal';
 import type { ActorMethod } from '@dfinity/agent';
+import type { IDL } from '@dfinity/candid';
 
 export type CanisterCyclesAggregatedData = BigUint64Array | bigint[];
 export type CanisterHeapMemoryAggregatedData = BigUint64Array | bigint[];
@@ -153,3 +154,5 @@ export type Username = string;
 export type Username__1 = string;
 export type WorkspaceId = Principal;
 export interface _SERVICE extends User {}
+export declare const idlFactory: IDL.InterfaceFactory;
+export declare const init: ({ IDL }: { IDL: IDL }) => IDL.Type[];

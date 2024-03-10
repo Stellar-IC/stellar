@@ -1,14 +1,14 @@
 import { Box } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
 import { Tree } from '@stellar-ic/lseq-ts';
-import { createRef, useEffect, useMemo, useState } from 'react';
+import { createRef, memo, useEffect, useMemo, useState } from 'react';
 
 import { useTextBlockKeyboardEventHandlers } from '@/hooks/documents/useTextBlockKeyboardEventHandlers';
 
 import { useTextStyles } from './hooks/useTextStyles';
 import { TextBlockProps } from './types';
 
-export const TextBlock = ({
+const _TextBlock = ({
   blockIndex,
   parentBlockIndex,
   blockType,
@@ -17,13 +17,29 @@ export const TextBlock = ({
   placeholder,
   value,
 }: TextBlockProps) => {
-  const [initialText] = useState(Tree.toText(value));
+  const [initialText, setInitialText] = useState(Tree.toText(value));
+  const [initialBlockExternalId, setInitialBlockExternalId] =
+    useState(blockExternalId);
+
   const [
     isShowingPlaceholder,
     { close: hidePlaceholder, open: showPlaceholder },
   ] = useDisclosure(!initialText);
+
   const textBoxRef = useMemo(() => createRef<HTMLSpanElement>(), []);
   const textStyles = useTextStyles({ blockType });
+
+  useEffect(() => {
+    if (initialBlockExternalId !== blockExternalId) {
+      const newInitialText = Tree.toText(value);
+      if (newInitialText.length === 0) {
+        showPlaceholder();
+      }
+
+      setInitialText(newInitialText);
+      setInitialBlockExternalId(blockExternalId);
+    }
+  }, [blockExternalId, initialBlockExternalId, value, showPlaceholder]);
 
   useEffect(() => {
     if (!textBoxRef.current) return;
@@ -45,12 +61,7 @@ export const TextBlock = ({
   });
 
   return (
-    <Box
-      className="TextBlock"
-      pos="relative"
-      w="100%"
-      style={{ ...textStyles }}
-    >
+    <Box className="TextBlock" pos="relative" w="100%" style={textStyles}>
       {placeholder && isShowingPlaceholder && (
         <Box
           pos="absolute"
@@ -77,3 +88,18 @@ export const TextBlock = ({
     </Box>
   );
 };
+
+export const TextBlock = memo(_TextBlock, (prev, next) => {
+  if (prev.blockExternalId !== next.blockExternalId) return false;
+  if (prev.blockIndex !== next.blockIndex) return false;
+
+  if (Object.keys(prev.blockType)[0] !== Object.keys(next.blockType)[0]) {
+    return false;
+  }
+
+  if (prev.parentBlockIndex !== next.parentBlockIndex) return false;
+  if (prev.parentBlockExternalId !== next.parentBlockExternalId) return false;
+  if (prev.placeholder !== next.placeholder) return false;
+
+  return true;
+});

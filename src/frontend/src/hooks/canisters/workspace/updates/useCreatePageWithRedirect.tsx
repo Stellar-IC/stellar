@@ -5,7 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import { stringify } from 'uuid';
 
 import { useWorkspaceContext } from '@/contexts/WorkspaceContext/useWorkspaceContext';
-import { useCreatePage } from '@/hooks/documents/updates/useCreatePage';
+import { useCreatePage } from '@/hooks/canisters/workspace/updates/useCreatePage';
 import { useAuthContext } from '@/modules/auth/contexts/AuthContext';
 
 export function useCreatePageWithRedirect() {

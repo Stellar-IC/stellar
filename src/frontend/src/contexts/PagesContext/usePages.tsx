@@ -4,13 +4,12 @@ import { Tree } from '@stellar-ic/lseq-ts';
 import { useCallback, useEffect } from 'react';
 import { parse, stringify, v4 } from 'uuid';
 
-import { DATA_TYPES } from '@/constants';
-import { useBlockByUuid } from '@/hooks/ic/workspace/queries/useBlockByUuid';
-import { usePageByUuid } from '@/hooks/ic/workspace/queries/usePageByUuid';
-import { useWorkspaceActor } from '@/hooks/ic/workspace/useWorkspaceActor';
+import { db } from '@/db';
+import { useBlockQuery } from '@/hooks/canisters/workspace/queries/useBlockQuery';
+import { useWorkspaceActor } from '@/hooks/canisters/workspace/useWorkspaceActor';
 import { useUpdate } from '@/hooks/useUpdate';
 import * as blockSerializers from '@/modules/blocks/serializers';
-import { Page, Block, CanisterId } from '@/types';
+import { Block, CanisterId } from '@/types';
 
 import {
   BlockBlockTypeUpdatedEventData,
@@ -23,7 +22,6 @@ import {
   SaveEventTransactionUpdateOutput,
   UUID,
 } from '../../../../declarations/workspace/workspace.did';
-import { useDataStoreContext } from '../DataStoreContext/useDataStoreContext';
 
 import { usePageEvents } from './usePageEvents';
 
@@ -66,27 +64,22 @@ export const usePages = (props: {
   const { identity, workspaceId } = props;
   const { actor } = useWorkspaceActor({ identity, workspaceId });
 
-  const { get, put } = useDataStoreContext();
-
-  const queryBlock = useBlockByUuid({ identity, workspaceId });
-  const queryPage = usePageByUuid({ identity, workspaceId });
+  const queryBlock = useBlockQuery({ identity, workspaceId });
 
   const updateLocalPage = useCallback(
-    (externalId: string, updatedData: Page) => {
-      put(DATA_TYPES.page, externalId, updatedData, {
-        prepareForStorage: blockSerializers.toLocalStorage,
-      });
+    (externalId: string, updatedData: Block) => {
+      const serializedData = blockSerializers.toLocalStorage(updatedData);
+      db.blocks.put(serializedData, externalId);
     },
-    [put]
+    []
   );
 
   const updateLocalBlock = useCallback(
     (externalId: string, updatedData: Block) => {
-      put(DATA_TYPES.block, externalId, updatedData, {
-        prepareForStorage: blockSerializers.toLocalStorage,
-      });
+      const serializedData = blockSerializers.toLocalStorage(updatedData);
+      db.blocks.put(serializedData, externalId);
     },
-    [put]
+    []
   );
 
   useEffect(() => {
@@ -96,21 +89,24 @@ export const usePages = (props: {
         cursor: [],
         limit: [],
       })
-      .then((res) => {
-        res.edges.forEach((edge) => {
-          updateLocalBlock(
-            stringify(edge.node.uuid),
-            blockSerializers.fromShareable(edge.node)
-          );
-          updateLocalPage(
-            stringify(edge.node.uuid),
-            blockSerializers.fromShareable(edge.node)
-          );
-        });
+      .then(async (res) => {
+        // Save all blocks to data store
+        await db.blocks.bulkPut(
+          res.recordMap.blocks.map((record) => {
+            const block = blockSerializers.fromShareable(record[1]);
+            return blockSerializers.toLocalStorage(block);
+          })
+        );
       });
   }, [actor, updateLocalBlock, updateLocalPage]);
 
-  const { storeEventLocal } = usePageEvents();
+  const { storeEventLocal } = usePageEvents({
+    storageAdapter: {
+      put: async (item, key) => {
+        await db.blockEvents.put(item, key);
+      },
+    },
+  });
 
   const [sendUpdate] = useUpdate<
     [SaveEventTransactionUpdateInput],
@@ -122,9 +118,9 @@ export const usePages = (props: {
   }, []);
 
   const createBlock = useCallback(
-    (event: BlockCreatedEvent): Block | null => {
+    async (event: BlockCreatedEvent): Promise<Block | undefined> => {
       if (!event.data.blockCreated.block.parent[0]) {
-        return null;
+        return undefined;
       }
 
       const eventData = event.data.blockCreated;
@@ -134,13 +130,13 @@ export const usePages = (props: {
         : null;
 
       if (!parentExternalId) {
-        return null;
+        return undefined;
       }
 
-      const parentBlock = get<Block>(DATA_TYPES.block, parentExternalId);
+      const parentBlock = await db.blocks.get(parentExternalId);
 
       if (!parentBlock) {
-        return null;
+        return undefined;
       }
 
       // Add block to parent block's content
@@ -165,12 +161,8 @@ export const usePages = (props: {
       sendUpdate([{ transaction: [contentUpdatedEvent] }]);
 
       updateLocalBlock(parentExternalId, parentBlock);
-      if ('page' in parentBlock.blockType) {
-        updateLocalPage(parentExternalId, parentBlock);
-      }
 
       const newBlock = {
-        id: '', // this will be set by the backend
         content: new Tree.Tree(),
         parent: parentExternalId,
         properties: {
@@ -186,15 +178,19 @@ export const usePages = (props: {
 
       return newBlock;
     },
-    [get, sendUpdate, updateLocalBlock, updateLocalPage]
+    [sendUpdate, updateLocalBlock]
   );
 
   const updateBlockType = useCallback(
-    (event: BlockTypeUpdatedEvent) => {
+    async (event: BlockTypeUpdatedEvent) => {
       const blockExternalId = stringify(
         event.data.blockUpdated.updateBlockType.blockExternalId
       );
-      const currentBlock = get<Block>(DATA_TYPES.block, blockExternalId);
+      const currentBlock = await db.blocks
+        .where('uuid')
+        .equals(blockExternalId)
+        .first();
+
       if (!currentBlock) {
         return;
       }
@@ -204,15 +200,19 @@ export const usePages = (props: {
         blockType: event.data.blockUpdated.updateBlockType.blockType,
       });
     },
-    [get, updateLocalBlock]
+    [updateLocalBlock]
   );
 
   const updatePropertyChecked = useCallback(
-    (event: BlockPropertyCheckedUpdatedEvent) => {
+    async (event: BlockPropertyCheckedUpdatedEvent) => {
       const blockExternalId = stringify(
         event.data.blockUpdated.updatePropertyChecked.blockExternalId
       );
-      const currentBlock = get<Block>(DATA_TYPES.block, blockExternalId);
+      const currentBlock = await db.blocks
+        .where('uuid')
+        .equals(blockExternalId)
+        .first();
+
       if (!currentBlock) {
         return;
       }
@@ -225,7 +225,7 @@ export const usePages = (props: {
         },
       });
     },
-    [get, updateLocalBlock]
+    [updateLocalBlock]
   );
 
   const updatePropertyTitle = useCallback(
@@ -237,17 +237,20 @@ export const usePages = (props: {
   );
 
   const handleBlockEvent = useCallback(
-    (blockExternalId: string, event: BlockEvent): Block | null => {
+    async (
+      blockExternalId: string,
+      event: BlockEvent
+    ): Promise<Block | undefined> => {
       storeEventLocal(blockExternalId, event);
 
-      let block: Block | null = null;
+      let block: Block | undefined;
 
       if ('blockCreated' in event.data) {
-        block = createBlock({ ...event, data: { ...event.data } });
+        block = await createBlock({ ...event, data: { ...event.data } });
       }
 
       if ('blockUpdated' in event.data) {
-        block = get<Block>(DATA_TYPES.block, blockExternalId);
+        block = await db.blocks.get(blockExternalId);
 
         if ('updateContent' in event.data.blockUpdated) {
           updateContent({
@@ -278,7 +281,6 @@ export const usePages = (props: {
     },
     [
       createBlock,
-      get,
       sendUpdate,
       storeEventLocal,
       updateBlockType,
@@ -289,10 +291,6 @@ export const usePages = (props: {
   );
 
   return {
-    pages: {
-      query: queryPage,
-      updateLocal: updateLocalPage,
-    },
     blocks: {
       query: queryBlock,
       updateLocal: updateLocalBlock,

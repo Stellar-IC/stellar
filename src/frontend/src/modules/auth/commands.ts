@@ -1,3 +1,5 @@
+import { db } from '@/db';
+
 import { getAuthClient } from './client';
 
 export async function login(options: { identityProvider: string }) {
@@ -22,6 +24,8 @@ export async function logout() {
   const authClient = await getAuthClient();
 
   await authClient.logout({
-    returnTo: 'http://127.0.0.1:8080',
+    returnTo: 'http://127.0.0.1:5173',
   });
+
+  await db.delete();
 }

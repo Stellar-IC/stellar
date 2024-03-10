@@ -25,17 +25,20 @@ type WorkspaceInitArgs =
 type WorkspaceDescription = text;
 type Workspace = 
  service {
-   activityLog: (UUID) -> (PaginatedResults) query;
-   addBlock: (AddBlockUpdateInput) -> (AddBlockUpdateOutput);
+   activityLog: (UUID) -> (PaginatedResults_1) query;
+   addBlock: (AddBlockUpdateInput) -> ();
+   /// ***********************************************************************
+   ///      * Updates
+   ///      ************************************************************************
    addUsers: (vec record {
                     principal;
                     PublicUserProfile;
                   }) -> ();
-   blockByUuid: (UUID) -> (BlockByUuidResult) query;
-   blocksByPageUuid: (text) -> (List) query;
-   /// ***********************************************************************
-   ///      * Updates
-   ///      ************************************************************************
+   block: (UUID,
+    record {contentPagination: record {
+                                 cursor: nat;
+                                 limit: nat;
+                               };}) -> (BlockByUuidResult) query;
    createPage: (CreatePageUpdateInput) -> (CreatePageUpdateOutput);
    cyclesInformation: () -> (record {
                                balance: nat;
@@ -61,7 +64,6 @@ type Workspace =
        updatedAt: Time;
        uuid: UUID;
      });
-   pageByUuid: (UUID) -> (PageByUuidResult) query;
    pages: (PagesOptionsArg) -> (PagesResult) query;
    saveEvents: (SaveEventTransactionUpdateInput) ->
     (SaveEventTransactionUpdateOutput);
@@ -82,7 +84,6 @@ type UpdateBlockUpdateOutputResult =
  record {
    blockType: BlockType;
    content: ShareableBlockContent;
-   id: PrimaryKey;
    parent: opt UUID;
    properties: ShareableBlockProperties;
    uuid: UUID;
@@ -97,7 +98,6 @@ type UpdateBlockUpdateInput =
  record {
    blockType: BlockType;
    content: ShareableBlockContent;
-   id: PrimaryKey;
    parent: opt UUID;
    properties: ShareableBlockProperties;
    uuid: UUID;
@@ -151,29 +151,10 @@ type ShareableNode =
    identifier: NodeIdentifier;
    value: NodeValue;
  };
-type ShareableBlock__3 = 
- record {
-   blockType: BlockType;
-   content: ShareableBlockContent;
-   id: PrimaryKey;
-   parent: opt UUID;
-   properties: ShareableBlockProperties;
-   uuid: UUID;
- };
-type ShareableBlock__2 = 
- record {
-   blockType: BlockType;
-   content: ShareableBlockContent;
-   id: PrimaryKey;
-   parent: opt UUID;
-   properties: ShareableBlockProperties;
-   uuid: UUID;
- };
 type ShareableBlock__1 = 
  record {
    blockType: BlockType;
    content: ShareableBlockContent;
-   id: PrimaryKey;
    parent: opt UUID;
    properties: ShareableBlockProperties;
    uuid: UUID;
@@ -224,7 +205,6 @@ type ShareableBlock =
  record {
    blockType: BlockType;
    content: ShareableBlockContent;
-   id: PrimaryKey;
    parent: opt UUID;
    properties: ShareableBlockProperties;
    uuid: UUID;
@@ -247,24 +227,22 @@ type PublicUserProfile =
    canisterId: principal;
    username: text;
  };
-type PrimaryKey__1 = nat;
 type PrimaryKey = nat;
-type PaginatedResults = record {edges: vec Edge_1;};
-type PagesResult = record {edges: vec Edge;};
+type PaginatedResults_1 = record {edges: vec Edge_1;};
+type PaginatedResults = record {edges: vec Edge;};
+type PagesResult = 
+ record {
+   pages: PaginatedResults;
+   recordMap: record {blocks: vec record {
+                                    ExternalId;
+                                    ShareableBlock;
+                                  };};
+ };
 type PagesOptionsArg = 
  record {
-   cursor: opt PrimaryKey__1;
+   cursor: opt PrimaryKey;
    limit: opt nat;
    order: opt SortOrder;
- };
-type PageByUuidResult = 
- variant {
-   err: variant {pageNotFound;};
-   ok:
-    record {
-      _records: record {blocks: vec ShareableBlock__1;};
-      page: record {uuid: UUID;};
-    };
  };
 type NumericEntity = 
  record {
@@ -293,11 +271,6 @@ type LogMessagesData =
    message: text;
    timeNanos: Nanos;
  };
-type List = 
- opt record {
-       ShareableBlock__2;
-       List;
-     };
 type HydratedEditItemUser = 
  record {
    canisterId: principal;
@@ -307,8 +280,8 @@ type HydratedEditItem =
  record {
    blockValue:
     record {
-      after: ShareableBlock__3;
-      before: opt ShareableBlock__3;
+      after: ShareableBlock__1;
+      before: opt ShareableBlock__1;
     };
    startTime: Time;
    user: HydratedEditItemUser;
@@ -368,8 +341,9 @@ type GetInformationRequest =
    status: opt StatusRequest;
    version: bool;
  };
+type ExternalId = text;
 type Edge_1 = record {node: HydratedActivity;};
-type Edge = record {node: ShareableBlock;};
+type Edge = record {node: ExternalId;};
 type DeletePageUpdateOutputResult = null;
 type DeletePageUpdateOutputError = null;
 type DeletePageUpdateOutput = 
@@ -390,7 +364,6 @@ type CreatePageUpdateOutputResult =
  record {
    blockType: BlockType;
    content: ShareableBlockContent;
-   id: PrimaryKey;
    parent: opt UUID;
    properties: ShareableBlockProperties;
    uuid: UUID;
@@ -562,8 +535,15 @@ type BlockContentUpdatedEventData =
  };
 type BlockByUuidResult = 
  variant {
-   err: variant {blockNotFound;};
-   ok: ShareableBlock;
+   err: variant {notFound;};
+   ok:
+    record {
+      block: ExternalId;
+      recordMap: record {blocks: vec record {
+                                       ExternalId;
+                                       ShareableBlock;
+                                     };};
+    };
  };
 type BlockBlockTypeUpdatedEventData = 
  record {
@@ -574,13 +554,6 @@ type AllocationStrategy =
  variant {
    boundaryMinus;
    boundaryPlus;
- };
-type AddBlockUpdateOutputResult = record {id: PrimaryKey__1;};
-type AddBlockUpdateOutputError = null;
-type AddBlockUpdateOutput = 
- variant {
-   err: AddBlockUpdateOutputError;
-   ok: AddBlockUpdateOutputResult;
  };
 type AddBlockUpdateInput = 
  record {

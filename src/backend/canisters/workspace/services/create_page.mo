@@ -74,36 +74,29 @@ module {
             case (#ok()) {};
         };
 
-        let result = state.data.addBlock(pageToCreate);
-        ignore state.data.addBlock(contentBlock);
+        state.data.addBlock(pageToCreate);
+        state.data.addBlock(contentBlock);
 
-        switch (result) {
-            case (#ok(pk, block)) {
-                let shareableTitle : ShareableBlockText = switch (block.properties.title) {
-                    case (null) {
-                        Tree.toShareableTree(Tree.Tree(null));
-                    };
-                    case (?title) {
-                        Tree.toShareableTree(title);
-                    };
-                };
-                let shareableContent : ShareableBlockContent = Tree.toShareableTree(block.content);
-                let shareableProperties : ShareableBlockProperties = {
-                    block.properties with title = ?shareableTitle;
-                    checked = block.properties.checked;
-                };
-
-                return #ok({
-                    block with properties = shareableProperties;
-                    content = shareableContent;
-                    blockType = block.blockType;
-                    parent = block.parent;
-                });
+        let shareableTitle : ShareableBlockText = switch (pageToCreate.properties.title) {
+            case (null) {
+                Tree.toShareableTree(Tree.Tree(null));
             };
-            case (#err(#keyAlreadyExists)) {
-                return #err(#failedToCreate);
+            case (?title) {
+                Tree.toShareableTree(title);
             };
         };
+        let shareableContent : ShareableBlockContent = Tree.toShareableTree(pageToCreate.content);
+        let shareableProperties : ShareableBlockProperties = {
+            pageToCreate.properties with title = ?shareableTitle;
+            checked = pageToCreate.properties.checked;
+        };
+
+        return #ok({
+            pageToCreate with properties = shareableProperties;
+            content = shareableContent;
+            blockType = pageToCreate.blockType;
+            parent = pageToCreate.parent;
+        });
     };
 
     private func _validate(input : UnsavedBlock) : Result.Result<(), { #anonymousUser; #inputTooLong; #invalidBlockType }> {

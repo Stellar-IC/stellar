@@ -1,24 +1,15 @@
 import { Flex } from '@mantine/core';
 
-import { useDataStoreContext } from '@/contexts/DataStoreContext/useDataStoreContext';
 import { Block } from '@/types';
 
 import { TextBlock } from './TextBlock';
 
 interface BulletedListBlockProps {
-  externalId: string;
+  block: Block;
   index: number;
 }
 
-export const BulletedListBlock = ({
-  externalId,
-  index,
-}: BulletedListBlockProps) => {
-  const { get } = useDataStoreContext();
-  const block = get<Block>('block', externalId);
-
-  if (!block) return null;
-
+export const BulletedListBlock = ({ block, index }: BulletedListBlockProps) => {
   if (!('bulletedList' in block.blockType)) {
     throw new Error('Expected bulletedList block');
   }

@@ -28,6 +28,8 @@
     "@tabler/icons-react": "^2.38.0",
     "chalk": "^5.3.0",
     "dayjs": "^1.11.10",
+    "dexie": "^3.2.6",
+    "dexie-react-hooks": "^1.1.7",
     "loglevel": "^1.8.1",
     "loglevel-plugin-prefix": "^0.8.4",
     "react": "^18.2.0",

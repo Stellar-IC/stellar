@@ -19,8 +19,6 @@ module UUIDModelManager {
                 instances := List.push<DataT>(instance, instances);
             };
 
-            Debug.print("all: " # debug_show List.size<DataT>(instances));
-
             return QuerySet.QuerySet<DataT>(?List.toArray<DataT>(instances));
         };
 

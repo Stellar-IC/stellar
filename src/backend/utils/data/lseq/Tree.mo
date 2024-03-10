@@ -744,6 +744,38 @@ module Tree {
         return List.toArray(buildArray(tree.rootNode));
     };
 
+    public func toPage(
+        tree : Tree,
+        options : {
+            cursor : Nat;
+            limit : Nat;
+        },
+    ) : {
+        items : [Node.Node];
+        totalCount : Nat;
+    } {
+        var items = List.fromArray<Node.Node>([]);
+        let totalCount = size(tree);
+
+        iterateFromUntil(
+            tree,
+            options.cursor,
+            func node {
+                items := List.append(items, List.fromArray([node]));
+            },
+            (
+                func isLimitReached() : Bool {
+                    return List.size(items) >= options.limit;
+                }
+            ),
+        );
+
+        return {
+            items = List.toArray(items);
+            totalCount = totalCount;
+        };
+    };
+
     /**
      * Get the size of the tree.
      *
@@ -1074,6 +1106,44 @@ module Tree {
             for (child in children.vals()) {
                 stack := Deque.pushFront(stack, child);
             };
+        };
+    };
+
+    type IterateExitCondition = () -> Bool;
+
+    func iterateFromUntil(tree : Tree, startingIndex : Nat, callback : (node : Node.Node) -> (), exitCondition : IterateExitCondition) {
+        var stack = Deque.empty<Node.Node>();
+        stack := Deque.pushFront<Node.Node>(stack, tree.rootNode);
+        var index = 0;
+
+        while (Deque.isEmpty(stack) == false) {
+            if (exitCondition()) {
+                return;
+            };
+
+            let node = switch (Deque.peekFront(stack)) {
+                case (null) { Debug.trap("Found a null node in the stack") };
+                case (?node) { node };
+            };
+
+            if (index >= startingIndex) {
+                callback(node);
+            };
+
+            switch (Deque.popFront(stack)) {
+                case (null) { Debug.trap("Found a null node in the stack") };
+                case (?(popped, updatedStack)) {
+                    stack := updatedStack;
+                };
+            };
+
+            let children = Array.reverse(Array.sort(Iter.toArray(node.children.vals()), Node.compare));
+
+            for (child in children.vals()) {
+                stack := Deque.pushFront(stack, child);
+            };
+
+            index += 1;
         };
     };
 

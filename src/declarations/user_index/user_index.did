@@ -158,7 +158,6 @@ service : {
   ///     * Called from browser.
   getCanistergeekInformation: (GetInformationRequest) ->
    (GetInformationResponse) query;
-  publicUserProfile: (principal) -> (record {canisterId: principal;});
   registerUser: () -> (RegisterUserResult);
   requestCycles: (nat) -> (record {accepted: nat64;});
   /// * Updates canister information based on passed parameters at current time.

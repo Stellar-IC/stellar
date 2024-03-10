@@ -1,3 +1,29 @@
+export async function focusBlock(uuid: string) {
+  const startTime = Date.now();
+  const maxWaitTime = 10000;
+
+  const getBlockToFocus = () =>
+    new Promise<HTMLDivElement>((resolve, reject) => {
+      const interval = setInterval(() => {
+        if (Date.now() - startTime > maxWaitTime) {
+          clearInterval(interval);
+          reject(new Error(`Could not focus block: ${uuid}`));
+        }
+
+        const selector = `.FocusableBlock[data-id='${uuid}'] span[role="textbox"]`;
+        const blockToFocus = document.querySelector<HTMLDivElement>(selector);
+
+        if (blockToFocus) {
+          clearInterval(interval);
+          resolve(blockToFocus);
+        }
+      }, 10);
+    });
+
+  const blockToFocus = await getBlockToFocus();
+  blockToFocus.focus();
+}
+
 export function focusNextBlock() {
   const blocksDiv = document.querySelector('.Blocks');
   if (!blocksDiv) return;
@@ -8,6 +34,10 @@ export function focusNextBlock() {
   const index = Array.from(blockElements).findIndex(
     (blockElement) => blockElement === document.activeElement
   );
+
+  if (index >= blockElements.length - 1) {
+    return;
+  }
 
   const indexToFocus = index + 1;
   const blockToFocus = blockElements[indexToFocus];
@@ -27,7 +57,7 @@ export function focusPreviousBlock(shouldFocusEnd = false) {
   );
 
   if (index === 0) {
-    throw new Error('Cannot focus previous block');
+    return;
   }
 
   const indexToFocus = index - 1;

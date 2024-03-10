@@ -1,7 +1,13 @@
+import { Principal } from '@dfinity/principal';
 import { Tree } from '@stellar-ic/lseq-ts';
 import { TreeEvent } from '@stellar-ic/lseq-ts/types';
+import { parse, v4 } from 'uuid';
 
 import { Block, ExternalId } from '@/types';
+
+import { BlockEvent } from '../../../../../declarations/workspace/workspace.did';
+
+import { PartialBlockEvent } from './types';
 
 export const updateBlockParent = (
   block: Block,
@@ -113,3 +119,74 @@ export const removeBlockContent = (
   onUpdateLocal(block);
   onUpdateRemote(block, allEvents);
 };
+
+export function buildEvent(
+  data: PartialBlockEvent,
+  userId: Principal
+): BlockEvent {
+  const now = BigInt(Date.now()) * BigInt(1_000_000); // convert to nanoseconds
+  const _build = <DataT>(data: DataT) => ({
+    data,
+    user: userId,
+    uuid: parse(v4()),
+    timestamp: now,
+  });
+
+  if ('blockCreated' in data) {
+    // TODO: Implement blockCreated
+  }
+
+  if ('blockUpdated' in data) {
+    if ('updatePropertyChecked' in data.blockUpdated) {
+      return _build({
+        blockUpdated: {
+          updatePropertyChecked: {
+            ...data.blockUpdated.updatePropertyChecked.data,
+          },
+        },
+      });
+    }
+
+    if ('updatePropertyTitle' in data.blockUpdated) {
+      return _build({
+        blockUpdated: {
+          updatePropertyTitle: {
+            ...data.blockUpdated.updatePropertyTitle.data,
+          },
+        },
+      });
+    }
+
+    if ('updateBlockType' in data.blockUpdated) {
+      return _build({
+        blockUpdated: {
+          updateBlockType: {
+            ...data.blockUpdated.updateBlockType.data,
+          },
+        },
+      });
+    }
+
+    if ('updateParent' in data.blockUpdated) {
+      return _build({
+        blockUpdated: {
+          updateParent: {
+            ...data.blockUpdated.updateParent.data,
+          },
+        },
+      });
+    }
+
+    if ('updateContent' in data.blockUpdated) {
+      return _build({
+        blockUpdated: {
+          updateContent: {
+            ...data.blockUpdated.updateContent.data,
+          },
+        },
+      });
+    }
+  }
+
+  throw new Error('Invalid event');
+}

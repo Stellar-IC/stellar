@@ -36,14 +36,8 @@ module {
         };
 
         let result = state.data.updateBlock(input);
-        switch (result) {
-            case (#ok(pk, obj)) {
-                return #ok(obj);
-            };
-            case (#err(#primaryKeyAttrNotFound)) {
-                return #err(#failedToUpdate);
-            };
-        };
+
+        return #ok(input);
     };
 
     private func _validate(

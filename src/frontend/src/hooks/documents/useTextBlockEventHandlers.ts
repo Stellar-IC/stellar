@@ -1,15 +1,15 @@
 import { Tree } from '@stellar-ic/lseq-ts';
 import { TreeEvent } from '@stellar-ic/lseq-ts/types';
+import { useLiveQuery } from 'dexie-react-hooks';
 import { parse, v4 } from 'uuid';
 
-import { DATA_TYPES } from '@/constants';
-import { useDataStoreContext } from '@/contexts/DataStoreContext/useDataStoreContext';
 import { usePagesContext } from '@/contexts/PagesContext/usePagesContext';
 import { useWorkspaceContext } from '@/contexts/WorkspaceContext/useWorkspaceContext';
-import { useWorkspaceActor } from '@/hooks/ic/workspace/useWorkspaceActor';
+import { db } from '@/db';
+import { useWorkspaceActor } from '@/hooks/canisters/workspace/useWorkspaceActor';
 import { useUpdate } from '@/hooks/useUpdate';
 import { useAuthContext } from '@/modules/auth/contexts/AuthContext';
-import { Block, ExternalId } from '@/types';
+import { ExternalId } from '@/types';
 
 import {
   SaveEventTransactionUpdateInput,
@@ -26,12 +26,10 @@ export const useTextBlockEventHandlers = ({
   const {
     blocks: { updateLocal: updateLocalBlock },
   } = usePagesContext();
-
-  const { get } = useDataStoreContext();
-
-  const block = get<Block>(DATA_TYPES.block, blockExternalId);
-
-  if (!block) throw new Error(`Block not found: ${blockExternalId}`);
+  const block = useLiveQuery(
+    () => db.blocks.get(blockExternalId),
+    [blockExternalId]
+  );
 
   const { identity, userId } = useAuthContext();
   const { workspaceId } = useWorkspaceContext();
@@ -43,6 +41,8 @@ export const useTextBlockEventHandlers = ({
   >(workspaceId, actor.saveEvents);
 
   const onSuccess = (title: Tree.Tree, events: TreeEvent[]) => {
+    if (!block) throw new Error('Block not found');
+
     sendUpdate([
       {
         transaction: [
@@ -73,6 +73,8 @@ export const useTextBlockEventHandlers = ({
   };
 
   const onCharacterInserted = (cursorPosition: number, character: string) => {
+    if (!block) throw new Error('Block not found');
+
     const events = Tree.insertCharacter(
       block.properties.title,
       cursorPosition,
@@ -85,6 +87,8 @@ export const useTextBlockEventHandlers = ({
     characters: string[],
     cursorPosition: number
   ) => {
+    if (!block) throw new Error('Block not found');
+
     const allEvents: TreeEvent[] = [];
 
     characters.forEach((character, i) => {
@@ -100,6 +104,8 @@ export const useTextBlockEventHandlers = ({
   };
 
   const onCharacterRemoved = (cursorPosition: number) => {
+    if (!block) throw new Error('Block not found');
+
     const event = Tree.removeCharacter(
       block.properties.title,
       cursorPosition - 1
@@ -111,6 +117,8 @@ export const useTextBlockEventHandlers = ({
     startPosition: number,
     endPosition?: number
   ): void => {
+    if (!block) throw new Error('Block not found');
+
     if (endPosition === undefined) return onCharacterRemoved(startPosition);
 
     // Build index array in descending order so that we don't have to worry about

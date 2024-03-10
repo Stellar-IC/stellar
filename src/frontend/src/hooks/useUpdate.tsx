@@ -33,6 +33,10 @@ export function useUpdate<ArgsT extends unknown[], DataT>(
           setData(data);
           return data;
         })
+        .catch((error) => {
+          console.error(error);
+          throw error;
+        })
         .finally(() => {
           setIsLoading(false);
         });

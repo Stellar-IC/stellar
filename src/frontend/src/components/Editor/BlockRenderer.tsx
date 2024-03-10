@@ -1,21 +1,20 @@
-import { DraggableProvidedDragHandleProps } from '@hello-pangea/dnd';
 import { Box, Flex, MantineTheme, Text } from '@mantine/core';
 import { Tree } from '@stellar-ic/lseq-ts';
 import { getNodeAtPosition } from '@stellar-ic/lseq-ts/Tree';
 import { IconBulbFilled } from '@tabler/icons-react';
-import { useCallback } from 'react';
+import { useLiveQuery } from 'dexie-react-hooks';
+import { memo, useCallback, useEffect, useState } from 'react';
 
-import { DATA_TYPES } from '@/constants';
-import { useDataStoreContext } from '@/contexts/DataStoreContext/useDataStoreContext';
 import { useSettingsContext } from '@/contexts/SettingsContext';
+import { db } from '@/db';
 import { Block } from '@/types';
 
 import { BlockWithActions } from './BlockWithActions';
-import { BulletedListBlockRenderer } from './BulletedListBlockRenderer';
-import { NumberedListBlockRenderer } from './NumberedListBlockRenderer';
+import { BulletedListBlock } from './BulletedListBlock';
+import { NumberedListBlock } from './NumberedListBlock';
 import { PageBlockRenderer } from './PageBlockRenderer';
-import { TextBlockRenderer } from './TextBlockRenderer';
-import { TodoListBlockRenderer } from './TodoListBlockRenderer';
+import { TextBlock } from './TextBlock';
+import { TodoListBlock } from './TodoListBlock';
 
 interface NestedBlocksProps {
   blockExternalId: string;
@@ -28,8 +27,7 @@ const NestedBlocks = ({
   blockExternalId,
   parentBlockIndex,
 }: NestedBlocksProps) => {
-  const { get } = useDataStoreContext();
-  const block = get<Block>('block', blockExternalId);
+  const block = useLiveQuery(() => db.blocks.get(blockExternalId));
 
   if (!block) return null;
   const nestedBlockIds = Tree.toArray(block.content);
@@ -69,8 +67,7 @@ const BlockRendererInner = ({
   placeholder,
   numeral,
 }: BlockRendererInnerProps) => {
-  const { get } = useDataStoreContext();
-  const block = get<Block>('block', externalId);
+  const block = useLiveQuery(() => db.blocks.get(externalId));
 
   if (!block) {
     return null;
@@ -80,7 +77,7 @@ const BlockRendererInner = ({
     return (
       <PageBlockRenderer
         key={block.uuid}
-        blockExternalId={block.uuid}
+        block={block}
         index={index}
         placeholder={placeholder}
         parentBlockIndex={parentBlockIndex}
@@ -96,13 +93,15 @@ const BlockRendererInner = ({
     'paragraph' in block.blockType
   ) {
     return (
-      <TextBlockRenderer
+      <TextBlock
         key={block.uuid}
         blockExternalId={block.uuid}
-        index={index}
-        placeholder={placeholder}
-        parentBlockIndex={parentBlockIndex}
+        blockIndex={index}
         blockType={block.blockType}
+        parentBlockExternalId={block.parent}
+        parentBlockIndex={parentBlockIndex}
+        placeholder={placeholder}
+        value={block.properties.title}
       />
     );
   }
@@ -110,13 +109,15 @@ const BlockRendererInner = ({
   if ('quote' in block.blockType) {
     return (
       <div style={{ borderLeft: '2px solid #ddd', paddingLeft: '1rem' }}>
-        <TextBlockRenderer
+        <TextBlock
           key={block.uuid}
           blockExternalId={block.uuid}
-          index={index}
-          placeholder={placeholder}
-          parentBlockIndex={parentBlockIndex}
+          blockIndex={index}
           blockType={block.blockType}
+          placeholder={placeholder}
+          parentBlockExternalId={block.parent}
+          parentBlockIndex={parentBlockIndex}
+          value={block.properties.title}
         />
       </div>
     );
@@ -126,28 +127,28 @@ const BlockRendererInner = ({
     return (
       <Flex p="md" bg="dark" style={{ borderRadius: '0.25rem' }} gap="md">
         <IconBulbFilled size={24} d="inline-block" />
-        <TextBlockRenderer
+        <TextBlock
           key={block.uuid}
           blockExternalId={block.uuid}
-          index={index}
-          placeholder={placeholder}
-          parentBlockIndex={parentBlockIndex}
+          blockIndex={index}
           blockType={block.blockType}
+          parentBlockExternalId={block.parent}
+          parentBlockIndex={parentBlockIndex}
+          placeholder={placeholder}
+          value={block.properties.title}
         />
       </Flex>
     );
   }
 
   if ('bulletedList' in block.blockType) {
-    return (
-      <BulletedListBlockRenderer blockExternalId={block.uuid} index={index} />
-    );
+    return <BulletedListBlock block={block} index={index} />;
   }
 
   if ('todoList' in block.blockType) {
     return (
-      <TodoListBlockRenderer
-        blockExternalId={block.uuid}
+      <TodoListBlock
+        block={block}
         index={index}
         parentBlockIndex={parentBlockIndex}
       />
@@ -156,11 +157,7 @@ const BlockRendererInner = ({
 
   if ('numberedList' in block.blockType) {
     return (
-      <NumberedListBlockRenderer
-        blockExternalId={block.uuid}
-        index={index}
-        numeral={numeral || 0}
-      />
+      <NumberedListBlock block={block} index={index} numeral={numeral || 0} />
     );
   }
 
@@ -168,13 +165,15 @@ const BlockRendererInner = ({
     return (
       <Box p="lg" bg="dark" style={{ borderRadius: '0.25rem' }}>
         <pre>
-          <TextBlockRenderer
+          <TextBlock
             key={block.uuid}
             blockExternalId={block.uuid}
-            index={index}
-            placeholder={placeholder}
-            parentBlockIndex={parentBlockIndex}
+            blockIndex={index}
             blockType={block.blockType}
+            parentBlockExternalId={block.parent}
+            parentBlockIndex={parentBlockIndex}
+            placeholder={placeholder}
+            value={block.properties.title}
           />
         </pre>
       </Box>
@@ -191,24 +190,25 @@ interface BlockRendererProps {
   parentBlockIndex?: number;
   placeholder?: string;
   depth: number;
-  dragHandleProps?: DraggableProvidedDragHandleProps | null;
 }
 
-export const BlockRenderer = ({
+export const _BlockRenderer = ({
   externalId,
   index,
   depth,
-  dragHandleProps,
   parentBlockExternalId,
   parentBlockIndex,
   placeholder,
 }: BlockRendererProps) => {
-  const { get } = useDataStoreContext();
+  const [blockNumeral, setBlockNumeral] = useState<number | undefined>(
+    undefined
+  );
   const { getSettingValue } = useSettingsContext();
-  const block = get<Block>('block', externalId);
-  const parentBlock = parentBlockExternalId
-    ? get<Block>(DATA_TYPES.block, parentBlockExternalId)
-    : undefined;
+  const block = useLiveQuery(() => db.blocks.get(externalId));
+  const parentBlock = useLiveQuery(() => {
+    if (!parentBlockExternalId) return undefined;
+    return db.blocks.get(parentBlockExternalId);
+  });
 
   const getPeviousSiblingBlockExternalId = useCallback(
     (currentBlockIndex: number) => {
@@ -226,11 +226,11 @@ export const BlockRenderer = ({
   );
 
   const calculateBlockNumeral = useCallback(() => {
-    const doTheThing = (
+    const _calculateNumeral = async (
       _block: Block,
       currentBlockIndex: number,
       numeral = 0
-    ): number | undefined => {
+    ): Promise<number | undefined> => {
       if (!('numberedList' in _block.blockType)) {
         throw new Error('Block is not a numberedList block');
       }
@@ -241,10 +241,10 @@ export const BlockRenderer = ({
         return numeral + 1;
       }
 
-      const previousSiblingBlock = get<Block>(
-        DATA_TYPES.block,
+      const previousSiblingBlock = await db.blocks.get(
         previousSiblingBlockExternalId
       );
+
       if (
         !previousSiblingBlock ||
         !('numberedList' in previousSiblingBlock.blockType)
@@ -252,7 +252,7 @@ export const BlockRenderer = ({
         return numeral + 1;
       }
 
-      return doTheThing(
+      return _calculateNumeral(
         previousSiblingBlock,
         currentBlockIndex - 1,
         numeral + 1
@@ -263,8 +263,13 @@ export const BlockRenderer = ({
       throw new Error('Block is not set');
     }
 
-    return doTheThing(block, index);
-  }, [block, get, getPeviousSiblingBlockExternalId, index]);
+    return _calculateNumeral(block, index);
+  }, [block, getPeviousSiblingBlockExternalId, index]);
+
+  useEffect(() => {
+    if (!block || !('numberedList' in block.blockType)) return;
+    calculateBlockNumeral().then(setBlockNumeral);
+  }, [block, calculateBlockNumeral]);
 
   if (!block) {
     return (
@@ -274,7 +279,6 @@ export const BlockRenderer = ({
         blockExternalId={externalId}
         blockType={{ paragraph: null }}
         parentBlockExternalId={parentBlockExternalId}
-        dragHandleProps={dragHandleProps}
       >
         <div />
       </BlockWithActions>
@@ -286,14 +290,13 @@ export const BlockRenderer = ({
   });
 
   return (
-    <Box className="FocusableBlock" mb="0.25rem">
+    <Box className="FocusableBlock" data-id={block.uuid} mb="0.25rem">
       <BlockWithActions
         key={block.uuid}
         blockExternalId={externalId}
         blockIndex={index}
         blockType={block.blockType}
         parentBlockExternalId={parentBlockExternalId}
-        dragHandleProps={dragHandleProps}
       >
         <Box style={getStyle}>
           <BlockRendererInner
@@ -301,11 +304,7 @@ export const BlockRenderer = ({
             parentBlockIndex={parentBlockIndex}
             placeholder={placeholder}
             externalId={externalId}
-            numeral={
-              'numberedList' in block.blockType
-                ? calculateBlockNumeral()
-                : undefined
-            }
+            numeral={blockNumeral}
           />
           {getSettingValue('developer.showBlockIds') && (
             <Text
@@ -331,3 +330,5 @@ export const BlockRenderer = ({
     </Box>
   );
 };
+
+export const BlockRenderer = memo(_BlockRenderer);

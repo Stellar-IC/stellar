@@ -12,12 +12,12 @@ import EventsTypes "../../../lib/events/types";
 import Types_v0 "./v0";
 
 module {
-    type Block = Types_v0.Block;
-    type UnsavedBlock = Types_v0.UnsavedBlock;
-    type ShareableBlock = Types_v0.ShareableBlock;
-    type ShareableBlockContent = Types_v0.ShareableBlockContent;
-    type ShareableBlockProperties = Types_v0.ShareableBlockProperties;
-    type BlockEvent = BlocksTypes.BlockEvent;
+    public type Block = Types_v0.Block;
+    public type UnsavedBlock = Types_v0.UnsavedBlock;
+    public type ShareableBlock = Types_v0.ShareableBlock;
+    public type ShareableBlockContent = Types_v0.ShareableBlockContent;
+    public type ShareableBlockProperties = Types_v0.ShareableBlockProperties;
+    public type BlockEvent = BlocksTypes.BlockEvent;
 
     public type PrimaryKey = Types_v0.PrimaryKey;
     public type Username = Types_v0.Username;

@@ -1,4 +1,4 @@
-import BlocksModels "../../lib/blocks/models";
+import Block "../../lib/blocks/Block";
 import Types "./types";
 
 module EditItem {
@@ -9,10 +9,10 @@ module EditItem {
                 before = switch (input.blockValue.before) {
                     case (null) { null };
                     case (?before) {
-                        ?BlocksModels.Block.fromShareable(before);
+                        ?Block.fromShareable(before);
                     };
                 };
-                after = BlocksModels.Block.fromShareable(input.blockValue.after);
+                after = Block.fromShareable(input.blockValue.after);
             };
         };
     };
@@ -24,10 +24,10 @@ module EditItem {
                 before = switch (input.blockValue.before) {
                     case (null) { null };
                     case (?before) {
-                        ?BlocksModels.Block.toShareable(before);
+                        ?Block.toShareable(before);
                     };
                 };
-                after = BlocksModels.Block.toShareable(input.blockValue.after);
+                after = Block.toShareable(input.blockValue.after);
             };
         };
     };

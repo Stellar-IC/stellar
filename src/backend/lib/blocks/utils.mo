@@ -4,7 +4,6 @@ import Tree "../../utils/data/lseq/Tree";
 module {
     public func clone(block : Types.Block) : Types.Block {
         return {
-            id = block.id;
             uuid = block.uuid;
             var blockType = block.blockType;
             content = Tree.clone(block.content);

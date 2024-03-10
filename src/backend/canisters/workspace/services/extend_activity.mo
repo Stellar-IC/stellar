@@ -8,7 +8,6 @@ import UUID "mo:uuid/UUID";
 import Activity "../../../lib/activities/Activity";
 import ActivityBuilder "../../../lib/activities/ActivityBuilder";
 import BlocksTypes "../../../lib/blocks/types";
-import UUIDGenerator "../../../lib/shared/UUIDGenerator";
 
 import State "../model/state";
 import Types "../types";
@@ -39,6 +38,10 @@ module ExtendActivity {
         };
 
         let activity = activityBuilder.build();
+
+        for (edit in activity.edits.vals()) {
+            activityBuilder := activityBuilder.addEdit(edit);
+        };
 
         state.data.Activity.objects.upsert(activity);
 

@@ -1,6 +1,6 @@
 import { Identity } from '@dfinity/agent';
 
-import { useWorkspaceActor } from '@/hooks/ic/workspace/useWorkspaceActor';
+import { useWorkspaceActor } from '@/hooks/canisters/workspace/useWorkspaceActor';
 import { useUpdate } from '@/hooks/useUpdate';
 import { CanisterId } from '@/types';
 
@@ -16,7 +16,7 @@ export const useDeletePage = (options: {
   (input: [DeletePageUpdateInput]) => Promise<DeletePageUpdateOutput>,
   { data: DeletePageUpdateOutput | null; isLoading: boolean }
 ] => {
-  const { actor, canisterId } = useWorkspaceActor(options);
+  const { actor } = useWorkspaceActor(options);
 
-  return useUpdate(canisterId, actor.deletePage);
+  return useUpdate(options.workspaceId, actor.deletePage);
 };

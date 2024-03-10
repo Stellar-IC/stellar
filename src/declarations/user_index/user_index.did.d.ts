@@ -121,7 +121,6 @@ export interface _SERVICE {
     [GetInformationRequest],
     GetInformationResponse
   >,
-  'publicUserProfile' : ActorMethod<[Principal], { 'canisterId' : Principal }>,
   'registerUser' : ActorMethod<[], RegisterUserResult>,
   'requestCycles' : ActorMethod<[bigint], { 'accepted' : bigint }>,
   'updateCanistergeekInformation' : ActorMethod<

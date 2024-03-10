@@ -1,9 +1,11 @@
 import Array "mo:base/Array";
 import Buffer "mo:base/Buffer";
 import Char "mo:base/Char";
+import Debug "mo:base/Debug";
 import Hash "mo:base/Hash";
 import HashMap "mo:base/HashMap";
 import Iter "mo:base/Iter";
+import Principal "mo:base/Principal";
 import Nat "mo:base/Nat";
 import Nat32 "mo:base/Nat32";
 import Result "mo:base/Result";
@@ -14,7 +16,7 @@ import Source "mo:uuid/async/SourceV4";
 
 import Activity "../../../../lib/activities/Activity";
 import ActivitiesTypes "../../../../lib/activities/types";
-import BlocksModels "../../../../lib/blocks/models";
+import BlockModule "../../../../lib/blocks/Block";
 import BlocksTypes "../../../../lib/blocks/types";
 import BlocksUtils "../../../../lib/blocks/utils";
 import Tree "../../../../utils/data/lseq/Tree";
@@ -33,7 +35,7 @@ module BlockUpdatedConsumer {
     type ShareableBlock = BlocksTypes.ShareableBlock;
 
     func _blockByUuid(state : State.State, uuid : UUID.UUID) : Block {
-        state.data.getBlockByUuid(uuid);
+        state.data.getBlock(UUID.toText(uuid));
     };
 
     public func execute(
@@ -55,7 +57,7 @@ module BlockUpdatedConsumer {
                     clonedBlockBeforeEdit,
                     clonedBlockAfterEdit,
                 );
-                #ok(BlocksModels.Block.toShareable(clonedBlockAfterEdit));
+                #ok(BlockModule.toShareable(clonedBlockAfterEdit));
             };
             case (#updateBlockType(data)) {
                 let blockBeforeEdit = _blockByUuid(state, data.blockExternalId);
@@ -71,7 +73,7 @@ module BlockUpdatedConsumer {
                     clonedBlockBeforeEdit,
                     clonedBlockAfterEdit,
                 );
-                #ok(BlocksModels.Block.toShareable(clonedBlockAfterEdit));
+                #ok(BlockModule.toShareable(clonedBlockAfterEdit));
             };
             case (#updateContent(data)) {
                 // let blockBeforeEdit = _blockByUuid(state, data.blockExternalId);
@@ -88,7 +90,7 @@ module BlockUpdatedConsumer {
                 //     blockAfterEdit,
                 //     deps,
                 // );
-                #ok(BlocksModels.Block.toShareable(clonedBlockAfterEdit));
+                #ok(BlockModule.toShareable(clonedBlockAfterEdit));
             };
             case (#updatePropertyTitle(data)) {
                 let blockBeforeEdit = _blockByUuid(state, data.blockExternalId);
@@ -104,7 +106,7 @@ module BlockUpdatedConsumer {
                     clonedBlockBeforeEdit,
                     clonedBlockAfterEdit,
                 );
-                #ok(BlocksModels.Block.toShareable(clonedBlockAfterEdit));
+                #ok(BlockModule.toShareable(clonedBlockAfterEdit));
             };
             case (#updatePropertyChecked(data)) {
                 let blockBeforeEdit = _blockByUuid(state, data.blockExternalId);
@@ -120,7 +122,7 @@ module BlockUpdatedConsumer {
                     clonedBlockBeforeEdit,
                     clonedBlockAfterEdit,
                 );
-                #ok(BlocksModels.Block.toShareable(clonedBlockAfterEdit));
+                #ok(BlockModule.toShareable(clonedBlockAfterEdit));
             };
         };
     };
@@ -134,7 +136,7 @@ module BlockUpdatedConsumer {
     ) : async () {
         let mostRecentActivity : ?ActivitiesTypes.Activity = switch (pageBlock) {
             case (?pageBlock) {
-                state.data.getMostRecentActivityForPage(pageBlock.uuid);
+                state.data.getMostRecentActivityForPage(UUID.toText(pageBlock.uuid));
             };
             case (null) { null };
         };

@@ -12,16 +12,18 @@ import {
 import { notifications } from '@mantine/notifications';
 import { Tree } from '@stellar-ic/lseq-ts';
 import { IconPlus, IconTrash } from '@tabler/icons-react';
+import { useLiveQuery } from 'dexie-react-hooks';
+import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { parse } from 'uuid';
 
-import { DATA_TYPES } from '@/constants';
-import { useDataStoreContext } from '@/contexts/DataStoreContext/useDataStoreContext';
 import { useWorkspaceContext } from '@/contexts/WorkspaceContext/useWorkspaceContext';
-import { useCreatePageWithRedirect } from '@/hooks/documents/updates/useCreatePageWithRedirect';
-import { useDeletePage } from '@/hooks/ic/workspace/updates/useDeletePage';
+import { db } from '@/db';
+import { usePagesQuery } from '@/hooks/canisters/workspace/queries/usePagesQuery';
+import { useCreatePageWithRedirect } from '@/hooks/canisters/workspace/updates/useCreatePageWithRedirect';
+import { useDeletePage } from '@/hooks/canisters/workspace/updates/useDeletePage';
 import { useAuthContext } from '@/modules/auth/contexts/AuthContext';
-import { Block } from '@/types';
+import { LocalStorageBlock } from '@/types';
 
 import { AuthButton } from '../AuthButton/AuthButton';
 import { PrincipalBadge } from '../PrincipalBadge';
@@ -29,10 +31,6 @@ import { PrincipalBadge } from '../PrincipalBadge';
 import classes from './NavbarSearch.module.css';
 
 function PageLinksSection() {
-  const { store } = useDataStoreContext();
-  const pages = Object.keys(store)
-    .filter((key) => key.startsWith(DATA_TYPES.page))
-    .map((key) => store[key]) as Block[];
   const createPageAndRedirect = useCreatePageWithRedirect();
   const { workspaceId } = useWorkspaceContext();
   const { identity } = useAuthContext();
@@ -40,6 +38,18 @@ function PageLinksSection() {
     identity,
     workspaceId,
   });
+
+  const queryPages = usePagesQuery({ identity, workspaceId });
+
+  const pages = useLiveQuery<LocalStorageBlock[], LocalStorageBlock[]>(
+    () => db.blocks.filter((block) => 'page' in block.blockType).toArray(),
+    [],
+    []
+  );
+
+  useEffect(() => {
+    queryPages();
+  }, [queryPages]);
 
   const pageLinks = Object.values(pages).map((page) => (
     <Flex justify="space-between" key={page.uuid}>

@@ -20,5 +20,5 @@ export const useWorkspaceActor = (options: {
     [identity, workspaceId]
   );
 
-  return { actor, canisterId: workspaceId };
+  return { actor };
 };

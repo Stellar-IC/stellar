@@ -1,11 +1,11 @@
 import { Node, Tree } from '@stellar-ic/lseq-ts';
+import { useLiveQuery } from 'dexie-react-hooks';
 import { useCallback } from 'react';
 import { parse } from 'uuid';
 
-import { DATA_TYPES } from '@/constants';
-import { useDataStoreContext } from '@/contexts/DataStoreContext/useDataStoreContext';
 import { usePagesContext } from '@/contexts/PagesContext/usePagesContext';
-import { Block, ExternalId } from '@/types';
+import { db } from '@/db';
+import { ExternalId } from '@/types';
 
 type UseReorderHandler = {
   parentBlockExternalId?: ExternalId | null;
@@ -15,26 +15,31 @@ export const useReorderHandler = ({
   parentBlockExternalId,
 }: UseReorderHandler) => {
   const {
-    pages: { updateLocal: updateLocalPage },
     blocks: { updateLocal: updateLocalBlock },
     updateBlock,
   } = usePagesContext();
-  const { get } = useDataStoreContext();
 
-  const parentBlock = parentBlockExternalId
-    ? get<Block>(DATA_TYPES.page, parentBlockExternalId) ||
-      get<Block>(DATA_TYPES.block, parentBlockExternalId)
-    : null;
+  const parentBlock = useLiveQuery(() => {
+    if (!parentBlockExternalId) {
+      return undefined;
+    }
+
+    return db.blocks.get(parentBlockExternalId);
+  });
 
   const doReorderOperation = useCallback(
-    (
+    async (
       blockExternalId: ExternalId,
       originalBlockIndex: number,
       updatedBlockIndex: number
     ) => {
       if (!parentBlock) return false;
 
-      const blockToMove = get<Block>(DATA_TYPES.block, blockExternalId);
+      const blockToMove = await db.blocks
+        .where('uuid')
+        .equals(blockExternalId)
+        .first();
+
       if (!blockToMove) return false;
 
       const node = Tree.getNodeAtPosition(
@@ -138,13 +143,9 @@ export const useReorderHandler = ({
 
       updateLocalBlock(parentBlock.uuid, parentBlock);
 
-      if ('page' in parentBlock.blockType) {
-        updateLocalPage(parentBlock.uuid, parentBlock);
-      }
-
       return true;
     },
-    [get, parentBlock, updateBlock, updateLocalBlock, updateLocalPage]
+    [parentBlock, updateBlock, updateLocalBlock]
   );
 
   return doReorderOperation;

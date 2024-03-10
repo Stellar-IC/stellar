@@ -1,4 +1,5 @@
-import Types "./v1";
+import Types "./v2";
+import Types_v1 "./v1";
 
 module {
     public type PrimaryKey = Types.PrimaryKey;
@@ -10,9 +11,9 @@ module {
     public type BlockProperties = Types.BlockProperties;
     public type ShareableBlockProperties = Types.ShareableBlockProperties;
     public type BlockType = Types.BlockType;
-    public type UnsavedBlock = Types.UnsavedBlock;
+    public type UnsavedBlock = Types_v1.UnsavedBlock; // Deprecated
     public type Block = Types.Block;
-    public type ShareableUnsavedBlock = Types.ShareableUnsavedBlock;
+    public type ShareableUnsavedBlock = Types_v1.ShareableUnsavedBlock; // Deprecated
     public type ShareableBlock = Types.ShareableBlock;
 
     public type CoreBlockEventData = Types.CoreBlockEventData;

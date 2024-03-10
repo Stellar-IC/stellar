@@ -44,9 +44,7 @@ function treefromShareable(tree: ShareableBlockText): Tree.Tree {
   });
 }
 
-export function serializeBlock(
-  block: Omit<ShareableBlock, 'id'>
-): Omit<Block, 'id'> {
+export function serializeBlock(block: ShareableBlock): Block {
   const parent = block.parent.length > 0 ? block.parent[0] : null;
   const title =
     block.properties.title.length > 0 ? block.properties.title[0] : null;
@@ -73,10 +71,7 @@ export function serializeBlock(
 }
 
 export function fromShareable(block: ShareableBlock): Block {
-  return {
-    ...serializeBlock(block),
-    id: block.id.toString(),
-  };
+  return serializeBlock(block);
 }
 
 export function fromLocalStorage(block: LocalStorageBlock): Block {
@@ -93,21 +88,10 @@ export function fromLocalStorage(block: LocalStorageBlock): Block {
 
   return {
     ...block,
-    content: new Tree.Tree({
-      allocationStrategies: new Map(),
-      boundary: block.content.boundary,
-      rootNode: new Node.Node(
-        block.content.rootNode.identifier,
-        block.content.rootNode.value
-      ),
-    }),
+    content: Tree.clone(block.content),
     properties: {
       ...block.properties,
-      title: new Tree.Tree({
-        allocationStrategies: block.properties.title.allocationStrategies,
-        boundary: block.properties.title.boundary,
-        rootNode,
-      }),
+      title: Tree.clone(block.properties.title),
     },
   };
 }

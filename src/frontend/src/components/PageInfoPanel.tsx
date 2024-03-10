@@ -5,7 +5,7 @@ import { useParams } from 'react-router-dom';
 import { parse } from 'uuid';
 
 import { useWorkspaceContext } from '@/contexts/WorkspaceContext/useWorkspaceContext';
-import { useActivityLog } from '@/hooks/documents/queries/useActivityLog';
+import { useActivityLog } from '@/hooks/canisters/workspace/queries/useActivityLog';
 import { useAuthContext } from '@/modules/auth/contexts/AuthContext';
 import { Activity, ActivityUser } from '@/types';
 

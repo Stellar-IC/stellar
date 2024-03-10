@@ -5,7 +5,7 @@ import Text "mo:base/Text";
 import Time "mo:base/Time";
 import UUID "mo:uuid/UUID";
 
-import Types "./v1";
+import Types "./v2";
 
 module {
     public type PrimaryKey = Types.PrimaryKey;

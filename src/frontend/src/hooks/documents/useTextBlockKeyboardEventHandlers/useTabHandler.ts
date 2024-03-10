@@ -1,11 +1,11 @@
 import { Tree } from '@stellar-ic/lseq-ts';
-import { useCallback, useMemo } from 'react';
+import { useLiveQuery } from 'dexie-react-hooks';
+import { useCallback } from 'react';
 import { parse } from 'uuid';
 
-import { DATA_TYPES } from '@/constants';
-import { useDataStoreContext } from '@/contexts/DataStoreContext/useDataStoreContext';
 import { usePagesContext } from '@/contexts/PagesContext/usePagesContext';
-import { Block, ExternalId } from '@/types';
+import { db } from '@/db';
+import { ExternalId } from '@/types';
 
 import {
   insertBlockContent,
@@ -26,41 +26,40 @@ export const useTabHandler = ({
 }: UseTabHandler) => {
   const {
     blocks: { updateLocal: updateLocalBlock },
-    pages: { updateLocal: updateLocalPage },
     updateBlock,
   } = usePagesContext();
-  const { get } = useDataStoreContext();
 
-  const parentBlock = useMemo(
-    () =>
-      parentBlockExternalId
-        ? get<Block>(DATA_TYPES.page, parentBlockExternalId) ||
-          get<Block>(DATA_TYPES.block, parentBlockExternalId)
-        : null,
-    [get, parentBlockExternalId]
+  const parentBlock = useLiveQuery(() =>
+    parentBlockExternalId ? db.blocks.get(parentBlockExternalId) : undefined
   );
 
-  const doTabOperation = useCallback(() => {
-    // Change the parent block of the current block
-    if (blockIndex === 0) {
-      // If the block is the first block, do nothing
-      return false;
-    }
+  const previousBlock = useLiveQuery(() => {
+    if (!parentBlock) return undefined;
 
-    if (!parentBlock) return false;
-
-    // Find the previous block
     const previousBlockExternalId = Tree.getNodeAtPosition(
       parentBlock.content,
       blockIndex - 1
     )?.value;
-    if (!previousBlockExternalId) return false;
 
-    const previousBlock = get<Block>(DATA_TYPES.block, previousBlockExternalId);
+    if (!previousBlockExternalId) return undefined;
+
+    return db.blocks.get(previousBlockExternalId);
+  }, [blockIndex, parentBlock]);
+
+  const blockToMove = useLiveQuery(
+    () => db.blocks.get(blockExternalId),
+    [blockExternalId]
+  );
+
+  const doTabOperation = useCallback(() => {
+    if (blockIndex === 0) {
+      return false;
+    }
+    if (!parentBlock) return false;
     if (!previousBlock) return false;
-
-    const blockToMove = get<Block>(DATA_TYPES.block, blockExternalId);
     if (!blockToMove) return false;
+
+    const previousBlockExternalId = previousBlock.uuid;
 
     // Inserting at the end of the previous block's content
     const newBlockIndex = Tree.size(previousBlock.content);
@@ -69,9 +68,6 @@ export const useTabHandler = ({
     removeBlockContent(parentBlock, [blockIndex], {
       onUpdateLocal: (updatedBlock) => {
         updateLocalBlock(updatedBlock.uuid, updatedBlock);
-        if ('page' in updatedBlock.blockType) {
-          updateLocalPage(updatedBlock.uuid, updatedBlock);
-        }
       },
       onUpdateRemote: (updatedBlock, events) => {
         const blockExternalId = parse(updatedBlock.uuid);
@@ -93,9 +89,6 @@ export const useTabHandler = ({
       {
         onUpdateLocal: (updatedBlock) => {
           updateLocalBlock(updatedBlock.uuid, updatedBlock);
-          if ('page' in updatedBlock.blockType) {
-            updateLocalPage(updatedBlock.uuid, updatedBlock);
-          }
         },
         onUpdateRemote: (updatedBlock, events) => {
           const blockExternalId = parse(updatedBlock.uuid);
@@ -115,9 +108,6 @@ export const useTabHandler = ({
     updateBlockParent(blockToMove, previousBlockExternalId, {
       onUpdateLocal: (updatedBlock) => {
         updateLocalBlock(updatedBlock.uuid, updatedBlock);
-        if ('page' in updatedBlock.blockType) {
-          updateLocalPage(updatedBlock.uuid, updatedBlock);
-        }
       },
       onUpdateRemote: (updatedBlock) => {
         const blockExternalId = parse(updatedBlock.uuid);
@@ -135,12 +125,11 @@ export const useTabHandler = ({
     return true;
   }, [
     blockIndex,
-    blockExternalId,
-    get,
     parentBlock,
+    blockToMove,
+    previousBlock,
     updateBlock,
     updateLocalBlock,
-    updateLocalPage,
   ]);
 
   return doTabOperation;

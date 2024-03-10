@@ -1,6 +1,6 @@
 import { createContext } from 'react';
 
-import { Block, Page } from '@/types';
+import { Block } from '@/types';
 
 import {
   BlockBlockTypeUpdatedEventData,
@@ -14,9 +14,6 @@ import {
 
 // eslint-disable-next-line no-spaced-func
 export const PagesContext = createContext<{
-  pages: {
-    updateLocal: (externalId: string, updatedData: Page) => void;
-  };
   blocks: {
     updateLocal: (externalId: string, updatedData: Block) => void;
   };
@@ -24,8 +21,8 @@ export const PagesContext = createContext<{
     pageExternalId: UUID,
     blockType: BlockType,
     index: number
-  ) => Block;
-  removeBlock: (pageExternalId: UUID, index: number) => void;
+  ) => Promise<Block>;
+  removeBlock: (pageExternalId: UUID, index: number) => Promise<void>;
   updateBlock: (
     blockExternalId: UUID,
     event:

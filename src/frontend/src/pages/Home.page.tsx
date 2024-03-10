@@ -2,39 +2,39 @@ import { Box, Button, Stack, Text } from '@mantine/core';
 import { toText } from '@stellar-ic/lseq-ts/Tree';
 import { DEFAULT_BOUNDARY } from '@stellar-ic/lseq-ts/constants';
 import { base } from '@stellar-ic/lseq-ts/utils';
-import { useCallback, useEffect, useState } from 'react';
+import { useLiveQuery } from 'dexie-react-hooks';
+import { useCallback, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { stringify } from 'uuid';
 
 import { useWorkspaceContext } from '@/contexts/WorkspaceContext/useWorkspaceContext';
-import { useCreatePage } from '@/hooks/documents/updates/useCreatePage';
+import { db } from '@/db';
+import { usePagesQuery } from '@/hooks/canisters/workspace/queries/usePagesQuery';
+import { useCreatePage } from '@/hooks/canisters/workspace/updates/useCreatePage';
 import { useAuthContext } from '@/modules/auth/contexts/AuthContext';
-import { fromShareable } from '@/modules/blocks/serializers';
-
-import { Edge } from '../../../declarations/workspace/workspace.did';
+import { LocalStorageBlock } from '@/types';
 
 function WorkspaceContent() {
+  const navigate = useNavigate();
   const { identity } = useAuthContext();
-  const { actor, workspaceId } = useWorkspaceContext();
+  const { workspaceId } = useWorkspaceContext();
+
   const [createPage] = useCreatePage({
     identity,
     workspaceId,
   });
-  const [pages, setPages] = useState<[] | Edge[]>([]);
+  const pagesQuery = usePagesQuery({ identity, workspaceId });
+
+  const pages = useLiveQuery<LocalStorageBlock[], LocalStorageBlock[]>(
+    () => db.blocks.filter((block) => 'page' in block.blockType).toArray(),
+    [],
+    []
+  );
 
   useEffect(() => {
-    actor
-      .pages({
-        order: [],
-        cursor: [],
-        limit: [],
-      })
-      .then((res) => {
-        setPages(res.edges);
-      });
-  }, [actor]);
+    pagesQuery();
+  }, [pagesQuery]);
 
-  const navigate = useNavigate();
   const createPageAndRedirect = useCallback(() => {
     createPage({
       content: {
@@ -73,11 +73,12 @@ function WorkspaceContent() {
       <Stack>
         {pages.map((page) => (
           <Button
+            key={page.uuid}
             onClick={() => {
-              navigate(`/pages/${stringify(page.node.uuid)}`);
+              navigate(`/pages/${page.uuid}`);
             }}
           >
-            {toText(fromShareable(page.node).properties.title) || 'Untitled'}
+            {toText(page.properties.title) || 'Untitled'}
           </Button>
         ))}
       </Stack>

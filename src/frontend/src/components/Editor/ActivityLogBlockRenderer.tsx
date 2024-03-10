@@ -123,9 +123,9 @@ export const ActivityLogBlockRenderer = ({
   const { before, after } = blockValue;
 
   return (
-    <Box className="FocusableBlock" mb="0.25rem">
+    <Box mb="0.25rem">
       <div>
-        {before ? <BlockRendererInner block={before} /> : 'Null'}
+        {before ? <BlockRendererInner block={before} /> : <></>}
         <BlockRendererInner block={after} />
       </div>
     </Box>

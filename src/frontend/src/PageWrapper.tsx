@@ -1,6 +1,7 @@
 import { DelegationIdentity } from '@dfinity/identity';
 import type { Principal } from '@dfinity/principal';
 import { Loader, Box, Flex, Text } from '@mantine/core';
+import { useDisclosure } from '@mantine/hooks';
 import { PropsWithChildren, useState, useEffect } from 'react';
 
 import { NavbarSearch } from './components/Navbars/NavbarSearch';
@@ -8,10 +9,12 @@ import { PageActionBar } from './components/PageActionBar';
 import { PageInfoPanel } from './components/PageInfoPanel';
 import { PagesContextProvider } from './contexts/PagesContext/PagesContextProvider';
 import { WorkspaceContextProvider } from './contexts/WorkspaceContext/WorkspaceContextProvider';
-import { useUserActor } from './hooks/ic/user/useUserActor';
+import { useUserActor } from './hooks/canisters/user/useUserActor';
 import { useAuthContext } from './modules/auth/contexts/AuthContext';
 
 export function PageWrapper({ children }: PropsWithChildren) {
+  const [isPanelOpen, { open: openPanel, close: closePanel }] =
+    useDisclosure(false);
   const { isLoading, identity, userId } = useAuthContext();
   const { actor: userActor, canisterId } = useUserActor({ identity, userId });
 
@@ -102,7 +105,14 @@ export function PageWrapper({ children }: PropsWithChildren) {
     <WorkspaceContextProvider identity={identity} workspaceId={workspaceId}>
       <PagesContextProvider>
         <Box w="100%">
-          <PageActionBar openActivityLog={() => {}} />
+          <PageActionBar
+            openActivityLog={() => {
+              if (!isPanelOpen) openPanel();
+              else {
+                closePanel();
+              }
+            }}
+          />
           <Flex>
             <NavbarSearch workspaceId={workspaceId} />
             <div
@@ -115,12 +125,12 @@ export function PageWrapper({ children }: PropsWithChildren) {
                 flexGrow: 1,
                 marginTop: '45px',
                 paddingLeft: '300px', // TODO: Convert this to rems
-                paddingRight: '300px', // TODO: Convert this to rems
+                paddingRight: isPanelOpen ? '300px' : 'unset', // TODO: Convert this to rems
               }}
             >
               {children}
             </div>
-            <PageInfoPanel />
+            {isPanelOpen && <PageInfoPanel />}
           </Flex>
         </Box>
       </PagesContextProvider>

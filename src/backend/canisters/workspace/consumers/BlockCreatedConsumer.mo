@@ -12,7 +12,6 @@ import ActivityBuilder "../../../lib/activities/ActivityBuilder";
 import ActivitiesTypes "../../../lib/activities/types";
 import BlocksTypes "../../../lib/blocks/types";
 import BlocksUtils "../../../lib/blocks/utils";
-import UUIDGenerator "../../../lib/shared/UUIDGenerator";
 import Tree "../../../utils/data/lseq/Tree";
 import CoreTypes "../../../types";
 

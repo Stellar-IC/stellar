@@ -1,5 +1,7 @@
 import { PropsWithChildren, useCallback, useState } from 'react';
 
+import { db } from '@/db';
+
 import { DataStoreContext } from './DataStoreContext';
 import { DataStore } from './types';
 

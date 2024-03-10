@@ -1,10 +1,10 @@
 import { KeyboardEvent } from 'react';
 import { parse } from 'uuid';
 
+import { TextBlockBlockType } from '@/components/Editor/TextBlock/types';
 import { usePagesContext } from '@/contexts/PagesContext/usePagesContext';
 import { ExternalId } from '@/types';
 
-import { BlockType } from '../../../../../declarations/workspace/workspace.did';
 import { useTextBlockEventHandlers } from '../useTextBlockEventHandlers';
 
 import { useArrowDownHandler } from './useArrowDownHandler';
@@ -19,7 +19,7 @@ import { useWordCharacterHandler } from './useWordCharacterHandler';
 type UseTextBlockKeyboardEventHandlersProps = {
   blockExternalId: ExternalId;
   blockIndex: number;
-  blockType: BlockType;
+  blockType: TextBlockBlockType;
   parentBlockExternalId?: ExternalId | null;
   parentBlockIndex?: number;
   showPlaceholder: () => void;

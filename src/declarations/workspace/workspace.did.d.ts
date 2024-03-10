@@ -9,18 +9,19 @@ export interface AddBlockUpdateInput {
   'properties' : ShareableBlockProperties__2,
   'parent' : [] | [UUID],
 }
-export type AddBlockUpdateOutput = { 'ok' : AddBlockUpdateOutputResult } |
-  { 'err' : AddBlockUpdateOutputError };
-export type AddBlockUpdateOutputError = null;
-export interface AddBlockUpdateOutputResult { 'id' : PrimaryKey__1 }
 export type AllocationStrategy = { 'boundaryPlus' : null } |
   { 'boundaryMinus' : null };
 export interface BlockBlockTypeUpdatedEventData {
   'blockType' : BlockType__1,
   'blockExternalId' : UUID,
 }
-export type BlockByUuidResult = { 'ok' : ShareableBlock } |
-  { 'err' : { 'blockNotFound' : null } };
+export type BlockByUuidResult = {
+    'ok' : {
+      'block' : ExternalId,
+      'recordMap' : { 'blocks' : Array<[ExternalId, ShareableBlock]> },
+    }
+  } |
+  { 'err' : { 'notFound' : null } };
 export interface BlockContentUpdatedEventData {
   'transaction' : Array<TreeEvent>,
   'blockExternalId' : UUID,
@@ -144,7 +145,6 @@ export type CreatePageUpdateOutputError = { 'failedToCreate' : null } |
   { 'insufficientCycles' : null } |
   { 'inputTooLong' : null };
 export interface CreatePageUpdateOutputResult {
-  'id' : PrimaryKey,
   'content' : ShareableBlockContent,
   'uuid' : UUID,
   'blockType' : BlockType,
@@ -163,8 +163,9 @@ export type DeletePageUpdateOutput = { 'ok' : DeletePageUpdateOutputResult } |
   { 'err' : DeletePageUpdateOutputError };
 export type DeletePageUpdateOutputError = null;
 export type DeletePageUpdateOutputResult = null;
-export interface Edge { 'node' : ShareableBlock }
+export interface Edge { 'node' : ExternalId }
 export interface Edge_1 { 'node' : HydratedActivity }
+export type ExternalId = string;
 export interface GetInformationRequest {
   'status' : [] | [StatusRequest],
   'metrics' : [] | [MetricsRequest],
@@ -215,8 +216,8 @@ export interface HydratedActivity {
 export interface HydratedEditItem {
   'startTime' : Time,
   'blockValue' : {
-    'after' : ShareableBlock__3,
-    'before' : [] | [ShareableBlock__3],
+    'after' : ShareableBlock__1,
+    'before' : [] | [ShareableBlock__1],
   },
   'user' : HydratedEditItemUser,
 }
@@ -224,7 +225,6 @@ export interface HydratedEditItemUser {
   'username' : string,
   'canisterId' : Principal,
 }
-export type List = [] | [[ShareableBlock__2, List]];
 export interface LogMessagesData { 'timeNanos' : Nanos, 'message' : string }
 export type MetricsGranularity = { 'hourly' : null } |
   { 'daily' : null };
@@ -244,22 +244,18 @@ export interface NumericEntity {
   'first' : bigint,
   'last' : bigint,
 }
-export type PageByUuidResult = {
-    'ok' : {
-      'page' : { 'uuid' : UUID },
-      '_records' : { 'blocks' : Array<ShareableBlock__1> },
-    }
-  } |
-  { 'err' : { 'pageNotFound' : null } };
 export interface PagesOptionsArg {
   'order' : [] | [SortOrder],
-  'cursor' : [] | [PrimaryKey__1],
+  'cursor' : [] | [PrimaryKey],
   'limit' : [] | [bigint],
 }
-export interface PagesResult { 'edges' : Array<Edge> }
-export interface PaginatedResults { 'edges' : Array<Edge_1> }
+export interface PagesResult {
+  'pages' : PaginatedResults,
+  'recordMap' : { 'blocks' : Array<[ExternalId, ShareableBlock]> },
+}
+export interface PaginatedResults { 'edges' : Array<Edge> }
+export interface PaginatedResults_1 { 'edges' : Array<Edge_1> }
 export type PrimaryKey = bigint;
-export type PrimaryKey__1 = bigint;
 export interface PublicUserProfile {
   'username' : string,
   'canisterId' : Principal,
@@ -275,7 +271,6 @@ export type SaveEventTransactionUpdateOutputError = { 'anonymousUser' : null } |
   { 'insufficientCycles' : null };
 export type SaveEventTransactionUpdateOutputResult = null;
 export interface ShareableBlock {
-  'id' : PrimaryKey,
   'content' : ShareableBlockContent,
   'uuid' : UUID,
   'blockType' : BlockType,
@@ -310,23 +305,6 @@ export interface ShareableBlockText {
   'rootNode' : ShareableNode,
 }
 export interface ShareableBlock__1 {
-  'id' : PrimaryKey,
-  'content' : ShareableBlockContent,
-  'uuid' : UUID,
-  'blockType' : BlockType,
-  'properties' : ShareableBlockProperties,
-  'parent' : [] | [UUID],
-}
-export interface ShareableBlock__2 {
-  'id' : PrimaryKey,
-  'content' : ShareableBlockContent,
-  'uuid' : UUID,
-  'blockType' : BlockType,
-  'properties' : ShareableBlockProperties,
-  'parent' : [] | [UUID],
-}
-export interface ShareableBlock__3 {
-  'id' : PrimaryKey,
   'content' : ShareableBlockContent,
   'uuid' : UUID,
   'blockType' : BlockType,
@@ -369,7 +347,6 @@ export type TreeEvent = {
   };
 export type UUID = Uint8Array | number[];
 export interface UpdateBlockUpdateInput {
-  'id' : PrimaryKey,
   'content' : ShareableBlockContent,
   'uuid' : UUID,
   'blockType' : BlockType,
@@ -380,7 +357,6 @@ export type UpdateBlockUpdateOutput = { 'ok' : UpdateBlockUpdateOutputResult } |
   { 'err' : UpdateBlockUpdateOutputError };
 export type UpdateBlockUpdateOutputError = { 'primaryKeyAttrNotFound' : null };
 export interface UpdateBlockUpdateOutputResult {
-  'id' : PrimaryKey,
   'content' : ShareableBlockContent,
   'uuid' : UUID,
   'blockType' : BlockType,
@@ -392,11 +368,13 @@ export interface UpdateInformationRequest {
   'metrics' : [] | [CollectMetricsRequestType],
 }
 export interface Workspace {
-  'activityLog' : ActorMethod<[UUID], PaginatedResults>,
-  'addBlock' : ActorMethod<[AddBlockUpdateInput], AddBlockUpdateOutput>,
+  'activityLog' : ActorMethod<[UUID], PaginatedResults_1>,
+  'addBlock' : ActorMethod<[AddBlockUpdateInput], undefined>,
   'addUsers' : ActorMethod<[Array<[Principal, PublicUserProfile]>], undefined>,
-  'blockByUuid' : ActorMethod<[UUID], BlockByUuidResult>,
-  'blocksByPageUuid' : ActorMethod<[string], List>,
+  'block' : ActorMethod<
+    [UUID, { 'contentPagination' : { 'cursor' : bigint, 'limit' : bigint } }],
+    BlockByUuidResult
+  >,
   'createPage' : ActorMethod<[CreatePageUpdateInput], CreatePageUpdateOutput>,
   'cyclesInformation' : ActorMethod<
     [],
@@ -418,7 +396,6 @@ export interface Workspace {
       'updatedAt' : Time,
     }
   >,
-  'pageByUuid' : ActorMethod<[UUID], PageByUuidResult>,
   'pages' : ActorMethod<[PagesOptionsArg], PagesResult>,
   'saveEvents' : ActorMethod<
     [SaveEventTransactionUpdateInput],

@@ -35,15 +35,9 @@ module CreateBlock {
             };
         };
 
-        let result = state.data.addBlock(input);
-        switch (result) {
-            case (#ok(pk, obj)) {
-                return #ok(obj);
-            };
-            case (#err(#keyAlreadyExists)) {
-                return #err(#failedToCreate);
-            };
-        };
+        state.data.addBlock(input);
+
+        return #ok(input);
     };
 
     private func _validate(

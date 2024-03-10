@@ -3,7 +3,6 @@ import { useDisclosure } from '@mantine/hooks';
 import { Tree } from '@stellar-ic/lseq-ts';
 import { createRef, useEffect, useMemo, useState } from 'react';
 
-import { useDataStoreContext } from '@/contexts/DataStoreContext/useDataStoreContext';
 import { useTextBlockKeyboardEventHandlers } from '@/hooks/documents/useTextBlockKeyboardEventHandlers';
 import { Block, ExternalId } from '@/types';
 
@@ -85,20 +84,16 @@ const NumberedListBlockInner = ({
 };
 
 interface NumberedListBlockProps {
-  externalId: string;
+  block: Block;
   index: number;
   numeral: number;
 }
 
 export const NumberedListBlock = ({
-  externalId,
+  block,
   index,
   numeral,
 }: NumberedListBlockProps) => {
-  const { get } = useDataStoreContext();
-  const block = get<Block>('block', externalId);
-
-  if (!block) return null;
   if (!('numberedList' in block.blockType)) {
     throw new Error('Expected numbered list block');
   }

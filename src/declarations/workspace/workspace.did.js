@@ -1,5 +1,4 @@
 export const idlFactory = ({ IDL }) => {
-  const List = IDL.Rec();
   const ShareableNode = IDL.Rec();
   const WorkspaceOwner = IDL.Principal;
   const WorkspaceInitArgs = IDL.Record({
@@ -17,7 +16,6 @@ export const idlFactory = ({ IDL }) => {
     'description' : WorkspaceDescription,
     'updatedAt' : Time,
   });
-  const PrimaryKey = IDL.Nat;
   const NodeBoundary = IDL.Nat16;
   const NodeDepth = IDL.Nat16;
   const AllocationStrategy = IDL.Variant({
@@ -68,8 +66,7 @@ export const idlFactory = ({ IDL }) => {
     'title' : IDL.Opt(ShareableBlockText),
     'checked' : IDL.Opt(IDL.Bool),
   });
-  const ShareableBlock__3 = IDL.Record({
-    'id' : PrimaryKey,
+  const ShareableBlock__1 = IDL.Record({
     'content' : ShareableBlockContent,
     'uuid' : UUID,
     'blockType' : BlockType,
@@ -83,8 +80,8 @@ export const idlFactory = ({ IDL }) => {
   const HydratedEditItem = IDL.Record({
     'startTime' : Time,
     'blockValue' : IDL.Record({
-      'after' : ShareableBlock__3,
-      'before' : IDL.Opt(ShareableBlock__3),
+      'after' : ShareableBlock__1,
+      'before' : IDL.Opt(ShareableBlock__1),
     }),
     'user' : HydratedEditItemUser,
   });
@@ -97,7 +94,7 @@ export const idlFactory = ({ IDL }) => {
     'blockExternalId' : UUID,
   });
   const Edge_1 = IDL.Record({ 'node' : HydratedActivity });
-  const PaginatedResults = IDL.Record({ 'edges' : IDL.Vec(Edge_1) });
+  const PaginatedResults_1 = IDL.Record({ 'edges' : IDL.Vec(Edge_1) });
   const ShareableBlockContent__1 = IDL.Record({
     'boundary' : NodeBoundary,
     'allocationStrategies' : IDL.Vec(IDL.Tuple(NodeDepth, AllocationStrategy)),
@@ -131,19 +128,12 @@ export const idlFactory = ({ IDL }) => {
     'properties' : ShareableBlockProperties__2,
     'parent' : IDL.Opt(UUID),
   });
-  const PrimaryKey__1 = IDL.Nat;
-  const AddBlockUpdateOutputResult = IDL.Record({ 'id' : PrimaryKey__1 });
-  const AddBlockUpdateOutputError = IDL.Null;
-  const AddBlockUpdateOutput = IDL.Variant({
-    'ok' : AddBlockUpdateOutputResult,
-    'err' : AddBlockUpdateOutputError,
-  });
   const PublicUserProfile = IDL.Record({
     'username' : IDL.Text,
     'canisterId' : IDL.Principal,
   });
+  const ExternalId = IDL.Text;
   const ShareableBlock = IDL.Record({
-    'id' : PrimaryKey,
     'content' : ShareableBlockContent,
     'uuid' : UUID,
     'blockType' : BlockType,
@@ -151,18 +141,14 @@ export const idlFactory = ({ IDL }) => {
     'parent' : IDL.Opt(UUID),
   });
   const BlockByUuidResult = IDL.Variant({
-    'ok' : ShareableBlock,
-    'err' : IDL.Variant({ 'blockNotFound' : IDL.Null }),
+    'ok' : IDL.Record({
+      'block' : ExternalId,
+      'recordMap' : IDL.Record({
+        'blocks' : IDL.Vec(IDL.Tuple(ExternalId, ShareableBlock)),
+      }),
+    }),
+    'err' : IDL.Variant({ 'notFound' : IDL.Null }),
   });
-  const ShareableBlock__2 = IDL.Record({
-    'id' : PrimaryKey,
-    'content' : ShareableBlockContent,
-    'uuid' : UUID,
-    'blockType' : BlockType,
-    'properties' : ShareableBlockProperties,
-    'parent' : IDL.Opt(UUID),
-  });
-  List.fill(IDL.Opt(IDL.Tuple(ShareableBlock__2, List)));
   const ShareableBlockProperties__1 = IDL.Record({
     'title' : IDL.Opt(ShareableBlockText),
     'checked' : IDL.Opt(IDL.Bool),
@@ -174,7 +160,6 @@ export const idlFactory = ({ IDL }) => {
     'parent' : IDL.Opt(UUID),
   });
   const CreatePageUpdateOutputResult = IDL.Record({
-    'id' : PrimaryKey,
     'content' : ShareableBlockContent,
     'uuid' : UUID,
     'blockType' : BlockType,
@@ -305,33 +290,25 @@ export const idlFactory = ({ IDL }) => {
     'logs' : IDL.Opt(CanisterLogResponse),
     'version' : IDL.Opt(IDL.Nat),
   });
-  const ShareableBlock__1 = IDL.Record({
-    'id' : PrimaryKey,
-    'content' : ShareableBlockContent,
-    'uuid' : UUID,
-    'blockType' : BlockType,
-    'properties' : ShareableBlockProperties,
-    'parent' : IDL.Opt(UUID),
-  });
-  const PageByUuidResult = IDL.Variant({
-    'ok' : IDL.Record({
-      'page' : IDL.Record({ 'uuid' : UUID }),
-      '_records' : IDL.Record({ 'blocks' : IDL.Vec(ShareableBlock__1) }),
-    }),
-    'err' : IDL.Variant({ 'pageNotFound' : IDL.Null }),
-  });
   const SortDirection = IDL.Variant({ 'asc' : IDL.Null, 'desc' : IDL.Null });
   const SortOrder = IDL.Record({
     'direction' : SortDirection,
     'fieldName' : IDL.Text,
   });
+  const PrimaryKey = IDL.Nat;
   const PagesOptionsArg = IDL.Record({
     'order' : IDL.Opt(SortOrder),
-    'cursor' : IDL.Opt(PrimaryKey__1),
+    'cursor' : IDL.Opt(PrimaryKey),
     'limit' : IDL.Opt(IDL.Nat),
   });
-  const Edge = IDL.Record({ 'node' : ShareableBlock });
-  const PagesResult = IDL.Record({ 'edges' : IDL.Vec(Edge) });
+  const Edge = IDL.Record({ 'node' : ExternalId });
+  const PaginatedResults = IDL.Record({ 'edges' : IDL.Vec(Edge) });
+  const PagesResult = IDL.Record({
+    'pages' : PaginatedResults,
+    'recordMap' : IDL.Record({
+      'blocks' : IDL.Vec(IDL.Tuple(ExternalId, ShareableBlock)),
+    }),
+  });
   const BlockType__1 = IDL.Variant({
     'numberedList' : IDL.Null,
     'todoList' : IDL.Null,
@@ -426,7 +403,6 @@ export const idlFactory = ({ IDL }) => {
     'updatedAt' : Time,
   });
   const UpdateBlockUpdateInput = IDL.Record({
-    'id' : PrimaryKey,
     'content' : ShareableBlockContent,
     'uuid' : UUID,
     'blockType' : BlockType,
@@ -434,7 +410,6 @@ export const idlFactory = ({ IDL }) => {
     'parent' : IDL.Opt(UUID),
   });
   const UpdateBlockUpdateOutputResult = IDL.Record({
-    'id' : PrimaryKey,
     'content' : ShareableBlockContent,
     'uuid' : UUID,
     'blockType' : BlockType,
@@ -456,15 +431,26 @@ export const idlFactory = ({ IDL }) => {
     'metrics' : IDL.Opt(CollectMetricsRequestType),
   });
   const Workspace = IDL.Service({
-    'activityLog' : IDL.Func([UUID], [PaginatedResults], ['query']),
-    'addBlock' : IDL.Func([AddBlockUpdateInput], [AddBlockUpdateOutput], []),
+    'activityLog' : IDL.Func([UUID], [PaginatedResults_1], ['query']),
+    'addBlock' : IDL.Func([AddBlockUpdateInput], [], []),
     'addUsers' : IDL.Func(
         [IDL.Vec(IDL.Tuple(IDL.Principal, PublicUserProfile))],
         [],
         [],
       ),
-    'blockByUuid' : IDL.Func([UUID], [BlockByUuidResult], ['query']),
-    'blocksByPageUuid' : IDL.Func([IDL.Text], [List], ['query']),
+    'block' : IDL.Func(
+        [
+          UUID,
+          IDL.Record({
+            'contentPagination' : IDL.Record({
+              'cursor' : IDL.Nat,
+              'limit' : IDL.Nat,
+            }),
+          }),
+        ],
+        [BlockByUuidResult],
+        ['query'],
+      ),
     'createPage' : IDL.Func(
         [CreatePageUpdateInput],
         [CreatePageUpdateOutput],
@@ -499,7 +485,6 @@ export const idlFactory = ({ IDL }) => {
         ],
         [],
       ),
-    'pageByUuid' : IDL.Func([UUID], [PageByUuidResult], ['query']),
     'pages' : IDL.Func([PagesOptionsArg], [PagesResult], ['query']),
     'saveEvents' : IDL.Func(
         [SaveEventTransactionUpdateInput],

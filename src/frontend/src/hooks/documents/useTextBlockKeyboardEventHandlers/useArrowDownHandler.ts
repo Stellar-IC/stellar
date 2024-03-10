@@ -1,5 +1,5 @@
-import { focusPreviousBlock } from '@/modules/editor/utils';
+import { focusNextBlock } from '@/modules/editor/utils';
 
 export function useArrowDownHandler() {
-  return focusPreviousBlock;
+  return focusNextBlock;
 }
