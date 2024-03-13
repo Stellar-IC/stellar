@@ -20,7 +20,7 @@ import ActivityBuilder "../../lib/activities/ActivityBuilder";
 import ActivitiesTypes "../../lib/activities/types";
 import BlockModule "../../lib/blocks/Block";
 import BlocksTypes "../../lib/blocks/types";
-import EventUtils "../../lib/events/Utils";
+import BlockEvent "../../lib/events/BlockEvent";
 import EventStream "../../lib/events/EventStream";
 import Paginator "../../lib/pagination/Paginator";
 import Logger "../../lib/Logger";
@@ -62,7 +62,7 @@ shared ({ caller = initializer }) actor class Workspace(
 
     stable var _stateUpgradeData : ?State.UpgradeData = null;
     stable var blocks : RBTree.Tree<PrimaryKey, ShareableBlock> = #leaf;
-    stable var blocksIdCounter : Nat = 0;
+    stable var activitiesIdCounter : Nat = 0;
     stable var events : RBTree.Tree<Text, BlockEvent> = #leaf;
     stable var owner : CoreTypes.Workspaces.WorkspaceOwner = initArgs.owner;
     stable var uuid : UUID.UUID = initData.uuid;
@@ -100,7 +100,7 @@ shared ({ caller = initializer }) actor class Workspace(
     let eventStream = EventStream.EventStream<BlocksTypes.BlockEvent>(
         {
             getEventId = func(event) {
-                UUID.toText(EventUtils.getEventId(event));
+                UUID.toText(BlockEvent.getId(event));
             };
         },
         { logger },
@@ -224,7 +224,6 @@ shared ({ caller = initializer }) actor class Workspace(
                         },
                     )
                 );
-
             };
             recordMap = {
                 blocks = List.toArray(blockRecords);
@@ -347,37 +346,42 @@ shared ({ caller = initializer }) actor class Workspace(
     func startListeningForEvents() : async () {
         eventStream.addEventListener(
             "BlockEventListener",
-            func(event : BlockEvent) : async () {
-                logger.info("Received event: " # debug_show event);
-                await processEvent(event);
+            func(event : BlockEvent) : () {
+                logger.info("Received event: " # BlockEvent.toText(event));
+                processEvent(event);
                 ();
             },
         );
         ignore Timer.recurringTimer(
-            #seconds(1),
+            #nanoseconds(100_000),
             eventStream.processEvents,
         );
     };
 
-    func processEvent(event : BlockEvent) : async () {
+    func processEvent(event : BlockEvent) : () {
+        let activityId = activitiesIdCounter;
+
         switch (event.data) {
             case (#blockCreated(blockCreatedEvent)) {
                 logger.info("Processing blockCreated event: " # debug_show UUID.toText(event.uuid));
-                let res = await BlockCreatedConsumer.execute(state, { event with data = blockCreatedEvent });
+                let res = BlockCreatedConsumer.execute(state, { event with data = blockCreatedEvent }, activityId);
                 logger.info("Processed blockCreated event: " # debug_show UUID.toText(event.uuid));
             };
             case (#blockUpdated(blockUpdatedEvent)) {
                 logger.info("Processing blockUpdated event: " # debug_show UUID.toText(event.uuid));
-                let res = await BlockUpdatedConsumer.execute(state, { event with data = blockUpdatedEvent });
+                let res = BlockUpdatedConsumer.execute(state, { event with data = blockUpdatedEvent }, activityId);
                 logger.info("Processed blockUpdated event: " # debug_show UUID.toText(event.uuid));
             };
         };
+
+        activitiesIdCounter := activitiesIdCounter + 1;
     };
 
     // Returns the cycles received up to the capacity allowed
     public shared func walletReceive() : async { accepted : Nat64 } {
         let result = await CyclesUtils.walletReceive(capacity - ExperimentalCycles.balance());
         await updateCanistergeekInformation({ metrics = ? #normal });
+
         return result;
     };
 

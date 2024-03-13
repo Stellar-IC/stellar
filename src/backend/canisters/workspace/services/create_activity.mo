@@ -26,7 +26,7 @@ module CreateActivity {
         var activityBuilder = ActivityBuilder.ActivityBuilder(
             {
                 blockExternalId = input.blockExternalId;
-                uuid = input.uuid;
+                id = input.id;
             }
         );
 

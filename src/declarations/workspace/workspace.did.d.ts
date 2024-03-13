@@ -206,9 +206,9 @@ export interface HourlyMetricsData {
   'timeMillis' : bigint,
 }
 export interface HydratedActivity {
+  'id' : bigint,
   'startTime' : Time,
   'endTime' : Time,
-  'uuid' : UUID,
   'edits' : Array<HydratedEditItem>,
   'users' : Array<HydratedEditItemUser>,
   'blockExternalId' : UUID,

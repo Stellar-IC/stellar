@@ -38,7 +38,16 @@ export type ActivityUser = {
 export type Activity = {
   startTime: Time;
   endTime: Time;
-  uuid: ExternalId;
+  id: bigint;
+  edits: EditItem[];
+  blockExternalId: ExternalId;
+  users: ActivityUser[];
+};
+
+export type LocalStorageActivity = {
+  startTime: Time;
+  endTime: Time;
+  id: string;
   edits: EditItem[];
   blockExternalId: ExternalId;
   users: ActivityUser[];

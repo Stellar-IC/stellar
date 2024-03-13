@@ -49,13 +49,13 @@ module {
     public type UpgradeData = {
         blocks : RBTree.Tree<BlocksTypes.PrimaryKey, ShareableBlock>;
         events : RBTree.Tree<BlocksTypes.PrimaryKey, BlockEvent>;
-        activities : RBTree.Tree<BlocksTypes.PrimaryKey, ActivitiesTypes.ShareableActivity>;
+        activities : RBTree.Tree<Nat, ActivitiesTypes.ShareableActivity>;
     };
 
     public class Data() {
         public var Block = Models.UUIDModel<Block>();
         public var Event = Models.UUIDModel<BlockEvent>();
-        public var Activity = Models.UUIDModel<ActivitiesTypes.Activity>();
+        public var Activity = Models.IDModel<ActivitiesTypes.Activity>();
 
         public var blocks_by_parent_uuid = RBTree.RBTree<Text, List.List<BlocksTypes.PrimaryKey>>(Text.compare);
 
@@ -262,8 +262,8 @@ module {
                 shareableBlocks.put(blockId, BlockModule.toShareable(blockData));
             };
 
-            let activities = RBTree.RBTree<BlocksTypes.PrimaryKey, ActivitiesTypes.Activity>(Text.compare);
-            let shareableActivities = RBTree.RBTree<BlocksTypes.PrimaryKey, ActivitiesTypes.ShareableActivity>(Text.compare);
+            let activities = RBTree.RBTree<Nat, ActivitiesTypes.Activity>(Nat.compare);
+            let shareableActivities = RBTree.RBTree<Nat, ActivitiesTypes.ShareableActivity>(Nat.compare);
 
             activities.unshare(Activity.objects.preupgrade());
 
@@ -293,7 +293,7 @@ module {
                 addBlockToBlocksByParentIdIndex(nonShareableBlock);
             };
 
-            let shareableActivities = RBTree.RBTree<BlocksTypes.PrimaryKey, ActivitiesTypes.ShareableActivity>(Text.compare);
+            let shareableActivities = RBTree.RBTree<Nat, ActivitiesTypes.ShareableActivity>(Nat.compare);
             shareableActivities.unshare(data.activities);
 
             for (activity in shareableActivities.entries()) {

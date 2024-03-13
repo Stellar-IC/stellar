@@ -9,7 +9,7 @@ module {
 
     public type EventId = Text;
 
-    public type EventListener<EventT> = (event : EventT) -> async ();
+    public type EventListener<EventT> = (event : EventT) -> ();
 
     public type Subscriber<EventT> = {
         name : Text;

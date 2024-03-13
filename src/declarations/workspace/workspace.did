@@ -291,9 +291,9 @@ type HydratedActivity =
    blockExternalId: UUID;
    edits: vec HydratedEditItem;
    endTime: Time;
+   id: nat;
    startTime: Time;
    users: vec HydratedEditItemUser;
-   uuid: UUID;
  };
 type HourlyMetricsData = 
  record {

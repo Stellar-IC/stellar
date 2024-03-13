@@ -23,7 +23,7 @@ module ExtendActivity {
         input : Input,
     ) : Output {
         let initialActivity = switch (
-            state.data.Activity.objects.get(UUID.toText(input.activityId))
+            state.data.Activity.objects.get(input.activityId)
         ) {
             case (null) { Debug.trap("Activity not found") };
             case (?initialActivity) { initialActivity };

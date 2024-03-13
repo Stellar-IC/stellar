@@ -72,11 +72,10 @@ module EventStream {
             };
 
             if (Deque.isEmpty(queue)) {
-                currentlyProcessing := false;
                 return;
             };
 
-            logger.info("Processing events");
+            logger.info("\n\nProcessing events");
 
             var maxIterationCount = 100;
             currentlyProcessing := true;
@@ -97,14 +96,13 @@ module EventStream {
                             case null {};
                             case (?(event)) {
                                 changeEventStatus(eventId, #processing);
-                                await notifySubscribers(event);
+                                notifySubscribers(event);
                                 changeEventStatus(eventId, #processed);
                                 advanceQueue();
                             };
                         };
                     };
                     case (? #processing) {
-                        currentlyProcessing := true;
                         break processQueue;
                     };
                     case (? #processed) {
@@ -160,9 +158,9 @@ module EventStream {
             return queue;
         };
 
-        private func notifySubscribers(event : EventT) : async () {
+        private func notifySubscribers(event : EventT) : () {
             for (subscriber in List.toIter(subscribers)) {
-                await subscriber.listener(event);
+                subscriber.listener(event);
             };
         };
 

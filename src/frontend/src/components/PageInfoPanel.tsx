@@ -56,7 +56,7 @@ export function PageInfoPanel() {
               activity.edits[activity.edits.length - 1].blockValue.after;
 
             return (
-              <div className={classes.activity} key={activity.uuid}>
+              <div className={classes.activity} key={activity.id}>
                 <Text>{getContributorsMessage(activity.users)}</Text>
                 <Text size="sm">
                   {dayjs(new Date(Number(activity.endTime))).fromNow()}

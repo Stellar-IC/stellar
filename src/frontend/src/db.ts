@@ -3,10 +3,10 @@ import { Tree } from '@stellar-ic/lseq-ts';
 import Dexie, { Table } from 'dexie';
 
 import { SerializedBlockEvent } from './modules/events/types';
-import { Activity, LocalStorageBlock } from './types';
+import { LocalStorageActivity, LocalStorageBlock } from './types';
 
 class AppDatabase extends Dexie {
-  public activities!: Table<Activity, string>;
+  public activities!: Table<LocalStorageActivity, string>;
   public blocks!: Table<LocalStorageBlock, string>;
   public blockEvents!: Table<SerializedBlockEvent, string>;
 
@@ -14,7 +14,7 @@ class AppDatabase extends Dexie {
     super('AppDatabase');
     this.version(1).stores({
       blocks: '&uuid,&id,parent',
-      activities: '&uuid,startTime,endTime,blockExternalId',
+      activities: '&id,startTime,endTime,blockExternalId',
       blockEvents: '&uuid,blockExternalId,user,timestamp',
     });
   }

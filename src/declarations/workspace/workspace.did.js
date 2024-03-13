@@ -86,9 +86,9 @@ export const idlFactory = ({ IDL }) => {
     'user' : HydratedEditItemUser,
   });
   const HydratedActivity = IDL.Record({
+    'id' : IDL.Nat,
     'startTime' : Time,
     'endTime' : Time,
-    'uuid' : UUID,
     'edits' : IDL.Vec(HydratedEditItem),
     'users' : IDL.Vec(HydratedEditItemUser),
     'blockExternalId' : UUID,

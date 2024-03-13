@@ -7,7 +7,7 @@ import Types "./types";
 
 module {
     type DraftActivity = {
-        uuid : UUID.UUID;
+        id : Nat;
         blockExternalId : UUID.UUID;
         var edits : Buffer.Buffer<Types.EditItem>;
         var startTime : Time.Time;
@@ -17,11 +17,11 @@ module {
     public class ActivityBuilder(
         initialValues : {
             blockExternalId : UUID.UUID;
-            uuid : UUID.UUID;
+            id : Nat;
         }
     ) = self {
         private let activity : DraftActivity = {
-            uuid = initialValues.uuid;
+            id = initialValues.id;
             blockExternalId = initialValues.blockExternalId;
             var edits = Buffer.fromArray([]);
             var startTime = Time.now();
@@ -42,7 +42,7 @@ module {
         public func build() : Types.Activity {
             return {
                 activity with
-                uuid = activity.uuid;
+                id = activity.id;
                 blockExternalId = activity.blockExternalId;
                 var edits = Buffer.toArray(activity.edits);
                 startTime = activity.startTime;
@@ -55,7 +55,7 @@ module {
         var activityBuilder = ActivityBuilder(
             {
                 blockExternalId = inputActivity.blockExternalId;
-                uuid = inputActivity.uuid;
+                id = inputActivity.id;
             }
         );
 

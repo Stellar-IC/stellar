@@ -4,7 +4,7 @@ import BlocksTypes "../../../lib/blocks/types";
 
 module {
     public type Activity = {
-        uuid : UUID.UUID;
+        id : Nat;
         var edits : [EditItem];
         blockExternalId : UUID.UUID;
         startTime : Time.Time;
@@ -23,7 +23,7 @@ module {
     };
 
     public type ShareableActivity = {
-        uuid : UUID.UUID;
+        id : Nat;
         edits : [ShareableEditItem];
         blockExternalId : UUID.UUID;
         startTime : Time.Time;
@@ -54,7 +54,7 @@ module {
     };
 
     public type HydratedActivity = {
-        uuid : UUID.UUID;
+        id : Nat;
         users : [HydratedEditItemUser];
         edits : [HydratedEditItem];
         blockExternalId : UUID.UUID;

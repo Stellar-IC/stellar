@@ -41,7 +41,8 @@ module BlockUpdatedConsumer {
     public func execute(
         state : State.State,
         event : BlocksTypes.BlockUpdatedEvent,
-    ) : async Result.Result<ShareableBlock, { #blockNotFound; #insufficientCycles; #inputTooLong; #invalidBlockType; #failedToUpdate; #anonymousUser }> {
+        idForNewActivity : Nat,
+    ) : Result.Result<ShareableBlock, { #blockNotFound; #insufficientCycles; #inputTooLong; #invalidBlockType; #failedToUpdate; #anonymousUser }> {
         switch (event.data) {
             case (#updateParent(data)) {
                 let blockBeforeEdit = _blockByUuid(state, data.blockExternalId);
@@ -49,13 +50,14 @@ module BlockUpdatedConsumer {
                 let result = updateParent(state, event, data);
                 let blockAfterEdit = _blockByUuid(state, data.blockExternalId);
                 let clonedBlockAfterEdit = BlocksUtils.clone(blockAfterEdit);
-                let pageBlock = state.data.getFirstAncestorPage(blockBeforeEdit);
-                let activity = await createOrExtendActivityForEvent(
+                let firstAncestorPage = state.data.getFirstAncestorPage(blockBeforeEdit);
+                let activity = createOrExtendActivityForEvent(
                     state,
-                    pageBlock,
+                    firstAncestorPage,
                     event,
                     clonedBlockBeforeEdit,
                     clonedBlockAfterEdit,
+                    idForNewActivity,
                 );
                 #ok(BlockModule.toShareable(clonedBlockAfterEdit));
             };
@@ -65,13 +67,14 @@ module BlockUpdatedConsumer {
                 let result = updateBlockType(state, event, data);
                 let blockAfterEdit = _blockByUuid(state, data.blockExternalId);
                 let clonedBlockAfterEdit = BlocksUtils.clone(blockAfterEdit);
-                let pageBlock = state.data.getFirstAncestorPage(blockBeforeEdit);
-                let activity = await createOrExtendActivityForEvent(
+                let firstAncestorPage = state.data.getFirstAncestorPage(blockBeforeEdit);
+                let activity = createOrExtendActivityForEvent(
                     state,
-                    pageBlock,
+                    firstAncestorPage,
                     event,
                     clonedBlockBeforeEdit,
                     clonedBlockAfterEdit,
+                    idForNewActivity,
                 );
                 #ok(BlockModule.toShareable(clonedBlockAfterEdit));
             };
@@ -81,10 +84,10 @@ module BlockUpdatedConsumer {
                 let result = updateContent(state, event, data);
                 let blockAfterEdit = _blockByUuid(state, data.blockExternalId);
                 let clonedBlockAfterEdit = BlocksUtils.clone(blockAfterEdit);
-                // let pageBlock = state.data.getFirstAncestorPage(blockBeforeEdit);
+                // let firstAncestorPage = state.data.getFirstAncestorPage(blockBeforeEdit);
                 // let activity = createOrExtendActivityForEvent(
                 //     state,
-                //     pageBlock,
+                //     firstAncestorPage,
                 //     event,
                 //     blockBeforeEdit,
                 //     blockAfterEdit,
@@ -98,13 +101,14 @@ module BlockUpdatedConsumer {
                 let result = updateTitleProperty(state, event, data);
                 let blockAfterEdit = _blockByUuid(state, data.blockExternalId);
                 let clonedBlockAfterEdit = BlocksUtils.clone(blockAfterEdit);
-                let pageBlock = state.data.getFirstAncestorPage(blockBeforeEdit);
-                let activity = await createOrExtendActivityForEvent(
+                let firstAncestorPage = state.data.getFirstAncestorPage(blockBeforeEdit);
+                let activity = createOrExtendActivityForEvent(
                     state,
-                    pageBlock,
+                    firstAncestorPage,
                     event,
                     clonedBlockBeforeEdit,
                     clonedBlockAfterEdit,
+                    idForNewActivity,
                 );
                 #ok(BlockModule.toShareable(clonedBlockAfterEdit));
             };
@@ -114,13 +118,14 @@ module BlockUpdatedConsumer {
                 let result = updateCheckedProperty(state, event, data);
                 let blockAfterEdit = _blockByUuid(state, data.blockExternalId);
                 let clonedBlockAfterEdit = BlocksUtils.clone(blockAfterEdit);
-                let pageBlock = state.data.getFirstAncestorPage(blockBeforeEdit);
-                let activity = await createOrExtendActivityForEvent(
+                let firstAncestorPage = state.data.getFirstAncestorPage(blockBeforeEdit);
+                let activity = createOrExtendActivityForEvent(
                     state,
-                    pageBlock,
+                    firstAncestorPage,
                     event,
                     clonedBlockBeforeEdit,
                     clonedBlockAfterEdit,
+                    idForNewActivity,
                 );
                 #ok(BlockModule.toShareable(clonedBlockAfterEdit));
             };
@@ -129,16 +134,20 @@ module BlockUpdatedConsumer {
 
     func createOrExtendActivityForEvent(
         state : State.State,
-        pageBlock : ?Block,
+        firstAncestorPage : ?Block,
         event : BlocksTypes.BlockUpdatedEvent,
         blockBeforeEdit : Block,
         blockAfterEdit : Block,
-    ) : async () {
-        let mostRecentActivity : ?ActivitiesTypes.Activity = switch (pageBlock) {
-            case (?pageBlock) {
-                state.data.getMostRecentActivityForPage(UUID.toText(pageBlock.uuid));
+        idForNewActivity : Nat,
+    ) : () {
+        let mostRecentActivity : ?ActivitiesTypes.Activity = switch (firstAncestorPage) {
+            case (?firstAncestorPage) {
+                state.data.getMostRecentActivityForPage(UUID.toText(firstAncestorPage.uuid));
             };
-            case (null) { null };
+            case (null) {
+                // If there is no ancestor page, then the block is a page.
+                state.data.getMostRecentActivityForPage(UUID.toText(blockBeforeEdit.uuid));
+            };
         };
 
         switch (mostRecentActivity) {
@@ -146,7 +155,7 @@ module BlockUpdatedConsumer {
                 let activity = CreateActivity.execute(
                     state,
                     {
-                        uuid = await Source.Source().new();
+                        id = idForNewActivity;
                         edits = [{
                             user = event.user;
                             startTime = event.timestamp;
@@ -164,7 +173,7 @@ module BlockUpdatedConsumer {
                     let updatedActivity = ExtendActivity.execute(
                         state,
                         {
-                            activityId = mostRecentActivity.uuid;
+                            activityId = mostRecentActivity.id;
                             edits = [{
                                 user = event.user;
                                 startTime = event.timestamp;
@@ -180,7 +189,7 @@ module BlockUpdatedConsumer {
                     let activity = CreateActivity.execute(
                         state,
                         {
-                            uuid = await Source.Source().new();
+                            id = idForNewActivity;
                             edits = [{
                                 user = event.user;
                                 startTime = event.timestamp;

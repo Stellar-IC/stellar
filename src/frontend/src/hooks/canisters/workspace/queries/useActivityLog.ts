@@ -5,7 +5,7 @@ import { stringify } from 'uuid';
 import { db } from '@/db';
 import { useWorkspaceActor } from '@/hooks/canisters/workspace/useWorkspaceActor';
 import { fromShareable } from '@/modules/blocks/serializers';
-import { CanisterId } from '@/types';
+import { Activity, CanisterId } from '@/types';
 
 import { UUID } from '../../../../../../declarations/workspace/workspace.did';
 
@@ -17,7 +17,7 @@ export const useActivityLog = (opts: {
   const { actor } = useWorkspaceActor({ identity, workspaceId });
 
   const activityLog = useCallback(
-    (arg_0: UUID) =>
+    (arg_0: UUID): Promise<Activity[]> =>
       actor
         .activityLog(arg_0)
         .then((result) => {
@@ -27,7 +27,6 @@ export const useActivityLog = (opts: {
 
             return {
               ...node,
-              uuid: stringify(node.uuid),
               blockExternalId: stringify(node.blockExternalId),
               endTime: node.endTime,
               startTime: node.startTime,
@@ -52,7 +51,10 @@ export const useActivityLog = (opts: {
           await db.transaction('rw', db.activities, async () => {
             await Promise.all(
               activities.map(async (activity) => {
-                await db.activities.put(activity);
+                await db.activities.put({
+                  ...activity,
+                  id: activity.id.toString(),
+                });
               })
             );
           });

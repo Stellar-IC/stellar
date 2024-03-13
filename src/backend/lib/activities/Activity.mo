@@ -13,7 +13,7 @@ module Activity {
             var edits = Array.map(input.edits, EditItem.fromShareable);
             var endTime = input.endTime;
             startTime = input.startTime;
-            uuid = input.uuid;
+            id = input.id;
         };
     };
 
@@ -23,7 +23,7 @@ module Activity {
             edits = Array.map(input.edits, EditItem.toShareable);
             endTime = input.endTime;
             startTime = input.startTime;
-            uuid = input.uuid;
+            id = input.id;
         };
     };
 
@@ -48,7 +48,7 @@ module Activity {
 
         return (
             "Activity (" #
-            UUID.toText(input.uuid) #
+            debug_show (input.id) #
             ") on block (" #
             UUID.toText(input.blockExternalId) #
             ")" #

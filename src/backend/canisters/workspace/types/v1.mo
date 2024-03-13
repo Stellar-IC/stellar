@@ -25,7 +25,7 @@ module {
     public module Services {
         public module CreateActivityService {
             public type CreateActivityServiceInput = {
-                uuid : UUID.UUID;
+                id : Nat;
                 edits : [ActivitiesTypes.EditItem];
                 blockExternalId : UUID.UUID;
             };
@@ -48,7 +48,7 @@ module {
 
         public module ExtendActivityService {
             public type ExtendActivityServiceInput = {
-                activityId : UUID.UUID;
+                activityId : Nat;
                 edits : [ActivitiesTypes.EditItem];
             };
             public type ExtendActivityServiceOutput = ActivitiesTypes.Activity;

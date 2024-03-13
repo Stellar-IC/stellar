@@ -27,7 +27,8 @@ module BlockCreatedConsumer {
     public func execute(
         state : State.State,
         event : BlocksTypes.BlockCreatedEvent,
-    ) : async Result.Result<ActivitiesTypes.ShareableActivity, { #anonymousUser; #failedToCreate; #inputTooLong; #insufficientCycles; #invalidBlockType }> {
+        activityId : Nat,
+    ) : Result.Result<ActivitiesTypes.ShareableActivity, { #anonymousUser; #failedToCreate; #inputTooLong; #insufficientCycles; #invalidBlockType }> {
         let result = CreateBlock.execute(
             state,
             event.user,
@@ -51,7 +52,7 @@ module BlockCreatedConsumer {
         let activity = CreateActivity.execute(
             state,
             {
-                uuid = await Source.Source().new();
+                id = activityId;
                 edits = [{
                     user = event.user;
                     blockValue = {
