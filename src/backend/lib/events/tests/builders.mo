@@ -34,7 +34,7 @@ module Builders {
             return self;
         };
 
-        public func withEventListener(name : Text, listener : (EventT) -> async ()) : EventStreamBuilder<EventT> {
+        public func withEventListener(name : Text, listener : (EventT) -> ()) : EventStreamBuilder<EventT> {
             eventStream.addEventListener(
                 name,
                 listener,

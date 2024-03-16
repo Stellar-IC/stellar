@@ -156,22 +156,22 @@ shared ({ caller = initializer }) actor class Workspace(
             };
         },
     ) : async BlockByUuidResult {
-        let data = switch (state.data.getBlockWithContent(UUID.toText(uuid), { contentOptions = options.contentPagination })) {
+        let blockId = UUID.toText(uuid);
+        let block = switch (state.data.findBlock(blockId)) {
             case (null) { return #err(#notFound) };
-            case (?data) { data };
+            case (?block) { block };
         };
-        let page = data.block;
-        let blocks = data.contentBlocks;
+        let contentBlocks = List.toArray(state.data.getContentForBlock(blockId, options.contentPagination));
         var blockRecords = List.fromArray<(Text, ShareableBlock)>([]);
 
-        for (block in Array.vals(blocks)) {
-            blockRecords := List.append(blockRecords, List.fromArray([(UUID.toText(block.uuid), BlockModule.toShareable(block))]));
+        for (contentBlock in Array.vals(contentBlocks)) {
+            blockRecords := List.append(blockRecords, List.fromArray([(UUID.toText(contentBlock.uuid), BlockModule.toShareable(block))]));
         };
 
-        blockRecords := List.append(blockRecords, List.fromArray([(UUID.toText(page.uuid), BlockModule.toShareable(page))]));
+        blockRecords := List.append(blockRecords, List.fromArray([(UUID.toText(block.uuid), BlockModule.toShareable(block))]));
 
         return #ok({
-            block = UUID.toText(page.uuid);
+            block = blockId;
             recordMap = {
                 blocks = List.toArray(blockRecords);
             };
@@ -195,22 +195,15 @@ shared ({ caller = initializer }) actor class Workspace(
 
         for (page in List.toIter(pages)) {
             let pageId = UUID.toText(page.uuid);
-            let pageWithContent = state.data.getBlockWithContent(
-                pageId,
-                { contentOptions },
-            );
+            let pageFromState = state.data.findBlock(pageId);
+            let pageContent = List.toArray(state.data.getContentForBlock(pageId, contentOptions));
             let pageRecord = (pageId, BlockModule.toShareable(page));
 
             blockRecords := List.append(blockRecords, List.fromArray([pageRecord]));
 
-            switch (pageWithContent) {
-                case (null) {};
-                case (?pageWithContent) {
-                    for (block in Array.vals(pageWithContent.contentBlocks)) {
-                        let record = (UUID.toText(block.uuid), BlockModule.toShareable(block));
-                        blockRecords := List.append(blockRecords, List.fromArray([record]));
-                    };
-                };
+            for (block in Array.vals(pageContent)) {
+                let record = (UUID.toText(block.uuid), BlockModule.toShareable(block));
+                blockRecords := List.append(blockRecords, List.fromArray([record]));
             };
         };
 
@@ -354,7 +347,7 @@ shared ({ caller = initializer }) actor class Workspace(
         );
         ignore Timer.recurringTimer(
             #nanoseconds(100_000),
-            eventStream.processEvents,
+            func() : async () { eventStream.processEvents() },
         );
     };
 

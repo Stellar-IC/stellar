@@ -66,7 +66,7 @@ module EventStream {
          * an event fails to be processed, it will be retried on the next call
          * to processEvents.
          */
-        public func processEvents() : async () {
+        public func processEvents() : () {
             if (currentlyProcessing) {
                 return;
             };

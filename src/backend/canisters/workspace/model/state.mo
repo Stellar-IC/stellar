@@ -1,5 +1,6 @@
 import Array "mo:base/Array";
 import Debug "mo:base/Debug";
+import Error "mo:base/Error";
 import Int "mo:base/Int";
 import Iter "mo:base/Iter";
 import List "mo:base/List";
@@ -9,7 +10,7 @@ import RBTree "mo:base/RBTree";
 import Result "mo:base/Result";
 import Stack "mo:base/Stack";
 import Text "mo:base/Text";
-import Time "mo:base/Time";
+
 import UUID "mo:uuid/UUID";
 
 import ActivitiesTypes "../../../lib/activities/types";
@@ -36,6 +37,7 @@ module {
     type BlockContent = BlocksTypes.BlockContent;
     type BlockProperties = BlocksTypes.BlockProperties;
     type BlockEvent = BlocksTypes.BlockEvent;
+    type BlockType = BlocksTypes.BlockType;
 
     public type PaginationOptions = {
         cursor : Nat;
@@ -59,26 +61,26 @@ module {
 
         public var blocks_by_parent_uuid = RBTree.RBTree<Text, List.List<BlocksTypes.PrimaryKey>>(Text.compare);
 
+        public func addActivity(input : ActivitiesTypes.Activity) {
+            Activity.objects.upsert(input);
+        };
+
         public func addBlock(input : Block) {
             Block.objects.upsert(input);
             addBlockToBlocksByParentIdIndex(input);
         };
 
-        public func addPageBlock(input : Block) : () {
-            let block : Block = {
-                uuid = input.uuid;
-                var blockType = #page;
-                var parent = input.parent;
-                content = Tree.Tree(null);
-                properties = input.properties;
+        public func updateBlock(input : Block) : Result.Result<(), { #blockNotFound }> {
+            switch (findBlock(UUID.toText(input.uuid))) {
+                case (null) {
+                    return #err(#blockNotFound);
+                };
+                case (?block) {
+                    Block.objects.upsert(input);
+                    addBlockToBlocksByParentIdIndex(input);
+                };
             };
-            Block.objects.upsert(block);
-            addBlockToBlocksByParentIdIndex(block);
-        };
-
-        public func updateBlock(input : Block) : () {
-            Block.objects.upsert(input);
-            addBlockToBlocksByParentIdIndex(input);
+            #ok;
         };
 
         public func deleteBlock(uuid : BlocksTypes.PrimaryKey) : () {
@@ -159,25 +161,6 @@ module {
             return finalBlocks;
         };
 
-        public func getBlockWithContent(
-            uuid : BlocksTypes.PrimaryKey,
-            { contentOptions : PaginationOptions },
-        ) : ?{
-            block : Block;
-            contentBlocks : [Block];
-        } {
-            let page : Block = switch (findBlock(uuid)) {
-                case (null) { return null };
-                case (?page) { page };
-            };
-            let blocks = getContentForBlock(uuid, contentOptions);
-
-            return ?{
-                block = page;
-                contentBlocks = List.toArray(blocks);
-            };
-        };
-
         public func getPages() : List.List<Block> {
             var pages = Block.objects.all().filter(
                 func block = block.blockType == #page
@@ -224,11 +207,15 @@ module {
             let content = page.content;
 
             func isRelevantActivity(activity : ActivitiesTypes.Activity) : Bool {
-                return isActivityOnBlock(activity, page);
+                return isActivityOnBlockOrContent(activity, page);
             };
 
             func compareByEndTime(activityA : ActivitiesTypes.Activity, activityB : ActivitiesTypes.Activity) : Order.Order {
-                return Int.compare(activityB.endTime, activityA.endTime);
+                let result = Int.compare(activityB.endTime, activityA.endTime);
+                switch result {
+                    case (#equal) { Int.compare(activityB.id, activityA.id) };
+                    case (result) { result };
+                };
             };
 
             return Activity.objects.filter(isRelevantActivity).sort(compareByEndTime).first();
@@ -244,7 +231,7 @@ module {
             let content = page.content;
 
             func isRelevantActivity(activity : ActivitiesTypes.Activity) : Bool {
-                return isActivityOnBlock(activity, page);
+                return isActivityOnBlockOrContent(activity, page);
             };
 
             return Activity.objects.filter(isRelevantActivity).sort(compareActivitiesByEndTimeDesc).value();
@@ -371,7 +358,7 @@ module {
             return Int.compare(activityB.endTime, activityA.endTime);
         };
 
-        func isActivityOnBlock(
+        func isActivityOnBlockOrContent(
             activity : ActivitiesTypes.Activity,
             block : Block,
         ) : Bool {
