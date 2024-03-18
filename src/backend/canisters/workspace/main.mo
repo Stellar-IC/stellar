@@ -14,10 +14,12 @@ import Time = "mo:base/Time";
 import Timer = "mo:base/Timer";
 import Canistergeek "mo:canistergeek/canistergeek";
 import UUID "mo:uuid/UUID";
+import Source "mo:uuid/async/SourceV4";
 
 import Activity "../../lib/activities/Activity";
 import ActivityBuilder "../../lib/activities/ActivityBuilder";
 import ActivitiesTypes "../../lib/activities/types";
+import BlockBuilder "../../lib/blocks/BlockBuilder";
 import BlockModule "../../lib/blocks/Block";
 import BlocksTypes "../../lib/blocks/types";
 import BlockEvent "../../lib/events/BlockEvent";
@@ -358,12 +360,26 @@ shared ({ caller = initializer }) actor class Workspace(
             case (#blockCreated(blockCreatedEvent)) {
                 logger.info("Processing blockCreated event: " # debug_show UUID.toText(event.uuid));
                 let res = BlockCreatedConsumer.execute(state, { event with data = blockCreatedEvent }, activityId);
-                logger.info("Processed blockCreated event: " # debug_show UUID.toText(event.uuid));
+                switch (res) {
+                    case (#ok(_)) {
+                        logger.info("Processed blockCreated event: " # debug_show UUID.toText(event.uuid));
+                    };
+                    case (#err(error)) {
+                        logger.info("Failed to process blockCreated event: " # debug_show UUID.toText(event.uuid) # "\nError: " # debug_show error);
+                    };
+                };
             };
             case (#blockUpdated(blockUpdatedEvent)) {
                 logger.info("Processing blockUpdated event: " # debug_show UUID.toText(event.uuid));
                 let res = BlockUpdatedConsumer.execute(state, { event with data = blockUpdatedEvent }, activityId);
-                logger.info("Processed blockUpdated event: " # debug_show UUID.toText(event.uuid));
+                switch (res) {
+                    case (#ok(_)) {
+                        logger.info("Processed blockUpdated event: " # debug_show UUID.toText(event.uuid));
+                    };
+                    case (#err(error)) {
+                        logger.info("Failed to process blockUpdated event: " # debug_show UUID.toText(event.uuid) # "\nError: " # debug_show error);
+                    };
+                };
             };
         };
 

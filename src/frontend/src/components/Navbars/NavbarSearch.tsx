@@ -13,13 +13,11 @@ import { notifications } from '@mantine/notifications';
 import { Tree } from '@stellar-ic/lseq-ts';
 import { IconPlus, IconTrash } from '@tabler/icons-react';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { parse } from 'uuid';
 
 import { useWorkspaceContext } from '@/contexts/WorkspaceContext/useWorkspaceContext';
 import { db } from '@/db';
-import { usePagesQuery } from '@/hooks/canisters/workspace/queries/usePagesQuery';
 import { useCreatePageWithRedirect } from '@/hooks/canisters/workspace/updates/useCreatePageWithRedirect';
 import { useDeletePage } from '@/hooks/canisters/workspace/updates/useDeletePage';
 import { useAuthContext } from '@/modules/auth/contexts/AuthContext';
@@ -39,17 +37,11 @@ function PageLinksSection() {
     workspaceId,
   });
 
-  const queryPages = usePagesQuery({ identity, workspaceId });
-
   const pages = useLiveQuery<LocalStorageBlock[], LocalStorageBlock[]>(
     () => db.blocks.filter((block) => 'page' in block.blockType).toArray(),
     [],
     []
   );
-
-  useEffect(() => {
-    queryPages();
-  }, [queryPages]);
 
   const pageLinks = Object.values(pages).map((page) => (
     <Flex justify="space-between" key={page.uuid}>

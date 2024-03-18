@@ -43,7 +43,7 @@ const BlockRendererInner = ({ block }: BlockRendererInnerProps) => {
   if ('quote' in block.blockType) {
     return (
       <div style={{ borderLeft: '2px solid #ddd', paddingLeft: '1rem' }}>
-        <Text>{Tree.toText(block.properties.title)}</Text>;
+        <Text>{Tree.toText(block.properties.title)}</Text>
       </div>
     );
   }

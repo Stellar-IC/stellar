@@ -1,10 +1,11 @@
 import { Principal } from '@dfinity/principal';
 import { Tree } from '@stellar-ic/lseq-ts';
-import { PropsWithChildren, useCallback } from 'react';
+import { PropsWithChildren, useCallback, useEffect } from 'react';
 import { parse, stringify, v4 } from 'uuid';
 
 import { usePages } from '@/contexts/PagesContext/usePages';
 import { db } from '@/db';
+import { usePagesQuery } from '@/hooks/canisters/workspace/queries/usePagesQuery';
 import { useAuthContext } from '@/modules/auth/contexts/AuthContext';
 import { Block } from '@/types';
 
@@ -35,11 +36,18 @@ function buildEvent<DataT>(data: DataT, userId: Principal) {
 export function PagesContextProvider({ children }: PropsWithChildren<{}>) {
   const { identity, userId } = useAuthContext();
   const { workspaceId } = useWorkspaceContext();
-
+  const queryPages = usePagesQuery({
+    identity,
+    workspaceId,
+  });
   const { blocks: blocksContext, handleBlockEvent } = usePages({
     identity,
     workspaceId,
   });
+
+  useEffect(() => {
+    queryPages();
+  }, [queryPages]);
 
   const addBlock = useCallback(
     async (
@@ -64,7 +72,7 @@ export function PagesContextProvider({ children }: PropsWithChildren<{}>) {
             index: BigInt(index),
           },
         },
-        timestamp: BigInt(Date.now()),
+        timestamp: BigInt(Date.now()) * BigInt(1_000_000), // convert from nano to milliseconds
       });
 
       if (!block) {
@@ -204,7 +212,6 @@ export function PagesContextProvider({ children }: PropsWithChildren<{}>) {
   return (
     <PagesContext.Provider
       value={{
-        blocks: blocksContext,
         addBlock,
         removeBlock,
         updateBlock,

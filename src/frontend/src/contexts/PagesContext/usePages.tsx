@@ -1,7 +1,7 @@
 import { Identity } from '@dfinity/agent';
 import type { Principal } from '@dfinity/principal';
 import { Tree } from '@stellar-ic/lseq-ts';
-import { useCallback, useEffect } from 'react';
+import { useCallback } from 'react';
 import { parse, stringify, v4 } from 'uuid';
 
 import { db } from '@/db';
@@ -66,14 +66,6 @@ export const usePages = (props: {
 
   const queryBlock = useBlockQuery({ identity, workspaceId });
 
-  const updateLocalPage = useCallback(
-    (externalId: string, updatedData: Block) => {
-      const serializedData = blockSerializers.toLocalStorage(updatedData);
-      db.blocks.put(serializedData, externalId);
-    },
-    []
-  );
-
   const updateLocalBlock = useCallback(
     (externalId: string, updatedData: Block) => {
       const serializedData = blockSerializers.toLocalStorage(updatedData);
@@ -81,24 +73,6 @@ export const usePages = (props: {
     },
     []
   );
-
-  useEffect(() => {
-    actor
-      .pages({
-        order: [],
-        cursor: [],
-        limit: [],
-      })
-      .then(async (res) => {
-        // Save all blocks to data store
-        await db.blocks.bulkPut(
-          res.recordMap.blocks.map((record) => {
-            const block = blockSerializers.fromShareable(record[1]);
-            return blockSerializers.toLocalStorage(block);
-          })
-        );
-      });
-  }, [actor, updateLocalBlock, updateLocalPage]);
 
   const { storeEventLocal } = usePageEvents({
     storageAdapter: {
@@ -156,7 +130,7 @@ export const usePages = (props: {
             },
           },
         },
-        timestamp: BigInt(Date.now()),
+        timestamp: BigInt(Date.now()) * BigInt(1_000_000), // convert from nano to milliseconds
       };
       sendUpdate([{ transaction: [contentUpdatedEvent] }]);
 

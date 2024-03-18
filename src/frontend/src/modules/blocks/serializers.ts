@@ -36,7 +36,7 @@ function nodefromShareable(shareable: ShareableNode): Node.Node {
   return node;
 }
 
-function treefromShareable(tree: ShareableBlockText): Tree.Tree {
+export function treefromShareable(tree: ShareableBlockText): Tree.Tree {
   return new Tree.Tree({
     allocationStrategies: new Map(),
     boundary: tree.boundary,

@@ -1,17 +1,14 @@
 import { Tree } from '@stellar-ic/lseq-ts';
-import { useLiveQuery } from 'dexie-react-hooks';
 import { useCallback } from 'react';
-import { parse } from 'uuid';
 
-import { usePagesContext } from '@/contexts/PagesContext/usePagesContext';
+import { useWorkspaceContext } from '@/contexts/WorkspaceContext/useWorkspaceContext';
 import { db } from '@/db';
+import { useSaveEvents } from '@/hooks/canisters/workspace/updates/useSaveEvents';
+import { useAuthContext } from '@/modules/auth/contexts/AuthContext';
+import { focusBlock } from '@/modules/editor/utils';
 import { ExternalId } from '@/types';
 
-import {
-  insertBlockContent,
-  removeBlockContent,
-  updateBlockParent,
-} from './utils';
+import { buildEvent, EditorController } from './utils';
 
 type UseTabHandler = {
   blockIndex: number;
@@ -24,113 +21,52 @@ export const useTabHandler = ({
   blockExternalId,
   parentBlockExternalId,
 }: UseTabHandler) => {
-  const {
-    blocks: { updateLocal: updateLocalBlock },
-    updateBlock,
-  } = usePagesContext();
+  const { workspaceId } = useWorkspaceContext();
+  const { identity, userId } = useAuthContext();
+  const [saveEvents] = useSaveEvents({
+    identity,
+    workspaceId,
+  });
 
-  const parentBlock = useLiveQuery(() =>
-    parentBlockExternalId ? db.blocks.get(parentBlockExternalId) : undefined
-  );
-
-  const previousBlock = useLiveQuery(() => {
-    if (!parentBlock) return undefined;
-
-    const previousBlockExternalId = Tree.getNodeAtPosition(
-      parentBlock.content,
-      blockIndex - 1
-    )?.value;
-
-    if (!previousBlockExternalId) return undefined;
-
-    return db.blocks.get(previousBlockExternalId);
-  }, [blockIndex, parentBlock]);
-
-  const blockToMove = useLiveQuery(
-    () => db.blocks.get(blockExternalId),
-    [blockExternalId]
-  );
-
-  const doTabOperation = useCallback(() => {
+  const doTabOperation = useCallback(async () => {
     if (blockIndex === 0) {
       return false;
     }
+
+    const blockToMove = await db.blocks.get(blockExternalId);
+    const parentBlock = parentBlockExternalId
+      ? await db.blocks.get(parentBlockExternalId)
+      : null;
+    const previousBlockExternalId = parentBlock
+      ? Tree.getNodeAtPosition(parentBlock.content, blockIndex - 1)?.value
+      : null;
+    const previousBlock = previousBlockExternalId
+      ? await db.blocks.get(previousBlockExternalId)
+      : null;
+
     if (!parentBlock) return false;
     if (!previousBlock) return false;
     if (!blockToMove) return false;
 
-    const previousBlockExternalId = previousBlock.uuid;
-
-    // Inserting at the end of the previous block's content
-    const newBlockIndex = Tree.size(previousBlock.content);
-
-    // Remove the block from its current position
-    removeBlockContent(parentBlock, [blockIndex], {
-      onUpdateLocal: (updatedBlock) => {
-        updateLocalBlock(updatedBlock.uuid, updatedBlock);
-      },
-      onUpdateRemote: (updatedBlock, events) => {
-        const blockExternalId = parse(updatedBlock.uuid);
-        updateBlock(blockExternalId, {
-          updateContent: {
-            data: {
-              blockExternalId,
-              transaction: events,
-            },
-          },
-        });
-      },
+    const controller = new EditorController({
+      blockIndex,
+      block: blockToMove,
+      parentBlock,
     });
 
-    // Add the block to the new position
-    insertBlockContent(
-      previousBlock,
-      [{ index: newBlockIndex, item: blockToMove.uuid }],
-      {
-        onUpdateLocal: (updatedBlock) => {
-          updateLocalBlock(updatedBlock.uuid, updatedBlock);
-        },
-        onUpdateRemote: (updatedBlock, events) => {
-          const blockExternalId = parse(updatedBlock.uuid);
-          updateBlock(blockExternalId, {
-            updateContent: {
-              data: {
-                blockExternalId,
-                transaction: events,
-              },
-            },
-          });
-        },
-      }
-    );
+    await controller.moveBlockToPreviousBlock();
 
-    // Update the block's parent on chain
-    updateBlockParent(blockToMove, previousBlockExternalId, {
-      onUpdateLocal: (updatedBlock) => {
-        updateLocalBlock(updatedBlock.uuid, updatedBlock);
-      },
-      onUpdateRemote: (updatedBlock) => {
-        const blockExternalId = parse(updatedBlock.uuid);
-        updateBlock(blockExternalId, {
-          updateParent: {
-            data: {
-              blockExternalId,
-              parentBlockExternalId: parse(previousBlockExternalId),
-            },
-          },
-        });
-      },
+    const { events, updatedBlocks } = controller;
+
+    await db.blocks.bulkPut(Object.values(updatedBlocks));
+    await saveEvents({
+      transaction: events.map((x) => buildEvent(x, userId)),
     });
+
+    focusBlock(blockToMove.uuid);
 
     return true;
-  }, [
-    blockIndex,
-    parentBlock,
-    blockToMove,
-    previousBlock,
-    updateBlock,
-    updateLocalBlock,
-  ]);
+  }, [blockExternalId, blockIndex, parentBlockExternalId, saveEvents, userId]);
 
   return doTabOperation;
 };

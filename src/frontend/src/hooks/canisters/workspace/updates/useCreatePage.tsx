@@ -1,15 +1,19 @@
 import { Identity } from '@dfinity/agent';
+import { Tree } from '@stellar-ic/lseq-ts';
 import { useCallback } from 'react';
-import { v4 as uuidv4, parse as uuidParse } from 'uuid';
+import { v4 as uuidv4, parse as uuidParse, parse } from 'uuid';
 
+import { db } from '@/db';
 import { useWorkspaceActor } from '@/hooks/canisters/workspace/useWorkspaceActor';
 import { useUpdate } from '@/hooks/useUpdate';
+import { serializeBlock } from '@/modules/blocks/serializers';
 import { CanisterId } from '@/types';
 
 import {
   CreatePageUpdateInput,
   CreatePageUpdateOutput,
 } from '../../../../../../declarations/workspace/workspace.did';
+import { useBlockQuery } from '../queries/useBlockQuery';
 
 export const useCreatePage = (options: {
   identity: Identity;
@@ -20,21 +24,47 @@ export const useCreatePage = (options: {
   ) => Promise<CreatePageUpdateOutput>,
   { data: CreatePageUpdateOutput | null; isLoading: boolean }
 ] => {
-  const { actor } = useWorkspaceActor(options);
+  const { identity, workspaceId } = options;
+  const { actor } = useWorkspaceActor({ identity, workspaceId });
   const [_createPage, ...other] = useUpdate(
     options.workspaceId,
     actor.createPage
   );
+  const queryBlock = useBlockQuery({ identity, workspaceId });
+
   const createPage = useCallback(
-    (input: Omit<CreatePageUpdateInput, 'uuid'>) => {
+    async (input: Omit<CreatePageUpdateInput, 'uuid'>) => {
       const uuid = uuidv4();
-      const page = { ...input, uuid: uuidParse(uuid) };
+      const pageData = { ...input, uuid: uuidParse(uuid) };
+      const result = await _createPage([pageData]);
 
-      // TODO: Add initial block creation here
+      if ('err' in result) {
+        throw new Error(JSON.stringify(result.err));
+      }
 
-      return _createPage([page]);
+      const page = serializeBlock(result.ok);
+
+      if (!page.content) {
+        throw new Error('Page content is missing');
+      }
+
+      const initialBlockId = Tree.toArray(page.content)[0];
+
+      if (!initialBlockId) {
+        throw new Error('Initial block is missing');
+      }
+
+      const initialBlock = await queryBlock(parse(initialBlockId));
+
+      if (!initialBlock) {
+        throw new Error('Initial block is missing');
+      }
+
+      await db.blocks.bulkPut([page, initialBlock]);
+
+      return result;
     },
-    [_createPage]
+    [_createPage, queryBlock]
   );
 
   return [createPage, ...other];

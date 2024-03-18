@@ -290,7 +290,7 @@ export const _BlockRenderer = ({
   });
 
   return (
-    <Box className="FocusableBlock" data-id={block.uuid} mb="0.25rem">
+    <Box className="FocusableBlock" data-id={block.uuid}>
       <BlockWithActions
         key={block.uuid}
         blockExternalId={externalId}

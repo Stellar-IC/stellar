@@ -3,13 +3,12 @@ import { toText } from '@stellar-ic/lseq-ts/Tree';
 import { DEFAULT_BOUNDARY } from '@stellar-ic/lseq-ts/constants';
 import { base } from '@stellar-ic/lseq-ts/utils';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { useCallback, useEffect } from 'react';
+import { useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { stringify } from 'uuid';
 
 import { useWorkspaceContext } from '@/contexts/WorkspaceContext/useWorkspaceContext';
 import { db } from '@/db';
-import { usePagesQuery } from '@/hooks/canisters/workspace/queries/usePagesQuery';
 import { useCreatePage } from '@/hooks/canisters/workspace/updates/useCreatePage';
 import { useAuthContext } from '@/modules/auth/contexts/AuthContext';
 import { LocalStorageBlock } from '@/types';
@@ -23,17 +22,12 @@ function WorkspaceContent() {
     identity,
     workspaceId,
   });
-  const pagesQuery = usePagesQuery({ identity, workspaceId });
 
   const pages = useLiveQuery<LocalStorageBlock[], LocalStorageBlock[]>(
     () => db.blocks.filter((block) => 'page' in block.blockType).toArray(),
     [],
     []
   );
-
-  useEffect(() => {
-    pagesQuery();
-  }, [pagesQuery]);
 
   const createPageAndRedirect = useCallback(() => {
     createPage({

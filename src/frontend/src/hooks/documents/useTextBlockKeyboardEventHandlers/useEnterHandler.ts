@@ -1,8 +1,11 @@
 import { Tree } from '@stellar-ic/lseq-ts';
 import { parse } from 'uuid';
 
+import { usePages } from '@/contexts/PagesContext/usePages';
 import { usePagesContext } from '@/contexts/PagesContext/usePagesContext';
+import { useWorkspaceContext } from '@/contexts/WorkspaceContext/useWorkspaceContext';
 import { db } from '@/db';
+import { useAuthContext } from '@/modules/auth/contexts/AuthContext';
 import { focusBlock } from '@/modules/editor/utils';
 import { ExternalId } from '@/types';
 
@@ -26,11 +29,16 @@ export function useEnterHandler({
   blockExternalId,
   parentBlockExternalId,
 }: UseEnterHandlerProps) {
+  const { identity } = useAuthContext();
+  const { workspaceId } = useWorkspaceContext();
   const {
-    addBlock,
-    updateBlock,
     blocks: { updateLocal: updateLocalBlock },
-  } = usePagesContext();
+  } = usePages({
+    identity,
+    workspaceId,
+  });
+  const { addBlock, updateBlock } = usePagesContext();
+
   const onEnterPressed = async () => {
     if (!blockExternalId) return;
     if (!parentBlockExternalId) return;

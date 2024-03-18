@@ -1,5 +1,6 @@
 import Array "mo:base/Array";
 import Debug "mo:base/Debug";
+import Deque "mo:base/Deque";
 import Error "mo:base/Error";
 import Int "mo:base/Int";
 import Iter "mo:base/Iter";
@@ -102,9 +103,7 @@ module {
 
             switch block {
                 case (?block) { return block };
-                case (null) {
-                    Debug.trap("Block not found: " # uuid);
-                };
+                case (null) { Debug.trap("Block not found: " # uuid) };
             };
         };
 
@@ -365,9 +364,57 @@ module {
             let activityBlock = UUID.toText(activity.blockExternalId);
             let inputBlock = UUID.toText(block.uuid);
 
+            func buildContentBlockArray(
+                block : Block
+            ) : [Text] {
+                var currentBlock = block;
+                var stack = Deque.empty<Block>();
+                var result = List.fromArray<Text>([]);
+
+                stack := Deque.pushFront<Block>(stack, currentBlock);
+
+                label iterateStack while (Deque.isEmpty(stack) == false) {
+                    currentBlock := switch (Deque.peekFront(stack)) {
+                        case (null) { continue iterateStack };
+                        case (?block) { block };
+                    };
+
+                    if (
+                        List.find(
+                            result,
+                            func(blockId : Text) : Bool {
+                                blockId == UUID.toText(currentBlock.uuid);
+                            },
+                        ) != null
+                    ) {
+                        let popResult = switch (Deque.popFront(stack)) {
+                            case (null) { continue iterateStack };
+                            case (?popResult) { popResult };
+                        };
+                        stack := popResult.1;
+
+                        continue iterateStack;
+                    };
+
+                    result := List.append(result, List.fromArray<Text>([UUID.toText(currentBlock.uuid)]));
+
+                    label iterateContent for (blockId in Tree.toArray(currentBlock.content).vals()) {
+                        let block = switch (Block.objects.get(blockId)) {
+                            case (null) { continue iterateContent };
+                            case (?block) { block };
+                        };
+                        stack := Deque.pushFront<Block>(stack, block);
+                    };
+                };
+
+                return List.toArray(result);
+            };
+
+            let contentBlocks = buildContentBlockArray(block);
+
             return activityBlock == inputBlock or Array.indexOf<Text>(
                 activityBlock,
-                Tree.toArray(block.content),
+                contentBlocks,
                 Text.equal,
             ) != null;
         };

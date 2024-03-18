@@ -14,9 +14,6 @@ import {
 
 // eslint-disable-next-line no-spaced-func
 export const PagesContext = createContext<{
-  blocks: {
-    updateLocal: (externalId: string, updatedData: Block) => void;
-  };
   addBlock: (
     pageExternalId: UUID,
     blockType: BlockType,

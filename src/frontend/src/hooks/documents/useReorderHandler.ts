@@ -3,8 +3,11 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { useCallback } from 'react';
 import { parse } from 'uuid';
 
+import { usePages } from '@/contexts/PagesContext/usePages';
 import { usePagesContext } from '@/contexts/PagesContext/usePagesContext';
+import { useWorkspaceContext } from '@/contexts/WorkspaceContext/useWorkspaceContext';
 import { db } from '@/db';
+import { useAuthContext } from '@/modules/auth/contexts/AuthContext';
 import { ExternalId } from '@/types';
 
 type UseReorderHandler = {
@@ -14,10 +17,15 @@ type UseReorderHandler = {
 export const useReorderHandler = ({
   parentBlockExternalId,
 }: UseReorderHandler) => {
+  const { identity } = useAuthContext();
+  const { workspaceId } = useWorkspaceContext();
   const {
     blocks: { updateLocal: updateLocalBlock },
-    updateBlock,
-  } = usePagesContext();
+  } = usePages({
+    identity,
+    workspaceId,
+  });
+  const { updateBlock } = usePagesContext();
 
   const parentBlock = useLiveQuery(() => {
     if (!parentBlockExternalId) {

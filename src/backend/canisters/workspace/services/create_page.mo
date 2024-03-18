@@ -6,6 +6,7 @@ import Result "mo:base/Result";
 import UUID "mo:uuid/UUID";
 import Source "mo:uuid/async/SourceV4";
 
+import BlockBuilder "../../../lib/blocks/BlockBuilder";
 import BlocksTypes "../../../lib/blocks/types";
 import Tree "../../../utils/data/lseq/Tree";
 
@@ -32,21 +33,13 @@ module {
             return #err(#anonymousUser);
         };
 
-        let contentBlockUuid = await Source.Source().new();
-        let contentBlock : UnsavedBlock = {
-            var blockType = #paragraph;
-            uuid = contentBlockUuid;
-            content = Tree.Tree(null);
-            properties = {
-                title = ?Tree.Tree(null);
-                var checked = ?false;
-            };
-            var parent = ?input.uuid;
-        };
-
+        let initialBlockUuid = await Source.Source().new();
+        let initialBlock : UnsavedBlock = BlockBuilder.BlockBuilder({
+            uuid = initialBlockUuid;
+        }).build();
         let contentForNewPage = Tree.Tree(null);
 
-        ignore Tree.insertCharacterAtStart(contentForNewPage, UUID.toText(contentBlockUuid));
+        ignore Tree.insertCharacterAtStart(contentForNewPage, UUID.toText(initialBlockUuid));
 
         let pageToCreate : UnsavedBlock = {
             var blockType = #page;
@@ -75,7 +68,7 @@ module {
         };
 
         state.data.addBlock(pageToCreate);
-        state.data.addBlock(contentBlock);
+        state.data.addBlock(initialBlock);
 
         let shareableTitle : ShareableBlockText = switch (pageToCreate.properties.title) {
             case (null) {

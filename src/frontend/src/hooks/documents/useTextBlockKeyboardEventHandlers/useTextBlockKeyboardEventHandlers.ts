@@ -1,11 +1,23 @@
+import { Tree } from '@stellar-ic/lseq-ts';
+import { useLiveQuery } from 'dexie-react-hooks';
 import { KeyboardEvent } from 'react';
-import { parse } from 'uuid';
+import { parse, v4 } from 'uuid';
 
 import { TextBlockBlockType } from '@/components/Editor/TextBlock/types';
+import { usePages } from '@/contexts/PagesContext/usePages';
 import { usePagesContext } from '@/contexts/PagesContext/usePagesContext';
+import { useWorkspaceContext } from '@/contexts/WorkspaceContext/useWorkspaceContext';
+import { db } from '@/db';
+import { useWorkspaceActor } from '@/hooks/canisters/workspace/useWorkspaceActor';
+import { useUpdate } from '@/hooks/useUpdate';
+import { useAuthContext } from '@/modules/auth/contexts/AuthContext';
 import { ExternalId } from '@/types';
 
-import { useTextBlockEventHandlers } from '../useTextBlockEventHandlers';
+import {
+  SaveEventTransactionUpdateInput,
+  SaveEventTransactionUpdateOutput,
+  TreeEvent,
+} from '../../../../../declarations/workspace/workspace.did';
 
 import { useArrowDownHandler } from './useArrowDownHandler';
 import { useArrowUpHandler } from './useArrowUpHandler';
@@ -66,6 +78,34 @@ function setCursorAtEnd(target: HTMLSpanElement) {
   }
 }
 
+enum EditorAction {
+  ArrowDown = 'ArrowDown',
+  ArrowUp = 'ArrowUp',
+  Backspace = 'Backspace',
+  Character = 'Character',
+  Enter = 'Enter',
+  ShiftTab = 'ShiftTab',
+  Tab = 'Tab',
+}
+
+function parseKeydownEvent(e: KeyboardEvent<HTMLSpanElement>): EditorAction {
+  const { key, shiftKey, metaKey, ctrlKey } = e;
+
+  if (key === 'Enter' && !shiftKey) return EditorAction.Enter;
+  if (key === 'Tab') {
+    if (shiftKey) return EditorAction.ShiftTab;
+    return EditorAction.Tab;
+  }
+  if (key === 'Backspace') return EditorAction.Backspace;
+  if (key === 'ArrowDown') return EditorAction.ArrowDown;
+  if (key === 'ArrowUp') return EditorAction.ArrowUp;
+  if (key.match(/^[\w\W]$/g) && !metaKey && !ctrlKey) {
+    return EditorAction.Character;
+  }
+
+  throw new Error('Unhandled keydown event');
+}
+
 export const useTextBlockKeyboardEventHandlers = ({
   blockIndex,
   blockType,
@@ -75,7 +115,22 @@ export const useTextBlockKeyboardEventHandlers = ({
   showPlaceholder,
   hidePlaceholder,
 }: UseTextBlockKeyboardEventHandlersProps) => {
+  const { workspaceId } = useWorkspaceContext();
+  const { identity, userId } = useAuthContext();
   const { removeBlock } = usePagesContext();
+  const {
+    blocks: { updateLocal: updateLocalBlock },
+  } = usePages({ identity, workspaceId });
+  const block = useLiveQuery(
+    () => db.blocks.get(blockExternalId),
+    [blockExternalId]
+  );
+  const { actor } = useWorkspaceActor({ identity, workspaceId });
+
+  const [sendUpdate] = useUpdate<
+    [SaveEventTransactionUpdateInput],
+    SaveEventTransactionUpdateOutput
+  >(workspaceId, actor.saveEvents);
 
   const onRemoveBlock = () => {
     if (!parentBlockExternalId) return;
@@ -85,38 +140,126 @@ export const useTextBlockKeyboardEventHandlers = ({
     removeBlock(parse(parentBlockExternalId), blockIndex + 1);
   };
 
-  const { onCharacterInserted, onCharactersRemoved, onCharactersInserted } =
-    useTextBlockEventHandlers({
-      blockExternalId,
+  const onSuccess = (title: Tree.Tree, events: TreeEvent[]) => {
+    if (!block) throw new Error('Block not found');
+
+    sendUpdate([
+      {
+        transaction: [
+          {
+            user: userId,
+            uuid: parse(v4()),
+            data: {
+              blockUpdated: {
+                updatePropertyTitle: {
+                  blockExternalId: parse(block.uuid),
+                  transaction: events,
+                },
+              },
+            },
+            timestamp: BigInt(Date.now()) * BigInt(1_000_000),
+          },
+        ],
+      },
+    ]);
+
+    updateLocalBlock(block.uuid, {
+      ...block,
+      properties: {
+        ...block.properties,
+        title,
+      },
     });
+  };
+
+  const onCharacterInserted = (cursorPosition: number, character: string) => {
+    if (!block) throw new Error('Block not found');
+
+    const events = Tree.insertCharacter(
+      block.properties.title,
+      cursorPosition,
+      character
+    );
+    onSuccess(block.properties.title, events);
+  };
+
+  const onCharactersInserted = (
+    characters: string[],
+    cursorPosition: number
+  ) => {
+    if (!block) throw new Error('Block not found');
+
+    const allEvents: TreeEvent[] = [];
+
+    characters.forEach((character, i) => {
+      const events = Tree.insertCharacter(
+        block.properties.title,
+        cursorPosition + i,
+        character
+      );
+      allEvents.push(...events);
+    });
+
+    onSuccess(block.properties.title, allEvents);
+  };
+
+  const onCharacterRemoved = (cursorPosition: number) => {
+    if (!block) throw new Error('Block not found');
+
+    const event = Tree.removeCharacter(
+      block.properties.title,
+      cursorPosition - 1
+    );
+    if (event) onSuccess(block.properties.title, [event]);
+  };
+
+  const onCharactersRemoved = (
+    startPosition: number,
+    endPosition?: number
+  ): void => {
+    if (!block) throw new Error('Block not found');
+
+    if (endPosition === undefined) return onCharacterRemoved(startPosition);
+
+    // Build index array in descending order so that we don't have to worry about
+    // the index changing as we remove characters
+    const characterIndexes = Array.from(
+      { length: endPosition - startPosition },
+      (_, i) => endPosition - i
+    );
+    const allEvents: TreeEvent[] = [];
+
+    characterIndexes.forEach((index) => {
+      const event = Tree.removeCharacter(block.properties.title, index - 1);
+      if (event) allEvents.push(event);
+    });
+
+    onSuccess(block.properties.title, allEvents);
+
+    return undefined;
+  };
 
   const handleTab = useTabHandler({
     blockIndex,
     blockExternalId,
     parentBlockExternalId,
   });
-
   const handleShiftTab = useShiftTabHandler({
     blockIndex,
     blockExternalId,
     parentBlockExternalId,
     parentBlockIndex,
   });
-
   const handleArrowDown = useArrowDownHandler();
-
   const handleArrowUp = useArrowUpHandler();
-
   const handleBackspace = useBackspaceHandler({
     onRemove: onCharactersRemoved,
     showPlaceholder,
   });
-
   const handleCut = useCutHandler({
     onRemove: onCharactersRemoved,
     showPlaceholder,
   });
-
   const handleEnter = useEnterHandler({
     blockExternalId,
     blockIndex,
@@ -130,41 +273,40 @@ export const useTextBlockKeyboardEventHandlers = ({
   });
 
   const onKeyDown = (e: KeyboardEvent<HTMLSpanElement>) => {
-    const { key, shiftKey, metaKey, ctrlKey } = e;
+    const { key } = e;
+    let editorAction: EditorAction;
 
-    if (key === 'Enter' && !shiftKey) {
-      e.preventDefault();
-
-      return handleEnter();
+    try {
+      editorAction = parseKeydownEvent(e);
+    } catch (error) {
+      return false;
     }
 
-    if (key === 'Tab') {
-      e.preventDefault();
+    const editorActionHandlers = {
+      [EditorAction.Tab]: () => {
+        e.preventDefault();
+        handleTab();
+      },
+      [EditorAction.ShiftTab]: () => {
+        e.preventDefault();
+        handleShiftTab();
+      },
+      [EditorAction.ArrowDown]: () => handleArrowDown(),
+      [EditorAction.ArrowUp]: () => handleArrowUp(),
+      [EditorAction.Backspace]: () =>
+        handleBackspace(e, {
+          hasParentBlock: Boolean(parentBlockExternalId),
+          onRemoveBlock,
+        }),
+      [EditorAction.Enter]: () => {
+        e.preventDefault();
+        handleEnter();
+      },
+      [EditorAction.Character]: () => handleWordCharacter(key, e.currentTarget),
+    };
 
-      if (shiftKey) {
-        return handleShiftTab();
-      }
-
-      return handleTab();
-    }
-
-    if (key === 'Backspace') {
-      return handleBackspace(e, {
-        hasParentBlock: Boolean(parentBlockExternalId),
-        onRemoveBlock,
-      });
-    }
-
-    if (key === 'ArrowDown') {
-      return handleArrowDown();
-    }
-
-    if (key === 'ArrowUp') {
-      return handleArrowUp();
-    }
-
-    if (key.match(/^[\w\W]$/g) && !metaKey && !ctrlKey) {
-      return handleWordCharacter(key, e.currentTarget);
+    if (editorActionHandlers[editorAction]) {
+      return editorActionHandlers[editorAction]();
     }
 
     return false;

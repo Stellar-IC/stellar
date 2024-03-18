@@ -34,8 +34,8 @@ module BlockUpdatedConsumer {
     type Block = BlocksTypes.Block;
     type ShareableBlock = BlocksTypes.ShareableBlock;
 
-    func _blockByUuid(state : State.State, uuid : UUID.UUID) : Block {
-        state.data.getBlock(UUID.toText(uuid));
+    func _blockByUuid(state : State.State, uuid : UUID.UUID) : ?Block {
+        state.data.findBlock(UUID.toText(uuid));
     };
 
     public func execute(
@@ -45,27 +45,39 @@ module BlockUpdatedConsumer {
     ) : Result.Result<ShareableBlock, { #blockNotFound; #insufficientCycles; #inputTooLong; #invalidBlockType; #failedToUpdate; #anonymousUser }> {
         switch (event.data) {
             case (#updateParent(data)) {
-                let blockBeforeEdit = _blockByUuid(state, data.blockExternalId);
+                let blockBeforeEdit = switch (_blockByUuid(state, data.blockExternalId)) {
+                    case (?block) { block };
+                    case (null) { return #err(#blockNotFound) };
+                };
                 let clonedBlockBeforeEdit = BlocksUtils.clone(blockBeforeEdit);
-                let result = updateParent(state, event, data);
-                let blockAfterEdit = _blockByUuid(state, data.blockExternalId);
+                let result = updateParent(state, event, data, blockBeforeEdit);
+                let blockAfterEdit = switch (_blockByUuid(state, data.blockExternalId)) {
+                    case (?block) { block };
+                    case (null) { return #err(#blockNotFound) };
+                };
                 let clonedBlockAfterEdit = BlocksUtils.clone(blockAfterEdit);
-                let firstAncestorPage = state.data.getFirstAncestorPage(blockBeforeEdit);
-                let activity = createOrExtendActivityForEvent(
-                    state,
-                    firstAncestorPage,
-                    event,
-                    clonedBlockBeforeEdit,
-                    clonedBlockAfterEdit,
-                    idForNewActivity,
-                );
+                // let firstAncestorPage = state.data.getFirstAncestorPage(blockBeforeEdit);
+                // let activity = createOrExtendActivityForEvent(
+                //     state,
+                //     firstAncestorPage,
+                //     event,
+                //     clonedBlockBeforeEdit,
+                //     clonedBlockAfterEdit,
+                //     idForNewActivity,
+                // );
                 #ok(BlockModule.toShareable(clonedBlockAfterEdit));
             };
             case (#updateBlockType(data)) {
-                let blockBeforeEdit = _blockByUuid(state, data.blockExternalId);
+                let blockBeforeEdit = switch (_blockByUuid(state, data.blockExternalId)) {
+                    case (?block) { block };
+                    case (null) { return #err(#blockNotFound) };
+                };
                 let clonedBlockBeforeEdit = BlocksUtils.clone(blockBeforeEdit);
-                let result = updateBlockType(state, event, data);
-                let blockAfterEdit = _blockByUuid(state, data.blockExternalId);
+                let result = updateBlockType(state, event, data, blockBeforeEdit);
+                let blockAfterEdit = switch (_blockByUuid(state, data.blockExternalId)) {
+                    case (?block) { block };
+                    case (null) { return #err(#blockNotFound) };
+                };
                 let clonedBlockAfterEdit = BlocksUtils.clone(blockAfterEdit);
                 let firstAncestorPage = state.data.getFirstAncestorPage(blockBeforeEdit);
                 let activity = createOrExtendActivityForEvent(
@@ -79,10 +91,16 @@ module BlockUpdatedConsumer {
                 #ok(BlockModule.toShareable(clonedBlockAfterEdit));
             };
             case (#updateContent(data)) {
-                // let blockBeforeEdit = _blockByUuid(state, data.blockExternalId);
+                let blockBeforeEdit = switch (_blockByUuid(state, data.blockExternalId)) {
+                    case (?block) { block };
+                    case (null) { return #err(#blockNotFound) };
+                };
                 // let clonedBlockBeforeEdit = BlocksUtils.clone(blockBeforeEdit);
-                let result = updateContent(state, event, data);
-                let blockAfterEdit = _blockByUuid(state, data.blockExternalId);
+                let result = updateContent(state, event, data, blockBeforeEdit);
+                let blockAfterEdit = switch (_blockByUuid(state, data.blockExternalId)) {
+                    case (?block) { block };
+                    case (null) { return #err(#blockNotFound) };
+                };
                 let clonedBlockAfterEdit = BlocksUtils.clone(blockAfterEdit);
                 // let firstAncestorPage = state.data.getFirstAncestorPage(blockBeforeEdit);
                 // let activity = createOrExtendActivityForEvent(
@@ -96,10 +114,16 @@ module BlockUpdatedConsumer {
                 #ok(BlockModule.toShareable(clonedBlockAfterEdit));
             };
             case (#updatePropertyTitle(data)) {
-                let blockBeforeEdit = _blockByUuid(state, data.blockExternalId);
+                let blockBeforeEdit = switch (_blockByUuid(state, data.blockExternalId)) {
+                    case (?block) { block };
+                    case (null) { return #err(#blockNotFound) };
+                };
                 let clonedBlockBeforeEdit = BlocksUtils.clone(blockBeforeEdit);
-                let result = updateTitleProperty(state, event, data);
-                let blockAfterEdit = _blockByUuid(state, data.blockExternalId);
+                let result = updateTitleProperty(state, event, data, blockBeforeEdit);
+                let blockAfterEdit = switch (_blockByUuid(state, data.blockExternalId)) {
+                    case (?block) { block };
+                    case (null) { return #err(#blockNotFound) };
+                };
                 let clonedBlockAfterEdit = BlocksUtils.clone(blockAfterEdit);
                 let firstAncestorPage = state.data.getFirstAncestorPage(blockBeforeEdit);
                 let activity = createOrExtendActivityForEvent(
@@ -113,10 +137,16 @@ module BlockUpdatedConsumer {
                 #ok(BlockModule.toShareable(clonedBlockAfterEdit));
             };
             case (#updatePropertyChecked(data)) {
-                let blockBeforeEdit = _blockByUuid(state, data.blockExternalId);
+                let blockBeforeEdit = switch (_blockByUuid(state, data.blockExternalId)) {
+                    case (?block) { block };
+                    case (null) { return #err(#blockNotFound) };
+                };
                 let clonedBlockBeforeEdit = BlocksUtils.clone(blockBeforeEdit);
-                let result = updateCheckedProperty(state, event, data);
-                let blockAfterEdit = _blockByUuid(state, data.blockExternalId);
+                let result = updateCheckedProperty(state, event, data, blockBeforeEdit);
+                let blockAfterEdit = switch (_blockByUuid(state, data.blockExternalId)) {
+                    case (?block) { block };
+                    case (null) { return #err(#blockNotFound) };
+                };
                 let clonedBlockAfterEdit = BlocksUtils.clone(blockAfterEdit);
                 let firstAncestorPage = state.data.getFirstAncestorPage(blockBeforeEdit);
                 let activity = createOrExtendActivityForEvent(
@@ -210,25 +240,25 @@ module BlockUpdatedConsumer {
         state : State.State,
         event : BlocksTypes.BlockUpdatedEvent,
         data : BlocksTypes.BlockBlockTypeUpdatedEventData,
+        block : Block,
     ) : Block {
         let blockExternalId = data.blockExternalId;
-        let currentBlock = _blockByUuid(state, blockExternalId);
-        currentBlock.blockType := data.blockType;
-        return currentBlock;
+        block.blockType := data.blockType;
+        return block;
     };
 
     func updateContent(
         state : State.State,
         event : BlocksTypes.BlockUpdatedEvent,
         data : BlocksTypes.BlockContentUpdatedEventData,
+        block : Block,
     ) : Result.Result<Block, { #failedToUpdate }> {
         let blockExternalId = data.blockExternalId;
-        let currentBlock = _blockByUuid(state, blockExternalId);
 
         for (event in Array.vals(data.transaction)) {
             switch (event) {
                 case (#insert(event)) {
-                    let result = currentBlock.content.insert({
+                    let result = block.content.insert({
                         identifier = event.position;
                         value = event.value;
                     });
@@ -240,46 +270,46 @@ module BlockUpdatedConsumer {
                     };
                 };
                 case (#delete(event)) {
-                    currentBlock.content.deleteNode(
+                    block.content.deleteNode(
                         event.position
                     );
                 };
             };
         };
 
-        return #ok(currentBlock);
+        return #ok(block);
     };
 
     func updateParent(
         state : State.State,
         event : BlocksTypes.BlockUpdatedEvent,
         data : BlocksTypes.BlockParentUpdatedEventData,
+        block : Block,
     ) : Block {
         let blockExternalId = data.blockExternalId;
-        let currentBlock = _blockByUuid(state, blockExternalId);
-        currentBlock.parent := ?data.parentBlockExternalId;
-        return currentBlock;
+        block.parent := ?data.parentBlockExternalId;
+        return block;
     };
 
     func updateTitleProperty(
         state : State.State,
         event : BlocksTypes.BlockUpdatedEvent,
         data : BlocksTypes.BlockPropertyTitleUpdatedEventData,
+        block : Block,
     ) : Block {
         let blockExternalId = data.blockExternalId;
-        let currentBlock = _blockByUuid(state, blockExternalId);
-        UpdateProperty.execute({ event with data = #title(data) }, currentBlock);
-        return currentBlock;
+        UpdateProperty.execute({ event with data = #title(data) }, block);
+        return block;
     };
 
     func updateCheckedProperty(
         state : State.State,
         event : BlocksTypes.BlockUpdatedEvent,
         data : BlocksTypes.BlockPropertyCheckedUpdatedEventData,
+        block : Block,
     ) : Block {
         let blockExternalId = data.blockExternalId;
-        let currentBlock = _blockByUuid(state, blockExternalId);
-        UpdateProperty.execute({ event with data = #checked(data) }, currentBlock);
-        return currentBlock;
+        UpdateProperty.execute({ event with data = #checked(data) }, block);
+        return block;
     };
 };

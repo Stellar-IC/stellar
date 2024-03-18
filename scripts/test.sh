@@ -18,3 +18,4 @@ mkdir -p ./.dfx/local/canisters/workspace
 
 # Unit tests
 $(dfx cache show)/moc -r `vessel sources` src/backend/lib/events/tests/test_event_stream.mo
+$(dfx cache show)/moc -r `vessel sources` src/backend/canisters/workspace/model/__tests__/test_state.mo

@@ -28,8 +28,8 @@ export const useActivityLog = (opts: {
             return {
               ...node,
               blockExternalId: stringify(node.blockExternalId),
-              endTime: node.endTime,
-              startTime: node.startTime,
+              endTime: node.endTime / BigInt(1_000_000),
+              startTime: node.startTime / BigInt(1_000_000),
               edits: node.edits.map((edit) => ({
                 ...edit,
                 blockValue: {
