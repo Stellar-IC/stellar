@@ -16,6 +16,7 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { Link } from 'react-router-dom';
 import { parse } from 'uuid';
 
+import { useLayoutManager } from '@/LayoutManager';
 import { useWorkspaceContext } from '@/contexts/WorkspaceContext/useWorkspaceContext';
 import { db } from '@/db';
 import { useCreatePageWithRedirect } from '@/hooks/canisters/workspace/updates/useCreatePageWithRedirect';
@@ -114,9 +115,17 @@ export function NavbarSearch({
   workspaceId?: Principal | null;
 }) {
   const theme = useMantineTheme();
+  const { layout } = useLayoutManager();
+  const isOpen = layout === 'NAVIGATION_OPEN';
 
   return (
-    <nav className={classes.navbar}>
+    <nav
+      className={classes.navbar}
+      style={{
+        transform: `translateX(${isOpen ? 0 : '-100%'})`,
+        transition: 'transform 0.2s ease-in-out',
+      }}
+    >
       <div className={classes.section}>
         <AuthButton />
       </div>

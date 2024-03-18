@@ -1,15 +1,14 @@
 .wrapper {
   position: fixed;
   top: 0;
-  left: 300px;
+  left: 0;
   right: 0;
   display: flex;
   z-index: 1000;
-  justify-content: flex-end;
+  justify-content: space-between;
 }
 
 .actions {
   padding: var(--mantine-spacing-xs);
-  justify-self: flex-end;
   display: flex;
 }
