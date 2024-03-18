@@ -25,7 +25,6 @@ import CoreTypes "../../../../types";
 import State "../../model/state";
 import CreateActivity "../../services/create_activity";
 import ExtendActivity "../../services/extend_activity";
-import UpdateBlock "../../services/update_block";
 import Types "../../types/v0";
 
 import UpdateProperty "./UpdateProperty";

@@ -61,6 +61,7 @@ module {
                 content : ShareableBlockContent;
                 parent : ?UUID.UUID;
                 properties : ShareableBlockProperties;
+                initialBlockUuid : UUID.UUID;
             };
             public type CreatePageServiceOutputError = {
                 #anonymousUser;
@@ -117,6 +118,7 @@ module {
                 content : BlocksTypes.ShareableBlockContent;
                 parent : ?UUID.UUID;
                 properties : ShareableBlockProperties;
+                initialBlockUuid : UUID.UUID;
             };
             public type CreatePageUpdateOutputError = {
                 #anonymousUser;

@@ -94,4 +94,22 @@ module BlockModule = {
         };
     };
 
+    public func toText(block : Block) : Text {
+        "Block(" # UUID.toText(block.uuid) # ")";
+    };
+
+    public func compare(a : Block, b : Block) : Bool {
+        if (UUID.toText(a.uuid) != UUID.toText(b.uuid)) {
+            Debug.print("UUIDs don't match");
+            return false;
+        };
+        if (a.blockType != b.blockType) {
+            Debug.print("Block types don't match: " # debug_show a.blockType # " vs " # debug_show b.blockType);
+            return false;
+        };
+
+        // TODO: compare other fields
+
+        true;
+    };
 };

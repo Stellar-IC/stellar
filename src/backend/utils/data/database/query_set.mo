@@ -69,6 +69,10 @@ module QuerySet {
             return QuerySet<DataT>(?ordered_items);
         };
 
+        public func count() : Nat {
+            return List.size<DataT>(_items);
+        };
+
         public func value() : List.List<DataT> {
             return _items;
         };

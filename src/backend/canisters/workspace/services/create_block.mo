@@ -24,44 +24,8 @@ module CreateBlock {
             return #err(#anonymousUser);
         };
 
-        // Validate the input
-        let validation = _validate(input);
-        switch (validation) {
-            case (#err(err)) {
-                return #err(err);
-            };
-            case (#ok()) {
-                // Continue
-            };
-        };
-
         state.data.addBlock(input);
 
         return #ok(input);
-    };
-
-    private func _validate(
-        input : Input
-    ) : Result.Result<(), { #anonymousUser; #invalidBlockType }> {
-        let valid_block_types = [
-            #heading1,
-            #heading2,
-            #heading3,
-            #page,
-            #paragraph,
-            #todoList,
-            #bulletedList,
-            #numberedList,
-            #toggleList,
-            #code,
-            #quote,
-            #callout,
-        ];
-
-        if (Array.find<BlocksTypes.BlockType>(valid_block_types, func x = x == input.blockType) == null) {
-            return #err(#invalidBlockType);
-        };
-
-        return #ok();
     };
 };

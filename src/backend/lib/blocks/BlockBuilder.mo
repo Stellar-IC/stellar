@@ -34,6 +34,11 @@ module {
             return self;
         };
 
+        public func setParent(parent : UUID.UUID) : BlockBuilder {
+            block.parent := ?parent;
+            return self;
+        };
+
         public func build() : Types.Block {
             return block;
         };

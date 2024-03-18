@@ -719,7 +719,13 @@ module Tree {
     public func toArray(tree : Tree) : [Text] {
         func buildArray(rootNode : Node.Node) : List.List<Text> {
             var final = switch (rootNode.deletedAt) {
-                case (null) { List.fromArray([rootNode.value]) };
+                case (null) {
+                    if (rootNode.value == "") {
+                        List.fromArray([]);
+                    } else {
+                        List.fromArray([rootNode.value]);
+                    };
+                };
                 case (?deletedAt) { List.fromArray([]) };
             };
 
@@ -733,7 +739,9 @@ module Tree {
                 switch (childNode) {
                     case (null) { continue doLoop };
                     case (?childNode) {
-                        final := List.append(buildArray(childNode), final);
+                        if (shouldSkipNode(childNode, true) == false) {
+                            final := List.append(buildArray(childNode), final);
+                        };
                     };
                 };
             };

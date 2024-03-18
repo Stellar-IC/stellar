@@ -58,4 +58,15 @@ module Activity {
             "\n\tblockContent=" # blockContent
         );
     };
+
+    public func compare(a : Types.Activity, b : Types.Activity) : Bool {
+        if (a.id != b.id) { return false };
+        if (a.blockExternalId != b.blockExternalId) { return false };
+        if (a.endTime != b.endTime) { return false };
+        if (a.startTime != b.startTime) { return false };
+
+        // TODO: Compare edits
+
+        true;
+    };
 };

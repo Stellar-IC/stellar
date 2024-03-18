@@ -288,7 +288,7 @@ shared ({ caller = initializer }) actor class Workspace(
     public shared ({ caller }) func createPage(
         input : Types.Updates.CreatePageUpdate.CreatePageUpdateInput
     ) : async Types.Updates.CreatePageUpdate.CreatePageUpdateOutput {
-        let result = await CreatePage.execute(state, caller, input);
+        let result = CreatePage.execute(state, caller, input);
         await updateCanistergeekInformation({ metrics = ? #normal });
 
         return result;

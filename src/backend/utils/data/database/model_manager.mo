@@ -85,6 +85,17 @@ module ModelManager {
             return QuerySet.QuerySet<DataT>(?List.toArray<DataT>(instances));
         };
 
+        public func count() : Nat {
+            let entries = data.entries();
+            var total = 0;
+
+            for (entry in entries) {
+                total := total + 1;
+            };
+
+            return total;
+        };
+
         /**
          * Get a model instance by its primary key.
          */

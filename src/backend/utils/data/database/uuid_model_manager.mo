@@ -22,6 +22,17 @@ module UUIDModelManager {
             return QuerySet.QuerySet<DataT>(?List.toArray<DataT>(instances));
         };
 
+        public func count() : Nat {
+            let entries = data.entries();
+            var total = 0;
+
+            for (entry in entries) {
+                total := total + 1;
+            };
+
+            return total;
+        };
+
         public func get(id : Text) : ?DataT {
             return data.get(id);
         };

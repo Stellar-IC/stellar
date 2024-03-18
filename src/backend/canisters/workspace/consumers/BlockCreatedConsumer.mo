@@ -18,7 +18,6 @@ import CoreTypes "../../../types";
 import State "../model/state";
 import CreateActivity "../services/create_activity";
 import CreateBlock "../services/create_block";
-import UpdateBlock "../services/update_block";
 import Types "../types/v0";
 
 module BlockCreatedConsumer {

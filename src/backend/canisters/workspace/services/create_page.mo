@@ -28,15 +28,15 @@ module {
         state : State.State,
         userPrincipal : Principal,
         input : CreatePageServiceInput,
-    ) : async CreatePageServiceOutput {
+    ) : CreatePageServiceOutput {
         if (Principal.isAnonymous(userPrincipal)) {
             return #err(#anonymousUser);
         };
 
-        let initialBlockUuid = await Source.Source().new();
+        let initialBlockUuid = input.initialBlockUuid;
         let initialBlock : UnsavedBlock = BlockBuilder.BlockBuilder({
             uuid = initialBlockUuid;
-        }).build();
+        }).setParent(input.uuid).build();
         let contentForNewPage = Tree.Tree(null);
 
         ignore Tree.insertCharacterAtStart(contentForNewPage, UUID.toText(initialBlockUuid));
@@ -57,14 +57,6 @@ module {
                 var checked = input.properties.checked;
             };
             var parent = input.parent;
-        };
-
-        let validation = _validate(pageToCreate);
-        switch (validation) {
-            case (#err(err)) {
-                return #err(err);
-            };
-            case (#ok()) {};
         };
 
         state.data.addBlock(pageToCreate);
@@ -90,13 +82,5 @@ module {
             blockType = pageToCreate.blockType;
             parent = pageToCreate.parent;
         });
-    };
-
-    private func _validate(input : UnsavedBlock) : Result.Result<(), { #anonymousUser; #inputTooLong; #invalidBlockType }> {
-        if (input.blockType != #page) {
-            return #err(#invalidBlockType);
-        };
-
-        return #ok();
     };
 };
