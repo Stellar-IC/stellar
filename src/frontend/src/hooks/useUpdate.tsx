@@ -31,14 +31,12 @@ export function useUpdate<ArgsT extends unknown[], DataT>(
       })
         .then((data) => {
           setData(data);
+          setIsLoading(false);
           return data;
         })
         .catch((error) => {
-          console.error(error);
-          throw error;
-        })
-        .finally(() => {
           setIsLoading(false);
+          throw error;
         });
     },
     [canisterId, query, options, send]

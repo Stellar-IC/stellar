@@ -2,6 +2,7 @@ import { Box } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
 import { Tree } from '@stellar-ic/lseq-ts';
 import { createRef, memo, useEffect, useMemo, useState } from 'react';
+import { useErrorBoundary } from 'react-error-boundary';
 
 import { useTextBlockKeyboardEventHandlers } from '@/hooks/documents/useTextBlockKeyboardEventHandlers';
 
@@ -50,6 +51,8 @@ const _TextBlock = ({
     }
   }, [initialText, textBoxRef, value, hidePlaceholder]);
 
+  const { showBoundary } = useErrorBoundary();
+
   const { onKeyDown, onCut, onPaste } = useTextBlockKeyboardEventHandlers({
     blockExternalId,
     blockIndex,
@@ -81,7 +84,14 @@ const _TextBlock = ({
         contentEditable
         style={{ outline: 'none', display: 'block', minHeight: '24px' }}
         suppressContentEditableWarning
-        onKeyDown={onKeyDown}
+        onKeyDown={(e) => {
+          try {
+            onKeyDown(e);
+          } catch (e) {
+            console.error(e);
+            showBoundary(e);
+          }
+        }}
         onPaste={onPaste}
         onCut={onCut}
       />

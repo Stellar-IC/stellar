@@ -143,6 +143,14 @@ export const useTextBlockKeyboardEventHandlers = ({
   const onSuccess = (title: Tree.Tree, events: TreeEvent[]) => {
     if (!block) throw new Error('Block not found');
 
+    updateLocalBlock(block.uuid, {
+      ...block,
+      properties: {
+        ...block.properties,
+        title,
+      },
+    });
+
     sendUpdate([
       {
         transaction: [
@@ -162,14 +170,6 @@ export const useTextBlockKeyboardEventHandlers = ({
         ],
       },
     ]);
-
-    updateLocalBlock(block.uuid, {
-      ...block,
-      properties: {
-        ...block.properties,
-        title,
-      },
-    });
   };
 
   const onCharacterInserted = (cursorPosition: number, character: string) => {

@@ -154,6 +154,7 @@ export const idlFactory = ({ IDL }) => {
     'checked' : IDL.Opt(IDL.Bool),
   });
   const CreatePageUpdateInput = IDL.Record({
+    'initialBlockUuid' : UUID,
     'content' : ShareableBlockContent__1,
     'uuid' : UUID,
     'properties' : ShareableBlockProperties__1,

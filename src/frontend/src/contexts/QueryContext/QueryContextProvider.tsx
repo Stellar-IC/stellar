@@ -27,17 +27,15 @@ export function QueryContextProvider({ children }: PropsWithChildren) {
   );
 
   const send = useCallback(
-    async <ArgsT extends unknown[], DataT>(
+    <ArgsT extends unknown[], DataT>(
       canisterId: CanisterId,
       query: ActorMethod<ArgsT, DataT>,
       options?: { arguments?: ArgsT }
     ): Promise<DataT> => {
       const { arguments: args } = options || {};
       // const cacheKey = getCacheKey(canisterId, query, options);
-      const result = await query(...(args || ([] as unknown[] as ArgsT)));
+      return query(...(args || ([] as unknown[] as ArgsT)));
       // cache[cacheKey] = result;
-
-      return result;
     },
     []
   );

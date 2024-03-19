@@ -384,6 +384,7 @@ type CreatePageUpdateOutput =
 type CreatePageUpdateInput = 
  record {
    content: ShareableBlockContent__1;
+   initialBlockUuid: UUID;
    parent: opt UUID;
    properties: ShareableBlockProperties__1;
    uuid: UUID;

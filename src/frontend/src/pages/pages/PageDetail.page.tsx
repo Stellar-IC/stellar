@@ -1,6 +1,7 @@
 import { Container, Stack } from '@mantine/core';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { useEffect } from 'react';
+import { ErrorBoundary } from 'react-error-boundary';
 import { useParams } from 'react-router-dom';
 import { parse } from 'uuid';
 
@@ -32,7 +33,23 @@ export function PageDetailPage() {
     <Page>
       <Container maw="container.sm">
         <Stack mt="100" gap="xs" px="10rem">
-          <Editor page={page} />
+          <ErrorBoundary
+            fallback={
+              <>
+                <p>⚠️Something went wrong</p>
+                <button
+                  type="button"
+                  onClick={() => {
+                    document.location.reload();
+                  }}
+                >
+                  Reload
+                </button>
+              </>
+            }
+          >
+            <Editor page={page} />
+          </ErrorBoundary>
         </Stack>
       </Container>
     </Page>

@@ -11,7 +11,7 @@ import { useHydrate } from './useHydrate';
 import { getUserProfile, registerUser } from './utils';
 
 export class AnonymousUserProfile implements UserProfile {
-  username = 'Anonymous';
+  username = '';
   created_at = 1000000000000000000n;
   updatedAt = 1000000000000000000n;
 }

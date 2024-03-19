@@ -1,4 +1,5 @@
 import { Identity } from '@dfinity/agent';
+import { notifications } from '@mantine/notifications';
 import { Tree } from '@stellar-ic/lseq-ts';
 import { useCallback } from 'react';
 import { v4 as uuidv4, parse as uuidParse, parse } from 'uuid';
@@ -36,7 +37,22 @@ export const useCreatePage = (options: {
     async (input: Omit<CreatePageUpdateInput, 'uuid'>) => {
       const uuid = uuidv4();
       const pageData = { ...input, uuid: uuidParse(uuid) };
-      const result = await _createPage([pageData]);
+
+      let result: CreatePageUpdateOutput;
+
+      try {
+        result = await _createPage([pageData]);
+      } catch (e) {
+        if (e instanceof Error) {
+          notifications.show({
+            title: 'Error',
+            message: e.message,
+            color: 'red',
+          });
+        }
+
+        throw e;
+      }
 
       if ('err' in result) {
         throw new Error(JSON.stringify(result.err));

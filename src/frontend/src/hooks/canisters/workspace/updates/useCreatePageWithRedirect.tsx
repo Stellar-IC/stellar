@@ -2,7 +2,7 @@ import { DEFAULT_BOUNDARY } from '@stellar-ic/lseq-ts/constants';
 import { base } from '@stellar-ic/lseq-ts/utils';
 import { useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { stringify } from 'uuid';
+import { parse, stringify, v4 } from 'uuid';
 
 import { useWorkspaceContext } from '@/contexts/WorkspaceContext/useWorkspaceContext';
 import { useCreatePage } from '@/hooks/canisters/workspace/updates/useCreatePage';
@@ -35,9 +35,9 @@ export function useCreatePageWithRedirect() {
         title: [],
         checked: [],
       },
+      initialBlockUuid: parse(v4()),
     }).then((res) => {
       if ('err' in res) {
-        // TODO: Handle error
         return;
       }
 

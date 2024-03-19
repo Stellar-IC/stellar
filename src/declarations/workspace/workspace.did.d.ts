@@ -132,6 +132,7 @@ export type CanisterMetricsData = { 'hourly' : Array<HourlyMetricsData> } |
 export type CollectMetricsRequestType = { 'force' : null } |
   { 'normal' : null };
 export interface CreatePageUpdateInput {
+  'initialBlockUuid' : UUID,
   'content' : ShareableBlockContent__1,
   'uuid' : UUID,
   'properties' : ShareableBlockProperties__1,
