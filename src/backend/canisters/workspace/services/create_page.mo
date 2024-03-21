@@ -10,7 +10,7 @@ import BlockBuilder "../../../lib/blocks/BlockBuilder";
 import BlocksTypes "../../../lib/blocks/types";
 import Tree "../../../utils/data/lseq/Tree";
 
-import State "../model/state";
+import State "../state";
 import Types "../types/v0";
 
 module {

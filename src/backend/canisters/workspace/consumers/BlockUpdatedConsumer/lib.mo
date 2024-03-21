@@ -22,9 +22,9 @@ import BlocksUtils "../../../../lib/blocks/utils";
 import Tree "../../../../utils/data/lseq/Tree";
 import CoreTypes "../../../../types";
 
-import State "../../model/state";
 import CreateActivity "../../services/create_activity";
 import ExtendActivity "../../services/extend_activity";
+import State "../../state";
 import Types "../../types/v0";
 
 import UpdateProperty "./UpdateProperty";
@@ -117,23 +117,23 @@ module BlockUpdatedConsumer {
                     case (?block) { block };
                     case (null) { return #err(#blockNotFound) };
                 };
-                let clonedBlockBeforeEdit = BlocksUtils.clone(blockBeforeEdit);
+                // let clonedBlockBeforeEdit = BlocksUtils.clone(blockBeforeEdit);
                 let result = updateTitleProperty(state, event, data, blockBeforeEdit);
-                let blockAfterEdit = switch (_blockByUuid(state, data.blockExternalId)) {
-                    case (?block) { block };
-                    case (null) { return #err(#blockNotFound) };
-                };
-                let clonedBlockAfterEdit = BlocksUtils.clone(blockAfterEdit);
-                let firstAncestorPage = state.data.getFirstAncestorPage(blockBeforeEdit);
-                let activity = createOrExtendActivityForEvent(
-                    state,
-                    firstAncestorPage,
-                    event,
-                    clonedBlockBeforeEdit,
-                    clonedBlockAfterEdit,
-                    idForNewActivity,
-                );
-                #ok(BlockModule.toShareable(clonedBlockAfterEdit));
+                // let blockAfterEdit = switch (_blockByUuid(state, data.blockExternalId)) {
+                //     case (?block) { block };
+                //     case (null) { return #err(#blockNotFound) };
+                // };
+                // let clonedBlockAfterEdit = BlocksUtils.clone(blockAfterEdit);
+                // let firstAncestorPage = state.data.getFirstAncestorPage(blockBeforeEdit);
+                // let activity = createOrExtendActivityForEvent(
+                //     state,
+                //     firstAncestorPage,
+                //     event,
+                //     clonedBlockBeforeEdit,
+                //     clonedBlockAfterEdit,
+                //     idForNewActivity,
+                // );
+                #ok(BlockModule.toShareable(blockBeforeEdit));
             };
             case (#updatePropertyChecked(data)) {
                 let blockBeforeEdit = switch (_blockByUuid(state, data.blockExternalId)) {

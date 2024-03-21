@@ -11,7 +11,7 @@ import ActivityBuilder "../../../lib/activities/ActivityBuilder";
 import BlocksTypes "../../../lib/blocks/types";
 import Logger "../../../lib/Logger";
 
-import State "../model/state";
+import State "../state";
 import Types "../types";
 
 module CreateActivity {

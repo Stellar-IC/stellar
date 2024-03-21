@@ -15,9 +15,9 @@ import BlocksUtils "../../../lib/blocks/utils";
 import Tree "../../../utils/data/lseq/Tree";
 import CoreTypes "../../../types";
 
-import State "../model/state";
 import CreateActivity "../services/create_activity";
 import CreateBlock "../services/create_block";
+import State "../state";
 import Types "../types/v0";
 
 module BlockCreatedConsumer {

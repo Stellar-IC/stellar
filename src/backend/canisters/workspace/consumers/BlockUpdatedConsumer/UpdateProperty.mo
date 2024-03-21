@@ -1,8 +1,8 @@
 import Array "mo:base/Array";
+import Debug "mo:base/Debug";
 import UUID "mo:uuid/UUID";
 
 import BlocksTypes "../../../../lib/blocks/types";
-
 import Tree "../../../../utils/data/lseq/Tree";
 import LseqTypes "../../../../utils/data/lseq/types";
 
@@ -34,10 +34,17 @@ module {
                     switch (title) {
                         case (null) {};
                         case (?title) {
-                            ignore title.insert({
+                            let result = title.insert({
                                 identifier = treeEvent.position;
                                 value = treeEvent.value;
                             });
+
+                            switch (result) {
+                                case (#err(err)) {
+                                    Debug.print("Error updating title property for block: " # UUID.toText(blockExternalId) # "\n\tError: " # debug_show err);
+                                };
+                                case (#ok) {};
+                            };
                         };
                     };
                 };
@@ -51,7 +58,6 @@ module {
                 };
             };
         };
-
     };
 
     private func handleChecked(data : BlockPropertyCheckedUpdatedEventData, block : Block) : () {

@@ -14,22 +14,22 @@ import Text "mo:base/Text";
 
 import UUID "mo:uuid/UUID";
 
-import ActivitiesTypes "../../../lib/activities/types";
-import ActivityModule "../../../lib/activities/Activity";
-import BlockModule "../../../lib/blocks/Block";
-import BlocksTypes "../../../lib/blocks/types";
-import EventsTypes "../../../lib/events/types";
-import WorkspacesTypes "../../../lib/workspaces/types";
+import ActivitiesTypes "../../lib/activities/types";
+import ActivityModule "../../lib/activities/Activity";
+import BlockModule "../../lib/blocks/Block";
+import BlocksTypes "../../lib/blocks/types";
+import EventsTypes "../../lib/events/types";
+import WorkspacesTypes "../../lib/workspaces/types";
 
-import Models "../../../utils/data/database/models";
-import QuerySet "../../../utils/data/database/query_set";
-import IdManager "../../../utils/data/id_manager";
-import Node "../../../utils/data/lseq/Node";
-import Tree "../../../utils/data/lseq/Tree";
+import Models "../../utils/data/database/models";
+import QuerySet "../../utils/data/database/query_set";
+import IdManager "../../utils/data/id_manager";
+import Node "../../utils/data/lseq/Node";
+import Tree "../../utils/data/lseq/Tree";
 
-import CoreTypes "../../../types";
+import CoreTypes "../../types";
 
-import Types "../types/v2";
+import Types "./types/v2";
 
 module {
     type Workspace = WorkspacesTypes.Workspace;

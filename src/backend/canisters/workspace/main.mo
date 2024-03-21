@@ -35,8 +35,8 @@ import LseqTree "../../utils/data/lseq/Tree";
 
 import BlockCreatedConsumer "./consumers/BlockCreatedConsumer";
 import BlockUpdatedConsumer "./consumers/BlockUpdatedConsumer";
-import State "./model/state";
 import CreatePage "./services/create_page";
+import State "./state";
 import Types "./types";
 
 shared ({ caller = initializer }) actor class Workspace(
@@ -289,7 +289,7 @@ shared ({ caller = initializer }) actor class Workspace(
         input : Types.Updates.CreatePageUpdate.CreatePageUpdateInput
     ) : async Types.Updates.CreatePageUpdate.CreatePageUpdateOutput {
         let result = CreatePage.execute(state, caller, input);
-        await updateCanistergeekInformation({ metrics = ? #normal });
+        await updateCanistergeekInformation({ metrics = ? #force });
 
         return result;
     };
@@ -299,7 +299,7 @@ shared ({ caller = initializer }) actor class Workspace(
     ) : async () {
         let block = BlockModule.fromShareableUnsaved(input);
         state.data.addBlock(block);
-        await updateCanistergeekInformation({ metrics = ? #normal });
+        await updateCanistergeekInformation({ metrics = ? #force });
     };
 
     public shared ({ caller }) func updateBlock(
@@ -307,7 +307,7 @@ shared ({ caller = initializer }) actor class Workspace(
     ) : async Types.Updates.UpdateBlockUpdate.UpdateBlockUpdateOutput {
         let block = BlockModule.fromShareable(input);
         let result = state.data.updateBlock(block);
-        await updateCanistergeekInformation({ metrics = ? #normal });
+        await updateCanistergeekInformation({ metrics = ? #force });
 
         return #ok(BlockModule.toShareable(block));
     };
@@ -316,7 +316,7 @@ shared ({ caller = initializer }) actor class Workspace(
         input : Types.Updates.DeletePageUpdate.DeletePageUpdateInput
     ) : async Types.Updates.DeletePageUpdate.DeletePageUpdateOutput {
         state.data.deleteBlock(UUID.toText(input.uuid));
-        await updateCanistergeekInformation({ metrics = ? #normal });
+        await updateCanistergeekInformation({ metrics = ? #force });
 
         return #ok();
     };
@@ -325,11 +325,12 @@ shared ({ caller = initializer }) actor class Workspace(
         input : Types.Updates.SaveEventTransactionUpdate.SaveEventTransactionUpdateInput
     ) : async Types.Updates.SaveEventTransactionUpdate.SaveEventTransactionUpdateOutput {
         for (event in input.transaction.vals()) {
-            state.data.Event.objects.upsert(event);
-            eventStream.publish(event);
+            // state.data.Event.objects.upsert(event);
+            // eventStream.publish(event);
+            processEvent(event);
         };
 
-        await updateCanistergeekInformation({ metrics = ? #normal });
+        await updateCanistergeekInformation({ metrics = ? #force });
 
         return #ok();
     };
@@ -389,7 +390,7 @@ shared ({ caller = initializer }) actor class Workspace(
     // Returns the cycles received up to the capacity allowed
     public shared func walletReceive() : async { accepted : Nat64 } {
         let result = await CyclesUtils.walletReceive(capacity - ExperimentalCycles.balance());
-        await updateCanistergeekInformation({ metrics = ? #normal });
+        await updateCanistergeekInformation({ metrics = ? #force });
 
         return result;
     };

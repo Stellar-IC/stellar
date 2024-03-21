@@ -6,7 +6,7 @@ import UUID "mo:uuid/UUID";
 
 import BlocksTypes "../../../lib/blocks/types";
 
-import State "../model/state";
+import State "../state";
 import Types "../types/v0";
 
 module CreateBlock {
