@@ -1,6 +1,10 @@
 import CyclesUtils "./utils/cycles";
 
 module Constants {
+    public let DEV_IDENTITIES = [
+        "loj7m-57vb4-jui2d-k4z35-ejgqc-lzarq-lhfmx-ekokh-kf6e4-5vad7-fqe"
+    ];
+
     public class Constants() {
         private func scalar(
             value : {

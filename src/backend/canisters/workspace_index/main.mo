@@ -46,13 +46,13 @@ actor WorkspaceIndex {
     /*************************************************************************
      * Stable data
      *************************************************************************/
-    stable var stable_workspace_id_to_workspace_uuid : RBTree.Tree<WorkspaceId, WorkspaceExternalId> = #leaf;
-    stable var stable_workspace_uuid_to_workspace_id : RBTree.Tree<WorkspaceExternalId, WorkspaceId> = #leaf;
-    stable var stable_workspace_id_to_canister : RBTree.Tree<WorkspaceId, Types.MockWorkspaceActor> = #leaf;
+    stable var _workspace_id_to_workspace_uuid : RBTree.Tree<WorkspaceId, WorkspaceExternalId> = #leaf;
+    stable var _workspace_uuid_to_workspace_id : RBTree.Tree<WorkspaceExternalId, WorkspaceId> = #leaf;
+    stable var _workspace_id_to_canister : RBTree.Tree<WorkspaceId, Types.MockWorkspaceActor> = #leaf;
 
-    stable let stable_capacity = 100_000_000_000_000;
-    stable var stable_balance = 0 : Nat;
-    stable var stable_topUps : RBTree.Tree<Principal, CanisterTopUp.CanisterTopUp> = #leaf;
+    stable let _capacity = 100_000_000_000_000;
+    stable var _balance = 0 : Nat;
+    stable var _topUps : RBTree.Tree<Principal, CanisterTopUp.CanisterTopUp> = #leaf;
 
     /*************************************************************************
      * Transient data
@@ -63,47 +63,10 @@ actor WorkspaceIndex {
     var workspace_id_to_canister : RBTree.RBTree<WorkspaceId, Types.MockWorkspaceActor> = RBTree.RBTree<WorkspaceId, Types.MockWorkspaceActor>(Principal.compare);
     let topUps = RBTree.RBTree<Principal, CanisterTopUp.CanisterTopUp>(Principal.compare);
 
-    workspace_id_to_workspace_uuid.unshare(stable_workspace_id_to_workspace_uuid);
-    workspace_uuid_to_workspace_id.unshare(stable_workspace_uuid_to_workspace_id);
-    workspace_id_to_canister.unshare(stable_workspace_id_to_canister);
-    topUps.unshare(stable_topUps);
-
-    /*************************************************************************
-     * Queries
-     *************************************************************************/
-
-    public shared ({ caller }) func workspaceByUuid(uuid : UUID.UUID) : async Types.Workspace {
-        // TODO: Add security checks:
-        // - Is the user allowed to access this workspace?
-        let workspace_id = switch (workspace_uuid_to_workspace_id.get(uuid)) {
-            case (null) { Debug.trap("Workspace ID not found") };
-            case (?workspace_id) { workspace_id };
-        };
-        let workspace_canister = switch (workspace_id_to_canister.get(workspace_id)) {
-            case (null) { Debug.trap("Workspace Canister not found") };
-            case (?workspace_id) { workspace_id };
-        };
-
-        return await workspace_canister.toObject();
-    };
-
-    public shared ({ caller }) func workspaces(
-        options : {
-            // cursor : ?PrimaryKey;
-            // limit : ?Nat;
-            // order : ?CoreTypes.SortOrder;
-        }
-    ) : async CoreTypes.PaginatedResults<Types.Workspace> {
-        // let { cursor, limit; order } = options;
-        var workspaces : List.List<Types.Workspace> = List.fromArray<Types.Workspace>([]);
-
-        for ((workspaceId, workspaceCanister) in workspace_id_to_canister.entries()) {
-            let workspace = await workspaceCanister.toObject();
-            workspaces := List.append<Types.Workspace>(workspaces, List.fromArray([workspace]));
-        };
-
-        return Paginator.paginateList(workspaces);
-    };
+    workspace_id_to_workspace_uuid.unshare(_workspace_id_to_workspace_uuid);
+    workspace_uuid_to_workspace_id.unshare(_workspace_uuid_to_workspace_id);
+    workspace_id_to_canister.unshare(_workspace_id_to_canister);
+    topUps.unshare(_topUps);
 
     /*************************************************************************
      * Updates
@@ -138,51 +101,12 @@ actor WorkspaceIndex {
         };
     };
 
-    // public shared func upgradeWorkspaceCanister(workspaceId : Principal) {
-    //     let workspaceActor = switch (workspace_id_to_canister.get(workspaceId)) {
-    //         case (null) { Debug.trap("Workspace actor not found") };
-    //         case (?workspaceCanister) { workspaceCanister };
-    //     };
-    //     let workspace_index_principal = Principal.fromActor(WorkspaceIndex);
-    //     let workspaceCanisterInitArgs = {
-    //         capacity = workspaceActor.capacity;
-    //         owner = workspaceActor.owner;
-    //     };
-
-    //     let now = Time.now();
-    //     let workspaceCanisterInitData = {
-    //         uuid = await Source.Source().new();
-    //         name = "";
-    //         description = "";
-    //         createdAt = workspaceActor.createdAt;
-    //         updatedAt = workspaceActor.updatedAt;
-    //     };
-
-    //     ignore await (system Workspace.Workspace)(
-    //         #upgrade(workspaceActor)
-    //     )(
-    //         {
-
-    //         },
-    //         await workspaceActor.getInitData(),
-    //     );
-
-    //     return;
-    // };
-
     // Returns the cycles received up to the capacity allowed
     public func walletReceive() : async { accepted : Nat64 } {
-        let limit : Nat = stable_capacity - stable_balance;
+        let limit : Nat = _capacity - _balance;
         let result = await CyclesUtils.walletReceive(limit);
-        stable_balance += Nat64.toNat(result.accepted);
+        _balance += Nat64.toNat(result.accepted);
         return result;
-    };
-
-    public shared func cyclesInformation() : async {
-        balance : Nat;
-        capacity : Nat;
-    } {
-        return { balance = Cycles.balance(); capacity = stable_capacity };
     };
 
     public shared ({ caller }) func requestCycles(amount : Nat) : async {
@@ -283,18 +207,18 @@ actor WorkspaceIndex {
      *************************************************************************/
 
     system func preupgrade() {
-        stable_workspace_id_to_workspace_uuid := workspace_id_to_workspace_uuid.share();
-        stable_workspace_uuid_to_workspace_id := workspace_uuid_to_workspace_id.share();
-        stable_workspace_id_to_canister := workspace_id_to_canister.share();
-        stable_topUps := topUps.share();
+        _workspace_id_to_workspace_uuid := workspace_id_to_workspace_uuid.share();
+        _workspace_uuid_to_workspace_id := workspace_uuid_to_workspace_id.share();
+        _workspace_id_to_canister := workspace_id_to_canister.share();
+        _topUps := topUps.share();
         doCanisterGeekPreUpgrade();
     };
 
     system func postupgrade() {
-        stable_workspace_id_to_workspace_uuid := #leaf;
-        stable_workspace_uuid_to_workspace_id := #leaf;
-        stable_workspace_id_to_canister := #leaf;
-        stable_topUps := #leaf;
+        _workspace_id_to_workspace_uuid := #leaf;
+        _workspace_uuid_to_workspace_id := #leaf;
+        _workspace_id_to_canister := #leaf;
+        _topUps := #leaf;
         doCanisterGeekPostUpgrade();
     };
 };

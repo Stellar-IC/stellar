@@ -4,8 +4,8 @@ import Principal "mo:base/Principal";
 import RBTree "mo:base/RBTree";
 import Text "mo:base/Text";
 
-import CoreTypes "../../../types";
-import Types "../types";
+import CoreTypes "../../types";
+import Types "./types";
 
 module {
     public class State(_data : Data) {
@@ -27,13 +27,13 @@ module {
         public func addUser(
             args : {
                 user : Types.UserActor;
-                user_id : Principal;
+                userId : Principal;
                 owner : Principal;
             }
         ) : async () {
             var owner = args.owner;
             var user = args.user;
-            var user_id = args.user_id;
+            var userId = args.userId;
             var existing_user_id : ?Principal = getUserIdByOwner(owner);
 
             switch existing_user_id {
@@ -42,8 +42,8 @@ module {
                     Debug.trap("User already added");
                 };
             };
-            user_identity_to_canister_id.put((owner, user_id));
-            user_canister_id_to_identity.put((user_id, owner));
+            user_identity_to_canister_id.put((owner, userId));
+            user_canister_id_to_identity.put((userId, owner));
 
             return;
         };

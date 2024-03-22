@@ -22,10 +22,6 @@ module {
     public type MockWorkspaceActor = actor {
         toObject : shared query () -> async Workspace;
         walletReceive : shared () -> async ({ accepted : Nat64 });
-        cyclesInformation : () -> async {
-            capacity : Nat;
-            balance : Nat;
-        };
         getInitArgs() : async WorkspaceInitArgs;
         getInitData() : async {
             uuid : UUID.UUID;

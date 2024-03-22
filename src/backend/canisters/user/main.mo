@@ -2,7 +2,6 @@ import Principal "mo:base/Principal";
 import Cycles "mo:base/ExperimentalCycles";
 import Nat64 "mo:base/Nat64";
 import Debug "mo:base/Debug";
-import List "mo:base/List";
 import Nat "mo:base/Nat";
 import Result "mo:base/Result";
 import Time "mo:base/Time";
@@ -16,6 +15,7 @@ import UserProfile "../../lib/users/UserProfile";
 import UsersTypes "../../lib/users/types";
 import CreateWorkspace "../../lib/workspaces/services/create_workspace";
 import WorkspacesTypes "../../lib/workspaces/types";
+import AuthUtils "../../utils/auth";
 
 import Workspace "../workspace/main";
 import Constants "../../constants";
@@ -52,11 +52,15 @@ shared ({ caller = initializer }) actor class User(
         return #ok(UserProfile.fromMutableUserProfile(stable_profile));
     };
 
-    public query func publicProfile() : async CoreTypes.User.PublicUserProfile {
-        {
+    public query ({ caller }) func publicProfile() : async Result.Result<CoreTypes.User.PublicUserProfile, { #unauthorized }> {
+        if (Principal.isAnonymous(caller)) {
+            return #err(#unauthorized);
+        };
+
+        #ok({
             canisterId = Principal.fromActor(self);
             username = stable_profile.username;
-        };
+        });
     };
 
     public shared ({ caller }) func personalWorkspace() : async Result.Result<WorkspacesTypes.WorkspaceId, { #anonymousUser; #insufficientCycles; #unauthorized }> {
@@ -65,6 +69,7 @@ shared ({ caller = initializer }) actor class User(
         };
 
         switch (stable_personalWorkspaceId) {
+            case (?workspaceId) { #ok(workspaceId) };
             case (null) {
                 let result = await CreateWorkspace.execute({
                     owner = stable_owner;
@@ -88,7 +93,6 @@ shared ({ caller = initializer }) actor class User(
                     };
                 };
             };
-            case (?workspaceId) { #ok(workspaceId) };
         };
     };
 
@@ -106,87 +110,39 @@ shared ({ caller = initializer }) actor class User(
     };
 
     // Returns the cycles received up to the capacity allowed
-    public func walletReceive() : async { accepted : Nat64 } {
+    public shared ({ caller }) func walletReceive() : async Result.Result<{ accepted : Nat64 }, { #unauthorized }> {
+        if (caller != initializer) {
+            return #err(#unauthorized);
+        };
+
         let amount = Cycles.available();
         let limit : Nat = stable_capacity - stable_balance;
         let accepted = if (amount <= limit) amount else limit;
         let deposit = Cycles.accept(accepted);
+
         assert (deposit == accepted);
         stable_balance += accepted;
 
-        return { accepted = Nat64.fromNat(accepted) };
+        return #ok({ accepted = Nat64.fromNat(accepted) });
     };
 
-    public shared ({ caller }) func upgradePersonalWorkspace() {
-        let workspaceActor = switch (stable_personalWorkspace) {
-            case (null) { Debug.trap("Personal workspace not initialized") };
-            case (?workspace) { workspace };
+    public shared ({ caller }) func upgradePersonalWorkspace(wasm_module : Blob) : async Result.Result<(), { #unauthorized; #workspaceNotFound : Text; #failed : Text }> {
+        if (caller != initializer and AuthUtils.isDev(caller) == false) {
+            return #err(#unauthorized);
         };
 
-        let workspace = await (system Workspace.Workspace)(
-            #upgrade(workspaceActor)
-        )(await (workspaceActor.getInitArgs()), await (workspaceActor.getInitData()));
-    };
-
-    public shared func updatePersonalWorkspaceCanisterSettings(updatedSettings : CoreTypes.CanisterSettings) : async () {
         let IC0 : CoreTypes.Management = actor "aaaaa-aa";
-
-        let workspaceId = switch (stable_personalWorkspaceId) {
-            case (null) {
-                Debug.trap("Personal workspace not initialized for user: " # debug_show (Principal.fromActor(self)));
-            };
-            case (?workspaceId) { workspaceId };
-        };
-        let canister_status = await IC0.canister_status({
-            canister_id = workspaceId;
-        });
-        let memoryAllocation = switch (updatedSettings.memory_allocation) {
-            case (null) { canister_status.settings.memory_allocation };
-            case (?memoryAllocation) { memoryAllocation };
-        };
-        let computeAllocation = switch (updatedSettings.compute_allocation) {
-            case (null) { canister_status.settings.compute_allocation };
-            case (?computeAllocation) { computeAllocation };
-        };
-        let freezingThreshold = switch (updatedSettings.freezing_threshold) {
-            case (null) { canister_status.settings.freezing_threshold };
-            case (?freezingThreshold) { freezingThreshold };
-        };
-
-        let sender_canister_version : ?Nat64 = null;
-
-        try {
-            IC0.update_settings(
-                {
-                    canister_id = workspaceId;
-                    settings = {
-                        controllers = ?canister_status.settings.controllers;
-                        compute_allocation = ?computeAllocation;
-                        memory_allocation = ?memoryAllocation;
-                        freezing_threshold = ?freezingThreshold;
-                    };
-                    sender_canister_version = sender_canister_version;
-                }
-            );
-        } catch (err) {
-            Debug.print("Error updating user canister settings: " # debug_show (Error.code(err)) # ": " # debug_show (Error.message(err)));
-        };
-    };
-
-    public shared func upgradePersonalWorkspaceCanisterWasm(wasm_module : Blob) : async () {
-        let IC0 : CoreTypes.Management = actor "aaaaa-aa";
-
         let sender_canister_version : ?Nat64 = null;
 
         let workspaceId = switch (stable_personalWorkspaceId) {
             case (null) {
-                Debug.trap("Personal workspace not initialized for user: " # debug_show (Principal.fromActor(self)));
+                return #err(#workspaceNotFound("Personal workspace not initialized for user: " # debug_show (Principal.fromActor(self))));
             };
             case (?workspaceId) { workspaceId };
         };
         let workspaceActor = switch (stable_personalWorkspace) {
             case (null) {
-                Debug.trap("Personal workspace not initialized for user: " # debug_show (Principal.fromActor(self)));
+                return #err(#workspaceNotFound("Personal workspace not initialized for user: " # debug_show (Principal.fromActor(self))));
             };
             case (?workspace) { workspace };
         };
@@ -209,8 +165,10 @@ shared ({ caller = initializer }) actor class User(
                 }
             );
         } catch (err) {
-            Debug.print("Error upgrading personal workspace canister: " # debug_show (Error.code(err)) # ": " # debug_show (Error.message(err)));
+            return #err(#failed(Error.message(err)));
         };
+
+        return #ok(());
     };
 
     private func checkCyclesBalance() : async () {

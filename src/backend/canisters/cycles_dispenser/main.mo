@@ -1,12 +1,11 @@
-import UserIndex "canister:user_index";
-import WorkspaceIndex "canister:workspace_index";
-
 import Principal "mo:base/Principal";
 import RbTree "mo:base/RBTree";
 import Nat "mo:base/Nat";
 import Time "mo:base/Time";
 import Debug "mo:base/Debug";
+import Error "mo:base/Error";
 import ExperimentalCycles "mo:base/ExperimentalCycles";
+import Text "mo:base/Text";
 import Timer "mo:base/Timer";
 import Array "mo:base/Array";
 import Iter "mo:base/Iter";
@@ -15,7 +14,9 @@ import Canistergeek "mo:canistergeek/canistergeek";
 
 import CanisterTopUp "../../lib/shared/CanisterTopUp";
 import Constants "../../constants";
-import Types "types";
+import AuthUtils "../../utils/auth";
+
+import Types "./types";
 
 actor CyclesDispenser {
     type RegisterableCanister = Types.RegisterableCanister;
@@ -52,18 +53,89 @@ actor CyclesDispenser {
 
     type RequestCyclesUpdateOutput = Result.Result<RequestCyclesUpdateOk, RequestCyclesUpdateError>;
 
+    private let canistergeekMonitor = Canistergeek.Monitor();
+    private let canistergeekLogger = Canistergeek.Logger();
+    stable var _canistergeekMonitorUD : ?Canistergeek.UpgradeData = null;
+    stable var _canistergeekLoggerUD : ?Canistergeek.LoggerUpgradeData = null;
+
+    /**
+    * Returns canister information based on passed parameters.
+    * Called from browser.
+    */
+    public query ({ caller }) func getCanistergeekInformation(request : Canistergeek.GetInformationRequest) : async Canistergeek.GetInformationResponse {
+        Canistergeek.getInformation(?canistergeekMonitor, ?canistergeekLogger, request);
+    };
+
+    /**
+    * Updates canister information based on passed parameters at current time.
+    * Called from browser or any canister "update" method.
+    */
+    public shared ({ caller }) func updateCanistergeekInformation(request : Canistergeek.UpdateInformationRequest) : async () {
+        canistergeekMonitor.updateInformation(request);
+    };
+
     public shared ({ caller }) func requestCycles(amount : Nat) : async RequestCyclesUpdateOutput {
+        if (isRegisteredCanister(caller) == false) {
+            return #err(#unauthorized);
+        };
+
         let now = Time.now();
         let canister = switch (canisters.get(caller)) {
-            case (null) {
-                // Canister not registered
-                return #err(#unauthorized);
-            };
+            case (null) { return #err(#unauthorized) };
             case (?canister) { canister };
         };
         let result = await depositCycles(canister, amount);
 
         return result;
+    };
+
+    public shared ({ caller }) func register(canisterId : Principal) : async Result.Result<(), { #unauthorized }> {
+        if (AuthUtils.isDev(caller) == false) {
+            return #err(#unauthorized);
+        };
+
+        let existingCanister = canisters.get(canisterId);
+
+        if (existingCanister == null) {
+            let canister : RegisterableCanister = actor (Principal.toText(canisterId));
+            canisters.put(canisterId, canister);
+            initializeTopUpsForCanister(canisterId);
+        };
+
+        #ok;
+    };
+
+    private func isRegisteredCanister(canisterId : Principal) : Bool {
+        switch (canisters.get(canisterId)) {
+            case (null) { false };
+            case (?canister) { true };
+        };
+    };
+
+    private func doCanisterGeekPreUpgrade() {
+        _canistergeekMonitorUD := ?canistergeekMonitor.preupgrade();
+        _canistergeekLoggerUD := ?canistergeekLogger.preupgrade();
+    };
+
+    private func doCanisterGeekPostUpgrade() {
+        canistergeekMonitor.postupgrade(_canistergeekMonitorUD);
+        _canistergeekMonitorUD := null;
+
+        canistergeekLogger.postupgrade(_canistergeekLoggerUD);
+        _canistergeekLoggerUD := null;
+
+        //Optional: override default number of log messages to your value
+        canistergeekLogger.setMaxMessagesCount(3000);
+    };
+
+    private func initializeTopUpsForCanister(canisterId : Principal) : () {
+        topUps.put(
+            canisterId,
+            {
+                var topUpInProgress = false;
+                var latestTopUp = null;
+            },
+        );
     };
 
     private func depositCycles(
@@ -97,107 +169,6 @@ actor CyclesDispenser {
         };
     };
 
-    private func registerKnownCanisters() {
-        register(UserIndex);
-        register(WorkspaceIndex);
-    };
-
-    private func register(canister : RegisterableCanister) {
-        let canisterId = Principal.fromActor(canister);
-        let existingCanister = canisters.get(canisterId);
-        if (existingCanister == null) {
-            canisters.put(canisterId, canister);
-            initializeTopUpsForCanister(canisterId);
-        };
-    };
-
-    private func initializeTopUpsForCanister(canisterId : Principal) : () {
-        let topUp : CanisterTopUp.CanisterTopUp = {
-            var topUpInProgress = false;
-            var latestTopUp = null;
-        };
-        topUps.put(canisterId, topUp);
-    };
-
-    private func topUpKnownCanisters() : async () {
-        await topUpUserIndex();
-        await topUpWorkspaceIndex();
-    };
-
-    private func topUpUserIndex() : async () {
-        let cyclesInfo = await UserIndex.cyclesInformation();
-        let balance = cyclesInfo.balance;
-        let amount = USER_INDEX__TOP_UP_AMOUNT;
-        ignore depositCycles(UserIndex, amount);
-    };
-
-    private func topUpWorkspaceIndex() : async () {
-        let cyclesInfo = await WorkspaceIndex.cyclesInformation();
-        let capacity = cyclesInfo.capacity;
-        let balance = cyclesInfo.balance;
-        let amount = WORKSPACE_INDEX__TOP_UP_AMOUNT;
-        ignore depositCycles(UserIndex, amount);
-    };
-
-    private func startRecurringTimers() {
-        ignore Timer.recurringTimer(
-            #seconds(60),
-            topUpKnownCanisters,
-        );
-    };
-
-    ignore Timer.setTimer(
-        #nanoseconds(0),
-        func() : async () { registerKnownCanisters() },
-    );
-
-    ignore Timer.setTimer(
-        #nanoseconds(0),
-        func() : async () { startRecurringTimers() },
-    );
-
-    /*************************************************************************
-     * Canister Monitoring
-     *************************************************************************/
-
-    // CanisterGeek
-    private let canistergeekMonitor = Canistergeek.Monitor();
-    private let canistergeekLogger = Canistergeek.Logger();
-    stable var _canistergeekMonitorUD : ?Canistergeek.UpgradeData = null;
-    stable var _canistergeekLoggerUD : ?Canistergeek.LoggerUpgradeData = null;
-
-    /**
-    * Returns canister information based on passed parameters.
-    * Called from browser.
-    */
-    public query ({ caller }) func getCanistergeekInformation(request : Canistergeek.GetInformationRequest) : async Canistergeek.GetInformationResponse {
-        Canistergeek.getInformation(?canistergeekMonitor, ?canistergeekLogger, request);
-    };
-
-    /**
-    * Updates canister information based on passed parameters at current time.
-    * Called from browser or any canister "update" method.
-    */
-    public shared ({ caller }) func updateCanistergeekInformation(request : Canistergeek.UpdateInformationRequest) : async () {
-        canistergeekMonitor.updateInformation(request);
-    };
-
-    private func doCanisterGeekPreUpgrade() {
-        _canistergeekMonitorUD := ?canistergeekMonitor.preupgrade();
-        _canistergeekLoggerUD := ?canistergeekLogger.preupgrade();
-    };
-
-    private func doCanisterGeekPostUpgrade() {
-        canistergeekMonitor.postupgrade(_canistergeekMonitorUD);
-        _canistergeekMonitorUD := null;
-
-        canistergeekLogger.postupgrade(_canistergeekLoggerUD);
-        _canistergeekLoggerUD := null;
-
-        //Optional: override default number of log messages to your value
-        canistergeekLogger.setMaxMessagesCount(3000);
-    };
-
     /*************************************************************************
      * System Functions
      *************************************************************************/
@@ -210,11 +181,11 @@ actor CyclesDispenser {
     };
 
     system func postupgrade() {
+        canisters.unshare(stable_canisters);
+        topUps.unshare(stable_topUps);
+
         stable_canisters := #leaf;
         stable_topUps := #leaf;
-
-        // Restart timers
-        startRecurringTimers();
 
         doCanisterGeekPostUpgrade();
     };

@@ -1,3 +1,5 @@
+import CyclesDispenser "canister:cycles_dispenser";
+
 import Debug "mo:base/Debug";
 import Cycles "mo:base/ExperimentalCycles";
 import Principal "mo:base/Principal";
@@ -14,11 +16,12 @@ import Error "mo:base/Error";
 import Canistergeek "mo:canistergeek/canistergeek";
 
 import Constants "../../constants";
+import AuthUtils "../../utils/auth";
 import CanisterTopUp "../../lib/shared/CanisterTopUp";
 import CoreTypes "../../types";
 
-import State "./model/state";
 import CreateUser "./services/create_user";
+import State "./state";
 import Types "./types";
 
 actor UserIndex {
@@ -49,72 +52,24 @@ actor UserIndex {
             return #err(#anonymousUser);
         };
 
-        let userIndexPrincipal = Principal.fromActor(UserIndex);
-        let result = await CreateUser.execute(state, caller, userIndexPrincipal);
+        let result = await CreateUser.execute(state, caller, Principal.fromActor(UserIndex));
 
         switch (result) {
-            case (#err(#anonymousUser)) {
-                return #err(#anonymousUser);
-            };
-            case (#err(#insufficientCycles)) {
-                return #err(#insufficientCycles);
-            };
-            case (#err(#canisterNotFoundForRegisteredUser)) {
-                return #err(#canisterNotFoundForRegisteredUser);
-            };
-            case (#ok(#existing(owner, user))) {
-                return #ok(owner);
-            };
-            case (#ok(#created(owner, user))) {
-                ignore initializeTopUpsForCanister(owner);
-                return #ok(owner);
+            case (#err(err)) { return #err(err) };
+            case (#ok(#existing(userId, user))) { return #ok(userId) };
+            case (#ok(#created(userId, user))) {
+                initializeTopUpsForCanister(userId);
+                return #ok(userId);
             };
         };
     };
 
-    public shared func updateUserCanisterSettings(userPrincipal : Principal, updatedSettings : CoreTypes.CanisterSettings) : async () {
+    public shared ({ caller }) func upgradeUsers(wasm_module : Blob) : async Result.Result<(), { #unauthorized }> {
+        if ((AuthUtils.isDev(caller)) == false) {
+            return #err(#unauthorized);
+        };
+
         let IC0 : CoreTypes.Management = actor "aaaaa-aa";
-
-        let canister_status = await IC0.canister_status({
-            canister_id = userPrincipal;
-        });
-        let memoryAllocation = switch (updatedSettings.memory_allocation) {
-            case (null) { canister_status.settings.memory_allocation };
-            case (?memoryAllocation) { memoryAllocation };
-        };
-        let computeAllocation = switch (updatedSettings.compute_allocation) {
-            case (null) { canister_status.settings.compute_allocation };
-            case (?computeAllocation) { computeAllocation };
-        };
-        let freezingThreshold = switch (updatedSettings.freezing_threshold) {
-            case (null) { canister_status.settings.freezing_threshold };
-            case (?freezingThreshold) { freezingThreshold };
-        };
-
-        let sender_canister_version : ?Nat64 = null;
-
-        try {
-            IC0.update_settings(
-                {
-                    canister_id = userPrincipal;
-                    settings = {
-                        controllers = ?canister_status.settings.controllers;
-                        compute_allocation = ?computeAllocation;
-                        memory_allocation = ?memoryAllocation;
-                        freezing_threshold = ?freezingThreshold;
-                    };
-                    sender_canister_version = sender_canister_version;
-                }
-            );
-        } catch (err) {
-            Debug.print("Error updating user canister settings: " # debug_show (Error.code(err)) # ": " # debug_show (Error.message(err)));
-        };
-
-    };
-
-    public shared func upgradeUserCanistersWasm(wasm_module : Blob) {
-        let IC0 : CoreTypes.Management = actor "aaaaa-aa";
-
         let sender_canister_version : ?Nat64 = null;
 
         for (entry in state.data.user_canister_id_to_identity.entries()) {
@@ -130,11 +85,7 @@ actor UserIndex {
                             }
                         );
                         canister_id = userId;
-                        mode = #upgrade(
-                            ?{
-                                skip_pre_upgrade = ?false;
-                            }
-                        );
+                        mode = #upgrade(?{ skip_pre_upgrade = ?false });
                         sender_canister_version = sender_canister_version;
                         wasm_module = wasm_module;
                     }
@@ -142,13 +93,17 @@ actor UserIndex {
             } catch (err) {
                 Debug.print("Error upgrading user canister: " # debug_show (Error.code(err)) # ": " # debug_show (Error.message(err)));
             };
-
         };
+
+        #ok;
     };
 
-    public shared func upgradeUserPersonalWorkspaceCanistersWasm(wasm_module : Blob) : async () {
-        let IC0 : CoreTypes.Management = actor "aaaaa-aa";
+    public shared ({ caller }) func upgradePersonalWorkspaces(wasm_module : Blob) : async Result.Result<(), { #unauthorized }> {
+        if ((AuthUtils.isDev(caller)) == false) {
+            return #err(#unauthorized);
+        };
 
+        let IC0 : CoreTypes.Management = actor "aaaaa-aa";
         let sender_canister_version : ?Nat64 = null;
 
         for (entry in state.data.user_canister_id_to_identity.entries()) {
@@ -156,40 +111,47 @@ actor UserIndex {
             var userCanister = actor (Principal.toText(userId)) : Types.UserActor;
 
             try {
-                await userCanister.upgradePersonalWorkspaceCanisterWasm(wasm_module);
+                await userCanister.upgradePersonalWorkspace(wasm_module);
             } catch (err) {
                 Debug.print("Error upgrading user personal workspace canister: " # debug_show (Error.code(err)) # ": " # debug_show (Error.message(err)));
             };
         };
+
+        #ok;
     };
 
-    // Returns the cycles received up to the capacity allowed
-    public func walletReceive() : async { accepted : Nat64 } {
+    public shared ({ caller }) func walletReceive() : async Result.Result<{ accepted : Nat64 }, { #unauthorized }> {
+        if (caller != Principal.fromActor(CyclesDispenser)) {
+            return #err(#unauthorized);
+        };
+
         let amount = Cycles.available();
         let limit : Nat = stable_capacity - stable_balance;
         let accepted = if (amount <= limit) amount else limit;
+
         let deposit = Cycles.accept(accepted);
+
         assert (deposit == accepted);
         stable_balance += accepted;
 
         return { accepted = Nat64.fromNat(accepted) };
     };
 
-    public shared func cyclesInformation() : async {
-        balance : Nat;
-        capacity : Nat;
-    } {
-        return { balance = Cycles.balance(); capacity = stable_capacity };
+    func isRegisteredUser(principal : Principal) : Bool {
+        return state.data.getUserIdByOwner(principal) != null;
     };
 
-    public shared ({ caller }) func requestCycles(amount : Nat) : async {
-        accepted : Nat64;
-    } {
+    public shared ({ caller }) func requestCycles(amount : Nat) : async Result.Result<{ accepted : Nat64 }, { #unauthorized }> {
+        if (isRegisteredUser(caller) == false) {
+            return #err(#unauthorized);
+        };
+
         let maxAmount = MAX_TOP_UP_AMOUNT;
         let minInterval = MIN_TOP_UP_INTERVAL;
         let currentBalance = Cycles.balance();
         let now = Time.now();
-        let user = state.data.getUserByUserId(caller);
+        let userId = state.data.getUserIdByOwner(caller);
+        let user = state.data.getUserByUserId(userId);
         let topUp = switch (topUps.get(caller)) {
             case (null) {
                 Debug.trap("Top-ups not set for canister");
@@ -212,18 +174,17 @@ actor UserIndex {
             ExperimentalCycles.add(amount);
             let result = await user.walletReceive();
             CanisterTopUp.setTopUpInProgress(topUp, false);
-            return result;
+
+            return #ok(result);
         };
     };
 
-    private func initializeTopUpsForCanister(canisterId : Principal) : CanisterTopUp.CanisterTopUp {
+    private func initializeTopUpsForCanister(canisterId : Principal) : () {
         let topUp : CanisterTopUp.CanisterTopUp = {
             var topUpInProgress = false;
             var latestTopUp = null;
         };
         topUps.put(canisterId, topUp);
-
-        return topUp;
     };
 
     /*************************************************************************

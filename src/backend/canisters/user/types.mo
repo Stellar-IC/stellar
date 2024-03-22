@@ -11,10 +11,6 @@ module {
     };
 
     public type PersonalWorkspace = actor {
-        cyclesInformation : () -> async {
-            capacity : Nat;
-            balance : Nat;
-        };
         walletReceive : () -> async {
             accepted : Nat64;
         };

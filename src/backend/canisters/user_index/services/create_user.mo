@@ -10,7 +10,7 @@ import Constants "../../../constants";
 
 import User "../../user/main";
 
-import State "../model/state";
+import State "../state";
 import Types "../types";
 
 module CreateUser {
@@ -34,6 +34,7 @@ module CreateUser {
             return #err(#anonymousUser);
         };
 
+        // Check if the user already exists
         switch (state.data.getUserIdByOwner(owner)) {
             case null {};
             case (?userId) {
@@ -42,17 +43,13 @@ module CreateUser {
             };
         };
 
-        let userInitArgs = {
-            owner = owner;
-            capacity = USER__CAPACITY;
-        };
-
         Cycles.add(USER__INITIAL_CYCLES_BALANCE);
 
+        let userInitArgs = { owner; capacity = USER__CAPACITY };
         let user = await (system User.User)(
             #new {
                 settings = ?{
-                    controllers = ?[owner, userIndexPrincipal];
+                    controllers = ?[userIndexPrincipal];
                     compute_allocation = null;
                     memory_allocation = null;
                     freezing_threshold = ?USER__FREEZING_THRESHOLD;
@@ -60,14 +57,10 @@ module CreateUser {
             }
         )(userInitArgs);
 
-        let userPrincipal = Principal.fromActor(user);
+        let userId = Principal.fromActor(user);
 
-        await state.data.addUser({
-            user = user;
-            user_id = userPrincipal;
-            owner = owner;
-        });
+        await state.data.addUser({ user; userId; owner });
 
-        #ok(#created(userPrincipal, user));
+        #ok(#created(userId, user));
     };
 };

@@ -228,16 +228,6 @@ shared ({ caller = initializer }) actor class Workspace(
         return result;
     };
 
-    public shared func cyclesInformation() : async {
-        balance : Nat;
-        capacity : Nat;
-    } {
-        return {
-            balance = ExperimentalCycles.balance();
-            capacity = capacity;
-        };
-    };
-
     public query func activityLog(pageUuid : UUID.UUID) : async CoreTypes.PaginatedResults<ActivitiesTypes.HydratedActivity> {
         var activities = List.fromArray<ActivitiesTypes.HydratedActivity>([]);
 
