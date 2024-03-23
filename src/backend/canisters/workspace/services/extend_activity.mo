@@ -10,7 +10,7 @@ import ActivityBuilder "../../../lib/activities/ActivityBuilder";
 import BlocksTypes "../../../lib/blocks/types";
 
 import State "../state";
-import Types "../types";
+import Types "../types/v2";
 
 module ExtendActivity {
     type Input = Types.Services.ExtendActivityService.ExtendActivityServiceInput;

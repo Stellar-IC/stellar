@@ -10,19 +10,19 @@ import ExperimentalCycles "mo:base/ExperimentalCycles";
 import Error "mo:base/Error";
 import Canistergeek "mo:canistergeek/canistergeek";
 
-import CoreTypes "../../types";
+import Constants "../../constants";
+import CanisterTopUp "../../lib/shared/CanisterTopUp";
 import UserProfile "../../lib/users/UserProfile";
 import UsersTypes "../../lib/users/types";
 import CreateWorkspace "../../lib/workspaces/services/create_workspace";
 import WorkspacesTypes "../../lib/workspaces/types";
+import CoreTypes "../../types";
 import AuthUtils "../../utils/auth";
 
 import Workspace "../workspace/main";
-import Constants "../../constants";
-import CanisterTopUp "../../lib/shared/CanisterTopUp";
 
-import Types "./types";
 import Guards "./guards";
+import Types "./types";
 
 shared ({ caller = initializer }) actor class User(
     initArgs : Types.UserInitArgs
@@ -79,6 +79,7 @@ shared ({ caller = initializer }) actor class User(
                         {
                             canisterId = Principal.fromActor(self);
                             username = stable_profile.username;
+                            role = #admin;
                         },
                     )];
                 });

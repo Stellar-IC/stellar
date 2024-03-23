@@ -19,17 +19,19 @@ module {
         owner : Principal;
     };
 
+    public type WorkspaceInitData = {
+        uuid : UUID.UUID;
+        name : Text;
+        description : Text;
+        createdAt : Time.Time;
+        updatedAt : Time.Time;
+    };
+
     public type MockWorkspaceActor = actor {
         toObject : shared query () -> async Workspace;
         walletReceive : shared () -> async ({ accepted : Nat64 });
-        getInitArgs() : async WorkspaceInitArgs;
-        getInitData() : async {
-            uuid : UUID.UUID;
-            name : WorkspaceName;
-            description : WorkspaceDescription;
-            createdAt : Time.Time;
-            updatedAt : Time.Time;
-        };
+        getInitArgs : shared query () -> async Result.Result<WorkspaceInitArgs, { #unauthorized }>;
+        getInitData : shared query () -> async Result.Result<WorkspaceInitData, { #unauthorized }>;
     };
 
     public type Workspace = {
@@ -41,6 +43,24 @@ module {
         updatedAt : Time.Time;
     };
 
+    public type WorkspaceVisibility = {
+        #open;
+        #closed;
+    };
+
+    public type WorkspaceUserRole = {
+        #admin;
+        #moderator;
+        #member;
+        #guest;
+    };
+
+    public type WorkspaceUser = {
+        canisterId : Principal;
+        username : Text;
+        role : WorkspaceUserRole;
+    };
+
     public module Services {
         public module CreateWorkspace {
             public type CreateWorkspaceInput = {
@@ -48,13 +68,10 @@ module {
                 controllers : [Principal];
                 initialUsers : [(
                     Principal,
-                    {
-                        canisterId : Principal;
-                        username : Text;
-                    },
+                    WorkspaceUser,
                 )];
             };
-            public type CreateWorkspaceResult = Result.Result<MockWorkspaceActor, { #anonymousUser; #insufficientCycles }>;
+            public type CreateWorkspaceOutput = Result.Result<MockWorkspaceActor, { #anonymousUser; #insufficientCycles }>;
         };
     };
 };

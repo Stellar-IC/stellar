@@ -12,7 +12,7 @@ import BlocksTypes "../../../lib/blocks/types";
 import Logger "../../../lib/Logger";
 
 import State "../state";
-import Types "../types";
+import Types "../types/v2";
 
 module CreateActivity {
     type Input = Types.Services.CreateActivityService.CreateActivityServiceInput;

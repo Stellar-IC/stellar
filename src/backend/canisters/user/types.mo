@@ -1,3 +1,4 @@
+import Result "mo:base/Result";
 import Time "mo:base/Time";
 import UUID "mo:uuid/UUID";
 
@@ -11,16 +12,8 @@ module {
     };
 
     public type PersonalWorkspace = actor {
-        walletReceive : () -> async {
-            accepted : Nat64;
-        };
-        getInitArgs() : async WorkspacesTypes.WorkspaceInitArgs;
-        getInitData() : async {
-            uuid : UUID.UUID;
-            name : CoreTypes.Workspaces.WorkspaceName;
-            description : CoreTypes.Workspaces.WorkspaceDescription;
-            createdAt : Time.Time;
-            updatedAt : Time.Time;
-        };
+        walletReceive : shared () -> async ({ accepted : Nat64 });
+        getInitArgs : shared query () -> async Result.Result<WorkspacesTypes.WorkspaceInitArgs, { #unauthorized }>;
+        getInitData : shared query () -> async Result.Result<WorkspacesTypes.WorkspaceInitData, { #unauthorized }>;
     };
 };

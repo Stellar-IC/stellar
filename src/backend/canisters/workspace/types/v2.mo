@@ -8,65 +8,113 @@ import UUID "mo:uuid/UUID";
 import ActivitiesTypes "../../../lib/activities/types";
 import BlocksTypes "../../../lib/blocks/types";
 import EventsTypes "../../../lib/events/types";
+import WorkspacesTypes "../../../lib/workspaces/types";
 import CoreTypes "../../../types";
 
-import Types_v1 "./v1";
-
 module {
-    public type Block = Types_v1.Block;
     public type ExternalId = Text;
-    public type UnsavedBlock = Types_v1.UnsavedBlock;
-    public type ShareableBlock = Types_v1.ShareableBlock;
-    public type ShareableBlockContent = Types_v1.ShareableBlockContent;
-    public type ShareableBlockProperties = Types_v1.ShareableBlockProperties;
-    public type BlockEvent = BlocksTypes.BlockEvent;
+    public type PrimaryKey = Nat;
+    public type Username = Text;
 
-    public type PrimaryKey = Types_v1.PrimaryKey;
-    public type Username = Types_v1.Username;
+    public type Block = BlocksTypes.Block;
+    public type BlockEvent = BlocksTypes.BlockEvent;
+    public type UnsavedBlock = BlocksTypes.UnsavedBlock;
+    public type ShareableBlock = BlocksTypes.ShareableBlock;
+    public type ShareableBlockContent = BlocksTypes.ShareableBlockContent;
+    public type ShareableBlockProperties = BlocksTypes.ShareableBlockProperties;
 
     public module Services {
         public module CreateActivityService {
-            public type CreateActivityServiceInput = Types_v1.Services.CreateActivityService.CreateActivityServiceInput;
-            public type CreateActivityServiceOutputError = Types_v1.Services.CreateActivityService.CreateActivityServiceOutputError;
+            public type CreateActivityServiceInput = {
+                id : Nat;
+                edits : [ActivitiesTypes.EditItem];
+                blockExternalId : UUID.UUID;
+            };
+            public type CreateActivityServiceOutputError = {
+                #anonymousUser;
+                #failedToCreate;
+                #inputTooLong;
+                #invalidActivityType;
+                #insufficientCycles;
+            };
             public type CreateActivityServiceOutput = ActivitiesTypes.Activity;
         };
 
         public module CreateBlockService {
-            public type CreateBlockServiceInput = Types_v1.Services.CreateBlockService.CreateBlockServiceInput;
-            public type CreateBlockServiceOutputError = Types_v1.Services.CreateBlockService.CreateBlockServiceOutputError;
-            public type CreateBlockServiceOutputResult = Types_v1.Services.CreateBlockService.CreateBlockServiceOutputResult;
-            public type CreateBlockServiceOutput = Types_v1.Services.CreateBlockService.CreateBlockServiceOutput;
+            public type CreateBlockServiceInput = UnsavedBlock;
+            public type CreateBlockServiceOutputError = {
+                #anonymousUser;
+                #failedToCreate;
+                #inputTooLong;
+                #invalidBlockType;
+                #insufficientCycles;
+            };
+            public type CreateBlockServiceOutputResult = Block;
+            public type CreateBlockServiceOutput = Result.Result<CreateBlockServiceOutputResult, CreateBlockServiceOutputError>;
         };
 
         public module ExtendActivityService {
-            public type ExtendActivityServiceInput = Types_v1.Services.ExtendActivityService.ExtendActivityServiceInput;
-            public type ExtendActivityServiceOutput = Types_v1.Services.ExtendActivityService.ExtendActivityServiceOutput;
+            public type ExtendActivityServiceInput = {
+                activityId : Nat;
+                edits : [ActivitiesTypes.EditItem];
+            };
+            public type ExtendActivityServiceOutput = ActivitiesTypes.Activity;
         };
 
         public module UpdateBlockService {
-            public type UpdateBlockServiceInput = Types_v1.Services.UpdateBlockService.UpdateBlockServiceInput;
-            public type UpdateBlockServiceOutputError = Types_v1.Services.UpdateBlockService.UpdateBlockServiceOutputError;
-            public type UpdateBlockServiceOutputResult = Types_v1.Services.UpdateBlockService.UpdateBlockServiceOutputResult;
-            public type UpdateBlockServiceOutput = Types_v1.Services.UpdateBlockService.UpdateBlockServiceOutput;
+            public type UpdateBlockServiceInput = Block;
+            public type UpdateBlockServiceOutputError = {
+                #anonymousUser;
+                #failedToUpdate;
+                #inputTooLong;
+                #invalidBlockType;
+                #insufficientCycles;
+            };
+            public type UpdateBlockServiceOutputResult = Block;
+            public type UpdateBlockServiceOutput = Result.Result<UpdateBlockServiceOutputResult, UpdateBlockServiceOutputError>;
         };
 
         public module DeleteBlockService {
-            public type DeleteBlockServiceInput = Types_v1.Services.DeleteBlockService.DeleteBlockServiceInput;
-            public type DeleteBlockServiceOutputError = Types_v1.Services.DeleteBlockService.DeleteBlockServiceOutputError;
-            public type DeleteBlockServiceOutputResult = Types_v1.Services.DeleteBlockService.DeleteBlockServiceOutputResult;
-            public type DeleteBlockServiceOutput = Types_v1.Services.DeleteBlockService.DeleteBlockServiceOutput;
+            public type DeleteBlockServiceInput = { id : PrimaryKey };
+            public type DeleteBlockServiceOutputError = {
+                #anonymousUser;
+            };
+            public type DeleteBlockServiceOutputResult = ();
+            public type DeleteBlockServiceOutput = Result.Result<DeleteBlockServiceOutputResult, DeleteBlockServiceOutputError>;
         };
 
         public module CreatePageService {
-            public type CreatePageServiceInput = Types_v1.Services.CreatePageService.CreatePageServiceInput;
-            public type CreatePageServiceOutputError = Types_v1.Services.CreatePageService.CreatePageServiceOutputError;
-            public type CreatePageServiceOutputResult = Types_v1.Services.CreatePageService.CreatePageServiceOutputResult;
-            public type CreatePageServiceOutput = Types_v1.Services.CreatePageService.CreatePageServiceOutput;
+            public type CreatePageServiceInput = {
+                uuid : UUID.UUID;
+                content : ShareableBlockContent;
+                parent : ?UUID.UUID;
+                properties : ShareableBlockProperties;
+                initialBlockUuid : UUID.UUID;
+            };
+            public type CreatePageServiceOutputError = {
+                #anonymousUser;
+                #failedToCreate;
+                #inputTooLong;
+                #invalidBlockType;
+                #insufficientCycles;
+            };
+            public type CreatePageServiceOutputResult = ShareableBlock;
+            public type CreatePageServiceOutput = Result.Result<CreatePageServiceOutputResult, CreatePageServiceOutputError>;
         };
     };
 
     public module Queries {
+        public module ActivityLog {
+            public type ActivityLogOutput = CoreTypes.PaginatedResults<ActivitiesTypes.HydratedActivity>;
+        };
+
         public module BlockByUuid {
+            public type BlockByUuidOptions = {
+                contentPagination : {
+                    cursor : Nat;
+                    limit : Nat;
+                };
+            };
             public type BlockByUuidResult = Result.Result<{ block : ExternalId; recordMap : { blocks : [(ExternalId, ShareableBlock)] } }, { #notFound }>;
         };
 
@@ -77,12 +125,24 @@ module {
             };
         };
 
+        public module GetInitArgs {
+            public type GetInitArgsOutput = Result.Result<WorkspacesTypes.WorkspaceInitArgs, { #unauthorized }>;
+        };
+
+        public module GetInitData {
+            public type GetInitDataOutput = Result.Result<WorkspacesTypes.WorkspaceInitData, { #unauthorized }>;
+        };
+
         public module PageByUuid {
             public type PageByUuidResult = Result.Result<{ page : ExternalId; recordMap : { blocks : [(ExternalId, ShareableBlock)] } }, { #notFound }>;
         };
 
         public module Pages {
-            public type PagesOptionsArg = Types_v1.Queries.Pages.PagesOptionsArg;
+            public type PagesOptionsArg = {
+                cursor : ?PrimaryKey;
+                limit : ?Nat;
+                order : ?CoreTypes.SortOrder;
+            };
             public type PagesResult = {
                 pages : CoreTypes.PaginatedResults<ExternalId>;
                 recordMap : { blocks : [(ExternalId, ShareableBlock)] };
@@ -92,38 +152,68 @@ module {
 
     public module Updates {
         public module AddBlockUpdate {
-            public type AddBlockUpdateInput = Types_v1.Updates.AddBlockUpdate.AddBlockUpdateInput;
-            public type AddBlockUpdateOutputError = Types_v1.Updates.AddBlockUpdate.AddBlockUpdateOutputError;
-            public type AddBlockUpdateOutputResult = Types_v1.Updates.AddBlockUpdate.AddBlockUpdateOutputResult;
-            public type AddBlockUpdateOutput = Types_v1.Updates.AddBlockUpdate.AddBlockUpdateOutput;
+            public type AddBlockUpdateInput = {
+                uuid : UUID.UUID;
+                blockType : BlocksTypes.BlockType;
+                content : BlocksTypes.ShareableBlockContent;
+                parent : ?UUID.UUID;
+                properties : BlocksTypes.ShareableBlockProperties;
+            };
+            public type AddBlockUpdateOutputError = { #unauthorized };
+            public type AddBlockUpdateOutputResult = ();
+            public type AddBlockUpdateOutput = Result.Result<AddBlockUpdateOutputResult, AddBlockUpdateOutputError>;
+        };
+
+        public module AddUsersUpdate {
+            public type AddUsersUpdateInput = [(Principal, WorkspacesTypes.WorkspaceUser)];
+            public type AddUsersUpdateResult = Result.Result<(), { #unauthorized }>;
         };
 
         public module CreatePageUpdate {
-            public type CreatePageUpdateInput = Types_v1.Updates.CreatePageUpdate.CreatePageUpdateInput;
-            public type CreatePageUpdateOutputError = Types_v1.Updates.CreatePageUpdate.CreatePageUpdateOutputError;
-            public type CreatePageUpdateOutputResult = Types_v1.Updates.CreatePageUpdate.CreatePageUpdateOutputResult;
-            public type CreatePageUpdateOutput = Types_v1.Updates.CreatePageUpdate.CreatePageUpdateOutput;
-        };
-
-        public module UpdateBlockUpdate {
-            public type UpdateBlockUpdateInput = Types_v1.Updates.UpdateBlockUpdate.UpdateBlockUpdateInput;
-            public type UpdateBlockUpdateOutputError = Types_v1.Updates.UpdateBlockUpdate.UpdateBlockUpdateOutputError;
-            public type UpdateBlockUpdateOutputResult = Types_v1.Updates.UpdateBlockUpdate.UpdateBlockUpdateOutputResult;
-            public type UpdateBlockUpdateOutput = Types_v1.Updates.UpdateBlockUpdate.UpdateBlockUpdateOutput;
+            public type CreatePageUpdateInput = {
+                uuid : UUID.UUID;
+                content : BlocksTypes.ShareableBlockContent;
+                parent : ?UUID.UUID;
+                properties : ShareableBlockProperties;
+                initialBlockUuid : UUID.UUID;
+            };
+            public type CreatePageUpdateOutputError = {
+                #anonymousUser;
+                #failedToCreate;
+                #inputTooLong;
+                #invalidBlockType;
+                #insufficientCycles;
+            };
+            public type CreatePageUpdateOutputResult = ShareableBlock;
+            public type CreatePageUpdateOutput = Result.Result<CreatePageUpdateOutputResult, CreatePageUpdateOutputError>;
         };
 
         public module DeletePageUpdate {
-            public type DeletePageUpdateInput = Types_v1.Updates.DeletePageUpdate.DeletePageUpdateInput;
-            public type DeletePageUpdateOutputError = Types_v1.Updates.DeletePageUpdate.DeletePageUpdateOutputError;
-            public type DeletePageUpdateOutputResult = Types_v1.Updates.DeletePageUpdate.DeletePageUpdateOutputResult;
-            public type DeletePageUpdateOutput = Types_v1.Updates.DeletePageUpdate.DeletePageUpdateOutput;
+            public type DeletePageUpdateInput = { uuid : UUID.UUID };
+            public type DeletePageUpdateOutputError = ();
+            public type DeletePageUpdateOutputResult = ();
+            public type DeletePageUpdateOutput = Result.Result<DeletePageUpdateOutputResult, DeletePageUpdateOutputError>;
         };
 
         public module SaveEventTransactionUpdate {
-            public type SaveEventTransactionUpdateInput = Types_v1.Updates.SaveEventTransactionUpdate.SaveEventTransactionUpdateInput;
-            public type SaveEventTransactionUpdateOutputError = Types_v1.Updates.SaveEventTransactionUpdate.SaveEventTransactionUpdateOutputError;
-            public type SaveEventTransactionUpdateOutputResult = Types_v1.Updates.SaveEventTransactionUpdate.SaveEventTransactionUpdateOutputResult;
-            public type SaveEventTransactionUpdateOutput = Types_v1.Updates.SaveEventTransactionUpdate.SaveEventTransactionUpdateOutput;
+            public type SaveEventTransactionUpdateInput = {
+                transaction : BlocksTypes.BlockEventTransaction;
+            };
+            public type SaveEventTransactionUpdateOutputError = {
+                #anonymousUser;
+                #insufficientCycles;
+            };
+            public type SaveEventTransactionUpdateOutputResult = ();
+            public type SaveEventTransactionUpdateOutput = Result.Result<SaveEventTransactionUpdateOutputResult, SaveEventTransactionUpdateOutputError>;
+        };
+
+        public module UpdateBlockUpdate {
+            public type UpdateBlockUpdateInput = ShareableBlock;
+            public type UpdateBlockUpdateOutputError = {
+                #primaryKeyAttrNotFound;
+            };
+            public type UpdateBlockUpdateOutputResult = ShareableBlock;
+            public type UpdateBlockUpdateOutput = Result.Result<UpdateBlockUpdateOutputResult, UpdateBlockUpdateOutputError>;
         };
     };
 };

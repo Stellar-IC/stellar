@@ -11,9 +11,9 @@ module {
     public type RegisterUserResult = Result.Result<Principal, RegisterUserError>;
 
     public type UserActor = actor {
-        upgradePersonalWorkspace : (wasm_module : Blob) -> async Result.Result<(), { #unauthorized }>;
-        walletReceive : () -> async Result.Result<{ accepted : Nat64 }, { #failed : Text; #unauthorized; #workspaceNotFound : Text }>;
-        personalWorkspace : () -> async Result.Result<WorkspacesTypes.WorkspaceId, { #anonymousUser; #insufficientCycles; #unauthorized }>;
+        personalWorkspace : shared () -> async Result.Result<WorkspacesTypes.WorkspaceId, { #anonymousUser; #insufficientCycles; #unauthorized }>;
+        upgradePersonalWorkspace : shared (wasm_module : Blob) -> async Result.Result<(), { #failed : Text; #unauthorized; #workspaceNotFound : Text }>;
+        walletReceive : shared () -> async Result.Result<{ accepted : Nat64 }, { #unauthorized }>;
     };
 
     public module Services {

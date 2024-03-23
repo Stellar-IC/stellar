@@ -13,9 +13,9 @@ import Types "../types";
 
 module CreateWorkspace {
     type Input = Types.Services.CreateWorkspace.CreateWorkspaceInput;
-    type Result = Types.Services.CreateWorkspace.CreateWorkspaceResult;
+    type Output = Types.Services.CreateWorkspace.CreateWorkspaceOutput;
 
-    public func execute({ controllers; owner; initialUsers } : Input) : async Result {
+    public func execute({ controllers; owner; initialUsers } : Input) : async Output {
         let CONSTANTS = Constants.Constants();
         let WORKSPACE_CAPACITY = CONSTANTS.WORKSPACE__CAPACITY.scalar;
         let WORKSPACE_FREEZING_THRESHOLD = CONSTANTS.WORKSPACE__FREEZING_THRESHOLD.scalar;
@@ -56,7 +56,7 @@ module CreateWorkspace {
         )(workspaceInitArgs, workspaceInitData);
 
         if (Array.size(initialUsers) > 0) {
-            await workspace.addUsers(initialUsers);
+            let result = await workspace.addUsers(initialUsers);
         };
 
         #ok(workspace);

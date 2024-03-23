@@ -25,6 +25,7 @@ import BlocksTypes "../../lib/blocks/types";
 import BlockEvent "../../lib/events/BlockEvent";
 import EventStream "../../lib/events/EventStream";
 import Paginator "../../lib/pagination/Paginator";
+import WorkspacesTypes "../../lib/workspaces/types";
 import Logger "../../lib/Logger";
 import UserRegistry "../../lib/UserRegistry";
 
@@ -37,7 +38,7 @@ import BlockCreatedConsumer "./consumers/BlockCreatedConsumer";
 import BlockUpdatedConsumer "./consumers/BlockUpdatedConsumer";
 import CreatePage "./services/create_page";
 import State "./state";
-import Types "./types";
+import Types "./types/v2";
 
 shared ({ caller = initializer }) actor class Workspace(
     initArgs : CoreTypes.Workspaces.WorkspaceInitArgs,
@@ -58,47 +59,41 @@ shared ({ caller = initializer }) actor class Workspace(
     type ShareableBlock = BlocksTypes.ShareableBlock;
     type BlockEvent = BlocksTypes.BlockEvent;
 
+    type WorkspaceUser = WorkspacesTypes.WorkspaceUser;
+
     /*************************************************************************
      * Stable Data
      *************************************************************************/
 
     stable var _stateUpgradeData : ?State.UpgradeData = null;
-    stable var blocks : RBTree.Tree<PrimaryKey, ShareableBlock> = #leaf;
-    stable var activitiesIdCounter : Nat = 0;
-    stable var events : RBTree.Tree<Text, BlockEvent> = #leaf;
-    stable var owner : CoreTypes.Workspaces.WorkspaceOwner = initArgs.owner;
-    stable var uuid : UUID.UUID = initData.uuid;
-    stable var name : CoreTypes.Workspaces.WorkspaceName = initData.name;
-    stable var description : CoreTypes.Workspaces.WorkspaceDescription = initData.name;
-    stable var websiteLink : ?Text = null;
-    stable var createdAt : Time.Time = initData.createdAt;
-    stable var updatedAt : Time.Time = initData.updatedAt;
+    stable var _blocks : RBTree.Tree<PrimaryKey, ShareableBlock> = #leaf;
+    stable var _activitiesIdCounter : Nat = 0;
+    stable var _events : RBTree.Tree<Text, BlockEvent> = #leaf;
 
-    stable let capacity : Nat = initArgs.capacity;
-    stable var balance : Nat = ExperimentalCycles.balance();
+    stable var _owner : CoreTypes.Workspaces.WorkspaceOwner = initArgs.owner;
+    stable var _uuid : UUID.UUID = initData.uuid;
+    stable var _name : CoreTypes.Workspaces.WorkspaceName = initData.name;
+    stable var _description : CoreTypes.Workspaces.WorkspaceDescription = initData.name;
+    stable var _websiteLink : ?Text = null;
+    stable var _createdAt : Time.Time = initData.createdAt;
+    stable var _updatedAt : Time.Time = initData.updatedAt;
 
-    // CanisterGeek
-    private let canistergeekMonitor = Canistergeek.Monitor();
-    private let canistergeekLogger = Canistergeek.Logger();
+    stable let _capacity : Nat = initArgs.capacity;
+    stable var _balance : Nat = ExperimentalCycles.balance();
+
     stable var _canistergeekMonitorUD : ?Canistergeek.UpgradeData = null;
     stable var _canistergeekLoggerUD : ?Canistergeek.LoggerUpgradeData = null;
+    stable var _userRegistryUpgradeData : RBTree.Tree<Principal, WorkspaceUser> = #leaf;
+    stable var _eventStreamUpgradeData : ?EventStream.UpgradeData<BlocksTypes.BlockEvent> = null;
 
-    private let logger = Logger.Logger([
+    let canistergeekMonitor = Canistergeek.Monitor();
+    let canistergeekLogger = Canistergeek.Logger();
+    let logger = Logger.Logger([
         Logger.CanisterGeekLoggerAdapter(canistergeekLogger),
         Logger.DebugLoggerAdapter(),
     ]);
 
-    type UserRegistryEntry = {
-        membershipStatus : {
-            isActive : Bool;
-        };
-        profile : CoreTypes.User.PublicUserProfile;
-    };
-
-    private let userRegistry = UserRegistry.UserRegistry<UserRegistryEntry>();
-    private stable var _userRegistryUpgradeData : RBTree.Tree<Principal, UserRegistryEntry> = #leaf;
-
-    // Event Stream
+    let userRegistry = UserRegistry.UserRegistry<WorkspaceUser>();
     let eventStream = EventStream.EventStream<BlocksTypes.BlockEvent>(
         {
             getEventId = func(event) {
@@ -107,31 +102,27 @@ shared ({ caller = initializer }) actor class Workspace(
         },
         { logger },
     );
-    stable var _eventStreamUpgradeData : ?EventStream.UpgradeData<BlocksTypes.BlockEvent> = null;
 
-    /*************************************************************************
-     * Transient Data
-     *************************************************************************/
-
-    var timersHaveBeenStarted = false;
     var state = State.State(State.Data());
 
     /*************************************************************************
      * Initialization helper methods
      *************************************************************************/
 
-    public func getInitArgs() : async CoreTypes.Workspaces.WorkspaceInitArgs {
-        return initArgs;
+    public query ({ caller }) func getInitArgs() : async Types.Queries.GetInitArgs.GetInitArgsOutput {
+        if (caller != _owner) {
+            return #err(#unauthorized);
+        };
+
+        return #ok(initArgs);
     };
 
-    public func getInitData() : async {
-        uuid : UUID.UUID;
-        name : CoreTypes.Workspaces.WorkspaceName;
-        description : CoreTypes.Workspaces.WorkspaceDescription;
-        createdAt : Time.Time;
-        updatedAt : Time.Time;
-    } {
-        return initData;
+    public query ({ caller }) func getInitData() : async Types.Queries.GetInitData.GetInitDataOutput {
+        if (caller != _owner) {
+            return #err(#unauthorized);
+        };
+
+        return #ok(initData);
     };
 
     /*************************************************************************
@@ -140,24 +131,19 @@ shared ({ caller = initializer }) actor class Workspace(
 
     public query func toObject() : async CoreTypes.Workspaces.Workspace {
         return {
-            uuid = uuid;
-            name = name;
-            description = description;
-            owner = owner;
-            createdAt = createdAt;
-            updatedAt = updatedAt;
+            uuid = _uuid;
+            name = _name;
+            description = _description;
+            owner = _owner;
+            createdAt = _createdAt;
+            updatedAt = _updatedAt;
         };
     };
 
     public query func block(
         uuid : UUID.UUID,
-        options : {
-            contentPagination : {
-                cursor : Nat;
-                limit : Nat;
-            };
-        },
-    ) : async BlockByUuidResult {
+        options : Types.Queries.BlockByUuid.BlockByUuidOptions,
+    ) : async Types.Queries.BlockByUuid.BlockByUuidResult {
         let blockId = UUID.toText(uuid);
         let block = switch (state.data.findBlock(blockId)) {
             case (null) { return #err(#notFound) };
@@ -228,7 +214,9 @@ shared ({ caller = initializer }) actor class Workspace(
         return result;
     };
 
-    public query func activityLog(pageUuid : UUID.UUID) : async CoreTypes.PaginatedResults<ActivitiesTypes.HydratedActivity> {
+    public query func activityLog(
+        pageUuid : UUID.UUID
+    ) : async Types.Queries.ActivityLog.ActivityLogOutput {
         var activities = List.fromArray<ActivitiesTypes.HydratedActivity>([]);
 
         for (activity in List.toIter(state.data.getActivitiesForPage(UUID.toText(pageUuid)))) {
@@ -238,7 +226,12 @@ shared ({ caller = initializer }) actor class Workspace(
 
             for (edit in shareableActivity.edits.vals()) {
                 let user = UserRegistry.getUser(userRegistry, edit.user);
-                let hydratedEdit = { edit with user = user.profile };
+                let hydratedEdit = {
+                    edit with user = {
+                        canisterId = user.canisterId;
+                        username = user.username;
+                    };
+                };
 
                 edits := List.append(edits, List.fromArray([hydratedEdit]));
 
@@ -246,10 +239,16 @@ shared ({ caller = initializer }) actor class Workspace(
                 if (
                     List.some<ActivitiesTypes.HydratedEditItemUser>(
                         users,
-                        func(u) { u.canisterId == user.profile.canisterId },
+                        func(u) { u.canisterId == user.canisterId },
                     ) == false
                 ) {
-                    users := List.push<ActivitiesTypes.HydratedEditItemUser>(user.profile, users);
+                    users := List.push<ActivitiesTypes.HydratedEditItemUser>(
+                        {
+                            canisterId = user.canisterId;
+                            username = user.username;
+                        },
+                        users,
+                    );
                 };
             };
 
@@ -269,10 +268,21 @@ shared ({ caller = initializer }) actor class Workspace(
      * Updates
      *************************************************************************/
 
-    public shared func addUsers(users : [(Principal, CoreTypes.User.PublicUserProfile)]) : async () {
-        for (user in users.vals()) {
-            UserRegistry.addUser<UserRegistryEntry>(userRegistry, user.0, { membershipStatus = { isActive = false }; profile = user.1 });
+    public shared ({ caller }) func addUsers(
+        input : Types.Updates.AddUsersUpdate.AddUsersUpdateInput
+    ) : async Types.Updates.AddUsersUpdate.AddUsersUpdateResult {
+        if (caller != _owner) {
+            return #err(#unauthorized);
         };
+
+        for (item in input.vals()) {
+            let userId = item.0;
+            let userDetails = item.1;
+
+            UserRegistry.addUser<WorkspaceUser>(userRegistry, userId, userDetails);
+        };
+
+        return #ok;
     };
 
     public shared ({ caller }) func createPage(
@@ -286,10 +296,12 @@ shared ({ caller = initializer }) actor class Workspace(
 
     public shared ({ caller }) func addBlock(
         input : Types.Updates.AddBlockUpdate.AddBlockUpdateInput
-    ) : async () {
+    ) : async Types.Updates.AddBlockUpdate.AddBlockUpdateOutput {
         let block = BlockModule.fromShareableUnsaved(input);
         state.data.addBlock(block);
         await updateCanistergeekInformation({ metrics = ? #force });
+
+        return #ok;
     };
 
     public shared ({ caller }) func updateBlock(
@@ -308,7 +320,7 @@ shared ({ caller = initializer }) actor class Workspace(
         state.data.deleteBlock(UUID.toText(input.uuid));
         await updateCanistergeekInformation({ metrics = ? #force });
 
-        return #ok();
+        return #ok;
     };
 
     public shared ({ caller }) func saveEvents(
@@ -322,7 +334,7 @@ shared ({ caller = initializer }) actor class Workspace(
 
         await updateCanistergeekInformation({ metrics = ? #force });
 
-        return #ok();
+        return #ok;
     };
 
     /*************************************************************************
@@ -345,7 +357,7 @@ shared ({ caller = initializer }) actor class Workspace(
     };
 
     func processEvent(event : BlockEvent) : () {
-        let activityId = activitiesIdCounter;
+        let activityId = _activitiesIdCounter;
 
         switch (event.data) {
             case (#blockCreated(blockCreatedEvent)) {
@@ -374,12 +386,12 @@ shared ({ caller = initializer }) actor class Workspace(
             };
         };
 
-        activitiesIdCounter := activitiesIdCounter + 1;
+        _activitiesIdCounter := _activitiesIdCounter + 1;
     };
 
     // Returns the cycles received up to the capacity allowed
     public shared func walletReceive() : async { accepted : Nat64 } {
-        let result = await CyclesUtils.walletReceive(capacity - ExperimentalCycles.balance());
+        let result = await CyclesUtils.walletReceive(_capacity - ExperimentalCycles.balance());
         await updateCanistergeekInformation({ metrics = ? #force });
 
         return result;
@@ -416,7 +428,7 @@ shared ({ caller = initializer }) actor class Workspace(
             return #ok(principal);
         };
 
-        if (principal == owner) {
+        if (principal == _owner) {
             return #ok(principal);
         };
 

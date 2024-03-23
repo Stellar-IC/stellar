@@ -98,7 +98,7 @@ actor UserIndex {
         #ok;
     };
 
-    public shared ({ caller }) func upgradePersonalWorkspaces(wasm_module : Blob) : async Result.Result<(), { #unauthorized }> {
+    public shared ({ caller }) func upgradePersonalWorkspaces(wasm_module : Blob) : async Result.Result<(), { #failed : Text; #unauthorized; #workspaceNotFound : Text }> {
         if ((AuthUtils.isDev(caller)) == false) {
             return #err(#unauthorized);
         };
@@ -111,7 +111,8 @@ actor UserIndex {
             var userCanister = actor (Principal.toText(userId)) : Types.UserActor;
 
             try {
-                await userCanister.upgradePersonalWorkspace(wasm_module);
+                let result = await userCanister.upgradePersonalWorkspace(wasm_module);
+                return result;
             } catch (err) {
                 Debug.print("Error upgrading user personal workspace canister: " # debug_show (Error.code(err)) # ": " # debug_show (Error.message(err)));
             };
@@ -134,14 +135,14 @@ actor UserIndex {
         assert (deposit == accepted);
         stable_balance += accepted;
 
-        return { accepted = Nat64.fromNat(accepted) };
+        return #ok({ accepted = Nat64.fromNat(accepted) });
     };
 
     func isRegisteredUser(principal : Principal) : Bool {
         return state.data.getUserIdByOwner(principal) != null;
     };
 
-    public shared ({ caller }) func requestCycles(amount : Nat) : async Result.Result<{ accepted : Nat64 }, { #unauthorized }> {
+    public shared ({ caller }) func requestCycles(amount : Nat) : async Result.Result<{ accepted : Nat64 }, { #unauthorized; #userNotFound }> {
         if (isRegisteredUser(caller) == false) {
             return #err(#unauthorized);
         };
@@ -150,7 +151,12 @@ actor UserIndex {
         let minInterval = MIN_TOP_UP_INTERVAL;
         let currentBalance = Cycles.balance();
         let now = Time.now();
-        let userId = state.data.getUserIdByOwner(caller);
+        let userId = switch (state.data.getUserIdByOwner(caller)) {
+            case (?userId) { userId };
+            case (null) {
+                return #err(#userNotFound);
+            };
+        };
         let user = state.data.getUserByUserId(userId);
         let topUp = switch (topUps.get(caller)) {
             case (null) {
@@ -175,7 +181,14 @@ actor UserIndex {
             let result = await user.walletReceive();
             CanisterTopUp.setTopUpInProgress(topUp, false);
 
-            return #ok(result);
+            switch (result) {
+                case (#ok({ accepted })) {
+                    return #ok({ accepted = accepted });
+                };
+                case (#err(err)) {
+                    return #err(err);
+                };
+            };
         };
     };
 
