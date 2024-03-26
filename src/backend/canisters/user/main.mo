@@ -15,7 +15,6 @@ import CanisterTopUp "../../lib/shared/CanisterTopUp";
 import UserProfile "../../lib/users/UserProfile";
 import UsersTypes "../../lib/users/types";
 import CreateWorkspace "../../lib/workspaces/services/create_workspace";
-import WorkspacesTypes "../../lib/workspaces/types";
 import CoreTypes "../../types";
 import AuthUtils "../../utils/auth";
 
@@ -27,6 +26,8 @@ import Types "./types";
 shared ({ caller = initializer }) actor class User(
     initArgs : Types.UserInitArgs
 ) = self {
+    type WorkspaceId = Principal;
+
     stable let CONSTANTS = Constants.Constants();
     stable let WORKSPACE__TOP_UP_AMOUNT = CONSTANTS.WORKSPACE__TOP_UP_AMOUNT.scalar;
     stable let WORKSPACE__CAPACITY = CONSTANTS.WORKSPACE__CAPACITY.scalar;
@@ -35,7 +36,7 @@ shared ({ caller = initializer }) actor class User(
     stable var stable_balance = 0;
     stable var stable_capacity = initArgs.capacity;
     stable var stable_owner = initArgs.owner;
-    stable var stable_personalWorkspaceId : ?WorkspacesTypes.WorkspaceId = null;
+    stable var stable_personalWorkspaceId : ?WorkspaceId = null;
     stable var stable_personalWorkspace : ?Types.PersonalWorkspace = null;
     stable var stable_profile : UserProfile.MutableUserProfile = {
         var username = "";
@@ -63,13 +64,13 @@ shared ({ caller = initializer }) actor class User(
         });
     };
 
-    public shared ({ caller }) func personalWorkspace() : async Result.Result<WorkspacesTypes.WorkspaceId, { #anonymousUser; #insufficientCycles; #unauthorized }> {
+    public shared ({ caller }) func personalWorkspace() : async Result.Result<WorkspaceId, { #anonymousUser; #insufficientCycles; #unauthorized }> {
         if (caller != stable_owner) {
             return #err(#unauthorized);
         };
 
-        switch (stable_personalWorkspaceId) {
-            case (?workspaceId) { #ok(workspaceId) };
+        let workspace = switch (stable_personalWorkspaceId) {
+            case (?workspaceId) { return #ok(workspaceId) };
             case (null) {
                 let result = await CreateWorkspace.execute({
                     owner = stable_owner;
@@ -85,16 +86,17 @@ shared ({ caller = initializer }) actor class User(
                 });
 
                 switch (result) {
-                    case (#err(error)) { #err(error) };
-                    case (#ok(workspace)) {
-                        let workspaceId = Principal.fromActor(workspace);
-                        stable_personalWorkspaceId := ?workspaceId;
-                        stable_personalWorkspace := ?workspace;
-                        #ok(workspaceId);
-                    };
+                    case (#err(error)) { return #err(error) };
+                    case (#ok(workspace)) { workspace };
                 };
             };
         };
+        let workspaceId = Principal.fromActor(workspace);
+
+        stable_personalWorkspaceId := ?workspaceId;
+        stable_personalWorkspace := ?workspace;
+
+        #ok(workspaceId);
     };
 
     public shared ({ caller }) func updateProfile(
@@ -152,8 +154,8 @@ shared ({ caller = initializer }) actor class User(
             await IC0.install_code(
                 {
                     arg = to_candid (
-                        await (workspaceActor.getInitArgs()),
-                        await (workspaceActor.getInitData()),
+                        await workspaceActor.getInitArgs(),
+                        await workspaceActor.getInitData(),
                     );
                     canister_id = workspaceId;
                     mode = #upgrade(

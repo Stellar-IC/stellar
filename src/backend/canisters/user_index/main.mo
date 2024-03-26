@@ -19,6 +19,7 @@ import Constants "../../constants";
 import AuthUtils "../../utils/auth";
 import CanisterTopUp "../../lib/shared/CanisterTopUp";
 import CoreTypes "../../types";
+import User "../user/main";
 
 import CreateUser "./services/create_user";
 import State "./state";
@@ -108,7 +109,7 @@ actor UserIndex {
 
         for (entry in state.data.user_canister_id_to_identity.entries()) {
             var userId = entry.0;
-            var userCanister = actor (Principal.toText(userId)) : Types.UserActor;
+            var userCanister = actor (Principal.toText(userId)) : User.User;
 
             try {
                 let result = await userCanister.upgradePersonalWorkspace(wasm_module);

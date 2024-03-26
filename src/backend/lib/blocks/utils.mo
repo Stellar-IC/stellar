@@ -9,7 +9,7 @@ module {
             content = Tree.clone(block.content);
             var parent = block.parent;
             properties = {
-                title = switch (block.properties.title) {
+                var title = switch (block.properties.title) {
                     case (null) { null };
                     case (?title) { ?Tree.clone(title) };
                 };

@@ -11,7 +11,7 @@ import BlocksTypes "../../../lib/blocks/types";
 import Tree "../../../utils/data/lseq/Tree";
 
 import State "../state";
-import Types "../types/v0";
+import Types "../types/v2";
 
 module {
     type UnsavedBlock = BlocksTypes.UnsavedBlock;
@@ -34,19 +34,34 @@ module {
         };
 
         let initialBlockUuid = input.initialBlockUuid;
-        let initialBlock : UnsavedBlock = BlockBuilder.BlockBuilder({
-            uuid = initialBlockUuid;
-        }).setParent(input.uuid).build();
+        let initialBlock : ?UnsavedBlock = switch (initialBlockUuid) {
+            case (null) { null };
+            case (?uuid) {
+                ?BlockBuilder.BlockBuilder({
+                    uuid;
+                }).setParent(input.uuid).build();
+            };
+        };
+
         let contentForNewPage = Tree.Tree(null);
 
-        ignore Tree.insertCharacterAtStart(contentForNewPage, UUID.toText(initialBlockUuid));
+        switch (initialBlock) {
+            case (null) {};
+            case (?initialBlock) {
+                ignore Tree.insertCharacterAtStart(contentForNewPage, UUID.toText(initialBlock.uuid));
+                state.data.addBlock(initialBlock);
+            };
+        };
 
         let pageToCreate : UnsavedBlock = {
             var blockType = #page;
             uuid = input.uuid;
-            content = contentForNewPage;
+            content = switch (initialBlock) {
+                case (null) { Tree.fromShareableTree(input.content) };
+                case (?initialBlock) { contentForNewPage };
+            };
             properties = {
-                title = ?(
+                var title = ?(
                     switch (input.properties.title) {
                         case (null) { Tree.Tree(null) };
                         case (?title) {
@@ -60,7 +75,6 @@ module {
         };
 
         state.data.addBlock(pageToCreate);
-        state.data.addBlock(initialBlock);
 
         let shareableTitle : ShareableBlockText = switch (pageToCreate.properties.title) {
             case (null) {

@@ -19,7 +19,6 @@ import ActivityModule "../../lib/activities/Activity";
 import BlockModule "../../lib/blocks/Block";
 import BlocksTypes "../../lib/blocks/types";
 import EventsTypes "../../lib/events/types";
-import WorkspacesTypes "../../lib/workspaces/types";
 
 import Models "../../utils/data/database/models";
 import QuerySet "../../utils/data/database/query_set";
@@ -32,7 +31,6 @@ import CoreTypes "../../types";
 import Types "./types/v2";
 
 module {
-    type Workspace = WorkspacesTypes.Workspace;
     type ShareableBlock = BlocksTypes.ShareableBlock;
     type Block = BlocksTypes.Block;
     type BlockContent = BlocksTypes.BlockContent;

@@ -7,13 +7,20 @@ import Debug "mo:base/Debug";
 import Source "mo:uuid/async/SourceV4";
 
 import Workspace "../../../canisters/workspace/main";
+import Types "../../../canisters/workspace/types/v2";
+
 import Constants "../../../constants";
 
-import Types "../types";
-
 module CreateWorkspace {
-    type Input = Types.Services.CreateWorkspace.CreateWorkspaceInput;
-    type Output = Types.Services.CreateWorkspace.CreateWorkspaceOutput;
+    type Input = {
+        owner : Principal;
+        controllers : [Principal];
+        initialUsers : [(
+            Principal,
+            Types.WorkspaceUser,
+        )];
+    };
+    type Output = Result.Result<Workspace.Workspace, { #anonymousUser; #insufficientCycles }>;
 
     public func execute({ controllers; owner; initialUsers } : Input) : async Output {
         let CONSTANTS = Constants.Constants();

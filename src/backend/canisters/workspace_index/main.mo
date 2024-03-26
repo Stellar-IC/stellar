@@ -1,5 +1,3 @@
-import UserIndex "canister:user_index";
-
 import Debug "mo:base/Debug";
 import Cycles "mo:base/ExperimentalCycles";
 import Principal "mo:base/Principal";
@@ -20,16 +18,16 @@ import Canistergeek "mo:canistergeek/canistergeek";
 
 import CanisterTopUp "../../lib/shared/CanisterTopUp";
 import CreateWorkspace "../../lib/workspaces/services/create_workspace";
-import Types "../../lib/workspaces/types";
 import CoreTypes "../../types";
 import CyclesUtils "../../utils/cycles";
 
 import Workspace "../workspace/main";
+import WorkspaceTypes "../workspace/types/v2";
 import Constants "../../constants";
 import Paginator "../../lib/pagination/Paginator";
 
 actor WorkspaceIndex {
-    type WorkspaceId = Types.WorkspaceId;
+    type WorkspaceId = Principal;
     type WorkspaceExternalId = UUID.UUID;
 
     // TODO: Move this to a library
@@ -48,7 +46,7 @@ actor WorkspaceIndex {
      *************************************************************************/
     stable var _workspace_id_to_workspace_uuid : RBTree.Tree<WorkspaceId, WorkspaceExternalId> = #leaf;
     stable var _workspace_uuid_to_workspace_id : RBTree.Tree<WorkspaceExternalId, WorkspaceId> = #leaf;
-    stable var _workspace_id_to_canister : RBTree.Tree<WorkspaceId, Types.MockWorkspaceActor> = #leaf;
+    stable var _workspace_id_to_canister : RBTree.Tree<WorkspaceId, Workspace.Workspace> = #leaf;
 
     stable let _capacity = 100_000_000_000_000;
     stable var _balance = 0 : Nat;
@@ -60,7 +58,7 @@ actor WorkspaceIndex {
 
     var workspace_id_to_workspace_uuid : RBTree.RBTree<WorkspaceId, WorkspaceExternalId> = RBTree.RBTree<WorkspaceId, WorkspaceExternalId>(Principal.compare);
     var workspace_uuid_to_workspace_id : RBTree.RBTree<WorkspaceExternalId, WorkspaceId> = RBTree.RBTree<WorkspaceExternalId, WorkspaceId>(compareUUIDs);
-    var workspace_id_to_canister : RBTree.RBTree<WorkspaceId, Types.MockWorkspaceActor> = RBTree.RBTree<WorkspaceId, Types.MockWorkspaceActor>(Principal.compare);
+    var workspace_id_to_canister : RBTree.RBTree<WorkspaceId, Workspace.Workspace> = RBTree.RBTree<WorkspaceId, Workspace.Workspace>(Principal.compare);
     let topUps = RBTree.RBTree<Principal, CanisterTopUp.CanisterTopUp>(Principal.compare);
 
     workspace_id_to_workspace_uuid.unshare(_workspace_id_to_workspace_uuid);

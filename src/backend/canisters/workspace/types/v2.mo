@@ -8,20 +8,44 @@ import UUID "mo:uuid/UUID";
 import ActivitiesTypes "../../../lib/activities/types";
 import BlocksTypes "../../../lib/blocks/types";
 import EventsTypes "../../../lib/events/types";
-import WorkspacesTypes "../../../lib/workspaces/types";
 import CoreTypes "../../../types";
 
 module {
     public type ExternalId = Text;
     public type PrimaryKey = Nat;
-    public type Username = Text;
-
     public type Block = BlocksTypes.Block;
     public type BlockEvent = BlocksTypes.BlockEvent;
     public type UnsavedBlock = BlocksTypes.UnsavedBlock;
     public type ShareableBlock = BlocksTypes.ShareableBlock;
     public type ShareableBlockContent = BlocksTypes.ShareableBlockContent;
     public type ShareableBlockProperties = BlocksTypes.ShareableBlockProperties;
+    public type WorkspaceOwner = Principal;
+
+    public type WorkspaceInitArgs = {
+        capacity : Nat;
+        owner : WorkspaceOwner;
+    };
+
+    public type WorkspaceInitData = {
+        uuid : UUID.UUID;
+        name : Text;
+        description : Text;
+        createdAt : Time.Time;
+        updatedAt : Time.Time;
+    };
+
+    public type WorkspaceUserRole = {
+        #admin;
+        #moderator;
+        #member;
+        #guest;
+    };
+
+    public type WorkspaceUser = {
+        canisterId : Principal;
+        username : Text;
+        role : WorkspaceUserRole;
+    };
 
     public module Services {
         public module CreateActivityService {
@@ -89,7 +113,7 @@ module {
                 content : ShareableBlockContent;
                 parent : ?UUID.UUID;
                 properties : ShareableBlockProperties;
-                initialBlockUuid : UUID.UUID;
+                initialBlockUuid : ?UUID.UUID;
             };
             public type CreatePageServiceOutputError = {
                 #anonymousUser;
@@ -126,11 +150,11 @@ module {
         };
 
         public module GetInitArgs {
-            public type GetInitArgsOutput = Result.Result<WorkspacesTypes.WorkspaceInitArgs, { #unauthorized }>;
+            public type GetInitArgsOutput = Result.Result<WorkspaceInitArgs, { #unauthorized }>;
         };
 
         public module GetInitData {
-            public type GetInitDataOutput = Result.Result<WorkspacesTypes.WorkspaceInitData, { #unauthorized }>;
+            public type GetInitDataOutput = Result.Result<WorkspaceInitData, { #unauthorized }>;
         };
 
         public module PageByUuid {
@@ -165,7 +189,7 @@ module {
         };
 
         public module AddUsersUpdate {
-            public type AddUsersUpdateInput = [(Principal, WorkspacesTypes.WorkspaceUser)];
+            public type AddUsersUpdateInput = [(Principal, WorkspaceUser)];
             public type AddUsersUpdateResult = Result.Result<(), { #unauthorized }>;
         };
 
@@ -175,7 +199,7 @@ module {
                 content : BlocksTypes.ShareableBlockContent;
                 parent : ?UUID.UUID;
                 properties : ShareableBlockProperties;
-                initialBlockUuid : UUID.UUID;
+                initialBlockUuid : ?UUID.UUID;
             };
             public type CreatePageUpdateOutputError = {
                 #anonymousUser;

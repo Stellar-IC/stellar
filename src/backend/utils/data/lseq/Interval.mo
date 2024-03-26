@@ -64,46 +64,80 @@ module Interval {
             Debug.trap("Prefixes must be of equal length");
         };
 
-        let nodeAPrefix = Buffer.fromArray<NodeIndex>(prefixA);
-        let nodeBPrefix = Buffer.fromArray<NodeIndex>(prefixB);
+        let updatedIntervalValue = Buffer.fromArray<NodeIndex>([]);
+        var borrowedAmount : Nat16 = 0;
         var intervalAsBuffer = Buffer.fromArray<NodeIndex>([]);
         var hasBorrowed = false;
 
-        label doLoop for (i in Iter.revRange(nodeAPrefix.size() - 1, 0)) {
-            let index = Int.abs(i);
-            var nodeAIndex = nodeAPrefix.get(index);
-            var nodeBIndex = switch (hasBorrowed) {
-                case (false) {
-                    nodeBPrefix.get(index);
-                };
-                case (true) {
-                    hasBorrowed := false;
-                    nodeBPrefix.get(index) - 1;
-                };
-            };
+        func _calculateValueAtIndex(
+            index : Nat16,
+            valueAtIndex : { var a : NodeIndex; var b : NodeIndex },
+            borrowedAmount : Nat16,
+            // onSuccess : (newValue : number, borrowedAmount : number) = > void,
+        ) : (Nat16, Nat16) {
+            let base = Base.at(index);
+            var borrowed : Nat16 = borrowedAmount;
 
-            if (nodeAIndex > nodeBIndex) {
-                if (index == 0) {
-                    Debug.trap("Prefix A must be less than prefix B");
-                };
+            if (valueAtIndex.a > valueAtIndex.b and index == 0) Debug.trap("Prefix A must be less than prefix B");
+
+            if (valueAtIndex.a > valueAtIndex.b) {
+                let amountToBorrow : Nat16 = 1;
 
                 // Borrow from the next index
-                nodeBIndex := nodeBIndex + Base.at(Nat16.fromNat(index));
-                hasBorrowed := true;
-                intervalAsBuffer.insert(0, nodeBIndex - nodeAIndex);
+                valueAtIndex.b += base;
+                borrowed := amountToBorrow;
+            };
+
+            let newValue = valueAtIndex.b - valueAtIndex.a;
+            if (newValue < 0) Debug.trap("Out of bounds");
+
+            return (newValue, borrowed);
+        };
+
+        label doLoop for (i in Iter.revRange(prefixA.size() - 1, 0)) {
+            let valueAtIndex = {
+                var a = prefixA[Int.abs(i)];
+                var b = prefixB[Int.abs(i)];
+            };
+
+            if (borrowedAmount < 0) {
+                Debug.trap("Borrowed amount must be greater than or equal to 0");
+            };
+
+            // Handle borrowing
+            if (borrowedAmount > 0) {
+                valueAtIndex.b := valueAtIndex.b - borrowedAmount;
+                borrowedAmount := 0;
+
+                let (val, borrowed) = _calculateValueAtIndex(
+                    Nat16.fromNat(Int.abs(i)),
+                    valueAtIndex,
+                    borrowedAmount,
+                );
+
+                updatedIntervalValue.insert(0, val);
+                borrowedAmount := borrowed;
+
                 continue doLoop;
             };
 
-            intervalAsBuffer.insert(0, nodeBIndex - nodeAIndex);
+            let (val, borrowed) = _calculateValueAtIndex(
+                Nat16.fromNat(Int.abs(i)),
+                valueAtIndex,
+                borrowedAmount,
+            );
+
+            updatedIntervalValue.insert(0, val);
+            borrowedAmount := borrowed;
         };
 
-        let actualInterval = fromBuffer(intervalAsBuffer);
+        let finalInterval = fromBuffer(updatedIntervalValue);
 
-        if (actualInterval.isAllZeros()) {
-            return actualInterval;
+        if (finalInterval.isAllZeros()) {
+            return finalInterval;
         };
 
-        let final = subtract(actualInterval, 1);
+        let final = subtract(finalInterval, 1);
         return final;
     };
 

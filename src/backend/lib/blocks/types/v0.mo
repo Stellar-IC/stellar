@@ -11,7 +11,7 @@ module {
     public type ShareableBlockContent = LseqTypes.ShareableTree;
 
     public type BlockProperties = {
-        title : ?BlockText;
+        var title : ?BlockText;
         var checked : ?Bool;
     };
     public type ShareableBlockProperties = {

@@ -165,11 +165,11 @@ module TestTree {
                                 ignore tree.insert(Node.Node([1], "h"));
                                 let result = tree.insert(Node.Node([1, 3, 1], "f"));
                                 switch (result) {
-                                    case (#err(#outOfOrder)) {
+                                    case (#err(#outOfOrderInsert)) {
                                         return #ok;
                                     };
                                     case (#err(err)) {
-                                        return #err(#failedTest(?("Expected to fail with #err(#outOfOrder), but got: " # debug_show (err))));
+                                        return #err(#failedTest(?("Expected to fail with #err(#outOfOrderInsert), but got: " # debug_show (err))));
                                     };
                                     case (#ok) {
                                         return #err(#failedTest(?("Expected to fail inserting node")));

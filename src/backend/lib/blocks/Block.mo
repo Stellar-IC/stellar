@@ -38,7 +38,7 @@ module BlockModule = {
         };
         let content : BlockContent = Tree.fromShareableTree(input.content);
         let properties : BlockProperties = {
-            title = ?title;
+            var title = ?title;
             var checked = input.properties.checked;
         };
 
@@ -59,7 +59,7 @@ module BlockModule = {
         };
         let content : BlockContent = Tree.fromShareableTree(input.content);
         let properties : BlockProperties = {
-            title = ?title;
+            var title = ?title;
             var checked = input.properties.checked;
         };
 

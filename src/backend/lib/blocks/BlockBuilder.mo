@@ -19,13 +19,28 @@ module {
             content = Tree.Tree(null);
             var parent = null;
             properties = {
-                title = ?Tree.Tree(null);
+                var title = ?Tree.Tree(null);
                 var checked = ?false;
             };
         };
 
+        public func setTitle(title : Text) : BlockBuilder {
+            block.properties.title := ?(
+                switch (Tree.fromText(title)) {
+                    case (#ok(title)) {
+                        title;
+                    };
+                    case (#err(err)) {
+                        // TODO: Handle error
+                        Tree.Tree(null);
+                    };
+                }
+            );
+            return self;
+        };
+
         public func addContentBlock(contentBlock : Types.Block) : BlockBuilder {
-            ignore Tree.insertCharacterAtStart(block.content, UUID.toText(contentBlock.uuid));
+            ignore Tree.insertCharacterAtEnd(block.content, UUID.toText(contentBlock.uuid));
             return self;
         };
 

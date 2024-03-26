@@ -31,7 +31,7 @@ module {
         let identifierALength = identifierA.length();
         let identifierBLength = identifierB.length();
 
-        if (identifierALength == 0 and identifierBLength == 0) {
+        if (identifierALength == 0 or identifierBLength == 0) {
             if (identifierALength == identifierBLength) {
                 return #equal;
             } else if (identifierALength > identifierBLength) {

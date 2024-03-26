@@ -25,7 +25,6 @@ import BlocksTypes "../../lib/blocks/types";
 import BlockEvent "../../lib/events/BlockEvent";
 import EventStream "../../lib/events/EventStream";
 import Paginator "../../lib/pagination/Paginator";
-import WorkspacesTypes "../../lib/workspaces/types";
 import Logger "../../lib/Logger";
 import UserRegistry "../../lib/UserRegistry";
 
@@ -54,12 +53,11 @@ shared ({ caller = initializer }) actor class Workspace(
     type PagesOptionsArg = Types.Queries.Pages.PagesOptionsArg;
     type PagesResult = Types.Queries.Pages.PagesResult;
     type PrimaryKey = Types.PrimaryKey;
+    type WorkspaceUser = Types.WorkspaceUser;
 
     type Block = BlocksTypes.Block;
     type ShareableBlock = BlocksTypes.ShareableBlock;
     type BlockEvent = BlocksTypes.BlockEvent;
-
-    type WorkspaceUser = WorkspacesTypes.WorkspaceUser;
 
     /*************************************************************************
      * Stable Data

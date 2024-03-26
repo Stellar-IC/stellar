@@ -18,7 +18,7 @@ module CreateUser {
         state : State.State,
         owner : Principal,
         userIndexPrincipal : Principal,
-    ) : async Result.Result<{ #created : (Principal, Types.UserActor); #existing : (Principal, Types.UserActor) }, { #anonymousUser; #insufficientCycles; #canisterNotFoundForRegisteredUser }> {
+    ) : async Result.Result<{ #created : (Principal, User.User); #existing : (Principal, User.User) }, { #anonymousUser; #insufficientCycles; #canisterNotFoundForRegisteredUser }> {
         let CONSTANTS = Constants.Constants();
         let USER__CAPACITY = CONSTANTS.USER__CAPACITY.scalar;
         let USER__FREEZING_THRESHOLD = CONSTANTS.USER__FREEZING_THRESHOLD.scalar;

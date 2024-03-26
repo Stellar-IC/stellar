@@ -7,7 +7,7 @@ import UUID "mo:uuid/UUID";
 import BlocksTypes "../../../lib/blocks/types";
 
 import State "../state";
-import Types "../types/v0";
+import Types "../types/v2";
 
 module CreateBlock {
     type Input = Types.Services.CreateBlockService.CreateBlockServiceInput;

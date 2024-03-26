@@ -5,6 +5,7 @@ import RBTree "mo:base/RBTree";
 import Text "mo:base/Text";
 
 import CoreTypes "../../types";
+import User "../user/main";
 import Types "./types";
 
 module {
@@ -26,7 +27,7 @@ module {
 
         public func addUser(
             args : {
-                user : Types.UserActor;
+                user : User.User;
                 userId : Principal;
                 owner : Principal;
             }
@@ -56,8 +57,8 @@ module {
             return user_canister_id_to_identity.get(user_id);
         };
 
-        public func getUserByUserId(user_id : Principal) : Types.UserActor {
-            return actor (Principal.toText(user_id)) : Types.UserActor;
+        public func getUserByUserId(user_id : Principal) : User.User {
+            return actor (Principal.toText(user_id)) : User.User;
         };
     };
 };

@@ -18,7 +18,7 @@ import CoreTypes "../../../types";
 import CreateActivity "../services/create_activity";
 import CreateBlock "../services/create_block";
 import State "../state";
-import Types "../types/v0";
+import Types "../types/v2";
 
 module BlockCreatedConsumer {
     type Block = BlocksTypes.Block;
@@ -37,7 +37,7 @@ module BlockCreatedConsumer {
                 content = Tree.Tree(null);
                 var parent = event.data.block.parent;
                 properties = {
-                    title = ?Tree.Tree(null);
+                    var title = ?Tree.Tree(null);
                     var checked = ?false;
                 };
             },

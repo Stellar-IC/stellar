@@ -2,6 +2,7 @@ import Array "mo:base/Array";
 import Blob "mo:base/Blob";
 import Bool "mo:base/Bool";
 import Buffer "mo:base/Buffer";
+import Char "mo:base/Char";
 import Debug "mo:base/Debug";
 import Deque "mo:base/Deque";
 import Float "mo:base/Float";
@@ -26,6 +27,7 @@ import List "mo:base/List";
 import Interval "./Interval";
 import Node "./Node";
 import NodeIdentifier "./NodeIdentifier";
+import RandomNumberGenerator "./RandomNumberGenerator";
 import Types "./types";
 
 module Tree {
@@ -48,6 +50,10 @@ module Tree {
         let identifier = node.identifier;
 
         if (shouldSkipDeleted == true and node.deletedAt != null) {
+            return true;
+        };
+
+        if (Array.equal<NodeIndex>(identifier.value, [], Nat16.equal)) {
             return true;
         };
 
@@ -77,6 +83,7 @@ module Tree {
 
         let rootNodeBaseNat : Nat = Nat16.toNat(rootNodeBase);
 
+        public let random = RandomNumberGenerator.RandomNumberGenerator();
         public let boundary : NodeBoundary = switch (options) {
             case (null) { DEFAULT_BOUNDARY };
             case (?options) {
@@ -143,11 +150,11 @@ module Tree {
          * @param node The node to insert.
          * @return The result of the insert operation.
          */
-        public func insert({ identifier : NodeIdentifier; value : NodeValue }) : Result.Result<(), { #identifierAlreadyInUse; #invalidIdentifier; #outOfOrder }> {
+        public func insert({ identifier : NodeIdentifier; value : NodeValue }) : Result.Result<(), { #identifierAlreadyInUse : NodeIdentifier; #invalidIdentifier : NodeIdentifier; #outOfOrderInsert : NodeIdentifier }> {
             let identifierLength : Nat = Array.size(identifier);
 
             if (identifierLength == 0) {
-                return #err(#invalidIdentifier);
+                return #err(#invalidIdentifier(identifier));
             };
 
             var currentNode = rootNode;
@@ -159,11 +166,11 @@ module Tree {
                 let currentNodeBaseMinusOne : Nat = Nat16.toNat(currentNodeBase - 1);
 
                 if (identifierPart > currentNodeBaseMinusOne) {
-                    return #err(#invalidIdentifier);
+                    return #err(#invalidIdentifier(identifier));
                 };
 
                 if (identifierLength < 1) {
-                    return #err(#invalidIdentifier);
+                    return #err(#invalidIdentifier(identifier));
                 };
 
                 if (i == (+identifierLength - 1)) {
@@ -174,7 +181,7 @@ module Tree {
                             return #ok;
                         };
                         case (?childNode) {
-                            return #err(#identifierAlreadyInUse);
+                            return #err(#identifierAlreadyInUse(identifier));
                         };
                     };
                     return #ok;
@@ -182,7 +189,7 @@ module Tree {
 
                 switch (childNode) {
                     case (null) {
-                        return #err(#outOfOrder);
+                        return #err(#outOfOrderInsert(identifier));
                     };
                     case (?childNode) {
                         currentNode := childNode;
@@ -193,7 +200,7 @@ module Tree {
             return #ok;
         };
 
-        public func insertMany(nodes : [{ identifier : NodeIdentifier; value : NodeValue }]) : Result.Result<(), { #identifierAlreadyInUse; #invalidIdentifier; #outOfOrder }> {
+        public func insertMany(nodes : [{ identifier : NodeIdentifier; value : NodeValue }]) : Result.Result<(), { #identifierAlreadyInUse : NodeIdentifier; #invalidIdentifier : NodeIdentifier; #outOfOrderInsert : NodeIdentifier }> {
             for (node in Array.vals(nodes)) {
                 let { identifier; value } = node;
                 let result = insert({ identifier; value });
@@ -350,52 +357,19 @@ module Tree {
         return clonedTree;
     };
 
-    func getRandomNumberBetween(min : Nat, max : Nat) : Nat {
-        let seed : Blob = "Hello world I am a seed for the random number generator";
-        let randomValue = Random.byteFrom(seed);
-        let range = Iter.range(min, max);
-        let rangeSize = Iter.size(range);
+    public func fromText(input : Text) : Result.Result<Tree, { #identifierAlreadyInUse : NodeIdentifier; #invalidIdentifier : NodeIdentifier; #outOfOrderInsert : NodeIdentifier }> {
+        let tree = Tree(null);
 
-        let maxRandomNumber = 255;
-
-        // Scale index to be between 0 and the number of available node identifiers
-        if (maxRandomNumber < rangeSize) {
-            // scale up
-            let scaleRatio = maxRandomNumber / rangeSize;
-            let scaledRandomValue = Nat8.toNat(randomValue) / scaleRatio;
-
-            return scaledRandomValue;
+        for (character in input.chars()) {
+            switch (insertCharacterAtEnd(tree, Char.toText(character))) {
+                case (#err(err)) {
+                    return #err(err);
+                };
+                case (#ok(insertedNode)) {};
+            };
         };
 
-        // scale down
-        let scaleRatio : Float = Float.fromInt64(
-            Int64.fromNat64(
-                Nat64.fromNat(
-                    rangeSize
-                )
-            )
-        ) / Float.fromInt64(
-            Int64.fromNat64(
-                Nat64.fromNat(
-                    maxRandomNumber
-                )
-            )
-        );
-        let scaledRandomValue = Float.fromInt64(
-            Int64.fromNat64(
-                Nat64.fromNat(
-                    Nat8.toNat(randomValue)
-                )
-            )
-        ) * scaleRatio;
-
-        return Int.abs(
-            Float.toInt(
-                Float.ceil(
-                    scaledRandomValue
-                )
-            )
-        );
+        return #ok(tree);
     };
 
     public func fromShareableTree(input : ShareableTree) : Tree {
@@ -475,6 +449,7 @@ module Tree {
         let firstNode = getNodeAtPosition(tree, 0);
         let firstNodeIdenfier = firstNode.identifier;
         let firstNodeIdenfierLength = firstNodeIdenfier.length();
+        if (firstNodeIdenfierLength <= 0) Debug.trap("There was an error finding the first node in the tree");
         let isFirstNodeEarliestPossibleChildNode = switch (firstNodeIdenfierLength == 1) {
             case (true) {
                 firstNodeIdenfier.value[firstNodeIdenfierLength - 1] == 1;
@@ -575,14 +550,12 @@ module Tree {
     ) : Node.Node {
         let rootNodeHasChildren = Node.hasChildren(tree.rootNode);
 
-        // does the title node have any children?
         if (rootNodeHasChildren) {
             let lastNode = getNodeAtPositionFromEnd(tree, 0);
 
             switch (lastNode) {
                 case (null) {
                     Debug.trap("There was an error finding the last node in the tree");
-
                 };
                 case (?lastNode) {
                     // insert character after the last node in the tree
@@ -598,7 +571,7 @@ module Tree {
             };
         };
 
-        // if not, insert the character as the first child
+        // insert the character as the first child
         return Node.Node(
             getAvailableIdentifierBetween(tree, NodeIdentifier.Identifier(START_NODE_IDENTIFIER), NodeIdentifier.Identifier(END_NODE_IDENTIFIER)),
             character,
@@ -666,14 +639,21 @@ module Tree {
         return { node; deletedNode = nodeToDelete; replacementNode };
     };
 
-    public func insertCharacterAtEnd(tree : Tree, character : Text) : Node.Node {
+    public func insertCharacterAtEnd(tree : Tree, character : Text) : Result.Result<Node.Node, { #identifierAlreadyInUse : NodeIdentifier; #invalidIdentifier : NodeIdentifier; #outOfOrderInsert : NodeIdentifier }> {
         let node = buildNodeForEndInsert(tree, character);
-        // TODO: Should we be ignoring the result? Probabaly not!
-        ignore tree.insert({
+        let result = tree.insert({
             identifier = node.identifier.value;
             value = node.value;
         });
-        return node;
+
+        switch (result) {
+            case (#err(err)) {
+                return #err(err);
+            };
+            case (#ok) {
+                return #ok(node);
+            };
+        };
     };
 
     public func insertCharacterAtPosition(
@@ -682,11 +662,11 @@ module Tree {
         position : Nat,
     ) : Node.Node {
         let node = buildNodeForMiddleInsert(tree, character, position);
-        // TODO: Should we be ignoring the result? Probabaly not!
         ignore tree.insert({
             identifier = node.identifier.value;
             value = node.value;
         });
+
         return node;
     };
 
@@ -811,11 +791,13 @@ module Tree {
         let nodeAPrefix = Node.prefix(nodeAIdentifier, depth);
         let nodeBPrefix = Node.prefix(nodeBIdentifier, depth);
         let step = _calculateStep(tree, nodeAPrefix, nodeBPrefix);
-
         let allocationStrategy = tree.allocationStrategy(depth);
 
         switch (allocationStrategy) {
             case (#boundaryPlus) {
+                if (depth == 0) {
+                    Debug.trap("Unable to get identifier between, Depth is 0");
+                };
                 let idIndexToUpdate : Nat = Nat16.toNat(depth) - 1;
                 let identifier = Array.mapEntries<NodeIndex, NodeIndex>(
                     nodeAPrefix,
@@ -831,8 +813,6 @@ module Tree {
                 return NodeIdentifier.subtract(NodeIdentifier.Identifier(nodeBPrefix), step);
             };
         };
-
-        Debug.trap("Unrecognized allocation strategy");
     };
 
     public func getNodeAtPosition(
@@ -908,7 +888,11 @@ module Tree {
                 return null;
             };
             case (?lastNode) {
-                if (shouldReturnNode(counter, lastNode)) return ?lastNode;
+
+                if (shouldReturnNode(counter, lastNode)) {
+
+                    return ?lastNode;
+                };
                 var prevNode : Node.Node = lastNode;
 
                 while (counter <= position) {
@@ -917,7 +901,10 @@ module Tree {
                     switch (node) {
                         case (null) { return null };
                         case (?node) {
-                            if (shouldReturnNode(counter, node)) return ?node;
+                            if (shouldReturnNode(counter, node)) {
+
+                                return ?node;
+                            };
                             prevNode := node;
                             if (not shouldSkipNode(node, shouldSkipDeleted)) counter += 1;
                         };
@@ -1162,19 +1149,19 @@ module Tree {
     ) : NodeIndex {
         let boundary = Nat16.toNat(tree.boundary);
         let interval = Interval.between(prefixA, prefixB);
-        let intervalAsInt = Interval.toInt(interval);
+        let intervalAsInt : Nat = Nat16.toNat(interval.value[interval.value.size() - 1]); // TODO: fix this
         let minimumStep = 1;
         var maximumStep : Nat = switch (boundary > intervalAsInt) {
             case (true) { intervalAsInt };
             case (false) { boundary };
         };
 
-        return Nat16.fromNat(
-            getRandomNumberBetween(
-                minimumStep,
-                maximumStep,
-            )
+        let step = tree.random.numberBetween(
+            minimumStep,
+            maximumStep,
         );
+
+        return Nat16.fromNat(step);
     };
 
     func _getFirstChild(rootNode : Node.Node) : ?Node.Node {
