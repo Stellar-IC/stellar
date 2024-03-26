@@ -1,0 +1,3 @@
+[submodule "src/backend/vendor/MotokoStableBTree"]
+	path = src/backend/vendor/MotokoStableBTree
+	url = https://github.com/sardariuss/MotokoStableBTree.git
