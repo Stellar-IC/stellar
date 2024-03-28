@@ -1,0 +1,7 @@
+[dependencies]
+base = "0.10.4"
+matchers = "https://github.com/kritzcreek/motoko-matchers#v1.3.0"
+encoding = "https://github.com/aviate-labs/encoding.mo#v0.4.1"
+io = "https://github.com/aviate-labs/io.mo#v0.3.2"
+uuid = "https://github.com/fury02/uuid.mo#v0.2.0"
+canistergeek = "https://github.com/usergeek/canistergeek-ic-motoko#v0.0.7"

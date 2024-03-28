@@ -29,7 +29,7 @@ actor UserIndex {
     type UserId = Principal;
 
     stable let CONSTANTS = Constants.Constants();
-    stable let USER_CAPACITY = CONSTANTS.USER__CAPACITY;
+    stable let USER_CAPACITY = CONSTANTS.USER__CAPACITY.scalar;
     stable let MAX_TOP_UP_AMOUNT = CONSTANTS.USER__TOP_UP_AMOUNT.scalar;
     stable let MIN_TOP_UP_INTERVAL = 3 * 60 * 60 * 1_000_000_000_000; // 3 hours
 
