@@ -3,8 +3,10 @@ import UUID "mo:uuid/UUID";
 import BlocksTypes "../../../lib/blocks/types";
 
 module {
+    public type ActivityId = Nat;
+
     public type Activity = {
-        id : Nat;
+        id : ActivityId;
         var edits : [EditItem];
         blockExternalId : UUID.UUID;
         startTime : Time.Time;
@@ -23,7 +25,7 @@ module {
     };
 
     public type ShareableActivity = {
-        id : Nat;
+        id : ActivityId;
         edits : [ShareableEditItem];
         blockExternalId : UUID.UUID;
         startTime : Time.Time;
@@ -54,7 +56,7 @@ module {
     };
 
     public type HydratedActivity = {
-        id : Nat;
+        id : ActivityId;
         users : [HydratedEditItemUser];
         edits : [HydratedEditItem];
         blockExternalId : UUID.UUID;

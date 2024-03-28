@@ -9,14 +9,18 @@ import Timer "mo:base/Timer";
 import ExperimentalCycles "mo:base/ExperimentalCycles";
 import Error "mo:base/Error";
 import Canistergeek "mo:canistergeek/canistergeek";
+import Source "mo:uuid/async/SourceV4";
 
 import Constants "../../constants";
+import Block "../../lib/blocks/Block";
+import BlockBuilder "../../lib/blocks/BlockBuilder";
 import CanisterTopUp "../../lib/shared/CanisterTopUp";
 import UserProfile "../../lib/users/UserProfile";
 import UsersTypes "../../lib/users/types";
 import CreateWorkspace "../../lib/workspaces/services/create_workspace";
 import CoreTypes "../../types";
 import AuthUtils "../../utils/auth";
+import Tree "../../utils/data/lseq/Tree";
 
 import Workspace "../workspace/main";
 
@@ -73,7 +77,7 @@ shared ({ caller = initializer }) actor class User(
             case (?workspaceId) { return #ok(workspaceId) };
             case (null) {
                 let result = await CreateWorkspace.execute({
-                    owner = stable_owner;
+                    owner = Principal.fromActor(self);
                     controllers = [stable_owner, Principal.fromActor(self)];
                     initialUsers = [(
                         Principal.fromActor(self),
@@ -95,6 +99,23 @@ shared ({ caller = initializer }) actor class User(
 
         stable_personalWorkspaceId := ?workspaceId;
         stable_personalWorkspace := ?workspace;
+
+        // Debug.print("Workspace created for user: " # debug_show (Principal.fromActor(self)));
+
+        // var pageBuilder = BlockBuilder.BlockBuilder({
+        //     uuid = await Source.Source().new();
+        // }).setTitle("Getting Started");
+
+        // var i = 0;
+
+        // let pageToCreate = Block.toShareable(pageBuilder.build());
+
+        // Debug.print("Done building page");
+        // let result = await workspace.createPage({
+        //     pageToCreate with initialBlockUuid = null;
+        // });
+
+        // Debug.print("Page created");
 
         #ok(workspaceId);
     };
@@ -143,19 +164,31 @@ shared ({ caller = initializer }) actor class User(
             };
             case (?workspaceId) { workspaceId };
         };
-        let workspaceActor = switch (stable_personalWorkspace) {
+        let workspace = switch (stable_personalWorkspace) {
             case (null) {
                 return #err(#workspaceNotFound("Personal workspace not initialized for user: " # debug_show (Principal.fromActor(self))));
             };
             case (?workspace) { workspace };
+        };
+        let initArgs = switch (await workspace.getInitArgs()) {
+            case (#ok(args)) { args };
+            case (#err(err)) {
+                return #err(#failed("Failed to get init args for personal workspace: " # debug_show (err)));
+            };
+        };
+        let initData = switch (await workspace.getInitData()) {
+            case (#ok(data)) { data };
+            case (#err(err)) {
+                return #err(#failed("Failed to get init data for personal workspace: " # debug_show (err)));
+            };
         };
 
         try {
             await IC0.install_code(
                 {
                     arg = to_candid (
-                        await workspaceActor.getInitArgs(),
-                        await workspaceActor.getInitData(),
+                        initArgs,
+                        initData,
                     );
                     canister_id = workspaceId;
                     mode = #upgrade(

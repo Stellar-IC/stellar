@@ -1,6 +1,7 @@
 import Types "./v0";
 
 module {
+    public type ActivityId = Types.ActivityId;
     public type Activity = Types.Activity;
     public type EditItem = Types.EditItem;
     public type EditItemUser = Types.EditItemUser;

@@ -34,7 +34,7 @@ module BlockUpdatedConsumer {
     type ShareableBlock = BlocksTypes.ShareableBlock;
 
     func _blockByUuid(state : State.State, uuid : UUID.UUID) : ?Block {
-        state.data.findBlock(UUID.toText(uuid));
+        State.findBlock(state, UUID.toText(uuid));
     };
 
     public func execute(
@@ -55,7 +55,7 @@ module BlockUpdatedConsumer {
                     case (null) { return #err(#blockNotFound) };
                 };
                 let clonedBlockAfterEdit = BlocksUtils.clone(blockAfterEdit);
-                // let firstAncestorPage = state.data.getFirstAncestorPage(blockBeforeEdit);
+                // let firstAncestorPage = State.getFirstAncestorPage(blockBeforeEdit);
                 // let activity = createOrExtendActivityForEvent(
                 //     state,
                 //     firstAncestorPage,
@@ -78,7 +78,7 @@ module BlockUpdatedConsumer {
                     case (null) { return #err(#blockNotFound) };
                 };
                 let clonedBlockAfterEdit = BlocksUtils.clone(blockAfterEdit);
-                let firstAncestorPage = state.data.getFirstAncestorPage(blockBeforeEdit);
+                let firstAncestorPage = State.getFirstAncestorPage(state, blockBeforeEdit);
                 let activity = createOrExtendActivityForEvent(
                     state,
                     firstAncestorPage,
@@ -101,7 +101,7 @@ module BlockUpdatedConsumer {
                     case (null) { return #err(#blockNotFound) };
                 };
                 let clonedBlockAfterEdit = BlocksUtils.clone(blockAfterEdit);
-                // let firstAncestorPage = state.data.getFirstAncestorPage(blockBeforeEdit);
+                // let firstAncestorPage = State.getFirstAncestorPage(blockBeforeEdit);
                 // let activity = createOrExtendActivityForEvent(
                 //     state,
                 //     firstAncestorPage,
@@ -124,7 +124,7 @@ module BlockUpdatedConsumer {
                 //     case (null) { return #err(#blockNotFound) };
                 // };
                 // let clonedBlockAfterEdit = BlocksUtils.clone(blockAfterEdit);
-                // let firstAncestorPage = state.data.getFirstAncestorPage(blockBeforeEdit);
+                // let firstAncestorPage = State.getFirstAncestorPage(blockBeforeEdit);
                 // let activity = createOrExtendActivityForEvent(
                 //     state,
                 //     firstAncestorPage,
@@ -147,7 +147,7 @@ module BlockUpdatedConsumer {
                     case (null) { return #err(#blockNotFound) };
                 };
                 let clonedBlockAfterEdit = BlocksUtils.clone(blockAfterEdit);
-                let firstAncestorPage = state.data.getFirstAncestorPage(blockBeforeEdit);
+                let firstAncestorPage = State.getFirstAncestorPage(state, blockBeforeEdit);
                 let activity = createOrExtendActivityForEvent(
                     state,
                     firstAncestorPage,
@@ -171,11 +171,11 @@ module BlockUpdatedConsumer {
     ) : () {
         let mostRecentActivity : ?ActivitiesTypes.Activity = switch (firstAncestorPage) {
             case (?firstAncestorPage) {
-                state.data.getMostRecentActivityForPage(UUID.toText(firstAncestorPage.uuid));
+                State.getMostRecentActivityForPage(state, UUID.toText(firstAncestorPage.uuid));
             };
             case (null) {
                 // If there is no ancestor page, then the block is a page.
-                state.data.getMostRecentActivityForPage(UUID.toText(blockBeforeEdit.uuid));
+                State.getMostRecentActivityForPage(state, UUID.toText(blockBeforeEdit.uuid));
             };
         };
 
@@ -213,7 +213,6 @@ module BlockUpdatedConsumer {
                             }];
                         },
                     );
-                    state.data.Activity.objects.upsert(updatedActivity);
                 } else {
                     let activity = CreateActivity.execute(
                         state,
@@ -243,6 +242,8 @@ module BlockUpdatedConsumer {
     ) : Block {
         let blockExternalId = data.blockExternalId;
         block.blockType := data.blockType;
+        ignore State.updateBlock(state, block);
+
         return block;
     };
 
@@ -276,6 +277,8 @@ module BlockUpdatedConsumer {
             };
         };
 
+        ignore State.updateBlock(state, block);
+
         return #ok(block);
     };
 
@@ -287,6 +290,8 @@ module BlockUpdatedConsumer {
     ) : Block {
         let blockExternalId = data.blockExternalId;
         block.parent := ?data.parentBlockExternalId;
+        ignore State.updateBlock(state, block);
+
         return block;
     };
 
@@ -298,6 +303,8 @@ module BlockUpdatedConsumer {
     ) : Block {
         let blockExternalId = data.blockExternalId;
         UpdateProperty.execute({ event with data = #title(data) }, block);
+        ignore State.updateBlock(state, block);
+
         return block;
     };
 
@@ -309,6 +316,8 @@ module BlockUpdatedConsumer {
     ) : Block {
         let blockExternalId = data.blockExternalId;
         UpdateProperty.execute({ event with data = #checked(data) }, block);
+        ignore State.updateBlock(state, block);
+
         return block;
     };
 };

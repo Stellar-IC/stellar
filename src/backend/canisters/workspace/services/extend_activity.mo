@@ -23,7 +23,7 @@ module ExtendActivity {
         input : Input,
     ) : Output {
         let initialActivity = switch (
-            state.data.Activity.objects.get(input.activityId)
+            State.findActivity(state, input.activityId)
         ) {
             case (null) { Debug.trap("Activity not found") };
             case (?initialActivity) { initialActivity };
@@ -43,7 +43,7 @@ module ExtendActivity {
             activityBuilder := activityBuilder.addEdit(edit);
         };
 
-        state.data.Activity.objects.upsert(activity);
+        ignore State.updateActivity(state, activity);
 
         return activity;
     };

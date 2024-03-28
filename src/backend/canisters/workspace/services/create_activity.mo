@@ -37,7 +37,7 @@ module CreateActivity {
 
         let activity = activityBuilder.build();
 
-        state.data.Activity.objects.upsert(activity);
+        ignore State.addActivity(state, activity);
 
         return activity;
     };

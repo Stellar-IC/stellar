@@ -1,18 +1,25 @@
 import Array "mo:base/Array";
+import Blob "mo:base/Blob";
 import Debug "mo:base/Debug";
 import Error "mo:base/Error";
 import ExperimentalCycles "mo:base/ExperimentalCycles";
+import Deque "mo:base/Deque";
 import HashMap "mo:base/HashMap";
 import List "mo:base/List";
 import Nat "mo:base/Nat";
 import Nat64 "mo:base/Nat64";
+import Option "mo:base/Option";
 import Principal "mo:base/Principal";
 import Result "mo:base/Result";
 import RBTree "mo:base/RBTree";
 import Text "mo:base/Text";
 import Time = "mo:base/Time";
 import Timer = "mo:base/Timer";
+
 import Canistergeek "mo:canistergeek/canistergeek";
+
+import Map "mo:map/Map";
+
 import UUID "mo:uuid/UUID";
 import Source "mo:uuid/async/SourceV4";
 
@@ -31,6 +38,7 @@ import UserRegistry "../../lib/UserRegistry";
 import CoreTypes "../../types";
 
 import CyclesUtils "../../utils/cycles";
+import UUIDUtils "../../utils/uuid";
 import LseqTree "../../utils/data/lseq/Tree";
 
 import BlockCreatedConsumer "./consumers/BlockCreatedConsumer";
@@ -54,6 +62,7 @@ shared ({ caller = initializer }) actor class Workspace(
     type PagesResult = Types.Queries.Pages.PagesResult;
     type PrimaryKey = Types.PrimaryKey;
     type WorkspaceUser = Types.WorkspaceUser;
+    type WorkspaceOwner = Types.WorkspaceOwner;
 
     type Block = BlocksTypes.Block;
     type ShareableBlock = BlocksTypes.ShareableBlock;
@@ -63,12 +72,10 @@ shared ({ caller = initializer }) actor class Workspace(
      * Stable Data
      *************************************************************************/
 
-    stable var _stateUpgradeData : ?State.UpgradeData = null;
-    stable var _blocks : RBTree.Tree<PrimaryKey, ShareableBlock> = #leaf;
     stable var _activitiesIdCounter : Nat = 0;
     stable var _events : RBTree.Tree<Text, BlockEvent> = #leaf;
 
-    stable var _owner : CoreTypes.Workspaces.WorkspaceOwner = initArgs.owner;
+    stable var _owner : WorkspaceOwner = initArgs.owner;
     stable var _uuid : UUID.UUID = initData.uuid;
     stable var _name : CoreTypes.Workspaces.WorkspaceName = initData.name;
     stable var _description : CoreTypes.Workspaces.WorkspaceDescription = initData.name;
@@ -83,6 +90,8 @@ shared ({ caller = initializer }) actor class Workspace(
     stable var _canistergeekLoggerUD : ?Canistergeek.LoggerUpgradeData = null;
     stable var _userRegistryUpgradeData : RBTree.Tree<Principal, WorkspaceUser> = #leaf;
     stable var _eventStreamUpgradeData : ?EventStream.UpgradeData<BlocksTypes.BlockEvent> = null;
+
+    stable var _state = State.init();
 
     let canistergeekMonitor = Canistergeek.Monitor();
     let canistergeekLogger = Canistergeek.Logger();
@@ -100,8 +109,6 @@ shared ({ caller = initializer }) actor class Workspace(
         },
         { logger },
     );
-
-    var state = State.State(State.Data());
 
     /*************************************************************************
      * Initialization helper methods
@@ -143,11 +150,11 @@ shared ({ caller = initializer }) actor class Workspace(
         options : Types.Queries.BlockByUuid.BlockByUuidOptions,
     ) : async Types.Queries.BlockByUuid.BlockByUuidResult {
         let blockId = UUID.toText(uuid);
-        let block = switch (state.data.findBlock(blockId)) {
+        let block = switch (State.findBlock(_state, blockId)) {
             case (null) { return #err(#notFound) };
             case (?block) { block };
         };
-        let contentBlocks = List.toArray(state.data.getContentForBlock(blockId, options.contentPagination));
+        let contentBlocks = List.toArray(State.getContentForBlock(_state, blockId, options.contentPagination));
         var blockRecords = List.fromArray<(Text, ShareableBlock)>([]);
 
         for (contentBlock in Array.vals(contentBlocks)) {
@@ -164,8 +171,32 @@ shared ({ caller = initializer }) actor class Workspace(
         });
     };
 
+    public query func pageStats(pageId : Text) : async Result.Result<{ bytes : Nat }, { #pageNotFound }> {
+        Debug.print("Page stats: " # debug_show pageId);
+        let page = switch (State.findBlock(_state, pageId)) {
+            case (null) { return #err(#pageNotFound) };
+            case (?page) { page };
+        };
+
+        // func _calculateSize(block : BlocksTypes.Block) : Nat {
+        //     ic0.block_size();
+        // };
+
+        var totalBytes = 0;
+
+        // State.iterateBlockDescendants(
+        //     page,
+        //     func(block) {
+        //         Debug.print("Block: " # debug_show UUID.toText(block.uuid));
+        //         totalBytes := totalBytes + _calculateSize(block);
+        //     },
+        // );
+
+        #ok({ bytes = totalBytes });
+    };
+
     public query ({ caller }) func pages(options : PagesOptionsArg) : async PagesResult {
-        let pages = state.data.getPages();
+        let pages = State.getPages(_state);
         let contentOptions = {
             limit = switch (options.limit) {
                 case (null) { 10 };
@@ -181,9 +212,9 @@ shared ({ caller = initializer }) actor class Workspace(
 
         for (page in List.toIter(pages)) {
             let pageId = UUID.toText(page.uuid);
-            let pageFromState = state.data.findBlock(pageId);
-            let pageContent = List.toArray(state.data.getContentForBlock(pageId, contentOptions));
-            let pageRecord = (pageId, BlockModule.toShareable(page));
+            let pageFromState = State.findBlock(_state, pageId);
+            let pageContent = List.toArray(State.getContentForBlock(_state, pageId, contentOptions));
+            let pageRecord = (pageId, page);
 
             blockRecords := List.append(blockRecords, List.fromArray([pageRecord]));
 
@@ -196,7 +227,7 @@ shared ({ caller = initializer }) actor class Workspace(
         let result : PagesResult = {
             pages = {
                 edges = List.toArray(
-                    List.map<BlocksTypes.Block, CoreTypes.Edge<Text>>(
+                    List.map<BlocksTypes.ShareableBlock, CoreTypes.Edge<Text>>(
                         pages,
                         func(block) {
                             { node = UUID.toText(block.uuid) };
@@ -217,12 +248,11 @@ shared ({ caller = initializer }) actor class Workspace(
     ) : async Types.Queries.ActivityLog.ActivityLogOutput {
         var activities = List.fromArray<ActivitiesTypes.HydratedActivity>([]);
 
-        for (activity in List.toIter(state.data.getActivitiesForPage(UUID.toText(pageUuid)))) {
-            let shareableActivity = Activity.toShareable(activity);
+        for (activity in List.toIter(State.getActivitiesForPage(_state, UUID.toText(pageUuid)))) {
             var edits = List.fromArray<ActivitiesTypes.HydratedEditItem>([]);
             var users = List.fromArray<ActivitiesTypes.HydratedEditItemUser>([]);
 
-            for (edit in shareableActivity.edits.vals()) {
+            for (edit in activity.edits.vals()) {
                 let user = UserRegistry.getUser(userRegistry, edit.user);
                 let hydratedEdit = {
                     edit with user = {
@@ -252,7 +282,7 @@ shared ({ caller = initializer }) actor class Workspace(
 
             activities := List.push<ActivitiesTypes.HydratedActivity>(
                 {
-                    shareableActivity with edits = List.toArray(edits);
+                    activity with edits = List.toArray(edits);
                     users = List.toArray(users);
                 },
                 activities,
@@ -286,7 +316,7 @@ shared ({ caller = initializer }) actor class Workspace(
     public shared ({ caller }) func createPage(
         input : Types.Updates.CreatePageUpdate.CreatePageUpdateInput
     ) : async Types.Updates.CreatePageUpdate.CreatePageUpdateOutput {
-        let result = CreatePage.execute(state, caller, input);
+        let result = CreatePage.execute(_state, caller, input);
         await updateCanistergeekInformation({ metrics = ? #force });
 
         return result;
@@ -296,7 +326,7 @@ shared ({ caller = initializer }) actor class Workspace(
         input : Types.Updates.AddBlockUpdate.AddBlockUpdateInput
     ) : async Types.Updates.AddBlockUpdate.AddBlockUpdateOutput {
         let block = BlockModule.fromShareableUnsaved(input);
-        state.data.addBlock(block);
+        ignore State.addBlock(_state, block);
         await updateCanistergeekInformation({ metrics = ? #force });
 
         return #ok;
@@ -306,7 +336,7 @@ shared ({ caller = initializer }) actor class Workspace(
         input : Types.Updates.UpdateBlockUpdate.UpdateBlockUpdateInput
     ) : async Types.Updates.UpdateBlockUpdate.UpdateBlockUpdateOutput {
         let block = BlockModule.fromShareable(input);
-        let result = state.data.updateBlock(block);
+        let result = State.updateBlock(_state, block);
         await updateCanistergeekInformation({ metrics = ? #force });
 
         return #ok(BlockModule.toShareable(block));
@@ -315,7 +345,7 @@ shared ({ caller = initializer }) actor class Workspace(
     public shared ({ caller }) func deletePage(
         input : Types.Updates.DeletePageUpdate.DeletePageUpdateInput
     ) : async Types.Updates.DeletePageUpdate.DeletePageUpdateOutput {
-        state.data.deleteBlock(UUID.toText(input.uuid));
+        State.deleteBlock(_state, UUID.toText(input.uuid));
         await updateCanistergeekInformation({ metrics = ? #force });
 
         return #ok;
@@ -325,8 +355,7 @@ shared ({ caller = initializer }) actor class Workspace(
         input : Types.Updates.SaveEventTransactionUpdate.SaveEventTransactionUpdateInput
     ) : async Types.Updates.SaveEventTransactionUpdate.SaveEventTransactionUpdateOutput {
         for (event in input.transaction.vals()) {
-            // state.data.Event.objects.upsert(event);
-            // eventStream.publish(event);
+            // TODO: Save events to state
             processEvent(event);
         };
 
@@ -360,7 +389,7 @@ shared ({ caller = initializer }) actor class Workspace(
         switch (event.data) {
             case (#blockCreated(blockCreatedEvent)) {
                 logger.info("Processing blockCreated event: " # debug_show UUID.toText(event.uuid));
-                let res = BlockCreatedConsumer.execute(state, { event with data = blockCreatedEvent }, activityId);
+                let res = BlockCreatedConsumer.execute(_state, { event with data = blockCreatedEvent }, activityId);
                 switch (res) {
                     case (#ok(_)) {
                         logger.info("Processed blockCreated event: " # debug_show UUID.toText(event.uuid));
@@ -372,7 +401,7 @@ shared ({ caller = initializer }) actor class Workspace(
             };
             case (#blockUpdated(blockUpdatedEvent)) {
                 logger.info("Processing blockUpdated event: " # debug_show UUID.toText(event.uuid));
-                let res = BlockUpdatedConsumer.execute(state, { event with data = blockUpdatedEvent }, activityId);
+                let res = BlockUpdatedConsumer.execute(_state, { event with data = blockUpdatedEvent }, activityId);
                 switch (res) {
                     case (#ok(_)) {
                         logger.info("Processed blockUpdated event: " # debug_show UUID.toText(event.uuid));
@@ -463,21 +492,12 @@ shared ({ caller = initializer }) actor class Workspace(
 
     system func preupgrade() {
         doCanisterGeekPreUpgrade();
-        _stateUpgradeData := ?state.data.preupgrade();
         _eventStreamUpgradeData := ?eventStream.preupgrade();
         _userRegistryUpgradeData := userRegistry.preupgrade();
     };
 
     system func postupgrade() {
         doCanisterGeekPostUpgrade();
-
-        switch (_stateUpgradeData) {
-            case (null) {};
-            case (?upgradeData) {
-                state.data.postupgrade(upgradeData);
-                _stateUpgradeData := null;
-            };
-        };
 
         switch (_eventStreamUpgradeData) {
             case (null) {};

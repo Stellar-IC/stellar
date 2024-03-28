@@ -24,7 +24,7 @@ module CreateBlock {
             return #err(#anonymousUser);
         };
 
-        state.data.addBlock(input);
+        ignore State.addBlock(state, input);
 
         return #ok(input);
     };

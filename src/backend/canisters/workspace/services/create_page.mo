@@ -49,7 +49,7 @@ module {
             case (null) {};
             case (?initialBlock) {
                 ignore Tree.insertCharacterAtStart(contentForNewPage, UUID.toText(initialBlock.uuid));
-                state.data.addBlock(initialBlock);
+                ignore State.addBlock(state, initialBlock);
             };
         };
 
@@ -74,7 +74,7 @@ module {
             var parent = input.parent;
         };
 
-        state.data.addBlock(pageToCreate);
+        ignore State.addBlock(state, pageToCreate);
 
         let shareableTitle : ShareableBlockText = switch (pageToCreate.properties.title) {
             case (null) {
