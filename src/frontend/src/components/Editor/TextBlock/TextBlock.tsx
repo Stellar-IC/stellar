@@ -61,6 +61,9 @@ const _TextBlock = ({
     parentBlockIndex,
     hidePlaceholder,
     showPlaceholder,
+    onError: (error) => {
+      showBoundary(error);
+    },
   });
 
   return (
@@ -88,7 +91,6 @@ const _TextBlock = ({
           try {
             onKeyDown(e);
           } catch (e) {
-            console.error(e);
             showBoundary(e);
           }
         }}

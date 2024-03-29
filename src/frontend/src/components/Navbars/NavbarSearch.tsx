@@ -134,7 +134,6 @@ export function NavbarSearch({
           style={{
             padding: theme.spacing?.xs,
             paddingTop: 0,
-            textAlign: 'right',
           }}
         >
           <Text size="sm">Workspace</Text>

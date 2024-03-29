@@ -36,6 +36,7 @@ type UseTextBlockKeyboardEventHandlersProps = {
   parentBlockIndex?: number;
   showPlaceholder: () => void;
   hidePlaceholder: () => void;
+  onError?: (error: Error) => void;
 };
 
 function getClipboardText(clipboardData: DataTransfer) {
@@ -114,6 +115,7 @@ export const useTextBlockKeyboardEventHandlers = ({
   parentBlockIndex,
   showPlaceholder,
   hidePlaceholder,
+  onError,
 }: UseTextBlockKeyboardEventHandlersProps) => {
   const { workspaceId } = useWorkspaceContext();
   const { identity, userId } = useAuthContext();
@@ -169,7 +171,11 @@ export const useTextBlockKeyboardEventHandlers = ({
           },
         ],
       },
-    ]);
+    ]).catch((e) => {
+      if (onError) onError(e);
+
+      throw e;
+    });
   };
 
   const onCharacterInserted = (cursorPosition: number, character: string) => {

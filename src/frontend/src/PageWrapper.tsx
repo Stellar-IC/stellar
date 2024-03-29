@@ -108,29 +108,25 @@ export function PageWrapper({ children }: PropsWithChildren) {
     <WorkspaceContextProvider identity={identity} workspaceId={workspaceId}>
       <PagesContextProvider>
         <Box w="100%">
-          <PageActionBar
-            openActivityLog={() => {
-              if (layout === 'PANEL_OPEN') {
-                layoutManager.layout = 'CLOSED';
-              } else layoutManager.layout = 'PANEL_OPEN';
-            }}
-          />
           <Flex>
             <NavbarSearch workspaceId={workspaceId} />
             <div
               style={{
-                display: 'flex',
                 width: '100%',
                 height: '100%',
-                alignContent: 'center',
-                justifyContent: 'center',
                 flexGrow: 1,
-                marginTop: '45px',
                 paddingLeft: layout === 'NAVIGATION_OPEN' ? '300px' : 0, // TODO: Convert this to rems
                 paddingRight: layout === 'PANEL_OPEN' ? '300px' : 0, // TODO: Convert this to rems
                 transition: 'padding 0.2s ease-in-out',
               }}
             >
+              <PageActionBar
+                openActivityLog={() => {
+                  if (layout === 'PANEL_OPEN') {
+                    layoutManager.layout = 'CLOSED';
+                  } else layoutManager.layout = 'PANEL_OPEN';
+                }}
+              />
               {children}
             </div>
             {layout === 'PANEL_OPEN' && <PageInfoPanel />}

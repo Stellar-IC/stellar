@@ -1,14 +1,9 @@
 import Array "mo:base/Array";
-import Blob "mo:base/Blob";
 import Debug "mo:base/Debug";
-import Error "mo:base/Error";
 import ExperimentalCycles "mo:base/ExperimentalCycles";
-import Deque "mo:base/Deque";
-import HashMap "mo:base/HashMap";
 import List "mo:base/List";
 import Nat "mo:base/Nat";
 import Nat64 "mo:base/Nat64";
-import Option "mo:base/Option";
 import Principal "mo:base/Principal";
 import Result "mo:base/Result";
 import RBTree "mo:base/RBTree";
@@ -18,15 +13,9 @@ import Timer = "mo:base/Timer";
 
 import Canistergeek "mo:canistergeek/canistergeek";
 
-import Map "mo:map/Map";
-
 import UUID "mo:uuid/UUID";
-import Source "mo:uuid/async/SourceV4";
 
-import Activity "../../lib/activities/Activity";
-import ActivityBuilder "../../lib/activities/ActivityBuilder";
 import ActivitiesTypes "../../lib/activities/types";
-import BlockBuilder "../../lib/blocks/BlockBuilder";
 import BlockModule "../../lib/blocks/Block";
 import BlocksTypes "../../lib/blocks/types";
 import BlockEvent "../../lib/events/BlockEvent";
@@ -38,8 +27,6 @@ import UserRegistry "../../lib/UserRegistry";
 import CoreTypes "../../types";
 
 import CyclesUtils "../../utils/cycles";
-import UUIDUtils "../../utils/uuid";
-import LseqTree "../../utils/data/lseq/Tree";
 
 import BlockCreatedConsumer "./consumers/BlockCreatedConsumer";
 import BlockUpdatedConsumer "./consumers/BlockUpdatedConsumer";
@@ -169,30 +156,6 @@ shared ({ caller = initializer }) actor class Workspace(
                 blocks = List.toArray(blockRecords);
             };
         });
-    };
-
-    public query func pageStats(pageId : Text) : async Result.Result<{ bytes : Nat }, { #pageNotFound }> {
-        Debug.print("Page stats: " # debug_show pageId);
-        let page = switch (State.findBlock(_state, pageId)) {
-            case (null) { return #err(#pageNotFound) };
-            case (?page) { page };
-        };
-
-        // func _calculateSize(block : BlocksTypes.Block) : Nat {
-        //     ic0.block_size();
-        // };
-
-        var totalBytes = 0;
-
-        // State.iterateBlockDescendants(
-        //     page,
-        //     func(block) {
-        //         Debug.print("Block: " # debug_show UUID.toText(block.uuid));
-        //         totalBytes := totalBytes + _calculateSize(block);
-        //     },
-        // );
-
-        #ok({ bytes = totalBytes });
     };
 
     public query ({ caller }) func pages(options : PagesOptionsArg) : async PagesResult {
@@ -364,25 +327,6 @@ shared ({ caller = initializer }) actor class Workspace(
         return #ok;
     };
 
-    /*************************************************************************
-     * Event Handling
-     *************************************************************************/
-
-    func startListeningForEvents() : async () {
-        eventStream.addEventListener(
-            "BlockEventListener",
-            func(event : BlockEvent) : () {
-                logger.info("Received event: " # BlockEvent.toText(event));
-                processEvent(event);
-                ();
-            },
-        );
-        ignore Timer.recurringTimer(
-            #nanoseconds(100_000),
-            func() : async () { eventStream.processEvents() },
-        );
-    };
-
     func processEvent(event : BlockEvent) : () {
         let activityId = _activitiesIdCounter;
 
@@ -448,20 +392,6 @@ shared ({ caller = initializer }) actor class Workspace(
         canistergeekMonitor.updateInformation(request);
     };
 
-    private func validateCaller(
-        principal : Principal
-    ) : Result.Result<Principal, { #unauthorized }> {
-        if (principal == Principal.fromActor(self)) {
-            return #ok(principal);
-        };
-
-        if (principal == _owner) {
-            return #ok(principal);
-        };
-
-        return #err(#unauthorized);
-    };
-
     private func doCanisterGeekPreUpgrade() {
         _canistergeekMonitorUD := ?canistergeekMonitor.preupgrade();
         _canistergeekLoggerUD := ?canistergeekLogger.preupgrade();
@@ -474,17 +404,8 @@ shared ({ caller = initializer }) actor class Workspace(
         canistergeekLogger.postupgrade(_canistergeekLoggerUD);
         _canistergeekLoggerUD := null;
 
-        //Optional: override default number of log messages to your value
-        canistergeekLogger.setMaxMessagesCount(3000);
+        canistergeekLogger.setMaxMessagesCount(500);
     };
-
-    /*************************************************************************
-     * Timers
-     *************************************************************************/
-    ignore Timer.setTimer(
-        #seconds(0),
-        startListeningForEvents,
-    );
 
     /*************************************************************************
      * System Functions

@@ -15,14 +15,14 @@ export default function App() {
   return (
     <MantineProvider theme={theme} defaultColorScheme="dark">
       <DataStoreContextProvider>
-        <QueryContextProvider>
-          <AuthContextProvider>
+        <AuthContextProvider>
+          <QueryContextProvider>
             <SettingsContextProvider>
               <Notifications />
               <AppRouter />
             </SettingsContextProvider>
-          </AuthContextProvider>
-        </QueryContextProvider>
+          </QueryContextProvider>
+        </AuthContextProvider>
       </DataStoreContextProvider>
     </MantineProvider>
   );
