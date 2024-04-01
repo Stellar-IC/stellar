@@ -1,4 +1,85 @@
 export const idlFactory = ({ IDL }) => {
+  const UUID = IDL.Vec(IDL.Nat8);
+  const BlockType = IDL.Variant({
+    'numberedList' : IDL.Null,
+    'todoList' : IDL.Null,
+    'toggleHeading1' : IDL.Null,
+    'toggleHeading2' : IDL.Null,
+    'toggleHeading3' : IDL.Null,
+    'code' : IDL.Null,
+    'heading1' : IDL.Null,
+    'heading2' : IDL.Null,
+    'heading3' : IDL.Null,
+    'page' : IDL.Null,
+    'callout' : IDL.Null,
+    'quote' : IDL.Null,
+    'bulletedList' : IDL.Null,
+    'paragraph' : IDL.Null,
+  });
+  const BlockCreatedEventData = IDL.Record({
+    'block' : IDL.Record({
+      'uuid' : UUID,
+      'blockType' : BlockType,
+      'parent' : IDL.Opt(UUID),
+    }),
+    'index' : IDL.Nat,
+  });
+  const BlockPropertyCheckedUpdatedEventData = IDL.Record({
+    'checked' : IDL.Bool,
+    'blockExternalId' : UUID,
+  });
+  const BlockBlockTypeUpdatedEventData = IDL.Record({
+    'blockType' : BlockType,
+    'blockExternalId' : UUID,
+  });
+  const NodeIndex = IDL.Nat16;
+  const NodeIdentifier = IDL.Vec(NodeIndex);
+  const NodeValue = IDL.Text;
+  const TreeEvent = IDL.Variant({
+    'delete' : IDL.Record({
+      'transactionType' : IDL.Variant({ 'delete' : IDL.Null }),
+      'position' : NodeIdentifier,
+    }),
+    'insert' : IDL.Record({
+      'transactionType' : IDL.Variant({ 'insert' : IDL.Null }),
+      'value' : NodeValue,
+      'position' : NodeIdentifier,
+    }),
+  });
+  const BlockContentUpdatedEventData = IDL.Record({
+    'transaction' : IDL.Vec(TreeEvent),
+    'blockExternalId' : UUID,
+  });
+  const BlockParentUpdatedEventData = IDL.Record({
+    'parentBlockExternalId' : UUID,
+    'blockExternalId' : UUID,
+  });
+  const BlockPropertyTitleUpdatedEventData = IDL.Record({
+    'transaction' : IDL.Vec(TreeEvent),
+    'blockExternalId' : UUID,
+  });
+  const BlockUpdatedEventData = IDL.Variant({
+    'updatePropertyChecked' : BlockPropertyCheckedUpdatedEventData,
+    'updateBlockType' : BlockBlockTypeUpdatedEventData,
+    'updateContent' : BlockContentUpdatedEventData,
+    'updateParent' : BlockParentUpdatedEventData,
+    'updatePropertyTitle' : BlockPropertyTitleUpdatedEventData,
+  });
+  const Time = IDL.Int;
+  const BlockEvent = IDL.Record({
+    'data' : IDL.Variant({
+      'blockCreated' : BlockCreatedEventData,
+      'blockUpdated' : BlockUpdatedEventData,
+    }),
+    'user' : IDL.Principal,
+    'uuid' : UUID,
+    'timestamp' : Time,
+  });
+  const AppMessage = IDL.Variant({
+    'ping' : IDL.Record({ 'message' : IDL.Text }),
+    'blockEvent' : BlockEvent,
+    'associateUser' : IDL.Record({ 'userId' : IDL.Principal }),
+  });
   const ClientPrincipal = IDL.Principal;
   const ClientKey = IDL.Record({
     'client_principal' : ClientPrincipal,
@@ -33,7 +114,6 @@ export const idlFactory = ({ IDL }) => {
     'is_service_message' : IDL.Bool,
   });
   const CanisterWsMessageArguments = IDL.Record({ 'msg' : WebsocketMessage });
-  const AppMessage = IDL.Record({ 'message' : IDL.Text });
   const CanisterWsMessageResult = IDL.Variant({
     'Ok' : IDL.Null,
     'Err' : IDL.Text,
@@ -48,6 +128,7 @@ export const idlFactory = ({ IDL }) => {
     'Err' : IDL.Text,
   });
   return IDL.Service({
+    'send_message' : IDL.Func([IDL.Principal, AppMessage], [], []),
     'ws_close' : IDL.Func(
         [CanisterWsCloseArguments],
         [CanisterWsCloseResult],

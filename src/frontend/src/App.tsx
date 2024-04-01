@@ -9,6 +9,7 @@ import { AuthContextProvider } from '@/modules/auth/contexts/AuthContext';
 import { theme } from '@/theme';
 
 import { AppRouter } from './AppRouter';
+import { WebSocketContextProvider } from './contexts/WebSocketContext';
 
 import './App.css';
 
@@ -20,14 +21,16 @@ export default function App() {
   return (
     <MantineProvider theme={theme} defaultColorScheme="dark">
       <AuthContextProvider>
-        <QueryContextProvider>
-          <SettingsContextProvider>
-            <Notifications />
-            <AppShell>
-              <AppRouter />
-            </AppShell>
-          </SettingsContextProvider>
-        </QueryContextProvider>
+        <WebSocketContextProvider>
+          <QueryContextProvider>
+            <SettingsContextProvider>
+              <Notifications />
+              <AppShell>
+                <AppRouter />
+              </AppShell>
+            </SettingsContextProvider>
+          </QueryContextProvider>
+        </WebSocketContextProvider>
       </AuthContextProvider>
     </MantineProvider>
   );

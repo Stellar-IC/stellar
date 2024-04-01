@@ -36,6 +36,65 @@ export const idlFactory = ({ IDL }) => {
       'deletedAt' : IDL.Opt(Time),
     })
   );
+  const ShareableBlockContent__1 = IDL.Record({
+    'boundary' : NodeBoundary,
+    'allocationStrategies' : IDL.Vec(IDL.Tuple(NodeDepth, AllocationStrategy)),
+    'rootNode' : ShareableNode,
+  });
+  const BlockType__1 = IDL.Variant({
+    'numberedList' : IDL.Null,
+    'todoList' : IDL.Null,
+    'toggleHeading1' : IDL.Null,
+    'toggleHeading2' : IDL.Null,
+    'toggleHeading3' : IDL.Null,
+    'code' : IDL.Null,
+    'heading1' : IDL.Null,
+    'heading2' : IDL.Null,
+    'heading3' : IDL.Null,
+    'page' : IDL.Null,
+    'callout' : IDL.Null,
+    'quote' : IDL.Null,
+    'bulletedList' : IDL.Null,
+    'paragraph' : IDL.Null,
+  });
+  const ShareableBlockText__1 = IDL.Record({
+    'boundary' : NodeBoundary,
+    'allocationStrategies' : IDL.Vec(IDL.Tuple(NodeDepth, AllocationStrategy)),
+    'rootNode' : ShareableNode,
+  });
+  const ShareableBlockProperties__2 = IDL.Record({
+    'title' : IDL.Opt(ShareableBlockText__1),
+    'checked' : IDL.Opt(IDL.Bool),
+  });
+  const ShareableBlock__1 = IDL.Record({
+    'content' : ShareableBlockContent__1,
+    'uuid' : UUID,
+    'blockType' : BlockType__1,
+    'properties' : ShareableBlockProperties__2,
+    'parent' : IDL.Opt(UUID),
+  });
+  const HydratedEditItemUser = IDL.Record({
+    'username' : IDL.Text,
+    'canisterId' : IDL.Principal,
+  });
+  const HydratedEditItem = IDL.Record({
+    'startTime' : Time,
+    'blockValue' : IDL.Record({
+      'after' : ShareableBlock__1,
+      'before' : IDL.Opt(ShareableBlock__1),
+    }),
+    'user' : HydratedEditItemUser,
+  });
+  const HydratedActivity = IDL.Record({
+    'id' : ActivityId,
+    'startTime' : Time,
+    'endTime' : Time,
+    'edits' : IDL.Vec(HydratedEditItem),
+    'users' : IDL.Vec(HydratedEditItemUser),
+    'blockExternalId' : UUID,
+  });
+  const Edge_2 = IDL.Record({ 'node' : HydratedActivity });
+  const ActivityLogOutput = IDL.Record({ 'edges' : IDL.Vec(Edge_2) });
   const ShareableBlockContent = IDL.Record({
     'boundary' : NodeBoundary,
     'allocationStrategies' : IDL.Vec(IDL.Tuple(NodeDepth, AllocationStrategy)),
@@ -66,65 +125,11 @@ export const idlFactory = ({ IDL }) => {
     'title' : IDL.Opt(ShareableBlockText),
     'checked' : IDL.Opt(IDL.Bool),
   });
-  const ShareableBlock__1 = IDL.Record({
+  const AddBlockUpdateInput = IDL.Record({
     'content' : ShareableBlockContent,
     'uuid' : UUID,
     'blockType' : BlockType,
     'properties' : ShareableBlockProperties,
-    'parent' : IDL.Opt(UUID),
-  });
-  const HydratedEditItemUser = IDL.Record({
-    'username' : IDL.Text,
-    'canisterId' : IDL.Principal,
-  });
-  const HydratedEditItem = IDL.Record({
-    'startTime' : Time,
-    'blockValue' : IDL.Record({
-      'after' : ShareableBlock__1,
-      'before' : IDL.Opt(ShareableBlock__1),
-    }),
-    'user' : HydratedEditItemUser,
-  });
-  const HydratedActivity = IDL.Record({
-    'id' : ActivityId,
-    'startTime' : Time,
-    'endTime' : Time,
-    'edits' : IDL.Vec(HydratedEditItem),
-    'users' : IDL.Vec(HydratedEditItemUser),
-    'blockExternalId' : UUID,
-  });
-  const Edge_2 = IDL.Record({ 'node' : HydratedActivity });
-  const ActivityLogOutput = IDL.Record({ 'edges' : IDL.Vec(Edge_2) });
-  const ShareableBlockContent__1 = IDL.Record({
-    'boundary' : NodeBoundary,
-    'allocationStrategies' : IDL.Vec(IDL.Tuple(NodeDepth, AllocationStrategy)),
-    'rootNode' : ShareableNode,
-  });
-  const BlockType__2 = IDL.Variant({
-    'numberedList' : IDL.Null,
-    'todoList' : IDL.Null,
-    'toggleHeading1' : IDL.Null,
-    'toggleHeading2' : IDL.Null,
-    'toggleHeading3' : IDL.Null,
-    'code' : IDL.Null,
-    'heading1' : IDL.Null,
-    'heading2' : IDL.Null,
-    'heading3' : IDL.Null,
-    'page' : IDL.Null,
-    'callout' : IDL.Null,
-    'quote' : IDL.Null,
-    'bulletedList' : IDL.Null,
-    'paragraph' : IDL.Null,
-  });
-  const ShareableBlockProperties__2 = IDL.Record({
-    'title' : IDL.Opt(ShareableBlockText),
-    'checked' : IDL.Opt(IDL.Bool),
-  });
-  const AddBlockUpdateInput = IDL.Record({
-    'content' : ShareableBlockContent__1,
-    'uuid' : UUID,
-    'blockType' : BlockType__2,
-    'properties' : ShareableBlockProperties__2,
     'parent' : IDL.Opt(UUID),
   });
   const AddBlockUpdateOutputResult = IDL.Null;
@@ -142,6 +147,7 @@ export const idlFactory = ({ IDL }) => {
   const WorkspaceUser = IDL.Record({
     'username' : IDL.Text,
     'role' : WorkspaceUserRole,
+    'identity' : IDL.Principal,
     'canisterId' : IDL.Principal,
   });
   const AddUsersUpdateInput = IDL.Vec(IDL.Tuple(IDL.Principal, WorkspaceUser));
@@ -175,7 +181,7 @@ export const idlFactory = ({ IDL }) => {
   });
   const CreatePageUpdateInput = IDL.Record({
     'initialBlockUuid' : IDL.Opt(UUID),
-    'content' : ShareableBlockContent__1,
+    'content' : ShareableBlockContent,
     'uuid' : UUID,
     'properties' : ShareableBlockProperties__1,
     'parent' : IDL.Opt(UUID),
@@ -358,26 +364,10 @@ export const idlFactory = ({ IDL }) => {
       'blocks' : IDL.Vec(IDL.Tuple(ExternalId, ShareableBlock)),
     }),
   });
-  const BlockType__1 = IDL.Variant({
-    'numberedList' : IDL.Null,
-    'todoList' : IDL.Null,
-    'toggleHeading1' : IDL.Null,
-    'toggleHeading2' : IDL.Null,
-    'toggleHeading3' : IDL.Null,
-    'code' : IDL.Null,
-    'heading1' : IDL.Null,
-    'heading2' : IDL.Null,
-    'heading3' : IDL.Null,
-    'page' : IDL.Null,
-    'callout' : IDL.Null,
-    'quote' : IDL.Null,
-    'bulletedList' : IDL.Null,
-    'paragraph' : IDL.Null,
-  });
   const BlockCreatedEventData = IDL.Record({
     'block' : IDL.Record({
       'uuid' : UUID,
-      'blockType' : BlockType__1,
+      'blockType' : BlockType,
       'parent' : IDL.Opt(UUID),
     }),
     'index' : IDL.Nat,
@@ -387,7 +377,7 @@ export const idlFactory = ({ IDL }) => {
     'blockExternalId' : UUID,
   });
   const BlockBlockTypeUpdatedEventData = IDL.Record({
-    'blockType' : BlockType__1,
+    'blockType' : BlockType,
     'blockExternalId' : UUID,
   });
   const TreeEvent = IDL.Variant({
@@ -540,6 +530,7 @@ export const idlFactory = ({ IDL }) => {
       ),
     'getInitArgs' : IDL.Func([], [GetInitArgsOutput], ['query']),
     'getInitData' : IDL.Func([], [GetInitDataOutput], ['query']),
+    'markUserActive' : IDL.Func([UUID], [], []),
     'members' : IDL.Func([], [MembersOutput], ['query']),
     'pages' : IDL.Func([PagesOptionsArg], [PagesOutput], ['query']),
     'saveEvents' : IDL.Func(

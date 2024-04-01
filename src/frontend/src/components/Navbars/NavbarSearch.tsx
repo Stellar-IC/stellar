@@ -23,6 +23,7 @@ import { Link } from 'react-router-dom';
 import { parse } from 'uuid';
 
 import { useLayoutManager } from '@/LayoutManager';
+import { useWebSocketContext } from '@/contexts/WebSocketContext';
 import { useWorkspaceContext } from '@/contexts/WorkspaceContext/useWorkspaceContext';
 import { db } from '@/db';
 import { usePagesQuery } from '@/hooks/canisters/workspace/queries/usePagesQuery';
@@ -145,6 +146,13 @@ export function NavbarSearch({
   const { isAuthenticated, login, profile } = useAuthContext();
 
   const xsBreakpoint = Number(`${px(theme.breakpoints.xs)}`.replace('px', ''));
+  const { state } = useWebSocketContext();
+
+  const statusIndicatorColorMap = {
+    connecting: 'yellow',
+    connected: 'green',
+    closed: 'red',
+  };
 
   return (
     <nav
@@ -164,7 +172,7 @@ export function NavbarSearch({
       <div className={classes.section}>
         <div className={authButtonClasses.section}>
           {isAuthenticated ? (
-            <Flex>
+            <Flex justify="space-between" w="100%">
               <Menu width="target">
                 <MenuTarget>
                   <Button size="sm" variant="transparent">
@@ -175,6 +183,10 @@ export function NavbarSearch({
                   <MenuItem onClick={() => logout()}>Logout</MenuItem>
                 </MenuDropdown>
               </Menu>
+              <div
+                className={classes.statusIndicator}
+                style={{ backgroundColor: statusIndicatorColorMap[state] }}
+              />
             </Flex>
           ) : (
             <Group>

@@ -46,6 +46,7 @@ const _TextBlock = ({
   useEffect(() => {
     if (!textBoxRef.current) return;
     const newText = Tree.toText(value);
+    // textBoxRef.current.innerText = newText.replace(/ /g, '&nbsp;');
     textBoxRef.current.innerText = newText;
     if (newText.length > 0) {
       hidePlaceholder();

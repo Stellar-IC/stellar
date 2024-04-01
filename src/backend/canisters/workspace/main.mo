@@ -1,3 +1,5 @@
+import WebSockets "canister:websockets";
+
 import Array "mo:base/Array";
 import Debug "mo:base/Debug";
 import ExperimentalCycles "mo:base/ExperimentalCycles";
@@ -16,6 +18,7 @@ import Option "mo:base/Option";
 import Canistergeek "mo:canistergeek/canistergeek";
 
 import UUID "mo:uuid/UUID";
+import Map "mo:map/Map";
 
 import ActivitiesTypes "../../lib/activities/Types";
 import BlockModule "../../lib/blocks/Block";
@@ -57,11 +60,6 @@ shared ({ caller = initializer }) actor class Workspace(
     type ShareableBlock = BlocksTypes.ShareableBlock;
     type BlockEvent = BlocksTypes.BlockEvent;
 
-    /*************************************************************************
-     * Stable Data
-     *************************************************************************/
-
-    stable var _activitiesIdCounter : Nat = 0;
     stable var _events : RBTree.Tree<Text, BlockEvent> = #leaf;
 
     stable var _owner : WorkspaceOwner = initArgs.owner;
@@ -355,9 +353,55 @@ shared ({ caller = initializer }) actor class Workspace(
     public shared ({ caller }) func saveEvents(
         input : Types.Updates.SaveEventTransactionUpdate.SaveEventTransactionUpdateInput
     ) : async Types.Updates.SaveEventTransactionUpdate.SaveEventTransactionUpdateOutput {
-        for (event in input.transaction.vals()) {
+        label iterateEvents for (event in input.transaction.vals()) {
             // TODO: Save events to state
             processEvent(event);
+
+            let blockExternalId = UUID.toText(
+                switch (event.data) {
+                    case (#blockCreated(blockCreatedEvent)) {
+                        blockCreatedEvent.block.uuid;
+                    };
+                    case (#blockUpdated(blockUpdatedEvent)) {
+                        switch (blockUpdatedEvent) {
+                            case (#updateBlockType(event)) {
+                                event.blockExternalId;
+                            };
+                            case (#updateContent(event)) {
+                                event.blockExternalId;
+                            };
+                            case (#updateParent(event)) {
+                                event.blockExternalId;
+                            };
+                            case (#updatePropertyChecked(event)) {
+                                event.blockExternalId;
+                            };
+                            case (#updatePropertyTitle(event)) {
+                                event.blockExternalId;
+                            };
+                        };
+                    };
+                }
+            );
+
+            let block = switch (State.findBlock(_state, blockExternalId)) {
+                case (null) { continue iterateEvents };
+                case (?block) { block };
+            };
+            let page = switch (State.getFirstAncestorPage(_state, block)) {
+                case (null) { continue iterateEvents };
+                case (?page) { page };
+            };
+            let users = State.getActiveUsersForPage(_state, UUID.toText(page.uuid));
+
+            Debug.print("Sending event to users: " # debug_show users);
+
+            for (user in users.vals()) {
+                // Send event to clients
+                await WebSockets.send_message(user, #blockEvent(event));
+            };
+
+            ();
         };
 
         await updateCanistergeekInformation({ metrics = ? #force });
@@ -442,8 +486,12 @@ shared ({ caller = initializer }) actor class Workspace(
         return #ok;
     };
 
+    public shared ({ caller }) func markUserActive(pageId : UUID.UUID) : async () {
+        State.markUserAsActive(_state, caller, UUID.toText(pageId));
+    };
+
     func processEvent(event : BlockEvent) : () {
-        let activityId = _activitiesIdCounter;
+        let activityId = _state.data.activitiesIdCounter;
 
         switch (event.data) {
             case (#blockCreated(blockCreatedEvent)) {
@@ -472,7 +520,7 @@ shared ({ caller = initializer }) actor class Workspace(
             };
         };
 
-        _activitiesIdCounter := _activitiesIdCounter + 1;
+        _state.data.activitiesIdCounter += 1;
     };
 
     // Returns the cycles received up to the capacity allowed

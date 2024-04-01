@@ -2,7 +2,61 @@ import type { Principal } from '@dfinity/principal';
 import type { ActorMethod } from '@dfinity/agent';
 import type { IDL } from '@dfinity/candid';
 
-export interface AppMessage { 'message' : string }
+export type AppMessage = { 'ping' : { 'message' : string } } |
+  { 'blockEvent' : BlockEvent } |
+  { 'associateUser' : { 'userId' : Principal } };
+export interface BlockBlockTypeUpdatedEventData {
+  'blockType' : BlockType,
+  'blockExternalId' : UUID,
+}
+export interface BlockContentUpdatedEventData {
+  'transaction' : Array<TreeEvent>,
+  'blockExternalId' : UUID,
+}
+export interface BlockCreatedEventData {
+  'block' : { 'uuid' : UUID, 'blockType' : BlockType, 'parent' : [] | [UUID] },
+  'index' : bigint,
+}
+export interface BlockEvent {
+  'data' : { 'blockCreated' : BlockCreatedEventData } |
+    { 'blockUpdated' : BlockUpdatedEventData },
+  'user' : Principal,
+  'uuid' : UUID,
+  'timestamp' : Time,
+}
+export interface BlockParentUpdatedEventData {
+  'parentBlockExternalId' : UUID,
+  'blockExternalId' : UUID,
+}
+export interface BlockPropertyCheckedUpdatedEventData {
+  'checked' : boolean,
+  'blockExternalId' : UUID,
+}
+export interface BlockPropertyTitleUpdatedEventData {
+  'transaction' : Array<TreeEvent>,
+  'blockExternalId' : UUID,
+}
+export type BlockType = { 'numberedList' : null } |
+  { 'todoList' : null } |
+  { 'toggleHeading1' : null } |
+  { 'toggleHeading2' : null } |
+  { 'toggleHeading3' : null } |
+  { 'code' : null } |
+  { 'heading1' : null } |
+  { 'heading2' : null } |
+  { 'heading3' : null } |
+  { 'page' : null } |
+  { 'callout' : null } |
+  { 'quote' : null } |
+  { 'bulletedList' : null } |
+  { 'paragraph' : null };
+export type BlockUpdatedEventData = {
+    'updatePropertyChecked' : BlockPropertyCheckedUpdatedEventData
+  } |
+  { 'updateBlockType' : BlockBlockTypeUpdatedEventData } |
+  { 'updateContent' : BlockContentUpdatedEventData } |
+  { 'updateParent' : BlockParentUpdatedEventData } |
+  { 'updatePropertyTitle' : BlockPropertyTitleUpdatedEventData };
 export interface CanisterOutputCertifiedMessages {
   'messages' : Array<CanisterOutputMessage>,
   'cert' : Uint8Array | number[],
@@ -37,6 +91,24 @@ export interface ClientKey {
 }
 export type ClientPrincipal = Principal;
 export type GatewayPrincipal = Principal;
+export type NodeIdentifier = Uint16Array | number[];
+export type NodeIndex = number;
+export type NodeValue = string;
+export type Time = bigint;
+export type TreeEvent = {
+    'delete' : {
+      'transactionType' : { 'delete' : null },
+      'position' : NodeIdentifier,
+    }
+  } |
+  {
+    'insert' : {
+      'transactionType' : { 'insert' : null },
+      'value' : NodeValue,
+      'position' : NodeIdentifier,
+    }
+  };
+export type UUID = Uint8Array | number[];
 export interface WebsocketMessage {
   'sequence_num' : bigint,
   'content' : Uint8Array | number[],
@@ -45,6 +117,7 @@ export interface WebsocketMessage {
   'is_service_message' : boolean,
 }
 export interface _SERVICE {
+  'send_message' : ActorMethod<[Principal, AppMessage], undefined>,
   'ws_close' : ActorMethod<[CanisterWsCloseArguments], CanisterWsCloseResult>,
   'ws_get_messages' : ActorMethod<
     [CanisterWsGetMessagesArguments],

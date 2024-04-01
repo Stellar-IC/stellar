@@ -10,5 +10,7 @@ $(dfx cache show)/moc ./src/backend/canisters/workspace/main.mo \
   --package uuid .mops/_github/uuid#v0.2.0/src \
   --package canistergeek .mops/_github/canistergeek#v0.0.7/src \
   --package map .mops/map@9.0.1/src \
+  --actor-idl .dfx/local/lsp/ \
+  --actor-alias websockets $(dfx canister id websockets) \
   -c -o ./.dfx/local/canisters/workspace/workspace.wasm
   

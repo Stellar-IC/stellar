@@ -6,6 +6,25 @@ type WebsocketMessage =
    sequence_num: nat64;
    timestamp: nat64;
  };
+type UUID = vec nat8;
+type TreeEvent = 
+ variant {
+   delete:
+    record {
+      position: NodeIdentifier;
+      transactionType: variant {delete;};
+    };
+   insert:
+    record {
+      position: NodeIdentifier;
+      transactionType: variant {insert;};
+      value: NodeValue;
+    };
+ };
+type Time = int;
+type NodeValue = text;
+type NodeIndex = nat16;
+type NodeIdentifier = vec NodeIndex;
 type GatewayPrincipal = principal;
 type ClientPrincipal = principal;
 type ClientKey = 
@@ -54,8 +73,84 @@ type CanisterOutputCertifiedMessages =
    messages: vec CanisterOutputMessage;
    tree: blob;
  };
-type AppMessage = record {message: text;};
+type BlockUpdatedEventData = 
+ variant {
+   updateBlockType: BlockBlockTypeUpdatedEventData;
+   updateContent: BlockContentUpdatedEventData;
+   updateParent: BlockParentUpdatedEventData;
+   updatePropertyChecked: BlockPropertyCheckedUpdatedEventData;
+   updatePropertyTitle: BlockPropertyTitleUpdatedEventData;
+ };
+type BlockType = 
+ variant {
+   bulletedList;
+   callout;
+   code;
+   heading1;
+   heading2;
+   heading3;
+   numberedList;
+   page;
+   paragraph;
+   quote;
+   todoList;
+   toggleHeading1;
+   toggleHeading2;
+   toggleHeading3;
+ };
+type BlockPropertyTitleUpdatedEventData = 
+ record {
+   blockExternalId: UUID;
+   transaction: vec TreeEvent;
+ };
+type BlockPropertyCheckedUpdatedEventData = 
+ record {
+   blockExternalId: UUID;
+   checked: bool;
+ };
+type BlockParentUpdatedEventData = 
+ record {
+   blockExternalId: UUID;
+   parentBlockExternalId: UUID;
+ };
+type BlockEvent = 
+ record {
+   data:
+    variant {
+      blockCreated: BlockCreatedEventData;
+      blockUpdated: BlockUpdatedEventData;
+    };
+   timestamp: Time;
+   user: principal;
+   uuid: UUID;
+ };
+type BlockCreatedEventData = 
+ record {
+   block: record {
+            blockType: BlockType;
+            parent: opt UUID;
+            uuid: UUID;
+          };
+   index: nat;
+ };
+type BlockContentUpdatedEventData = 
+ record {
+   blockExternalId: UUID;
+   transaction: vec TreeEvent;
+ };
+type BlockBlockTypeUpdatedEventData = 
+ record {
+   blockExternalId: UUID;
+   blockType: BlockType;
+ };
+type AppMessage = 
+ variant {
+   associateUser: record {userId: principal;};
+   blockEvent: BlockEvent;
+   ping: record {message: text;};
+ };
 service : {
+  send_message: (principal, AppMessage) -> ();
   ws_close: (CanisterWsCloseArguments) -> (CanisterWsCloseResult);
   ws_get_messages: (CanisterWsGetMessagesArguments) ->
    (CanisterWsGetMessagesResult) query;

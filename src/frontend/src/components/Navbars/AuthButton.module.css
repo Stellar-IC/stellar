@@ -4,6 +4,7 @@
   align-items: start;
 
   padding: calc(var(--mantine-spacing-xs));
+  /* margin: calc(var(--mantine-spacing-xs) * -1); */
 }
 
 .userId {

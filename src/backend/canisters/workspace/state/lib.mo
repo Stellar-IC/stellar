@@ -1,4 +1,12 @@
-import B "./modules/block";
+import UUID "mo:uuid/UUID";
+import Map "mo:map/Map";
+import Text "mo:base/Text";
+import List "mo:base/List";
+import Principal "mo:base/Principal";
+import Array "mo:base/Array";
+
+import Block "./modules/block";
+import User "./modules/users";
 import S "./state";
 
 module {
@@ -24,5 +32,12 @@ module {
         getPages;
         updateActivity;
         updateBlock;
-    } = B;
+    } = Block;
+
+    public let {
+        getActiveUsers;
+        getActiveUsersForPage;
+        markUserAsActive;
+        markUserAsInactive;
+    } = User;
 };

@@ -9,6 +9,7 @@ import { Editor } from '@/components/Editor/Editor';
 import { Page } from '@/components/layout/page/Page';
 import { useWorkspaceContext } from '@/contexts/WorkspaceContext/useWorkspaceContext';
 import { useBlockQuery } from '@/hooks/canisters/workspace/queries/useBlockQuery';
+import { useMarkUserActive } from '@/hooks/canisters/workspace/updates/useMarkUserActive';
 import { useAuthContext } from '@/modules/auth/contexts/AuthContext';
 import * as BlockModule from '@/modules/blocks';
 import { store, useStoreQuery } from '@/modules/data-store';
@@ -23,10 +24,25 @@ function PageDetailPageInner(props: { pageId: string }) {
   const page = useStoreQuery(() => store.blocks.get(pageId), {
     clone: BlockModule.clone,
   });
+  const [markUserActive] = useMarkUserActive({ workspaceId, identity });
 
   useEffect(() => {
     queryPage(parse(pageId));
   }, [queryPage, pageId]);
+
+  useEffect(() => {
+    console.log('marking user active');
+    markUserActive([parse(pageId)]);
+
+    const interval = setInterval(() => {
+      console.log('marking user active');
+      markUserActive([parse(pageId)]);
+    }, 10_000);
+
+    return () => {
+      clearInterval(interval);
+    };
+  }, [markUserActive, pageId]);
 
   if (!page) return <Page>Page not found</Page>;
 
