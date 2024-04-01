@@ -1,0 +1,65 @@
+type WebsocketMessage = 
+ record {
+   client_key: ClientKey;
+   content: blob;
+   is_service_message: bool;
+   sequence_num: nat64;
+   timestamp: nat64;
+ };
+type GatewayPrincipal = principal;
+type ClientPrincipal = principal;
+type ClientKey = 
+ record {
+   client_nonce: nat64;
+   client_principal: ClientPrincipal;
+ };
+type CanisterWsOpenResult = 
+ variant {
+   Err: text;
+   Ok;
+ };
+type CanisterWsOpenArguments = 
+ record {
+   client_nonce: nat64;
+   gateway_principal: GatewayPrincipal;
+ };
+type CanisterWsMessageResult = 
+ variant {
+   Err: text;
+   Ok;
+ };
+type CanisterWsMessageArguments = record {msg: WebsocketMessage;};
+type CanisterWsGetMessagesResult = 
+ variant {
+   Err: text;
+   Ok: CanisterOutputCertifiedMessages;
+ };
+type CanisterWsGetMessagesArguments = record {nonce: nat64;};
+type CanisterWsCloseResult = 
+ variant {
+   Err: text;
+   Ok;
+ };
+type CanisterWsCloseArguments = record {client_key: ClientKey;};
+type CanisterOutputMessage = 
+ record {
+   client_key: ClientKey;
+   content: blob;
+   key: text;
+ };
+type CanisterOutputCertifiedMessages = 
+ record {
+   cert: blob;
+   is_end_of_queue: bool;
+   messages: vec CanisterOutputMessage;
+   tree: blob;
+ };
+type AppMessage = record {message: text;};
+service : {
+  ws_close: (CanisterWsCloseArguments) -> (CanisterWsCloseResult);
+  ws_get_messages: (CanisterWsGetMessagesArguments) ->
+   (CanisterWsGetMessagesResult) query;
+  ws_message: (CanisterWsMessageArguments, opt AppMessage) ->
+   (CanisterWsMessageResult);
+  ws_open: (CanisterWsOpenArguments) -> (CanisterWsOpenResult);
+}
