@@ -54,7 +54,7 @@ export const Editor = ({ page }: { page: Block }) => {
   );
 
   return (
-    <Stack className="Blocks" w="100%" gap={0}>
+    <Stack className="Blocks" w="100%" gap={0} maw="44rem">
       <div style={textBoxWrapperStyle}>
         <TextBlock
           blockExternalId={page.uuid}

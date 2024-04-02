@@ -15,7 +15,6 @@ import { useAuthContext } from './modules/auth/contexts/AuthContext';
 export function PageWrapper({ children }: PropsWithChildren) {
   const { isLoading, identity, userId } = useAuthContext();
   const { actor: userActor, canisterId } = useUserActor({ identity, userId });
-
   const [workspaceId, setWorkspaceId] = useState<Principal | null>(null);
 
   useEffect(() => {
@@ -39,7 +38,7 @@ export function PageWrapper({ children }: PropsWithChildren) {
 
   if (isLoading) {
     return (
-      <Flex>
+      <Flex h="100%">
         <NavbarSearch workspaceId={workspaceId} />
         <div
           style={{
@@ -49,8 +48,6 @@ export function PageWrapper({ children }: PropsWithChildren) {
             alignContent: 'center',
             justifyContent: 'center',
             flexGrow: 1,
-            paddingLeft: layout === 'NAVIGATION_OPEN' ? '300px' : 0, // TODO: Convert this to rems
-            paddingRight: layout === 'PANEL_OPEN' ? '300px' : 0, // TODO: Convert this to rems
             transition: 'padding 0.2s ease-in-out',
           }}
         >
@@ -62,7 +59,7 @@ export function PageWrapper({ children }: PropsWithChildren) {
 
   if (!(identity instanceof DelegationIdentity)) {
     return (
-      <Flex>
+      <Flex h="100%">
         <NavbarSearch workspaceId={workspaceId} />
         <div
           style={{
@@ -72,8 +69,6 @@ export function PageWrapper({ children }: PropsWithChildren) {
             alignContent: 'center',
             justifyContent: 'center',
             flexGrow: 1,
-            paddingLeft: layout === 'NAVIGATION_OPEN' ? '300px' : 0, // TODO: Convert this to rems
-            paddingRight: layout === 'PANEL_OPEN' ? '300px' : 0, // TODO: Convert this to rems
             transition: 'padding 0.2s ease-in-out',
           }}
         />
@@ -83,7 +78,7 @@ export function PageWrapper({ children }: PropsWithChildren) {
 
   if (!workspaceId) {
     return (
-      <Flex>
+      <Flex h="100%">
         <NavbarSearch workspaceId={workspaceId} />
         <div
           style={{
@@ -93,8 +88,6 @@ export function PageWrapper({ children }: PropsWithChildren) {
             alignContent: 'center',
             justifyContent: 'center',
             flexGrow: 1,
-            paddingLeft: layout === 'NAVIGATION_OPEN' ? '300px' : 0, // TODO: Convert this to rems
-            paddingRight: layout === 'PANEL_OPEN' ? '300px' : 0, // TODO: Convert this to rems
             transition: 'padding 0.2s ease-in-out',
           }}
         >
@@ -107,17 +100,16 @@ export function PageWrapper({ children }: PropsWithChildren) {
   return (
     <WorkspaceContextProvider identity={identity} workspaceId={workspaceId}>
       <PagesContextProvider>
-        <Box w="100%">
-          <Flex>
+        <Box w="100%" h="100%">
+          <Flex h="100%">
             <NavbarSearch workspaceId={workspaceId} />
             <div
               style={{
                 width: '100%',
                 height: '100%',
                 flexGrow: 1,
-                paddingLeft: layout === 'NAVIGATION_OPEN' ? '300px' : 0, // TODO: Convert this to rems
-                paddingRight: layout === 'PANEL_OPEN' ? '300px' : 0, // TODO: Convert this to rems
                 transition: 'padding 0.2s ease-in-out',
+                overflowY: 'scroll',
               }}
             >
               <PageActionBar
@@ -129,7 +121,7 @@ export function PageWrapper({ children }: PropsWithChildren) {
               />
               {children}
             </div>
-            {layout === 'PANEL_OPEN' && <PageInfoPanel />}
+            <PageInfoPanel />
           </Flex>
         </Box>
       </PagesContextProvider>

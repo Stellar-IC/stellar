@@ -12,6 +12,8 @@ import { db } from '@/db';
 import { useBlockQuery } from '@/hooks/canisters/workspace/queries/useBlockQuery';
 import { useAuthContext } from '@/modules/auth/contexts/AuthContext';
 
+import classes from './PageDetail.module.css';
+
 export function PageDetailPage() {
   const { pageId } = useParams<{ pageId: string }>();
   if (!pageId) throw new Error('Missing pageId');
@@ -31,8 +33,8 @@ export function PageDetailPage() {
 
   return (
     <Page>
-      <Container maw="container.sm">
-        <Stack mt="100" gap="xs" px="10rem">
+      <Container maw="container.xs">
+        <Stack gap="xs" className={classes.editorWrapper}>
           <ErrorBoundary
             fallback={
               <>

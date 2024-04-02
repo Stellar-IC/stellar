@@ -11,6 +11,8 @@ import { theme } from '@/theme';
 import { AppRouter } from './AppRouter';
 import { DataStoreContextProvider } from './contexts/DataStoreContext/DataStoreContextProvider';
 
+import './App.css';
+
 export default function App() {
   return (
     <MantineProvider theme={theme} defaultColorScheme="dark">

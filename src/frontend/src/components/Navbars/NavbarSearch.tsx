@@ -5,33 +5,43 @@ import {
   ActionIcon,
   Tooltip,
   rem,
+  px,
   useMantineTheme,
   Button,
   Flex,
+  Menu,
+  MenuDropdown,
+  MenuItem,
+  MenuTarget,
 } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 import { Tree } from '@stellar-ic/lseq-ts';
 import { IconPlus, IconTrash } from '@tabler/icons-react';
 import { useLiveQuery } from 'dexie-react-hooks';
+import { useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { parse } from 'uuid';
 
 import { useLayoutManager } from '@/LayoutManager';
+import { INTERNET_IDENTITY_HOST } from '@/config';
 import { useWorkspaceContext } from '@/contexts/WorkspaceContext/useWorkspaceContext';
 import { db } from '@/db';
 import { useCreatePageWithRedirect } from '@/hooks/canisters/workspace/updates/useCreatePageWithRedirect';
 import { useDeletePage } from '@/hooks/canisters/workspace/updates/useDeletePage';
+import { logout } from '@/modules/auth/commands';
 import { useAuthContext } from '@/modules/auth/contexts/AuthContext';
 import { LocalStorageBlock } from '@/types';
 
-import { AuthButton } from '../AuthButton/AuthButton';
 import { PrincipalBadge } from '../PrincipalBadge';
 
+import authButtonClasses from './AuthButton.module.css';
 import classes from './NavbarSearch.module.css';
 
 function PageLinksSection() {
   const createPageAndRedirect = useCreatePageWithRedirect();
   const { workspaceId } = useWorkspaceContext();
+  const { layoutManager } = useLayoutManager();
+  const theme = useMantineTheme();
   const { identity } = useAuthContext();
   const [deletePage] = useDeletePage({
     identity,
@@ -53,6 +63,11 @@ function PageLinksSection() {
         style={{
           flexGrow: 1,
           alignSelf: 'center',
+        }}
+        onClick={() => {
+          if (document.body.clientWidth < px(theme.breakpoints.xs)) {
+            layoutManager.layout = 'CLOSED';
+          }
         }}
       >
         {/* <span style={{ marginRight: rem(9), fontSize: rem(16) }}>
@@ -115,24 +130,63 @@ export function NavbarSearch({
   workspaceId?: Principal | null;
 }) {
   const theme = useMantineTheme();
-  const { layout } = useLayoutManager();
+  const { layout, layoutManager } = useLayoutManager();
   const isOpen = layout === 'NAVIGATION_OPEN';
+  const { isAuthenticated, login, profile } = useAuthContext();
+
+  const handleLogin = useCallback(
+    () =>
+      login({
+        identityProvider: `${INTERNET_IDENTITY_HOST}`,
+      }),
+    [login]
+  );
 
   return (
     <nav
       className={classes.navbar}
-      style={{
-        transform: `translateX(${isOpen ? 0 : '-100%'})`,
-        transition: 'transform 0.2s ease-in-out',
-      }}
+      style={
+        isOpen
+          ? { transition: '0.2s ease-in-out' }
+          : {
+              overflowX: 'hidden',
+              width: 0,
+              padding: 0,
+              opacity: 0,
+              transition: '0.2s ease-in-out',
+            }
+      }
     >
       <div className={classes.section}>
-        <AuthButton />
+        <div className={authButtonClasses.section}>
+          {isAuthenticated ? (
+            <Flex>
+              <Menu width="target">
+                <MenuTarget>
+                  <Button size="sm" variant="transparent">
+                    {profile.username || '---'}
+                  </Button>
+                </MenuTarget>
+                <MenuDropdown>
+                  <MenuItem onClick={() => logout()}>Profile</MenuItem>
+                  <MenuItem onClick={() => logout()}>Logout</MenuItem>
+                </MenuDropdown>
+              </Menu>
+            </Flex>
+          ) : (
+            <Group>
+              <Text>{profile.username}</Text>
+              <Button size="sm" onClick={handleLogin}>
+                Login
+              </Button>
+            </Group>
+          )}
+        </div>
       </div>
       <div className={classes.section}>
         <div
           style={{
-            padding: theme.spacing?.xs,
+            padding: theme.spacing.xs,
             paddingTop: 0,
           }}
         >
@@ -149,6 +203,11 @@ export function NavbarSearch({
             style={{
               flexGrow: 1,
               alignSelf: 'center',
+            }}
+            onClick={() => {
+              if (document.body.clientWidth < px(theme.breakpoints.xs)) {
+                layoutManager.layout = 'CLOSED';
+              }
             }}
           >
             Settings

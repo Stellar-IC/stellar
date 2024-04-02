@@ -9,6 +9,7 @@ import { usePagesContext } from '@/contexts/PagesContext/usePagesContext';
 
 import { BlockType } from '../../../../declarations/workspace/workspace.did';
 
+import classes from './BlockWithActions.module.css';
 import { TransformBlockModal } from './TransformBlockModal';
 
 type BlockWithActionsProps = PropsWithChildren<{
@@ -82,10 +83,9 @@ export const BlockWithActions = ({
         }}
       >
         <Group
-          style={{ flexShrink: 0, opacity: isShowingActions ? 1 : 0 }}
-          pos="absolute"
-          left="-8rem"
+          className={classes.actionButtons}
           gap="2px"
+          style={{ opacity: isShowingActions ? 1 : 0 }}
         >
           <Button
             aria-label="Add block"
@@ -103,6 +103,7 @@ export const BlockWithActions = ({
               }
             }}
             size="xs"
+            px="xs"
           >
             <IconPlus size="12px" />
           </Button>
@@ -112,8 +113,47 @@ export const BlockWithActions = ({
               onTransformModalOpen();
             }}
             size="xs"
+            px="xs"
           >
             <IconGridDots size="12px" />
+          </Button>
+        </Group>
+
+        <Group
+          className={classes.actionBar}
+          gap="2px"
+          style={{ opacity: isShowingActions ? 1 : 0 }}
+        >
+          <Button
+            aria-label="Add block"
+            onClick={() => {
+              if (!parsedParentExternalId) return;
+
+              if (shouldShowMobileModal) {
+                onAddModalOpen();
+              } else {
+                addBlock(
+                  parsedParentExternalId,
+                  { paragraph: null },
+                  blockIndex + 1
+                );
+              }
+            }}
+            size="xs"
+            px="xs"
+          >
+            <IconPlus size="12px" />
+            Add Block
+          </Button>
+          <Button
+            aria-label="View actions"
+            onClick={() => {
+              onTransformModalOpen();
+            }}
+            size="xs"
+            px="xs"
+          >
+            Transform
           </Button>
         </Group>
 

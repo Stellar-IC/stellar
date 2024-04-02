@@ -1,0 +1,8 @@
+.editorWrapper {
+  margin-top: var(--mantine-spacing-xl);
+  padding: 0 var(--mantine-spacing-xs);
+
+  @media (min-width: $mantine-breakpoint-xs) {
+    padding: 0 5rem;
+  }
+}

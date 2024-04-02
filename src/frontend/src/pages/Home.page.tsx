@@ -1,4 +1,4 @@
-import { Box, Button, Stack, Text } from '@mantine/core';
+import { Box, Button, Stack, Text, useMantineTheme } from '@mantine/core';
 import { toText } from '@stellar-ic/lseq-ts/Tree';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { useNavigate } from 'react-router-dom';
@@ -10,6 +10,7 @@ import { LocalStorageBlock } from '@/types';
 
 function WorkspaceContent() {
   const navigate = useNavigate();
+  const theme = useMantineTheme();
   const { workspaceId } = useWorkspaceContext();
   const createPageAndRedirect = useCreatePageWithRedirect();
 
@@ -20,7 +21,7 @@ function WorkspaceContent() {
   );
 
   return (
-    <div>
+    <div style={{ padding: theme.spacing.sm }}>
       <Text>Workspace</Text>
       <Text>{workspaceId.toString()}</Text>
       <Button onClick={createPageAndRedirect}>Create new document</Button>

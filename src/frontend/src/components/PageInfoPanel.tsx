@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { parse } from 'uuid';
 
+import { useLayoutManager } from '@/LayoutManager';
 import { useWorkspaceContext } from '@/contexts/WorkspaceContext/useWorkspaceContext';
 import { useActivityLog } from '@/hooks/canisters/workspace/queries/useActivityLog';
 import { useAuthContext } from '@/modules/auth/contexts/AuthContext';
@@ -19,6 +20,9 @@ export function PageInfoPanel() {
 
   const getActivityLog = useActivityLog({ identity, workspaceId });
   const [activities, setActivities] = useState<Activity[]>([]);
+
+  const { layout } = useLayoutManager();
+  const isOpen = layout === 'PANEL_OPEN';
 
   useEffect(() => {
     if (!pageId) return;
@@ -43,7 +47,7 @@ export function PageInfoPanel() {
   };
 
   return (
-    <div className={classes.panel}>
+    <div className={classes.panel} style={isOpen ? {} : { width: '0' }}>
       <div className={classes.inner}>
         <Title size="xs" ml="sm" mb="sm" mt="sm">
           Activity Log
