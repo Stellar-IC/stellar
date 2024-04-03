@@ -6,13 +6,12 @@
   z-index: 100;
   width: 100%;
   height: 100%;
-  background-color: var(--mantine-color-body);
+  background-color: var(--mantine-color-dark-8);
   padding: var(--mantine-spacing-md);
   padding-top: rem(56px);
   display: flex;
   flex-direction: column;
-  border-right: rem(1px) solid
-    light-dark(var(--mantine-color-gray-3), var(--mantine-color-dark-4));
+  flex-shrink: 0;
 
   @media (min-width: $mantine-breakpoint-xs) {
     position: sticky;
@@ -28,7 +27,7 @@
 
   &:not(:last-of-type) {
     border-bottom: rem(1px) solid
-      light-dark(var(--mantine-color-gray-3), var(--mantine-color-dark-4));
+      light-dark(var(--mantine-color-gray-3), var(--mantine-color-dark-5));
   }
 }
 

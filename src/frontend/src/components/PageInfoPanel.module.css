@@ -13,6 +13,7 @@
   z-index: 100;
   overflow: hidden;
   transition: 0.2s ease-in-out;
+  flex-shrink: 0;
 
   @media (min-width: $mantine-breakpoint-xs) {
     position: sticky;
