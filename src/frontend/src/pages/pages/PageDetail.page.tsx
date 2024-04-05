@@ -5,6 +5,7 @@ import { ErrorBoundary } from 'react-error-boundary';
 import { useParams } from 'react-router-dom';
 import { parse } from 'uuid';
 
+import { PageWrapper } from '@/PageWrapper';
 import { Editor } from '@/components/Editor/Editor';
 import { Page } from '@/components/layout/page/Page';
 import { useWorkspaceContext } from '@/contexts/WorkspaceContext/useWorkspaceContext';
@@ -14,15 +15,11 @@ import { useAuthContext } from '@/modules/auth/contexts/AuthContext';
 
 import classes from './PageDetail.module.css';
 
-export function PageDetailPage() {
-  const { pageId } = useParams<{ pageId: string }>();
-  if (!pageId) throw new Error('Missing pageId');
-
+function PageDetailPageInner(props: { pageId: string }) {
+  const { pageId } = props;
   const { workspaceId } = useWorkspaceContext();
   const { identity } = useAuthContext();
-
   const queryPage = useBlockQuery({ identity, workspaceId });
-
   const page = useLiveQuery(() => db.blocks.get(pageId), [pageId]);
 
   useEffect(() => {
@@ -31,29 +28,39 @@ export function PageDetailPage() {
 
   if (!page) return <Page>Page not found</Page>;
 
+  return <Editor page={page} />;
+}
+
+export function PageDetailPage() {
+  const { pageId } = useParams<{ pageId: string }>();
+
+  if (!pageId) throw new Error('Missing pageId');
+
   return (
-    <Page>
-      <Container maw="container.xs">
-        <Stack gap="xs" className={classes.editorWrapper}>
-          <ErrorBoundary
-            fallback={
-              <>
-                <p>⚠️Something went wrong</p>
-                <button
-                  type="button"
-                  onClick={() => {
-                    document.location.reload();
-                  }}
-                >
-                  Reload
-                </button>
-              </>
-            }
-          >
-            <Editor page={page} />
-          </ErrorBoundary>
-        </Stack>
-      </Container>
-    </Page>
+    <PageWrapper>
+      <Page>
+        <Container maw="container.xs">
+          <Stack gap="xs" className={classes.editorWrapper}>
+            <ErrorBoundary
+              fallback={
+                <>
+                  <p>⚠️Something went wrong</p>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      document.location.reload();
+                    }}
+                  >
+                    Reload
+                  </button>
+                </>
+              }
+            >
+              <PageDetailPageInner pageId={pageId} />
+            </ErrorBoundary>
+          </Stack>
+        </Container>
+      </Page>
+    </PageWrapper>
   );
 }

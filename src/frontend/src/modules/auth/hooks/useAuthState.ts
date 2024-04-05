@@ -3,6 +3,8 @@ import { DelegationIdentity } from '@dfinity/identity';
 import { Principal } from '@dfinity/principal';
 import { useEffect, useState } from 'react';
 
+import { INTERNET_IDENTITY_HOST } from '@/config';
+
 import { UserProfile } from '../../../../../declarations/user/user.did';
 import { getAuthClient } from '../client';
 import { login as _login } from '../commands';
@@ -26,10 +28,11 @@ export const useAuthState = () => {
   );
   const { hydrate } = useHydrate();
 
-  const login = async (options: { identityProvider: string }) => {
+  const login = async () => {
     setIsLoading(true);
 
-    return _login(options).then(async () => {
+    return _login({ identityProvider: `${INTERNET_IDENTITY_HOST}` }).then(
+      async () => {
       getAuthClient()
         .then(async (authClient) => authClient.getIdentity())
         .then(async (identity) => {
@@ -50,7 +53,8 @@ export const useAuthState = () => {
         .finally(() => {
           setIsLoading(false);
         });
-    });
+      }
+    );
   };
 
   useEffect(() => {

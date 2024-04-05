@@ -3,6 +3,7 @@ import { toText } from '@stellar-ic/lseq-ts/Tree';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { useNavigate } from 'react-router-dom';
 
+import { PageWrapper } from '@/PageWrapper';
 import { useWorkspaceContext } from '@/contexts/WorkspaceContext/useWorkspaceContext';
 import { db } from '@/db';
 import { useCreatePageWithRedirect } from '@/hooks/canisters/workspace/updates/useCreatePageWithRedirect';
@@ -44,8 +45,10 @@ function WorkspaceContent() {
 
 export function HomePage() {
   return (
-    <Box style={{ width: '100%' }}>
-      <WorkspaceContent />
-    </Box>
+    <PageWrapper>
+      <Box style={{ width: '100%' }}>
+        <WorkspaceContent />
+      </Box>
+    </PageWrapper>
   );
 }
