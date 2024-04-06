@@ -52,6 +52,8 @@ function PageLinksSection() {
     []
   );
 
+  const xsBreakpoint = Number(`${px(theme.breakpoints.xs)}`.replace('px', ''));
+
   const pageLinks = Object.values(pages).map((page) => (
     <Flex justify="space-between" key={page.uuid}>
       <Link
@@ -63,7 +65,7 @@ function PageLinksSection() {
           alignSelf: 'center',
         }}
         onClick={() => {
-          if (document.body.clientWidth < px(theme.breakpoints.xs)) {
+          if (document.body.clientWidth < xsBreakpoint) {
             layoutManager.layout = 'CLOSED';
           }
         }}
@@ -132,6 +134,8 @@ export function NavbarSearch({
   const isOpen = layout === 'NAVIGATION_OPEN';
   const { isAuthenticated, login, profile } = useAuthContext();
 
+  const xsBreakpoint = Number(`${px(theme.breakpoints.xs)}`.replace('px', ''));
+
   return (
     <nav
       className={classes.navbar}
@@ -195,7 +199,7 @@ export function NavbarSearch({
               alignSelf: 'center',
             }}
             onClick={() => {
-              if (document.body.clientWidth < px(theme.breakpoints.xs)) {
+              if (document.body.clientWidth < xsBreakpoint) {
                 layoutManager.layout = 'CLOSED';
               }
             }}

@@ -35,7 +35,7 @@ export function useCreatePageWithRedirect() {
         title: [],
         checked: [],
       },
-      initialBlockUuid: parse(v4()),
+      initialBlockUuid: [parse(v4())],
     }).then((res) => {
       if ('err' in res) {
         return;

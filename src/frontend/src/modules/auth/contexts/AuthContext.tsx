@@ -17,6 +17,7 @@ const AuthContext = createContext<{
   isLoading: boolean;
   userId: Principal;
   profile: SerializedUserProfile;
+  setProfile: (profile: UserProfile) => void;
 } | null>(null);
 
 export const useAuthContext = () => {
@@ -30,8 +31,15 @@ export const useAuthContext = () => {
 };
 
 export const AuthContextProvider = ({ children }: PropsWithChildren) => {
-  const { login, identity, isAuthenticated, isLoading, userId, profile } =
-    useAuthState();
+  const {
+    login,
+    identity,
+    isAuthenticated,
+    isLoading,
+    userId,
+    profile,
+    setProfile,
+  } = useAuthState();
 
   const serializedProfile: SerializedUserProfile = {
     ...profile,
@@ -47,6 +55,7 @@ export const AuthContextProvider = ({ children }: PropsWithChildren) => {
         isLoading,
         userId,
         profile: serializedProfile,
+        setProfile,
       }}
     >
       {children}

@@ -1,5 +1,6 @@
-import { Box, Card, Checkbox, Stack, Text } from '@mantine/core';
+import { Card, Checkbox, Container, Stack, Text, Title } from '@mantine/core';
 
+import { PageWrapper } from '@/PageWrapper';
 import { useSettingsContext } from '@/contexts/SettingsContext';
 
 enum SettingsValueType {
@@ -41,46 +42,50 @@ export function SettingsPage() {
   const { getSettingValue, updateSettings } = useSettingsContext();
 
   return (
-    <Box style={{ width: '100%' }} p="lg">
-      <Stack>
-        <Text size="xl">Settings</Text>
-        <form>
-          <Stack>
-            {settingsConfig.groups.map((group) => {
-              if (group.requires) {
-                const requiredSetting = getSettingValue(group.requires);
-                if (!requiredSetting) return null;
-              }
+    <PageWrapper>
+      <Container>
+        <Stack>
+          <Title size="h1" tt="uppercase">
+            Settings
+          </Title>
+          <form>
+            <Stack>
+              {settingsConfig.groups.map((group) => {
+                if (group.requires) {
+                  const requiredSetting = getSettingValue(group.requires);
+                  if (!requiredSetting) return null;
+                }
 
-              return (
-                <Card key={group.key}>
-                  <Text size="xl" mb="md">
-                    {group.name}
-                  </Text>
-                  <Stack>
-                    {group.items.map((item) => {
-                      const path = [group.key, item.key].join('.');
-                      const setting = getSettingValue(path);
+                return (
+                  <Card key={group.key}>
+                    <Text size="xl" mb="md">
+                      {group.name}
+                    </Text>
+                    <Stack>
+                      {group.items.map((item) => {
+                        const path = [group.key, item.key].join('.');
+                        const setting = getSettingValue(path);
 
-                      return (
-                        <Checkbox
-                          key={item.key}
-                          label={item.name}
-                          description={item.description}
-                          checked={setting === true}
-                          onChange={(event) => {
-                            updateSettings(path, event.currentTarget.checked);
-                          }}
-                        />
-                      );
-                    })}
-                  </Stack>
-                </Card>
-              );
-            })}
-          </Stack>
-        </form>
-      </Stack>
-    </Box>
+                        return (
+                          <Checkbox
+                            key={item.key}
+                            label={item.name}
+                            description={item.description}
+                            checked={setting === true}
+                            onChange={(event) => {
+                              updateSettings(path, event.currentTarget.checked);
+                            }}
+                          />
+                        );
+                      })}
+                    </Stack>
+                  </Card>
+                );
+              })}
+            </Stack>
+          </form>
+        </Stack>
+      </Container>
+    </PageWrapper>
   );
 }

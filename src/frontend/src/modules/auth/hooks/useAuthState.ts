@@ -20,7 +20,7 @@ export class AnonymousUserProfile implements UserProfile {
 
 export const useAuthState = () => {
   const [isLoading, setIsLoading] = useState(false);
-  const [isHydrating, setIsHydrating] = useState(false);
+  const [isHydrating, setIsHydrating] = useState(true);
   const [userId, setUserId] = useState<Principal>(Principal.anonymous());
   const [identity, setIdentity] = useState<Identity>(new AnonymousIdentity());
   const [profile, setProfile] = useState<UserProfile>(
@@ -90,6 +90,7 @@ export const useAuthState = () => {
     isAuthenticated: 'getDelegation' in identity && !userId.isAnonymous(),
     isLoading: isLoading || isHydrating,
     profile,
+    setProfile,
     userId,
     login,
   };

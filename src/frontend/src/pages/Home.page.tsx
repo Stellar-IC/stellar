@@ -1,18 +1,23 @@
-import { Box, Button, Stack, Text, useMantineTheme } from '@mantine/core';
+import {
+  ActionIcon,
+  Anchor,
+  Container,
+  Flex,
+  Stack,
+  useMantineTheme,
+} from '@mantine/core';
 import { toText } from '@stellar-ic/lseq-ts/Tree';
+import { IconPlus } from '@tabler/icons-react';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 
 import { PageWrapper } from '@/PageWrapper';
-import { useWorkspaceContext } from '@/contexts/WorkspaceContext/useWorkspaceContext';
 import { db } from '@/db';
 import { useCreatePageWithRedirect } from '@/hooks/canisters/workspace/updates/useCreatePageWithRedirect';
 import { LocalStorageBlock } from '@/types';
 
-function WorkspaceContent() {
-  const navigate = useNavigate();
+export function HomePage() {
   const theme = useMantineTheme();
-  const { workspaceId } = useWorkspaceContext();
   const createPageAndRedirect = useCreatePageWithRedirect();
 
   const pages = useLiveQuery<LocalStorageBlock[], LocalStorageBlock[]>(
@@ -22,33 +27,28 @@ function WorkspaceContent() {
   );
 
   return (
-    <div style={{ padding: theme.spacing.sm }}>
-      <Text>Workspace</Text>
-      <Text>{workspaceId.toString()}</Text>
-      <Button onClick={createPageAndRedirect}>Create new document</Button>
-      <Text>Pages</Text>
-      <Stack>
-        {pages.map((page) => (
-          <Button
-            key={page.uuid}
-            onClick={() => {
-              navigate(`/pages/${page.uuid}`);
-            }}
-          >
-            {toText(page.properties.title) || 'Untitled'}
-          </Button>
-        ))}
-      </Stack>
-    </div>
-  );
-}
-
-export function HomePage() {
-  return (
     <PageWrapper>
-      <Box style={{ width: '100%' }}>
-        <WorkspaceContent />
-      </Box>
+      <Container>
+        <div style={{ padding: theme.spacing.sm }}>
+          <Flex align="center" justify="space-between">
+            <h2>Pages</h2>
+            <ActionIcon variant="subtle" onClick={createPageAndRedirect}>
+              <IconPlus />
+            </ActionIcon>
+          </Flex>
+          <Stack>
+            {pages.map((page) => (
+              <Anchor
+                key={page.uuid}
+                component={Link}
+                to={`/pages/${page.uuid}`}
+              >
+                {toText(page.properties.title) || 'Untitled'}
+              </Anchor>
+            ))}
+          </Stack>
+        </div>
+      </Container>
     </PageWrapper>
   );
 }

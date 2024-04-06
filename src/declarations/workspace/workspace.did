@@ -7,8 +7,30 @@ type Workspace__1 =
    updatedAt: Time;
    uuid: UUID;
  };
+type WorkspaceUserRole = 
+ variant {
+   admin;
+   guest;
+   member;
+   moderator;
+ };
+type WorkspaceUser = 
+ record {
+   canisterId: principal;
+   role: WorkspaceUserRole;
+   username: text;
+ };
+type WorkspaceOwner__1 = principal;
 type WorkspaceOwner = principal;
 type WorkspaceName = text;
+type WorkspaceInitData__1 = 
+ record {
+   createdAt: Time;
+   description: text;
+   name: text;
+   updatedAt: Time;
+   uuid: UUID;
+ };
 type WorkspaceInitData = 
  record {
    createdAt: Time;
@@ -16,6 +38,11 @@ type WorkspaceInitData =
    name: WorkspaceName;
    updatedAt: Time;
    uuid: UUID;
+ };
+type WorkspaceInitArgs__1 = 
+ record {
+   capacity: nat;
+   owner: WorkspaceOwner__1;
  };
 type WorkspaceInitArgs = 
  record {
@@ -25,25 +52,14 @@ type WorkspaceInitArgs =
 type WorkspaceDescription = text;
 type Workspace = 
  service {
-   activityLog: (UUID) -> (PaginatedResults_1) query;
-   addBlock: (AddBlockUpdateInput) -> ();
+   activityLog: (UUID) -> (ActivityLogOutput) query;
+   addBlock: (AddBlockUpdateInput) -> (AddBlockUpdateOutput);
    /// ***********************************************************************
    ///      * Updates
    ///      ************************************************************************
-   addUsers: (vec record {
-                    principal;
-                    PublicUserProfile;
-                  }) -> ();
-   block: (UUID,
-    record {contentPagination: record {
-                                 cursor: nat;
-                                 limit: nat;
-                               };}) -> (BlockByUuidResult) query;
+   addUsers: (AddUsersUpdateInput) -> (AddUsersUpdateResult);
+   block: (UUID, BlockByUuidOptions) -> (BlockByUuidResult) query;
    createPage: (CreatePageUpdateInput) -> (CreatePageUpdateOutput);
-   cyclesInformation: () -> (record {
-                               balance: nat;
-                               capacity: nat;
-                             });
    deletePage: (DeletePageUpdateInput) -> (DeletePageUpdateOutput);
    /// ***********************************************************************
    ///      * Canister Monitoring
@@ -55,15 +71,8 @@ type Workspace =
    /// ***********************************************************************
    ///      * Initialization helper methods
    ///      ************************************************************************
-   getInitArgs: () -> (WorkspaceInitArgs);
-   getInitData: () ->
-    (record {
-       createdAt: Time;
-       description: WorkspaceDescription;
-       name: WorkspaceName;
-       updatedAt: Time;
-       uuid: UUID;
-     });
+   getInitArgs: () -> (GetInitArgsOutput) query;
+   getInitData: () -> (GetInitDataOutput) query;
    pages: (PagesOptionsArg) -> (PagesResult) query;
    saveEvents: (SaveEventTransactionUpdateInput) ->
     (SaveEventTransactionUpdateOutput);
@@ -222,13 +231,7 @@ type SaveEventTransactionUpdateOutput =
  };
 type SaveEventTransactionUpdateInput = record {
                                          transaction: BlockEventTransaction;};
-type PublicUserProfile = 
- record {
-   canisterId: principal;
-   username: text;
- };
 type PrimaryKey = nat;
-type PaginatedResults_1 = record {edges: vec Edge_1;};
 type PaginatedResults = record {edges: vec Edge;};
 type PagesResult = 
  record {
@@ -291,7 +294,7 @@ type HydratedActivity =
    blockExternalId: UUID;
    edits: vec HydratedEditItem;
    endTime: Time;
-   id: nat;
+   id: ActivityId;
    startTime: Time;
    users: vec HydratedEditItemUser;
  };
@@ -326,6 +329,16 @@ type GetLatestLogMessagesParameters =
    count: nat32;
    filter: opt GetLogMessagesFilter;
    upToTimeNanos: opt Nanos;
+ };
+type GetInitDataOutput = 
+ variant {
+   err: variant {unauthorized;};
+   ok: WorkspaceInitData__1;
+ };
+type GetInitArgsOutput = 
+ variant {
+   err: variant {unauthorized;};
+   ok: WorkspaceInitArgs__1;
  };
 type GetInformationResponse = 
  record {
@@ -384,7 +397,7 @@ type CreatePageUpdateOutput =
 type CreatePageUpdateInput = 
  record {
    content: ShareableBlockContent__1;
-   initialBlockUuid: UUID;
+   initialBlockUuid: opt UUID;
    parent: opt UUID;
    properties: ShareableBlockProperties__1;
    uuid: UUID;
@@ -546,6 +559,12 @@ type BlockByUuidResult =
                                      };};
     };
  };
+type BlockByUuidOptions = record {
+                            contentPagination:
+                             record {
+                               cursor: nat;
+                               limit: nat;
+                             };};
 type BlockBlockTypeUpdatedEventData = 
  record {
    blockExternalId: UUID;
@@ -556,6 +575,23 @@ type AllocationStrategy =
    boundaryMinus;
    boundaryPlus;
  };
+type AddUsersUpdateResult = 
+ variant {
+   err: variant {unauthorized;};
+   ok;
+ };
+type AddUsersUpdateInput = 
+ vec record {
+       principal;
+       WorkspaceUser;
+     };
+type AddBlockUpdateOutputResult = null;
+type AddBlockUpdateOutputError = variant {unauthorized;};
+type AddBlockUpdateOutput = 
+ variant {
+   err: AddBlockUpdateOutputError;
+   ok: AddBlockUpdateOutputResult;
+ };
 type AddBlockUpdateInput = 
  record {
    blockType: BlockType__2;
@@ -564,4 +600,6 @@ type AddBlockUpdateInput =
    properties: ShareableBlockProperties__2;
    uuid: UUID;
  };
+type ActivityLogOutput = record {edges: vec Edge_1;};
+type ActivityId = nat;
 service : (WorkspaceInitArgs, WorkspaceInitData) -> Workspace

@@ -28,4 +28,6 @@ export async function logout() {
   });
 
   await db.delete();
+
+  window.location.reload();
 }

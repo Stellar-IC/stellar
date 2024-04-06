@@ -4,7 +4,7 @@ import { Principal } from '@dfinity/principal';
 import { logger as baseLogger } from '@/modules/logger';
 
 import { createActor } from '../../../../../declarations/user';
-import { Result as ProfileQueryResult } from '../../../../../declarations/user/user.did';
+import { Result_4 as ProfileQueryResult } from '../../../../../declarations/user/user.did';
 import {
   canisterId as canisterIdForUserIndex,
   createActor as createActorForUserIndex,

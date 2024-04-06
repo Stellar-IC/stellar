@@ -2,6 +2,8 @@ import type { Principal } from '@dfinity/principal';
 import type { ActorMethod } from '@dfinity/agent';
 import type { IDL } from '@dfinity/candid';
 
+export type ActivityId = bigint;
+export interface ActivityLogOutput { 'edges' : Array<Edge_1> }
 export interface AddBlockUpdateInput {
   'content' : ShareableBlockContent__1,
   'uuid' : UUID,
@@ -9,11 +11,21 @@ export interface AddBlockUpdateInput {
   'properties' : ShareableBlockProperties__2,
   'parent' : [] | [UUID],
 }
+export type AddBlockUpdateOutput = { 'ok' : AddBlockUpdateOutputResult } |
+  { 'err' : AddBlockUpdateOutputError };
+export type AddBlockUpdateOutputError = { 'unauthorized' : null };
+export type AddBlockUpdateOutputResult = null;
+export type AddUsersUpdateInput = Array<[Principal, WorkspaceUser]>;
+export type AddUsersUpdateResult = { 'ok' : null } |
+  { 'err' : { 'unauthorized' : null } };
 export type AllocationStrategy = { 'boundaryPlus' : null } |
   { 'boundaryMinus' : null };
 export interface BlockBlockTypeUpdatedEventData {
   'blockType' : BlockType__1,
   'blockExternalId' : UUID,
+}
+export interface BlockByUuidOptions {
+  'contentPagination' : { 'cursor' : bigint, 'limit' : bigint },
 }
 export type BlockByUuidResult = {
     'ok' : {
@@ -132,7 +144,7 @@ export type CanisterMetricsData = { 'hourly' : Array<HourlyMetricsData> } |
 export type CollectMetricsRequestType = { 'force' : null } |
   { 'normal' : null };
 export interface CreatePageUpdateInput {
-  'initialBlockUuid' : UUID,
+  'initialBlockUuid' : [] | [UUID],
   'content' : ShareableBlockContent__1,
   'uuid' : UUID,
   'properties' : ShareableBlockProperties__1,
@@ -179,6 +191,10 @@ export interface GetInformationResponse {
   'logs' : [] | [CanisterLogResponse],
   'version' : [] | [bigint],
 }
+export type GetInitArgsOutput = { 'ok' : WorkspaceInitArgs__1 } |
+  { 'err' : { 'unauthorized' : null } };
+export type GetInitDataOutput = { 'ok' : WorkspaceInitData__1 } |
+  { 'err' : { 'unauthorized' : null } };
 export interface GetLatestLogMessagesParameters {
   'upToTimeNanos' : [] | [Nanos],
   'count' : number,
@@ -207,7 +223,7 @@ export interface HourlyMetricsData {
   'timeMillis' : bigint,
 }
 export interface HydratedActivity {
-  'id' : bigint,
+  'id' : ActivityId,
   'startTime' : Time,
   'endTime' : Time,
   'edits' : Array<HydratedEditItem>,
@@ -255,12 +271,7 @@ export interface PagesResult {
   'recordMap' : { 'blocks' : Array<[ExternalId, ShareableBlock]> },
 }
 export interface PaginatedResults { 'edges' : Array<Edge> }
-export interface PaginatedResults_1 { 'edges' : Array<Edge_1> }
 export type PrimaryKey = bigint;
-export interface PublicUserProfile {
-  'username' : string,
-  'canisterId' : Principal,
-}
 export interface SaveEventTransactionUpdateInput {
   'transaction' : BlockEventTransaction,
 }
@@ -369,34 +380,18 @@ export interface UpdateInformationRequest {
   'metrics' : [] | [CollectMetricsRequestType],
 }
 export interface Workspace {
-  'activityLog' : ActorMethod<[UUID], PaginatedResults_1>,
-  'addBlock' : ActorMethod<[AddBlockUpdateInput], undefined>,
-  'addUsers' : ActorMethod<[Array<[Principal, PublicUserProfile]>], undefined>,
-  'block' : ActorMethod<
-    [UUID, { 'contentPagination' : { 'cursor' : bigint, 'limit' : bigint } }],
-    BlockByUuidResult
-  >,
+  'activityLog' : ActorMethod<[UUID], ActivityLogOutput>,
+  'addBlock' : ActorMethod<[AddBlockUpdateInput], AddBlockUpdateOutput>,
+  'addUsers' : ActorMethod<[AddUsersUpdateInput], AddUsersUpdateResult>,
+  'block' : ActorMethod<[UUID, BlockByUuidOptions], BlockByUuidResult>,
   'createPage' : ActorMethod<[CreatePageUpdateInput], CreatePageUpdateOutput>,
-  'cyclesInformation' : ActorMethod<
-    [],
-    { 'balance' : bigint, 'capacity' : bigint }
-  >,
   'deletePage' : ActorMethod<[DeletePageUpdateInput], DeletePageUpdateOutput>,
   'getCanistergeekInformation' : ActorMethod<
     [GetInformationRequest],
     GetInformationResponse
   >,
-  'getInitArgs' : ActorMethod<[], WorkspaceInitArgs>,
-  'getInitData' : ActorMethod<
-    [],
-    {
-      'name' : WorkspaceName,
-      'createdAt' : Time,
-      'uuid' : UUID,
-      'description' : WorkspaceDescription,
-      'updatedAt' : Time,
-    }
-  >,
+  'getInitArgs' : ActorMethod<[], GetInitArgsOutput>,
+  'getInitData' : ActorMethod<[], GetInitDataOutput>,
   'pages' : ActorMethod<[PagesOptionsArg], PagesResult>,
   'saveEvents' : ActorMethod<
     [SaveEventTransactionUpdateInput],
@@ -418,6 +413,10 @@ export interface WorkspaceInitArgs {
   'owner' : WorkspaceOwner,
   'capacity' : bigint,
 }
+export interface WorkspaceInitArgs__1 {
+  'owner' : WorkspaceOwner__1,
+  'capacity' : bigint,
+}
 export interface WorkspaceInitData {
   'name' : WorkspaceName,
   'createdAt' : Time,
@@ -425,8 +424,25 @@ export interface WorkspaceInitData {
   'description' : WorkspaceDescription,
   'updatedAt' : Time,
 }
+export interface WorkspaceInitData__1 {
+  'name' : string,
+  'createdAt' : Time,
+  'uuid' : UUID,
+  'description' : string,
+  'updatedAt' : Time,
+}
 export type WorkspaceName = string;
 export type WorkspaceOwner = Principal;
+export type WorkspaceOwner__1 = Principal;
+export interface WorkspaceUser {
+  'username' : string,
+  'role' : WorkspaceUserRole,
+  'canisterId' : Principal,
+}
+export type WorkspaceUserRole = { 'member' : null } |
+  { 'admin' : null } |
+  { 'moderator' : null } |
+  { 'guest' : null };
 export interface Workspace__1 {
   'owner' : WorkspaceOwner,
   'name' : WorkspaceName,

@@ -4,6 +4,7 @@ import { Flex, Loader } from '@mantine/core';
 import { useEffect, useState } from 'react';
 import {
   createBrowserRouter,
+  Navigate,
   RouteObject,
   RouterProvider,
 } from 'react-router-dom';
@@ -14,6 +15,7 @@ import { useAuthContext } from './modules/auth/contexts/AuthContext';
 import { HomePage } from './pages/Home.page';
 import { SettingsPage } from './pages/Settings.page';
 import { LandingPage } from './pages/landing/Landing.page';
+import { OnboardingPage } from './pages/onboarding/Onboarding.page';
 import { PageDetailPage } from './pages/pages/PageDetail.page';
 
 const unauthenticatedRoutes: RouteObject[] = [
@@ -21,6 +23,7 @@ const unauthenticatedRoutes: RouteObject[] = [
     path: '/',
     element: <LandingPage />,
   },
+  { path: '*', element: <Navigate to="/" /> },
 ];
 const unauthenticatedRouter = createBrowserRouter(unauthenticatedRoutes);
 
@@ -39,6 +42,14 @@ const authenticatedRoutes: RouteObject[] = [
   },
 ];
 const authenticatedRouter = createBrowserRouter(authenticatedRoutes);
+
+const onboardingRoutes: RouteObject[] = [
+  {
+    path: '/',
+    element: <OnboardingPage />,
+  },
+  { path: '*', element: <Navigate to="/" /> },
+];
 
 function WorkspaceLoader({
   children,
@@ -83,7 +94,20 @@ function WorkspaceLoader({
 }
 
 export function AppRouter() {
-  const { isAuthenticated, identity } = useAuthContext();
+  const { isAuthenticated, identity, profile, isLoading } = useAuthContext();
+
+  if (isLoading) {
+    return <></>;
+  }
+
+  if (isAuthenticated && !profile.username) {
+    return (
+      <RouterProvider
+        router={createBrowserRouter(onboardingRoutes)}
+        fallbackElement={<>Page Not Found</>}
+      />
+    );
+  }
 
   return isAuthenticated ? (
     <WorkspaceLoader>

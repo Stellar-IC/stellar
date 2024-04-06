@@ -20,6 +20,7 @@ import AuthUtils "../../utils/auth";
 import CanisterTopUp "../../lib/shared/CanisterTopUp";
 import CoreTypes "../../types";
 import User "../user/main";
+import UserTypes "../user/types";
 
 import CreateUser "./services/create_user";
 import State "./state";
@@ -35,6 +36,7 @@ actor UserIndex {
 
     stable var stable_user_identity_to_canister_id : RBTree.Tree<Principal, UserId> = #leaf;
     stable var stable_user_canister_id_to_identity : RBTree.Tree<UserId, Principal> = #leaf;
+    stable var stable_username_to_user_id : RBTree.Tree<Text, UserId> = #leaf;
     stable var stable_topUps : RBTree.Tree<Principal, CanisterTopUp.CanisterTopUp> = #leaf;
 
     stable let stable_capacity = 100_000_000_000_000;
@@ -43,6 +45,7 @@ actor UserIndex {
     var stable_data = {
         user_identity_to_canister_id = stable_user_identity_to_canister_id;
         user_canister_id_to_identity = stable_user_canister_id_to_identity;
+        username_to_user_id = stable_username_to_user_id;
     };
 
     var state = State.State(State.Data(stable_data));
@@ -60,9 +63,27 @@ actor UserIndex {
             case (#ok(#existing(userId, user))) { return #ok(userId) };
             case (#ok(#created(userId, user))) {
                 initializeTopUpsForCanister(userId);
+                await user.subscribe(#profileUpdated, onUserEvent);
                 return #ok(userId);
             };
         };
+    };
+
+    public shared ({ caller }) func onUserEvent(event : UserTypes.UserEvent) : async () {
+        if (state.data.user_canister_id_to_identity.get(caller) == null) {
+            // caller is not a registered user
+            return;
+        };
+
+        switch (event.event) {
+            case (#profileUpdated(data)) {
+                state.data.username_to_user_id.put(data.profile.username, caller);
+            };
+        };
+    };
+
+    public query func checkUsername(username : Text) : async Types.CheckUsernameResult {
+        return state.data.checkUsername(username);
     };
 
     public shared ({ caller }) func upgradeUsers(wasm_module : Blob) : async Result.Result<(), { #unauthorized }> {
@@ -256,6 +277,7 @@ actor UserIndex {
     system func preupgrade() {
         stable_user_identity_to_canister_id := state.data.user_identity_to_canister_id.share();
         stable_user_canister_id_to_identity := state.data.user_canister_id_to_identity.share();
+        stable_username_to_user_id := state.data.username_to_user_id.share();
         stable_topUps := topUps.share();
 
         doCanisterGeekPreUpgrade();
@@ -264,6 +286,7 @@ actor UserIndex {
     system func postupgrade() {
         stable_user_identity_to_canister_id := #leaf;
         stable_user_canister_id_to_identity := #leaf;
+        stable_username_to_user_id := #leaf;
         stable_topUps := #leaf;
 
         doCanisterGeekPostUpgrade();

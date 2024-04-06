@@ -1,4 +1,9 @@
 export const idlFactory = ({ IDL }) => {
+  const CheckUsernameError = IDL.Variant({ 'usernameTaken' : IDL.Null });
+  const CheckUsernameResult = IDL.Variant({
+    'ok' : IDL.Null,
+    'err' : CheckUsernameError,
+  });
   const StatusRequest = IDL.Record({
     'memory_size' : IDL.Bool,
     'cycles' : IDL.Bool,
@@ -105,6 +110,18 @@ export const idlFactory = ({ IDL }) => {
     'logs' : IDL.Opt(CanisterLogResponse),
     'version' : IDL.Opt(IDL.Nat),
   });
+  const Username = IDL.Text;
+  const Time = IDL.Int;
+  const UserProfile = IDL.Record({
+    'username' : Username,
+    'created_at' : Time,
+    'updatedAt' : Time,
+  });
+  const ProfileUpdatedEventData = IDL.Record({ 'profile' : UserProfile });
+  const UserEvent = IDL.Record({
+    'userId' : IDL.Principal,
+    'event' : IDL.Variant({ 'profileUpdated' : ProfileUpdatedEventData }),
+  });
   const RegisterUserError = IDL.Variant({
     'canisterNotFoundForRegisteredUser' : IDL.Null,
     'userNotFound' : IDL.Null,
@@ -115,6 +132,13 @@ export const idlFactory = ({ IDL }) => {
     'ok' : IDL.Principal,
     'err' : RegisterUserError,
   });
+  const Result_3 = IDL.Variant({
+    'ok' : IDL.Record({ 'accepted' : IDL.Nat64 }),
+    'err' : IDL.Variant({
+      'userNotFound' : IDL.Null,
+      'unauthorized' : IDL.Null,
+    }),
+  });
   const CollectMetricsRequestType = IDL.Variant({
     'force' : IDL.Null,
     'normal' : IDL.Null,
@@ -122,50 +146,40 @@ export const idlFactory = ({ IDL }) => {
   const UpdateInformationRequest = IDL.Record({
     'metrics' : IDL.Opt(CollectMetricsRequestType),
   });
-  const CanisterSettings = IDL.Record({
-    'freezing_threshold' : IDL.Opt(IDL.Nat),
-    'controllers' : IDL.Opt(IDL.Vec(IDL.Principal)),
-    'memory_allocation' : IDL.Opt(IDL.Nat),
-    'compute_allocation' : IDL.Opt(IDL.Nat),
+  const Result_2 = IDL.Variant({
+    'ok' : IDL.Null,
+    'err' : IDL.Variant({
+      'unauthorized' : IDL.Null,
+      'workspaceNotFound' : IDL.Text,
+      'failed' : IDL.Text,
+    }),
+  });
+  const Result_1 = IDL.Variant({
+    'ok' : IDL.Null,
+    'err' : IDL.Variant({ 'unauthorized' : IDL.Null }),
+  });
+  const Result = IDL.Variant({
+    'ok' : IDL.Record({ 'accepted' : IDL.Nat64 }),
+    'err' : IDL.Variant({ 'unauthorized' : IDL.Null }),
   });
   return IDL.Service({
-    'cyclesInformation' : IDL.Func(
-        [],
-        [IDL.Record({ 'balance' : IDL.Nat, 'capacity' : IDL.Nat })],
-        [],
-      ),
+    'checkUsername' : IDL.Func([IDL.Text], [CheckUsernameResult], ['query']),
     'getCanistergeekInformation' : IDL.Func(
         [GetInformationRequest],
         [GetInformationResponse],
         ['query'],
       ),
+    'onUserEvent' : IDL.Func([UserEvent], [], []),
     'registerUser' : IDL.Func([], [RegisterUserResult], []),
-    'requestCycles' : IDL.Func(
-        [IDL.Nat],
-        [IDL.Record({ 'accepted' : IDL.Nat64 })],
-        [],
-      ),
+    'requestCycles' : IDL.Func([IDL.Nat], [Result_3], []),
     'updateCanistergeekInformation' : IDL.Func(
         [UpdateInformationRequest],
         [],
         [],
       ),
-    'updateUserCanisterSettings' : IDL.Func(
-        [IDL.Principal, CanisterSettings],
-        [],
-        [],
-      ),
-    'upgradeUserCanistersWasm' : IDL.Func([IDL.Vec(IDL.Nat8)], [], ['oneway']),
-    'upgradeUserPersonalWorkspaceCanistersWasm' : IDL.Func(
-        [IDL.Vec(IDL.Nat8)],
-        [],
-        [],
-      ),
-    'walletReceive' : IDL.Func(
-        [],
-        [IDL.Record({ 'accepted' : IDL.Nat64 })],
-        [],
-      ),
+    'upgradePersonalWorkspaces' : IDL.Func([IDL.Vec(IDL.Nat8)], [Result_2], []),
+    'upgradeUsers' : IDL.Func([IDL.Vec(IDL.Nat8)], [Result_1], []),
+    'walletReceive' : IDL.Func([], [Result], []),
   });
 };
 export const init = ({ IDL }) => { return []; };

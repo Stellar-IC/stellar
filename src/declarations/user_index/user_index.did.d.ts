@@ -25,12 +25,9 @@ export type CanisterMemoryAggregatedData = BigUint64Array | bigint[];
 export interface CanisterMetrics { 'data' : CanisterMetricsData }
 export type CanisterMetricsData = { 'hourly' : Array<HourlyMetricsData> } |
   { 'daily' : Array<DailyMetricsData> };
-export interface CanisterSettings {
-  'freezing_threshold' : [] | [bigint],
-  'controllers' : [] | [Array<Principal>],
-  'memory_allocation' : [] | [bigint],
-  'compute_allocation' : [] | [bigint],
-}
+export type CheckUsernameError = { 'usernameTaken' : null };
+export type CheckUsernameResult = { 'ok' : null } |
+  { 'err' : CheckUsernameError };
 export type CollectMetricsRequestType = { 'force' : null } |
   { 'normal' : null };
 export interface DailyMetricsData {
@@ -92,12 +89,25 @@ export interface NumericEntity {
   'first' : bigint,
   'last' : bigint,
 }
+export interface ProfileUpdatedEventData { 'profile' : UserProfile }
 export type RegisterUserError = { 'canisterNotFoundForRegisteredUser' : null } |
   { 'userNotFound' : null } |
   { 'anonymousUser' : null } |
   { 'insufficientCycles' : null };
 export type RegisterUserResult = { 'ok' : Principal } |
   { 'err' : RegisterUserError };
+export type Result = { 'ok' : { 'accepted' : bigint } } |
+  { 'err' : { 'unauthorized' : null } };
+export type Result_1 = { 'ok' : null } |
+  { 'err' : { 'unauthorized' : null } };
+export type Result_2 = { 'ok' : null } |
+  {
+    'err' : { 'unauthorized' : null } |
+      { 'workspaceNotFound' : string } |
+      { 'failed' : string }
+  };
+export type Result_3 = { 'ok' : { 'accepted' : bigint } } |
+  { 'err' : { 'userNotFound' : null } | { 'unauthorized' : null } };
 export interface StatusRequest {
   'memory_size' : boolean,
   'cycles' : boolean,
@@ -108,35 +118,37 @@ export interface StatusResponse {
   'cycles' : [] | [bigint],
   'heap_memory_size' : [] | [bigint],
 }
+export type Time = bigint;
 export type UpdateCallsAggregatedData = BigUint64Array | bigint[];
 export interface UpdateInformationRequest {
   'metrics' : [] | [CollectMetricsRequestType],
 }
+export interface UserEvent {
+  'userId' : Principal,
+  'event' : { 'profileUpdated' : ProfileUpdatedEventData },
+}
+export interface UserProfile {
+  'username' : Username,
+  'created_at' : Time,
+  'updatedAt' : Time,
+}
+export type Username = string;
 export interface _SERVICE {
-  'cyclesInformation' : ActorMethod<
-    [],
-    { 'balance' : bigint, 'capacity' : bigint }
-  >,
+  'checkUsername' : ActorMethod<[string], CheckUsernameResult>,
   'getCanistergeekInformation' : ActorMethod<
     [GetInformationRequest],
     GetInformationResponse
   >,
+  'onUserEvent' : ActorMethod<[UserEvent], undefined>,
   'registerUser' : ActorMethod<[], RegisterUserResult>,
-  'requestCycles' : ActorMethod<[bigint], { 'accepted' : bigint }>,
+  'requestCycles' : ActorMethod<[bigint], Result_3>,
   'updateCanistergeekInformation' : ActorMethod<
     [UpdateInformationRequest],
     undefined
   >,
-  'updateUserCanisterSettings' : ActorMethod<
-    [Principal, CanisterSettings],
-    undefined
-  >,
-  'upgradeUserCanistersWasm' : ActorMethod<[Uint8Array | number[]], undefined>,
-  'upgradeUserPersonalWorkspaceCanistersWasm' : ActorMethod<
-    [Uint8Array | number[]],
-    undefined
-  >,
-  'walletReceive' : ActorMethod<[], { 'accepted' : bigint }>,
+  'upgradePersonalWorkspaces' : ActorMethod<[Uint8Array | number[]], Result_2>,
+  'upgradeUsers' : ActorMethod<[Uint8Array | number[]], Result_1>,
+  'walletReceive' : ActorMethod<[], Result>,
 }
 export declare const idlFactory: IDL.InterfaceFactory;
 export declare const init: ({ IDL }: { IDL: IDL }) => IDL.Type[];

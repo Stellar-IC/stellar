@@ -1,19 +1,19 @@
-import { Button, Flex } from '@mantine/core';
-import { IconHistory, IconMenu2 } from '@tabler/icons-react';
+import { ActionIcon, Flex } from '@mantine/core';
+import { IconMenu2 } from '@tabler/icons-react';
 
 import { layoutManager } from '@/LayoutManager';
 
-import classes from './PageActionBar.module.css';
+import classes from './ActionBar.module.css';
 
-export function PageActionBar({
-  openActivityLog,
-}: {
-  openActivityLog: () => void;
-}) {
+interface ActionBarProps {
+  additionalActions?: React.ReactNode;
+}
+
+export function ActionBar({ additionalActions }: ActionBarProps) {
   return (
     <Flex className={classes.wrapper}>
       <Flex className={classes.actions}>
-        <Button
+        <ActionIcon
           variant="subtle"
           onClick={() => {
             if (layoutManager.layout === 'NAVIGATION_OPEN') {
@@ -24,12 +24,10 @@ export function PageActionBar({
           }}
         >
           <IconMenu2 />
-        </Button>
+        </ActionIcon>
       </Flex>
       <Flex gap="sm" className={classes.actions}>
-        <Button variant="subtle" onClick={openActivityLog}>
-          <IconHistory />
-        </Button>
+        {additionalActions}
       </Flex>
     </Flex>
   );

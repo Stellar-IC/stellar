@@ -8,8 +8,11 @@ import Time "mo:base/Time";
 import Timer "mo:base/Timer";
 import ExperimentalCycles "mo:base/ExperimentalCycles";
 import Error "mo:base/Error";
+import Text "mo:base/Text";
+import Array "mo:base/Array";
 import Canistergeek "mo:canistergeek/canistergeek";
 import Source "mo:uuid/async/SourceV4";
+import Map "mo:map/Map";
 
 import Constants "../../constants";
 import Block "../../lib/blocks/Block";
@@ -48,6 +51,60 @@ shared ({ caller = initializer }) actor class User(
         var updatedAt = Time.now();
     };
     var timersHaveBeenStarted = false;
+
+    func userEventNameToHash(event : Types.UserEventName) : Nat32 {
+        switch (event) {
+            case (#profileUpdated) { 0 };
+        };
+    };
+
+    func userEventNameCompare(eventA : Types.UserEventName, eventB : Types.UserEventName) : Bool {
+        return eventA == eventB;
+    };
+
+    let userEventNameHash = (userEventNameToHash, userEventNameCompare);
+
+    stable var canisterSubscriptions = Map.new<Types.UserEventName, Map.Map<Principal, Types.ProfileUpdatedSubscription>>();
+
+    public shared ({ caller }) func subscribe(
+        event : Types.UserEventName,
+        eventHandler : Types.UserEventSubscription,
+    ) : async () {
+        let subscriptionsForEvent = Map.get(canisterSubscriptions, userEventNameHash, event);
+
+        switch (subscriptionsForEvent) {
+            case (null) {
+                // No subscriptions for this event yet, create a new map
+                let subscriptions = Map.new<Principal, Types.ProfileUpdatedSubscription>();
+                ignore Map.put(subscriptions, Map.phash, caller, eventHandler);
+                ignore Map.put(canisterSubscriptions, userEventNameHash, event, subscriptions);
+            };
+            case (?subscriptions) {
+                ignore Map.put<Principal, Types.ProfileUpdatedSubscription>(subscriptions, Map.phash, caller, eventHandler);
+            };
+        };
+    };
+
+    /* public shared ({ caller }) func unsubscribe() : async () {} */
+
+    func publishEvent(event : Types.UserEvent) : async () {
+        let subscribers = switch (event.event) {
+            case (#profileUpdated({ profile })) {
+                Map.get(canisterSubscriptions, userEventNameHash, #profileUpdated);
+            };
+        };
+
+        switch (subscribers) {
+            case (null) {};
+            case (?subscribers) {
+                let subscriptions = Map.entries(subscribers);
+                for (subscription in subscriptions) {
+                    let handler = subscription.1;
+                    ignore handler(event);
+                };
+            };
+        };
+    };
 
     public query ({ caller }) func profile() : async Result.Result<UserProfile.UserProfile, { #unauthorized }> {
         if (caller != stable_owner) {
@@ -120,17 +177,33 @@ shared ({ caller = initializer }) actor class User(
         #ok(workspaceId);
     };
 
-    public shared ({ caller }) func updateProfile(
-        input : UsersTypes.ProfileInput
-    ) : async Result.Result<UserProfile.UserProfile, { #unauthorized }> {
-        if (caller != stable_owner) {
-            return #err(#unauthorized);
+    public shared ({ caller }) func updateProfile(input : UsersTypes.ProfileInput) : async Result.Result<UserProfile.UserProfile, { #unauthorized; #usernameTaken }> {
+        if (caller != stable_owner) { return #err(#unauthorized) };
+
+        switch (await checkUsernameAvailability(input.username)) {
+            case (#err(error)) { return #err(error) };
+            case (#ok(())) {
+        stable_profile.username := input.username;
+            };
         };
 
-        stable_profile.username := input.username;
         stable_profile.updatedAt := Time.now();
 
-        return #ok(UserProfile.fromMutableUserProfile(stable_profile));
+        let immutableProfile = UserProfile.fromMutableUserProfile(stable_profile);
+
+        ignore publishEvent({
+            userId = Principal.fromActor(self);
+            event = #profileUpdated({ profile = immutableProfile });
+        });
+
+        return #ok(immutableProfile);
+    };
+
+    func checkUsernameAvailability(username : Text) : async Result.Result<(), { #usernameTaken }> {
+        let userIndexCanister = actor (Principal.toText(userIndexCanisterId)) : actor {
+            checkUsername : (username : Text) -> async Result.Result<(), { #usernameTaken }>;
+        };
+        await userIndexCanister.checkUsername(username);
     };
 
     // Returns the cycles received up to the capacity allowed

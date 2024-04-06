@@ -34,7 +34,6 @@ export interface DailyMetricsData {
   'canisterMemorySize' : NumericEntity,
   'timeMillis' : bigint,
 }
-export interface Edge { 'node' : Workspace }
 export interface GetInformationRequest {
   'status' : [] | [StatusRequest],
   'metrics' : [] | [MetricsRequest],
@@ -87,7 +86,6 @@ export interface NumericEntity {
   'first' : bigint,
   'last' : bigint,
 }
-export interface PaginatedResults { 'edges' : Array<Edge> }
 export type Result = { 'ok' : Principal } |
   {
     'err' : { 'anonymousUser' : null } |
@@ -105,29 +103,12 @@ export interface StatusResponse {
   'cycles' : [] | [bigint],
   'heap_memory_size' : [] | [bigint],
 }
-export type Time = bigint;
-export type UUID = Uint8Array | number[];
 export type UpdateCallsAggregatedData = BigUint64Array | bigint[];
 export interface UpdateInformationRequest {
   'metrics' : [] | [CollectMetricsRequestType],
 }
-export interface Workspace {
-  'owner' : WorkspaceOwner,
-  'name' : WorkspaceName,
-  'createdAt' : Time,
-  'uuid' : UUID,
-  'description' : WorkspaceDescription,
-  'updatedAt' : Time,
-}
-export type WorkspaceDescription = string;
-export type WorkspaceName = string;
-export type WorkspaceOwner = Principal;
 export interface _SERVICE {
   'createWorkspace' : ActorMethod<[{ 'owner' : Principal }], Result>,
-  'cyclesInformation' : ActorMethod<
-    [],
-    { 'balance' : bigint, 'capacity' : bigint }
-  >,
   'getCanistergeekInformation' : ActorMethod<
     [GetInformationRequest],
     GetInformationResponse
@@ -138,8 +119,6 @@ export interface _SERVICE {
     undefined
   >,
   'walletReceive' : ActorMethod<[], { 'accepted' : bigint }>,
-  'workspaceByUuid' : ActorMethod<[UUID], Workspace>,
-  'workspaces' : ActorMethod<[{}], PaginatedResults>,
 }
 export declare const idlFactory: IDL.InterfaceFactory;
 export declare const init: ({ IDL }: { IDL: IDL }) => IDL.Type[];

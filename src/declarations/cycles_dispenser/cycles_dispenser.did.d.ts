@@ -94,6 +94,8 @@ export type RequestCyclesUpdateError = { 'topUpAlreadyInProgress' : null } |
 export interface RequestCyclesUpdateOk { 'accepted' : bigint }
 export type RequestCyclesUpdateOutput = { 'ok' : RequestCyclesUpdateOk } |
   { 'err' : RequestCyclesUpdateError };
+export type Result = { 'ok' : null } |
+  { 'err' : { 'unauthorized' : null } };
 export interface StatusRequest {
   'memory_size' : boolean,
   'cycles' : boolean,
@@ -113,6 +115,7 @@ export interface _SERVICE {
     [GetInformationRequest],
     GetInformationResponse
   >,
+  'register' : ActorMethod<[Principal], Result>,
   'requestCycles' : ActorMethod<[bigint], RequestCyclesUpdateOutput>,
   'updateCanistergeekInformation' : ActorMethod<
     [UpdateInformationRequest],

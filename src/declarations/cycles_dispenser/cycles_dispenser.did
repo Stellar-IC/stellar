@@ -13,6 +13,11 @@ type StatusRequest =
    heap_memory_size: bool;
    memory_size: bool;
  };
+type Result = 
+ variant {
+   err: variant {unauthorized;};
+   ok;
+ };
 type RequestCyclesUpdateOutput = 
  variant {
    err: RequestCyclesUpdateError;
@@ -149,6 +154,7 @@ service : {
   ///     * Called from browser.
   getCanistergeekInformation: (GetInformationRequest) ->
    (GetInformationResponse) query;
+  register: (principal) -> (Result);
   requestCycles: (nat) -> (RequestCyclesUpdateOutput);
   /// * Updates canister information based on passed parameters at current time.
   ///     * Called from browser or any canister "update" method.

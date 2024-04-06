@@ -10,21 +10,26 @@ type UserInitArgs = record {
   capacity : nat;
   owner : principal;
 };
+type UserEventSubscription = func(UserEvent) -> ();
+type UserEventName = variant { profileUpdated };
+type UserEvent = record {
+  event : variant { profileUpdated : record { profile : UserProfile } };
+  userId : principal;
+};
 type User = service {
   /// * Returns canister information based on passed parameters.
   ///     * Called from browser.
   getCanistergeekInformation : (GetInformationRequest) -> (GetInformationResponse) query;
-  personalWorkspace : () -> (Result_1);
-  profile : () -> (Result) query;
-  publicProfile : () -> (PublicUserProfile) query;
+  personalWorkspace : () -> (Result_5);
+  profile : () -> (Result_4) query;
+  publicProfile : () -> (Result_3) query;
+  subscribe : (UserEventName, UserEventSubscription) -> ();
   /// * Updates canister information based on passed parameters at current time.
   ///     * Called from browser or any canister "update" method.
   updateCanistergeekInformation : (UpdateInformationRequest) -> ();
-  updatePersonalWorkspaceCanisterSettings : (CanisterSettings) -> ();
-  updateProfile : (ProfileInput) -> (Result);
-  upgradePersonalWorkspace : () -> () oneway;
-  upgradePersonalWorkspace : (blob) -> ();
-  walletReceive : () -> (record { accepted : nat64 });
+  updateProfile : (ProfileInput) -> (Result_2);
+  upgradePersonalWorkspace : (blob) -> (Result_1);
+  walletReceive : () -> (Result);
 };
 type UpdateInformationRequest = record {
   metrics : opt CollectMetricsRequestType;
@@ -41,7 +46,7 @@ type StatusRequest = record {
   heap_memory_size : bool;
   memory_size : bool;
 };
-type Result_1 = variant {
+type Result_5 = variant {
   err : variant {
     anonymousUser;
     insufficientCycles;
@@ -49,9 +54,32 @@ type Result_1 = variant {
   };
   ok : WorkspaceId;
 };
-type Result = variant {
+type Result_4 = variant {
   err : variant { unauthorized };
   ok : UserProfile;
+};
+type Result_3 = variant {
+  err : variant { unauthorized };
+  ok : PublicUserProfile;
+};
+type Result_2 = variant {
+  err : variant {
+    unauthorized;
+    usernameTaken;
+  };
+  ok : UserProfile;
+};
+type Result_1 = variant {
+  err : variant {
+    failed : text;
+    unauthorized;
+    workspaceNotFound : text;
+  };
+  ok;
+};
+type Result = variant {
+  err : variant { unauthorized };
+  ok : record { accepted : nat64 };
 };
 type PublicUserProfile = record {
   canisterId : principal;
@@ -125,12 +153,6 @@ type DailyMetricsData = record {
 type CollectMetricsRequestType = variant {
   force;
   normal;
-};
-type CanisterSettings = record {
-  compute_allocation : opt nat;
-  controllers : opt vec principal;
-  freezing_threshold : opt nat;
-  memory_allocation : opt nat;
 };
 type CanisterMetricsData = variant {
   daily : vec DailyMetricsData;

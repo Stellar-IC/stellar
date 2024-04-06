@@ -11,6 +11,11 @@ module {
     };
     public type RegisterUserResult = Result.Result<Principal, RegisterUserError>;
 
+    public type CheckUsernameError = {
+        #usernameTaken;
+    };
+    public type CheckUsernameResult = Result.Result<(), CheckUsernameError>;
+
     public module Services {
         public module CreateUserService {
             public type CreateUserServiceOutput = {

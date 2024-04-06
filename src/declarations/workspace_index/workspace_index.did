@@ -1,20 +1,6 @@
-type WorkspaceOwner = principal;
-type WorkspaceName = text;
-type WorkspaceDescription = text;
-type Workspace = 
- record {
-   createdAt: Time;
-   description: WorkspaceDescription;
-   name: WorkspaceName;
-   owner: WorkspaceOwner;
-   updatedAt: Time;
-   uuid: UUID;
- };
 type UpdateInformationRequest = record {
                                   metrics: opt CollectMetricsRequestType;};
 type UpdateCallsAggregatedData = vec nat64;
-type UUID = vec nat8;
-type Time = int;
 type StatusResponse = 
  record {
    cycles: opt nat64;
@@ -38,7 +24,6 @@ type Result =
     };
    ok: principal;
  };
-type PaginatedResults = record {edges: vec Edge;};
 type NumericEntity = 
  record {
    avg: nat64;
@@ -106,7 +91,6 @@ type GetInformationRequest =
    status: opt StatusRequest;
    version: bool;
  };
-type Edge = record {node: Workspace;};
 type DailyMetricsData = 
  record {
    canisterCycles: NumericEntity;
@@ -162,10 +146,6 @@ service : {
   ///      * Updates
   ///      ************************************************************************
   createWorkspace: (record {owner: principal;}) -> (Result);
-  cyclesInformation: () -> (record {
-                              balance: nat;
-                              capacity: nat;
-                            });
   /// * Returns canister information based on passed parameters.
   ///     * Called from browser.
   getCanistergeekInformation: (GetInformationRequest) ->
@@ -175,9 +155,4 @@ service : {
   ///     * Called from browser or any canister "update" method.
   updateCanistergeekInformation: (UpdateInformationRequest) -> ();
   walletReceive: () -> (record {accepted: nat64;});
-  /// ***********************************************************************
-  ///      * Queries
-  ///      ************************************************************************
-  workspaceByUuid: (UUID) -> (Workspace);
-  workspaces: (record {}) -> (PaginatedResults);
 }

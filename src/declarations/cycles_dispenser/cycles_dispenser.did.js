@@ -105,6 +105,10 @@ export const idlFactory = ({ IDL }) => {
     'logs' : IDL.Opt(CanisterLogResponse),
     'version' : IDL.Opt(IDL.Nat),
   });
+  const Result = IDL.Variant({
+    'ok' : IDL.Null,
+    'err' : IDL.Variant({ 'unauthorized' : IDL.Null }),
+  });
   const RequestCyclesUpdateOk = IDL.Record({ 'accepted' : IDL.Nat64 });
   const RequestCyclesUpdateError = IDL.Variant({
     'topUpAlreadyInProgress' : IDL.Null,
@@ -130,6 +134,7 @@ export const idlFactory = ({ IDL }) => {
         [GetInformationResponse],
         ['query'],
       ),
+    'register' : IDL.Func([IDL.Principal], [Result], []),
     'requestCycles' : IDL.Func([IDL.Nat], [RequestCyclesUpdateOutput], []),
     'updateCanistergeekInformation' : IDL.Func(
         [UpdateInformationRequest],

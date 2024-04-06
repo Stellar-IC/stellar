@@ -37,7 +37,7 @@ export function PageDetailPage() {
   if (!pageId) throw new Error('Missing pageId');
 
   return (
-    <PageWrapper>
+    <PageWrapper shouldShowPageActions>
       <Page>
         <Container maw="container.xs">
           <Stack gap="xs" className={classes.editorWrapper}>

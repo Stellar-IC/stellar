@@ -1,6 +1,19 @@
+type Username = text;
+type UserProfile = 
+ record {
+   created_at: Time;
+   updatedAt: Time;
+   username: Username;
+ };
+type UserEvent = 
+ record {
+   event: variant {profileUpdated: ProfileUpdatedEventData;};
+   userId: principal;
+ };
 type UpdateInformationRequest = record {
                                   metrics: opt CollectMetricsRequestType;};
 type UpdateCallsAggregatedData = vec nat64;
+type Time = int;
 type StatusResponse = 
  record {
    cycles: opt nat64;
@@ -12,6 +25,33 @@ type StatusRequest =
    cycles: bool;
    heap_memory_size: bool;
    memory_size: bool;
+ };
+type Result_3 = 
+ variant {
+   err: variant {
+          unauthorized;
+          userNotFound;
+        };
+   ok: record {accepted: nat64;};
+ };
+type Result_2 = 
+ variant {
+   err: variant {
+          failed: text;
+          unauthorized;
+          workspaceNotFound: text;
+        };
+   ok;
+ };
+type Result_1 = 
+ variant {
+   err: variant {unauthorized;};
+   ok;
+ };
+type Result = 
+ variant {
+   err: variant {unauthorized;};
+   ok: record {accepted: nat64;};
  };
 type RegisterUserResult = 
  variant {
@@ -25,6 +65,7 @@ type RegisterUserError =
    insufficientCycles;
    userNotFound;
  };
+type ProfileUpdatedEventData = record {profile: UserProfile;};
 type NumericEntity = 
  record {
    avg: nat64;
@@ -105,13 +146,12 @@ type CollectMetricsRequestType =
    force;
    normal;
  };
-type CanisterSettings = 
- record {
-   compute_allocation: opt nat;
-   controllers: opt vec principal;
-   freezing_threshold: opt nat;
-   memory_allocation: opt nat;
+type CheckUsernameResult = 
+ variant {
+   err: CheckUsernameError;
+   ok;
  };
+type CheckUsernameError = variant {usernameTaken;};
 type CanisterMetricsData = 
  variant {
    daily: vec DailyMetricsData;
@@ -150,21 +190,18 @@ type CanisterLogFeature =
 type CanisterHeapMemoryAggregatedData = vec nat64;
 type CanisterCyclesAggregatedData = vec nat64;
 service : {
-  cyclesInformation: () -> (record {
-                              balance: nat;
-                              capacity: nat;
-                            });
+  checkUsername: (text) -> (CheckUsernameResult) query;
   /// * Returns canister information based on passed parameters.
   ///     * Called from browser.
   getCanistergeekInformation: (GetInformationRequest) ->
    (GetInformationResponse) query;
+  onUserEvent: (UserEvent) -> ();
   registerUser: () -> (RegisterUserResult);
-  requestCycles: (nat) -> (record {accepted: nat64;});
+  requestCycles: (nat) -> (Result_3);
   /// * Updates canister information based on passed parameters at current time.
   ///     * Called from browser or any canister "update" method.
   updateCanistergeekInformation: (UpdateInformationRequest) -> ();
-  updateUserCanisterSettings: (principal, CanisterSettings) -> ();
-  upgradeUserCanistersWasm: (blob) -> () oneway;
-  upgradeUserPersonalWorkspaceCanistersWasm: (blob) -> ();
-  walletReceive: () -> (record {accepted: nat64;});
+  upgradePersonalWorkspaces: (blob) -> (Result_2);
+  upgradeUsers: (blob) -> (Result_1);
+  walletReceive: () -> (Result);
 }

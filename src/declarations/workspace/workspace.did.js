@@ -16,6 +16,7 @@ export const idlFactory = ({ IDL }) => {
     'description' : WorkspaceDescription,
     'updatedAt' : Time,
   });
+  const ActivityId = IDL.Nat;
   const NodeBoundary = IDL.Nat16;
   const NodeDepth = IDL.Nat16;
   const AllocationStrategy = IDL.Variant({
@@ -86,7 +87,7 @@ export const idlFactory = ({ IDL }) => {
     'user' : HydratedEditItemUser,
   });
   const HydratedActivity = IDL.Record({
-    'id' : IDL.Nat,
+    'id' : ActivityId,
     'startTime' : Time,
     'endTime' : Time,
     'edits' : IDL.Vec(HydratedEditItem),
@@ -94,7 +95,7 @@ export const idlFactory = ({ IDL }) => {
     'blockExternalId' : UUID,
   });
   const Edge_1 = IDL.Record({ 'node' : HydratedActivity });
-  const PaginatedResults_1 = IDL.Record({ 'edges' : IDL.Vec(Edge_1) });
+  const ActivityLogOutput = IDL.Record({ 'edges' : IDL.Vec(Edge_1) });
   const ShareableBlockContent__1 = IDL.Record({
     'boundary' : NodeBoundary,
     'allocationStrategies' : IDL.Vec(IDL.Tuple(NodeDepth, AllocationStrategy)),
@@ -128,9 +129,30 @@ export const idlFactory = ({ IDL }) => {
     'properties' : ShareableBlockProperties__2,
     'parent' : IDL.Opt(UUID),
   });
-  const PublicUserProfile = IDL.Record({
+  const AddBlockUpdateOutputResult = IDL.Null;
+  const AddBlockUpdateOutputError = IDL.Variant({ 'unauthorized' : IDL.Null });
+  const AddBlockUpdateOutput = IDL.Variant({
+    'ok' : AddBlockUpdateOutputResult,
+    'err' : AddBlockUpdateOutputError,
+  });
+  const WorkspaceUserRole = IDL.Variant({
+    'member' : IDL.Null,
+    'admin' : IDL.Null,
+    'moderator' : IDL.Null,
+    'guest' : IDL.Null,
+  });
+  const WorkspaceUser = IDL.Record({
     'username' : IDL.Text,
+    'role' : WorkspaceUserRole,
     'canisterId' : IDL.Principal,
+  });
+  const AddUsersUpdateInput = IDL.Vec(IDL.Tuple(IDL.Principal, WorkspaceUser));
+  const AddUsersUpdateResult = IDL.Variant({
+    'ok' : IDL.Null,
+    'err' : IDL.Variant({ 'unauthorized' : IDL.Null }),
+  });
+  const BlockByUuidOptions = IDL.Record({
+    'contentPagination' : IDL.Record({ 'cursor' : IDL.Nat, 'limit' : IDL.Nat }),
   });
   const ExternalId = IDL.Text;
   const ShareableBlock = IDL.Record({
@@ -154,7 +176,7 @@ export const idlFactory = ({ IDL }) => {
     'checked' : IDL.Opt(IDL.Bool),
   });
   const CreatePageUpdateInput = IDL.Record({
-    'initialBlockUuid' : UUID,
+    'initialBlockUuid' : IDL.Opt(UUID),
     'content' : ShareableBlockContent__1,
     'uuid' : UUID,
     'properties' : ShareableBlockProperties__1,
@@ -290,6 +312,26 @@ export const idlFactory = ({ IDL }) => {
     'metrics' : IDL.Opt(MetricsResponse),
     'logs' : IDL.Opt(CanisterLogResponse),
     'version' : IDL.Opt(IDL.Nat),
+  });
+  const WorkspaceOwner__1 = IDL.Principal;
+  const WorkspaceInitArgs__1 = IDL.Record({
+    'owner' : WorkspaceOwner__1,
+    'capacity' : IDL.Nat,
+  });
+  const GetInitArgsOutput = IDL.Variant({
+    'ok' : WorkspaceInitArgs__1,
+    'err' : IDL.Variant({ 'unauthorized' : IDL.Null }),
+  });
+  const WorkspaceInitData__1 = IDL.Record({
+    'name' : IDL.Text,
+    'createdAt' : Time,
+    'uuid' : UUID,
+    'description' : IDL.Text,
+    'updatedAt' : Time,
+  });
+  const GetInitDataOutput = IDL.Variant({
+    'ok' : WorkspaceInitData__1,
+    'err' : IDL.Variant({ 'unauthorized' : IDL.Null }),
   });
   const SortDirection = IDL.Variant({ 'asc' : IDL.Null, 'desc' : IDL.Null });
   const SortOrder = IDL.Record({
@@ -432,34 +474,17 @@ export const idlFactory = ({ IDL }) => {
     'metrics' : IDL.Opt(CollectMetricsRequestType),
   });
   const Workspace = IDL.Service({
-    'activityLog' : IDL.Func([UUID], [PaginatedResults_1], ['query']),
-    'addBlock' : IDL.Func([AddBlockUpdateInput], [], []),
-    'addUsers' : IDL.Func(
-        [IDL.Vec(IDL.Tuple(IDL.Principal, PublicUserProfile))],
-        [],
-        [],
-      ),
+    'activityLog' : IDL.Func([UUID], [ActivityLogOutput], ['query']),
+    'addBlock' : IDL.Func([AddBlockUpdateInput], [AddBlockUpdateOutput], []),
+    'addUsers' : IDL.Func([AddUsersUpdateInput], [AddUsersUpdateResult], []),
     'block' : IDL.Func(
-        [
-          UUID,
-          IDL.Record({
-            'contentPagination' : IDL.Record({
-              'cursor' : IDL.Nat,
-              'limit' : IDL.Nat,
-            }),
-          }),
-        ],
+        [UUID, BlockByUuidOptions],
         [BlockByUuidResult],
         ['query'],
       ),
     'createPage' : IDL.Func(
         [CreatePageUpdateInput],
         [CreatePageUpdateOutput],
-        [],
-      ),
-    'cyclesInformation' : IDL.Func(
-        [],
-        [IDL.Record({ 'balance' : IDL.Nat, 'capacity' : IDL.Nat })],
         [],
       ),
     'deletePage' : IDL.Func(
@@ -472,20 +497,8 @@ export const idlFactory = ({ IDL }) => {
         [GetInformationResponse],
         ['query'],
       ),
-    'getInitArgs' : IDL.Func([], [WorkspaceInitArgs], []),
-    'getInitData' : IDL.Func(
-        [],
-        [
-          IDL.Record({
-            'name' : WorkspaceName,
-            'createdAt' : Time,
-            'uuid' : UUID,
-            'description' : WorkspaceDescription,
-            'updatedAt' : Time,
-          }),
-        ],
-        [],
-      ),
+    'getInitArgs' : IDL.Func([], [GetInitArgsOutput], ['query']),
+    'getInitData' : IDL.Func([], [GetInitDataOutput], ['query']),
     'pages' : IDL.Func([PagesOptionsArg], [PagesResult], ['query']),
     'saveEvents' : IDL.Func(
         [SaveEventTransactionUpdateInput],

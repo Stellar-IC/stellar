@@ -3,6 +3,7 @@ import Debug "mo:base/Debug";
 import Principal "mo:base/Principal";
 import RBTree "mo:base/RBTree";
 import Text "mo:base/Text";
+import Result "mo:base/Result";
 
 import CoreTypes "../../types";
 import User "../user/main";
@@ -17,13 +18,16 @@ module {
         stable_data : {
             user_identity_to_canister_id : RBTree.Tree<Principal, Principal>;
             user_canister_id_to_identity : RBTree.Tree<Principal, Principal>;
+            username_to_user_id : RBTree.Tree<Text, Principal>;
         }
     ) {
         public let user_identity_to_canister_id = RBTree.RBTree<Principal, Principal>(Principal.compare);
         public let user_canister_id_to_identity = RBTree.RBTree<Principal, Principal>(Principal.compare);
+        public let username_to_user_id = RBTree.RBTree<Text, Principal>(Text.compare);
 
         user_identity_to_canister_id.unshare(stable_data.user_identity_to_canister_id);
         user_canister_id_to_identity.unshare(stable_data.user_canister_id_to_identity);
+        username_to_user_id.unshare(stable_data.username_to_user_id);
 
         public func addUser(
             args : {
@@ -59,6 +63,16 @@ module {
 
         public func getUserByUserId(user_id : Principal) : User.User {
             return actor (Principal.toText(user_id)) : User.User;
+        };
+
+        public func checkUsername(username : Text) : Result.Result<(), { #usernameTaken }> {
+            switch (username_to_user_id.get(username)) {
+                case (null) { #ok };
+                case (?userId) {
+                    Debug.print("Username already taken");
+                    return #err(#usernameTaken);
+                };
+            };
         };
     };
 };
