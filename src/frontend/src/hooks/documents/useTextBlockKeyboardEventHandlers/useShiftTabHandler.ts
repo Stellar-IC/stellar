@@ -4,6 +4,7 @@ import { useWorkspaceContext } from '@/contexts/WorkspaceContext/useWorkspaceCon
 import { db } from '@/db';
 import { useSaveEvents } from '@/hooks/canisters/workspace/updates/useSaveEvents';
 import { useAuthContext } from '@/modules/auth/contexts/AuthContext';
+import { store } from '@/modules/data-store';
 import { focusBlock } from '@/modules/editor/utils';
 import { ExternalId } from '@/types';
 
@@ -60,6 +61,12 @@ export const useShiftTabHandler = ({
 
     const { events, updatedBlocks } = controller;
 
+    store.blocks.bulkPut(
+      Object.values(updatedBlocks).map((block) => ({
+        key: block.uuid,
+        value: block,
+      }))
+    );
     await db.blocks.bulkPut(Object.values(updatedBlocks));
     await saveEvents({
       transaction: events.map((x) => buildEvent(x, userId)),

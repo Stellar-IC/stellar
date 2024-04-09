@@ -1,5 +1,4 @@
 import { Container, Stack } from '@mantine/core';
-import { useLiveQuery } from 'dexie-react-hooks';
 import { useEffect } from 'react';
 import { ErrorBoundary } from 'react-error-boundary';
 import { useParams } from 'react-router-dom';
@@ -9,9 +8,9 @@ import { PageWrapper } from '@/PageWrapper';
 import { Editor } from '@/components/Editor/Editor';
 import { Page } from '@/components/layout/page/Page';
 import { useWorkspaceContext } from '@/contexts/WorkspaceContext/useWorkspaceContext';
-import { db } from '@/db';
 import { useBlockQuery } from '@/hooks/canisters/workspace/queries/useBlockQuery';
 import { useAuthContext } from '@/modules/auth/contexts/AuthContext';
+import { store, useStoreQuery } from '@/modules/data-store';
 
 import classes from './PageDetail.module.css';
 
@@ -20,7 +19,7 @@ function PageDetailPageInner(props: { pageId: string }) {
   const { workspaceId } = useWorkspaceContext();
   const { identity } = useAuthContext();
   const queryPage = useBlockQuery({ identity, workspaceId });
-  const page = useLiveQuery(() => db.blocks.get(pageId), [pageId]);
+  const page = useStoreQuery(() => store.blocks.get(pageId));
 
   useEffect(() => {
     queryPage(parse(pageId));

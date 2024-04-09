@@ -1,6 +1,7 @@
 import { Identity } from '@dfinity/agent';
 import type { Principal } from '@dfinity/principal';
 import { Tree } from '@stellar-ic/lseq-ts';
+import { PromiseExtended } from 'dexie';
 import { useCallback } from 'react';
 import { parse, stringify, v4 } from 'uuid';
 
@@ -9,6 +10,7 @@ import { useBlockQuery } from '@/hooks/canisters/workspace/queries/useBlockQuery
 import { useWorkspaceActor } from '@/hooks/canisters/workspace/useWorkspaceActor';
 import { useUpdate } from '@/hooks/useUpdate';
 import * as blockSerializers from '@/modules/blocks/serializers';
+import { store } from '@/modules/data-store';
 import { Block, CanisterId } from '@/types';
 
 import {
@@ -67,9 +69,10 @@ export const usePages = (props: {
   const queryBlock = useBlockQuery({ identity, workspaceId });
 
   const updateLocalBlock = useCallback(
-    (externalId: string, updatedData: Block) => {
+    (externalId: string, updatedData: Block): PromiseExtended<string> => {
       const serializedData = blockSerializers.toLocalStorage(updatedData);
-      db.blocks.put(serializedData, externalId);
+      store.blocks.put(updatedData.uuid, updatedData);
+      return db.blocks.put(serializedData, externalId);
     },
     []
   );

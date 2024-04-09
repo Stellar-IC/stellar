@@ -4,6 +4,7 @@ import { useCallback } from 'react';
 import { db } from '@/db';
 import { useWorkspaceActor } from '@/hooks/canisters/workspace/useWorkspaceActor';
 import * as blockSerializers from '@/modules/blocks/serializers';
+import { store } from '@/modules/data-store';
 import { Block, CanisterId } from '@/types';
 
 import { UUID } from '../../../../../../declarations/workspace/workspace.did';
@@ -29,6 +30,17 @@ export const useBlockQuery = (opts: {
       const { block: blockId, recordMap } = result.ok;
 
       // Save all blocks to data store
+      store.blocks.bulkPut(
+        recordMap.blocks.map((record) => {
+          const block = blockSerializers.fromShareable(record[1]);
+          return {
+            key: block.uuid,
+            value: blockSerializers.toLocalStorage(block),
+          };
+        })
+      );
+
+      // Save all blocks to indexedDB
       await db.blocks.bulkPut(
         recordMap.blocks.map((record) => {
           const block = blockSerializers.fromShareable(record[1]);

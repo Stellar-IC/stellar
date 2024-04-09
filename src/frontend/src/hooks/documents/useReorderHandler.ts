@@ -1,5 +1,4 @@
 import { Node, Tree } from '@stellar-ic/lseq-ts';
-import { useLiveQuery } from 'dexie-react-hooks';
 import { useCallback } from 'react';
 import { parse } from 'uuid';
 
@@ -8,6 +7,7 @@ import { usePagesContext } from '@/contexts/PagesContext/usePagesContext';
 import { useWorkspaceContext } from '@/contexts/WorkspaceContext/useWorkspaceContext';
 import { db } from '@/db';
 import { useAuthContext } from '@/modules/auth/contexts/AuthContext';
+import { store } from '@/modules/data-store';
 import { ExternalId } from '@/types';
 
 type UseReorderHandler = {
@@ -27,13 +27,9 @@ export const useReorderHandler = ({
   });
   const { updateBlock } = usePagesContext();
 
-  const parentBlock = useLiveQuery(() => {
-    if (!parentBlockExternalId) {
-      return undefined;
-    }
-
-    return db.blocks.get(parentBlockExternalId);
-  });
+  const parentBlock = parentBlockExternalId
+    ? store.blocks.get(parentBlockExternalId)
+    : null;
 
   const doReorderOperation = useCallback(
     async (

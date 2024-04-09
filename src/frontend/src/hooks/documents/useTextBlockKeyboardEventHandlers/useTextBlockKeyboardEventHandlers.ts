@@ -1,5 +1,4 @@
 import { Tree } from '@stellar-ic/lseq-ts';
-import { useLiveQuery } from 'dexie-react-hooks';
 import { KeyboardEvent } from 'react';
 import { parse, v4 } from 'uuid';
 
@@ -7,10 +6,10 @@ import { TextBlockBlockType } from '@/components/Editor/TextBlock/types';
 import { usePages } from '@/contexts/PagesContext/usePages';
 import { usePagesContext } from '@/contexts/PagesContext/usePagesContext';
 import { useWorkspaceContext } from '@/contexts/WorkspaceContext/useWorkspaceContext';
-import { db } from '@/db';
 import { useWorkspaceActor } from '@/hooks/canisters/workspace/useWorkspaceActor';
 import { useUpdate } from '@/hooks/useUpdate';
 import { useAuthContext } from '@/modules/auth/contexts/AuthContext';
+import { store } from '@/modules/data-store';
 import { ExternalId } from '@/types';
 
 import {
@@ -123,10 +122,8 @@ export const useTextBlockKeyboardEventHandlers = ({
   const {
     blocks: { updateLocal: updateLocalBlock },
   } = usePages({ identity, workspaceId });
-  const block = useLiveQuery(
-    () => db.blocks.get(blockExternalId),
-    [blockExternalId]
-  );
+  const block = store.blocks.get(blockExternalId);
+
   const { actor } = useWorkspaceActor({ identity, workspaceId });
 
   const [sendUpdate] = useUpdate<

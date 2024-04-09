@@ -13,25 +13,6 @@ const textBoxWrapperStyle = {
 
 export const Editor = ({ page }: { page: Block }) => {
   const blocksToRender = Tree.toArray(page.content);
-  // const [state, handlers] = useListState(blocksToRender);
-
-  // // Update the state if the blocks change
-  // useEffect(() => {
-  //   let i = 0;
-
-  //   if (blocksToRender.length !== state.length) {
-  //     handlers.setState(blocksToRender);
-  //     return;
-  //   }
-
-  //   for (const block of blocksToRender) {
-  //     if (block !== state[i]) {
-  //       handlers.setState(blocksToRender);
-  //       break;
-  //     }
-  //     i += 1;
-  //   }
-  // }, [blocksToRender, handlers, state]);
 
   const mapUuidToComponent = useCallback(
     (blockUuid: string, index: number) => (

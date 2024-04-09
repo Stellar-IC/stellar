@@ -4,6 +4,7 @@ import { useCallback } from 'react';
 import { db } from '@/db';
 import { useWorkspaceActor } from '@/hooks/canisters/workspace/useWorkspaceActor';
 import * as blockSerializers from '@/modules/blocks/serializers';
+import { store } from '@/modules/data-store';
 import { Block, CanisterId } from '@/types';
 
 export const usePagesQuery = (opts: {
@@ -21,6 +22,17 @@ export const usePagesQuery = (opts: {
     });
 
     const { recordMap, pages } = result;
+
+    // Save all blocks to data store
+    store.blocks.bulkPut(
+      recordMap.blocks.map((record) => {
+        const block = blockSerializers.fromShareable(record[1]);
+        return {
+          key: block.uuid,
+          value: blockSerializers.toLocalStorage(block),
+        };
+      })
+    );
 
     // Save all blocks to data store
     await db.blocks.bulkPut(
@@ -43,7 +55,7 @@ export const usePagesQuery = (opts: {
       }
     });
 
-    return pageRecords;
+    return result;
   }, [actor]);
 
   return query;

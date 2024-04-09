@@ -8,6 +8,7 @@ import { db } from '@/db';
 import { useWorkspaceActor } from '@/hooks/canisters/workspace/useWorkspaceActor';
 import { useUpdate } from '@/hooks/useUpdate';
 import { serializeBlock } from '@/modules/blocks/serializers';
+import { store } from '@/modules/data-store';
 import { CanisterId } from '@/types';
 
 import {
@@ -76,6 +77,12 @@ export const useCreatePage = (options: {
         throw new Error('Initial block is missing');
       }
 
+      store.blocks.bulkPut(
+        [page, initialBlock].map((block) => ({
+          key: block.uuid,
+          value: block,
+        }))
+      );
       await db.blocks.bulkPut([page, initialBlock]);
 
       return result;

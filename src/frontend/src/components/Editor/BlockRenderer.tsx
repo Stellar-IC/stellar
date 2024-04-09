@@ -2,11 +2,11 @@ import { Box, Flex, MantineTheme, Text } from '@mantine/core';
 import { Tree } from '@stellar-ic/lseq-ts';
 import { getNodeAtPosition } from '@stellar-ic/lseq-ts/Tree';
 import { IconBulbFilled } from '@tabler/icons-react';
-import { useLiveQuery } from 'dexie-react-hooks';
 import { memo, useCallback, useEffect, useState } from 'react';
 
 import { useSettingsContext } from '@/contexts/SettingsContext';
 import { db } from '@/db';
+import { store, useStoreQuery } from '@/modules/data-store';
 import { Block } from '@/types';
 
 import { BlockWithActions } from './BlockWithActions';
@@ -27,7 +27,7 @@ const NestedBlocks = ({
   blockExternalId,
   parentBlockIndex,
 }: NestedBlocksProps) => {
-  const block = useLiveQuery(() => db.blocks.get(blockExternalId));
+  const block = useStoreQuery(() => store.blocks.get(blockExternalId));
 
   if (!block) return null;
   const nestedBlockIds = Tree.toArray(block.content);
@@ -67,7 +67,7 @@ const BlockRendererInner = ({
   placeholder,
   numeral,
 }: BlockRendererInnerProps) => {
-  const block = useLiveQuery(() => db.blocks.get(externalId));
+  const block = useStoreQuery(() => store.blocks.get(externalId));
 
   if (!block) {
     return null;
@@ -204,10 +204,10 @@ export const _BlockRenderer = ({
     undefined
   );
   const { getSettingValue } = useSettingsContext();
-  const block = useLiveQuery(() => db.blocks.get(externalId));
-  const parentBlock = useLiveQuery(() => {
+  const block = useStoreQuery(() => store.blocks.get(externalId));
+  const parentBlock = useStoreQuery(() => {
     if (!parentBlockExternalId) return undefined;
-    return db.blocks.get(parentBlockExternalId);
+    return store.blocks.get(parentBlockExternalId);
   });
 
   const getPeviousSiblingBlockExternalId = useCallback(
