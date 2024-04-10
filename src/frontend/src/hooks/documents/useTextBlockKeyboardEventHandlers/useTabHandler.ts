@@ -1,80 +1,34 @@
-import { Tree } from '@stellar-ic/lseq-ts';
 import { useCallback } from 'react';
 
-import { useWorkspaceContext } from '@/contexts/WorkspaceContext/useWorkspaceContext';
 import { db } from '@/db';
-import { useSaveEvents } from '@/hooks/canisters/workspace/updates/useSaveEvents';
-import { useAuthContext } from '@/modules/auth/contexts/AuthContext';
-import { store } from '@/modules/data-store';
-import { EditorController } from '@/modules/editor/EditorController';
+import { EditorControllerV2 } from '@/modules/editor/EditorControllerV2';
 import { focusBlock } from '@/modules/editor/utils/focus';
-import { ExternalId } from '@/types';
+import { Block, ExternalId } from '@/types';
 
-import { buildEvent } from './utils';
+import { PartialBlockEvent } from './types';
 
 type UseTabHandler = {
-  blockIndex: number;
   blockExternalId: ExternalId;
-  parentBlockExternalId?: ExternalId | null;
+  onSave: (data: {
+    events: PartialBlockEvent[];
+    updatedBlocks: { [key: string]: Block };
+  }) => void;
 };
 
-export const useTabHandler = ({
-  blockIndex,
-  blockExternalId,
-  parentBlockExternalId,
-}: UseTabHandler) => {
-  const { workspaceId } = useWorkspaceContext();
-  const { identity, userId } = useAuthContext();
-  const [saveEvents] = useSaveEvents({
-    identity,
-    workspaceId,
-  });
-
+export const useTabHandler = ({ blockExternalId, onSave }: UseTabHandler) => {
   const doTabOperation = useCallback(async () => {
-    if (blockIndex === 0) {
-      return false;
-    }
-
     const blockToMove = await db.blocks.get(blockExternalId);
-    const parentBlock = parentBlockExternalId
-      ? await db.blocks.get(parentBlockExternalId)
-      : null;
-    const previousBlockExternalId = parentBlock
-      ? Tree.getNodeAtPosition(parentBlock.content, blockIndex - 1)?.value
-      : null;
-    const previousBlock = previousBlockExternalId
-      ? await db.blocks.get(previousBlockExternalId)
-      : null;
-
-    if (!parentBlock) return false;
-    if (!previousBlock) return false;
     if (!blockToMove) return false;
 
-    const controller = new EditorController({
-      blockIndex,
-      block: blockToMove,
-      parentBlock,
-    });
+    const controller = new EditorControllerV2({ onSave });
 
-    await controller.moveBlockToPreviousBlock();
-
-    const { events, updatedBlocks } = controller;
-
-    store.blocks.bulkPut(
-      Object.values(updatedBlocks).map((block) => ({
-        key: block.uuid,
-        value: block,
-      }))
-    );
-    await db.blocks.bulkPut(Object.values(updatedBlocks));
-    await saveEvents({
-      transaction: events.map((x) => buildEvent(x, userId)),
-    });
+    await controller.moveBlockToPreviousBlock(blockToMove);
+    await controller.save();
 
     focusBlock(blockToMove.uuid);
 
     return true;
-  }, [blockExternalId, blockIndex, parentBlockExternalId, saveEvents, userId]);
+  }, [blockExternalId, onSave]);
 
   return doTabOperation;
 };

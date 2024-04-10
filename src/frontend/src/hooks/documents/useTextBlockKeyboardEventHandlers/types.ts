@@ -23,7 +23,6 @@ export type UseTextBlockKeyboardEventHandlersProps = {
   blockIndex: number;
   blockType: TextBlockBlockType;
   parentBlockExternalId?: ExternalId | null;
-  parentBlockIndex?: number;
   showPlaceholder: () => void;
   hidePlaceholder: () => void;
   onError?: (error: Error) => void;

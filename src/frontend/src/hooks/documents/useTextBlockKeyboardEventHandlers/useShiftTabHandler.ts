@@ -1,89 +1,39 @@
 import { useCallback } from 'react';
 
-import { useWorkspaceContext } from '@/contexts/WorkspaceContext/useWorkspaceContext';
-import { db } from '@/db';
-import { useSaveEvents } from '@/hooks/canisters/workspace/updates/useSaveEvents';
-import { useAuthContext } from '@/modules/auth/contexts/AuthContext';
 import { store } from '@/modules/data-store';
-import { EditorController } from '@/modules/editor/EditorController';
+import { EditorControllerV2 } from '@/modules/editor/EditorControllerV2';
 import { focusBlock } from '@/modules/editor/utils/focus';
-import { ExternalId } from '@/types';
+import { Block, ExternalId } from '@/types';
 
-import { buildEvent } from './utils';
+import { PartialBlockEvent } from './types';
 
 type UseShiftTabHandler = {
-  blockIndex: number;
-  parentBlockIndex?: number;
   blockExternalId: ExternalId;
-  parentBlockExternalId?: ExternalId | null;
+  onSave: (data: {
+    events: PartialBlockEvent[];
+    updatedBlocks: { [key: string]: Block };
+  }) => void;
 };
 
 export const useShiftTabHandler = ({
-  blockIndex,
   blockExternalId,
-  parentBlockExternalId,
-  parentBlockIndex,
+  onSave,
 }: UseShiftTabHandler) => {
-  const { workspaceId } = useWorkspaceContext();
-  const { identity, userId } = useAuthContext();
-
-  const [saveEvents] = useSaveEvents({
-    identity,
-    workspaceId,
-  });
-
   const doShiftTabOperation = useCallback(async () => {
-    const parentBlock = parentBlockExternalId
-      ? await db.blocks.get(parentBlockExternalId)
-      : null;
-
-    const grandparentBlock = parentBlock?.parent
-      ? await db.blocks.get(parentBlock.parent)
-      : null;
-
-    if (!parentBlock) return false;
-    if (parentBlockIndex === undefined) return false;
-    if (!grandparentBlock) return false;
-
-    const blockToMove = await db.blocks.get(blockExternalId);
+    const blockToMove = store.blocks.get(blockExternalId);
 
     if (!blockToMove) return false;
 
-    const controller = new EditorController({
-      blockIndex,
-      block: blockToMove,
-      parentBlock,
-      parentBlockIndex,
-      grandparentBlock,
-    });
+    const controller = new EditorControllerV2({ onSave });
 
-    await controller.adoptSiblingBlocks();
-    await controller.moveBlockToGrandparent();
-
-    const { events, updatedBlocks } = controller;
-
-    store.blocks.bulkPut(
-      Object.values(updatedBlocks).map((block) => ({
-        key: block.uuid,
-        value: block,
-      }))
-    );
-    await db.blocks.bulkPut(Object.values(updatedBlocks));
-    await saveEvents({
-      transaction: events.map((x) => buildEvent(x, userId)),
-    });
+    await controller.adoptSiblingBlocks(blockToMove);
+    await controller.moveBlockToGrandparent(blockToMove);
+    await controller.save();
 
     focusBlock(blockToMove.uuid);
 
     return true;
-  }, [
-    blockExternalId,
-    blockIndex,
-    userId,
-    parentBlockExternalId,
-    parentBlockIndex,
-    saveEvents,
-  ]);
+  }, [blockExternalId, onSave]);
 
   return doShiftTabOperation;
 };
