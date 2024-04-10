@@ -4,125 +4,59 @@ import { TreeEvent } from '@stellar-ic/lseq-ts/types';
 import { parse, v4 } from 'uuid';
 
 import { db } from '@/db';
-import { Block, ExternalId } from '@/types';
+import { getAuthClient } from '@/modules/auth/client';
+import * as blockSerializers from '@/modules/blocks/serializers';
+import { store } from '@/modules/data-store';
+import { Block } from '@/types';
 
-import { BlockEvent } from '../../../../../declarations/workspace/workspace.did';
+import { createActor } from '../../../../../declarations/workspace';
+import {
+  BlockEvent,
+  SaveEventTransactionUpdateInput,
+} from '../../../../../declarations/workspace/workspace.did';
 
 import { PartialBlockEvent } from './types';
 
-export const updateBlockParent = (
-  block: Block,
-  parent: ExternalId,
-  opts: {
-    onUpdateLocal: (block: Block) => void;
-    onUpdateRemote: (block: Block) => void;
-  }
-) => {
-  const { onUpdateLocal, onUpdateRemote } = opts;
-  const updatedBlock = {
-    ...block,
-    parent,
-  };
-  onUpdateLocal(updatedBlock);
-  onUpdateRemote(updatedBlock);
+type Context = {
+  block: Block;
+  workspaceId: Principal;
+  userId: Principal;
 };
 
-export const insertBlockTitleCharacters = (
-  block: Block,
-  characters: string,
-  opts: {
-    onUpdateLocal: (block: Block) => void;
-    onUpdateRemote: (block: Block, events: TreeEvent[]) => void;
-  }
-) => {
-  const { onUpdateLocal, onUpdateRemote } = opts;
-  const allEvents: TreeEvent[] = [];
-  const { title } = block.properties;
+type UpdateOptions = {
+  onError?: (e: Error) => void;
+};
 
-  characters.split('').forEach((character, index) => {
-    const events = Tree.insertCharacter(title, index, character);
-    allEvents.push(...events);
-  });
-
-  const updatedBlock = {
-    ...block,
-    properties: {
-      ...block.properties,
-      title,
+async function _saveEvents(
+  workspaceId: Principal,
+  args: SaveEventTransactionUpdateInput
+) {
+  const authClient = await getAuthClient();
+  const identity = authClient.getIdentity();
+  const workspaceActor = createActor(workspaceId, {
+    agentOptions: {
+      identity,
     },
-  };
-  onUpdateLocal(updatedBlock);
-  onUpdateRemote(updatedBlock, allEvents);
-};
-
-export const removeBlockTitleCharacters = (
-  block: Block,
-  characterIndexes: number[],
-  opts: {
-    onUpdateLocal: (block: Block) => void;
-    onUpdateRemote: (block: Block, events: TreeEvent[]) => void;
-  }
-) => {
-  const { onUpdateLocal, onUpdateRemote } = opts;
-  const allEvents: TreeEvent[] = [];
-  const { title } = block.properties;
-  const newTitle = Tree.clone(title);
-
-  characterIndexes.forEach((characterIndex) => {
-    const event = Tree.removeCharacter(newTitle, characterIndex - 1);
-    if (event) allEvents.push(event);
   });
 
-  const updatedBlock = {
-    ...block,
-    properties: {
-      ...block.properties,
-      title: newTitle,
-    },
-  };
-  onUpdateLocal(updatedBlock);
-  onUpdateRemote(updatedBlock, allEvents);
-};
+  return workspaceActor.saveEvents(args);
+}
 
-export const insertBlockContent = (
-  block: Block,
-  data: { index: number; item: ExternalId }[],
-  opts: {
-    onUpdateLocal: (block: Block) => void;
-    onUpdateRemote: (block: Block, events: TreeEvent[]) => void;
-  }
-) => {
-  const { onUpdateLocal, onUpdateRemote } = opts;
-  const allEvents: TreeEvent[] = [];
-  data.forEach((x) => {
-    const { index, item } = x;
-    const events = Tree.insertCharacter(block.content, index, item);
-    allEvents.push(...events);
+function _updateBlock(
+  context: Context,
+  events: TreeEvent[],
+  opts: UpdateOptions
+) {
+  const { block } = context;
+  updateBlockLocal(block);
+  updateBlockRemote(context, events, opts).catch((e) => {
+    if (opts.onError) opts.onError(e);
+    throw e;
   });
-  onUpdateLocal(block);
-  onUpdateRemote(block, allEvents);
-};
-
-export const removeBlockContent = (
-  block: Block,
-  indexes: number[],
-  opts: {
-    onUpdateLocal: (block: Block) => void;
-    onUpdateRemote: (block: Block, events: TreeEvent[]) => void;
-  }
-) => {
-  const { onUpdateLocal, onUpdateRemote } = opts;
-  const allEvents: TreeEvent[] = [];
-  indexes.forEach((index) => {
-    const event = Tree.removeCharacter(block.content, index);
-    if (event) allEvents.push(event);
-  });
-  onUpdateLocal(block);
-  onUpdateRemote(block, allEvents);
-};
+}
 
 export function buildEvent(
-  data: PartialBlockEvent,
+  input: PartialBlockEvent,
   userId: Principal
 ): BlockEvent {
   const now = BigInt(Date.now()) * BigInt(1_000_000); // convert to nanoseconds
@@ -133,56 +67,56 @@ export function buildEvent(
     timestamp: now,
   });
 
-  if ('blockCreated' in data) {
+  if ('blockCreated' in input) {
     // TODO: Implement blockCreated
   }
 
-  if ('blockUpdated' in data) {
-    if ('updatePropertyChecked' in data.blockUpdated) {
+  if ('blockUpdated' in input) {
+    if ('updatePropertyChecked' in input.blockUpdated) {
       return _build({
         blockUpdated: {
           updatePropertyChecked: {
-            ...data.blockUpdated.updatePropertyChecked.data,
+            ...input.blockUpdated.updatePropertyChecked.data,
           },
         },
       });
     }
 
-    if ('updatePropertyTitle' in data.blockUpdated) {
+    if ('updatePropertyTitle' in input.blockUpdated) {
       return _build({
         blockUpdated: {
           updatePropertyTitle: {
-            ...data.blockUpdated.updatePropertyTitle.data,
+            ...input.blockUpdated.updatePropertyTitle.data,
           },
         },
       });
     }
 
-    if ('updateBlockType' in data.blockUpdated) {
+    if ('updateBlockType' in input.blockUpdated) {
       return _build({
         blockUpdated: {
           updateBlockType: {
-            ...data.blockUpdated.updateBlockType.data,
+            ...input.blockUpdated.updateBlockType.data,
           },
         },
       });
     }
 
-    if ('updateParent' in data.blockUpdated) {
+    if ('updateParent' in input.blockUpdated) {
       return _build({
         blockUpdated: {
           updateParent: {
-            ...data.blockUpdated.updateParent.data,
+            ...input.blockUpdated.updateParent.data,
           },
         },
       });
     }
 
-    if ('updateContent' in data.blockUpdated) {
+    if ('updateContent' in input.blockUpdated) {
       return _build({
         blockUpdated: {
           updateContent: {
-            ...data.blockUpdated.updateContent.data,
+            ...input.blockUpdated.updateContent.data,
           },
         },
       });
@@ -192,170 +126,153 @@ export function buildEvent(
   throw new Error('Invalid event');
 }
 
-export class EditorController {
-  blockIndex: number;
-  block: Block;
-  parentBlock: Block;
-  parentBlockIndex?: number;
-  grandparentBlock?: Block;
-  events: PartialBlockEvent[] = [];
-  updatedBlocks: { [key: string]: Block } = {};
+export function updateBlockLocal(updatedData: Block) {
+  const serializedData = blockSerializers.toLocalStorage(updatedData);
+  store.blocks.put(updatedData.uuid, updatedData);
+  return db.blocks.put(serializedData, serializedData.uuid);
+}
 
-  constructor(input: {
-    blockIndex: number;
-    block: Block;
-    parentBlock: Block;
-    parentBlockIndex?: number;
-    grandparentBlock?: Block;
-  }) {
-    const {
-      blockIndex,
-      block,
-      parentBlock,
-      parentBlockIndex,
-      grandparentBlock,
-    } = input;
-    this.blockIndex = blockIndex;
-    this.block = block;
-    this.parentBlock = parentBlock;
-    this.parentBlockIndex = parentBlockIndex;
-    this.grandparentBlock = grandparentBlock;
-  }
+export function updateBlockRemote(
+  context: Context,
+  events: TreeEvent[],
+  opts: UpdateOptions = {}
+) {
+  const { block, workspaceId, userId } = context;
+  const { onError } = opts;
 
-  _insertContentBlocks = (
-    block: Block,
-    data: { index: number; item: ExternalId }[]
-  ) => {
-    data.forEach((x) => {
-      const { index, item } = x;
-      const treeEvents = Tree.insertCharacter(block.content, index, item);
-
-      this.events.push({
-        blockUpdated: {
-          updateContent: {
-            data: {
-              blockExternalId: parse(block.uuid),
-              transaction: treeEvents,
-            },
-          },
-        },
-      });
-    });
-    this.updatedBlocks[block.uuid] = block;
-
-    return this;
-  };
-
-  _removeContentBlocks = (block: Block, indexes: number[]) => {
-    indexes.forEach((index) => {
-      const treeEvent = Tree.removeCharacter(block.content, index);
-
-      if (treeEvent) {
-        this.events.push({
+  return _saveEvents(workspaceId, {
+    transaction: [
+      buildEvent(
+        {
           blockUpdated: {
-            updateContent: {
+            updatePropertyTitle: {
               data: {
                 blockExternalId: parse(block.uuid),
-                transaction: [treeEvent],
+                transaction: events,
               },
             },
           },
-        });
-        this.updatedBlocks[block.uuid] = block;
-      }
-    });
-  };
-
-  _updateBlockParent = (block: Block, parent: ExternalId) => {
-    this.block.parent = parent;
-
-    const event = {
-      blockUpdated: {
-        updateParent: {
-          data: {
-            blockExternalId: parse(block.uuid),
-            parentBlockExternalId: parse(parent),
-          },
         },
-      },
-    };
+        userId
+      ),
+    ],
+  }).catch((e) => {
+    if (onError) onError(e);
 
-    this.events.push(event);
-    this.updatedBlocks[block.uuid] = block;
-  };
+    throw e;
+  });
+}
 
-  adoptSiblingBlocks = async () => {
-    const parentBlockContent = Tree.toArray(this.parentBlock.content);
-    const siblings = parentBlockContent.slice(this.blockIndex + 1);
-    const siblingBlocks = await db.blocks.bulkGet(siblings);
-    let insertIndex = Tree.size(this.block.content);
+export function onCharacterInserted(
+  context: Context,
+  position: number,
+  character: string,
+  opts: UpdateOptions = {}
+) {
+  const { block, workspaceId, userId } = context;
+  const { onError } = opts;
+  const events = Tree.insertCharacter(
+    block.properties.title,
+    position,
+    character
+  );
+  _updateBlock({ block, workspaceId, userId }, events, {
+    onError,
+  });
+}
 
-    this._insertContentBlocks(
-      this.block,
-      siblings.map((siblingExternalId) => {
-        const index = insertIndex;
-        insertIndex += 1;
-        return {
-          index,
-          item: siblingExternalId,
-        };
-      })
+export function onCharactersInserted(
+  context: Context,
+  characters: string[],
+  position: number,
+  opts: UpdateOptions = {}
+) {
+  const { block, workspaceId, userId } = context;
+  const { onError } = opts;
+  const allEvents: TreeEvent[] = [];
+
+  characters.forEach((character, i) => {
+    const events = Tree.insertCharacter(
+      block.properties.title,
+      position + i,
+      character
+    );
+    allEvents.push(...events);
+  });
+
+  _updateBlock({ block, workspaceId, userId }, allEvents, {
+    onError,
+  });
+}
+
+export function onCharacterRemoved(
+  context: Context,
+  position: number,
+  opts: UpdateOptions = {}
+) {
+  const { block, workspaceId, userId } = context;
+  const { onError } = opts;
+  const event = Tree.removeCharacter(block.properties.title, position - 1);
+
+  _updateBlock({ block, workspaceId, userId }, [event], {
+    onError,
+  });
+}
+
+export function onCharactersRemoved(
+  context: Context,
+  startPosition: number,
+  endPosition?: number,
+  opts: UpdateOptions = {}
+): void {
+  const { block, workspaceId, userId } = context;
+  const { onError } = opts;
+
+  // Remove the character at the start position
+  if (endPosition === undefined) {
+    const event = Tree.removeCharacter(
+      block.properties.title,
+      startPosition - 1
     );
 
-    this._removeContentBlocks(
-      this.parentBlock,
-      // We are iterating in reverse order so that the indexes don't change
-      // as we remove the siblings
-      siblings.reverse().map((siblingBlockExternalId) => {
-        const siblingBlockIndex = Tree.toArray(
-          this.parentBlock.content
-        ).indexOf(siblingBlockExternalId);
-        return siblingBlockIndex;
-      })
-    );
-
-    siblingBlocks.forEach((siblingBlock) => {
-      if (!siblingBlock) return;
-      this._updateBlockParent(siblingBlock, this.block.uuid);
+    _updateBlock({ block, workspaceId, userId }, [event], {
+      onError,
     });
 
-    return this;
-  };
+    return;
+  }
 
-  moveBlockToGrandparent = () => {
-    if (!this.grandparentBlock) return this;
-    if (this.parentBlockIndex === undefined) return this;
+  // Remove the characters in the range
+  // Here, we are building index array in descending order so that we don't
+  // have to worry about the index changing as we remove characters
+  const characterIndexes = Array.from(
+    { length: endPosition - startPosition },
+    (_, i) => endPosition - i
+  );
+  const allEvents: TreeEvent[] = [];
 
-    const newBlockIndex = this.parentBlockIndex + 1;
+  characterIndexes.forEach((index) => {
+    const event = Tree.removeCharacter(block.properties.title, index - 1);
+    if (event) allEvents.push(event);
+  });
 
-    this._insertContentBlocks(this.grandparentBlock, [
-      { index: newBlockIndex, item: this.block.uuid },
-    ]);
-    this._removeContentBlocks(this.parentBlock, [this.blockIndex]);
-    this._updateBlockParent(this.block, this.grandparentBlock.uuid);
+  _updateBlock({ block, workspaceId, userId }, allEvents, {
+    onError,
+  });
+}
 
-    return this;
-  };
+export function insertTextAtPosition(
+  context: Context,
+  clipboardText: string,
+  position: number,
+  target: HTMLSpanElement,
+  opts: UpdateOptions = {}
+) {
+  const characters = target.innerText.split('');
+  const clipboardCharacters = clipboardText.split('');
 
-  moveBlockToPreviousBlock = async () => {
-    const previousBlockExternalId = this.parentBlock
-      ? Tree.getNodeAtPosition(this.parentBlock.content, this.blockIndex - 1)
-          ?.value
-      : null;
-    const previousBlock = previousBlockExternalId
-      ? await db.blocks.get(previousBlockExternalId)
-      : null;
+  characters.splice(position, 0, ...clipboardCharacters);
+  target.innerText = characters.join(''); // eslint-disable-line no-param-reassign
 
-    if (!previousBlock) throw new Error('Previous block not found');
-
-    const newBlockIndex = Tree.size(previousBlock.content);
-
-    this._insertContentBlocks(previousBlock, [
-      { index: newBlockIndex, item: this.block.uuid },
-    ]);
-    this._removeContentBlocks(this.parentBlock, [this.blockIndex]);
-    this._updateBlockParent(this.block, previousBlock.uuid);
-
-    return this;
-  };
+  onCharactersInserted(context, clipboardCharacters, position, opts);
 }

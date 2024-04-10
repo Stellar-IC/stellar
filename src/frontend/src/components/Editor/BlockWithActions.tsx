@@ -1,4 +1,11 @@
-import { Box, Button, Flex, Group, useMantineTheme } from '@mantine/core';
+import {
+  ActionIcon,
+  Box,
+  Button,
+  Flex,
+  Group,
+  useMantineTheme,
+} from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
 import { IconPlus, IconGridDots } from '@tabler/icons-react';
 import { PropsWithChildren, useCallback } from 'react';
@@ -87,7 +94,7 @@ export const BlockWithActions = ({
           gap="2px"
           style={{ opacity: isShowingActions ? 1 : 0 }}
         >
-          <Button
+          <ActionIcon
             aria-label="Add block"
             onClick={() => {
               if (!parsedParentExternalId) return;
@@ -102,21 +109,17 @@ export const BlockWithActions = ({
                 );
               }
             }}
-            size="xs"
-            px="xs"
           >
             <IconPlus size="12px" />
-          </Button>
-          <Button
+          </ActionIcon>
+          <ActionIcon
             aria-label="View actions"
             onClick={() => {
               onTransformModalOpen();
             }}
-            size="xs"
-            px="xs"
           >
             <IconGridDots size="12px" />
-          </Button>
+          </ActionIcon>
         </Group>
 
         <Group

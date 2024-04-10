@@ -4,7 +4,7 @@
   @media (min-width: $mantine-breakpoint-xs) {
     display: flex;
     position: absolute;
-    left: -5.5rem;
+    left: -4.5rem;
     flex-shrink: 0;
   }
 }

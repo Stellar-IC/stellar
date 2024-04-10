@@ -1,23 +1,14 @@
-import { Tree } from '@stellar-ic/lseq-ts';
-import { KeyboardEvent } from 'react';
-import { parse, v4 } from 'uuid';
+import { KeyboardEvent, useCallback } from 'react';
+import { parse } from 'uuid';
 
-import { TextBlockBlockType } from '@/components/Editor/TextBlock/types';
-import { usePages } from '@/contexts/PagesContext/usePages';
 import { usePagesContext } from '@/contexts/PagesContext/usePagesContext';
 import { useWorkspaceContext } from '@/contexts/WorkspaceContext/useWorkspaceContext';
-import { useWorkspaceActor } from '@/hooks/canisters/workspace/useWorkspaceActor';
-import { useUpdate } from '@/hooks/useUpdate';
 import { useAuthContext } from '@/modules/auth/contexts/AuthContext';
-import { store } from '@/modules/data-store';
-import { ExternalId } from '@/types';
+import { store, useStoreQuery } from '@/modules/data-store';
+import * as EditorActionModule from '@/modules/editor/EditorAction';
+import { setCursorAtEnd } from '@/modules/editor/utils/selection';
 
-import {
-  SaveEventTransactionUpdateInput,
-  SaveEventTransactionUpdateOutput,
-  TreeEvent,
-} from '../../../../../declarations/workspace/workspace.did';
-
+import { UseTextBlockKeyboardEventHandlersProps } from './types';
 import { useArrowDownHandler } from './useArrowDownHandler';
 import { useArrowUpHandler } from './useArrowUpHandler';
 import { useBackspaceHandler } from './useBackspaceHandler';
@@ -26,85 +17,15 @@ import { useEnterHandler } from './useEnterHandler';
 import { useShiftTabHandler } from './useShiftTabHandler';
 import { useTabHandler } from './useTabHandler';
 import { useWordCharacterHandler } from './useWordCharacterHandler';
+import {
+  insertTextAtPosition,
+  onCharacterInserted,
+  onCharactersRemoved,
+} from './utils';
 
-type UseTextBlockKeyboardEventHandlersProps = {
-  blockExternalId: ExternalId;
-  blockIndex: number;
-  blockType: TextBlockBlockType;
-  parentBlockExternalId?: ExternalId | null;
-  parentBlockIndex?: number;
-  showPlaceholder: () => void;
-  hidePlaceholder: () => void;
-  onError?: (error: Error) => void;
-};
+type EditorAction = EditorActionModule.EditorAction;
 
-function getClipboardText(clipboardData: DataTransfer) {
-  return clipboardData.getData('text/plain');
-}
-
-function getCursorPosition() {
-  const cursorPosition = window.getSelection()?.anchorOffset;
-
-  if (cursorPosition === undefined) {
-    throw new Error('No cursor position');
-  }
-
-  return cursorPosition;
-}
-
-function insertTextAtPosition(
-  clipboardText: string,
-  position: number,
-  target: HTMLSpanElement
-) {
-  const characters = target.innerText.split('');
-  const clipboardCharacters = clipboardText.split('');
-
-  characters.splice(position, 0, ...clipboardCharacters);
-  target.innerText = characters.join(''); // eslint-disable-line no-param-reassign
-}
-
-function setCursorAtEnd(target: HTMLSpanElement) {
-  const selection = window.getSelection();
-
-  if (selection) {
-    const range = document.createRange();
-
-    range.setStart(target.childNodes[0], target.innerText.length);
-    range.collapse(true);
-
-    selection.removeAllRanges();
-    selection.addRange(range);
-  }
-}
-
-enum EditorAction {
-  ArrowDown = 'ArrowDown',
-  ArrowUp = 'ArrowUp',
-  Backspace = 'Backspace',
-  Character = 'Character',
-  Enter = 'Enter',
-  ShiftTab = 'ShiftTab',
-  Tab = 'Tab',
-}
-
-function parseKeydownEvent(e: KeyboardEvent<HTMLSpanElement>): EditorAction {
-  const { key, shiftKey, metaKey, ctrlKey } = e;
-
-  if (key === 'Enter' && !shiftKey) return EditorAction.Enter;
-  if (key === 'Tab') {
-    if (shiftKey) return EditorAction.ShiftTab;
-    return EditorAction.Tab;
-  }
-  if (key === 'Backspace') return EditorAction.Backspace;
-  if (key === 'ArrowDown') return EditorAction.ArrowDown;
-  if (key === 'ArrowUp') return EditorAction.ArrowUp;
-  if (key.match(/^[\w\W]$/g) && !metaKey && !ctrlKey) {
-    return EditorAction.Character;
-  }
-
-  throw new Error('Unhandled keydown event');
-}
+const { EditorAction } = EditorActionModule;
 
 export const useTextBlockKeyboardEventHandlers = ({
   blockIndex,
@@ -114,155 +35,56 @@ export const useTextBlockKeyboardEventHandlers = ({
   parentBlockIndex,
   showPlaceholder,
   hidePlaceholder,
-  onError,
-}: UseTextBlockKeyboardEventHandlersProps) => {
+}: // onError,
+UseTextBlockKeyboardEventHandlersProps) => {
   const { workspaceId } = useWorkspaceContext();
-  const { identity, userId } = useAuthContext();
+  const { userId } = useAuthContext();
   const { removeBlock } = usePagesContext();
-  const {
-    blocks: { updateLocal: updateLocalBlock },
-  } = usePages({ identity, workspaceId });
-  const block = store.blocks.get(blockExternalId);
+  const block = useStoreQuery(() => store.blocks.get(blockExternalId));
 
-  const { actor } = useWorkspaceActor({ identity, workspaceId });
-
-  const [sendUpdate] = useUpdate<
-    [SaveEventTransactionUpdateInput],
-    SaveEventTransactionUpdateOutput
-  >(workspaceId, actor.saveEvents);
-
-  const onRemoveBlock = () => {
+  const onRemoveBlock = useCallback(() => {
     if (!parentBlockExternalId) return;
 
     // Note: We add 1 to the block index because the current functionality
     // for removing a block is to remove the block before the given position.
     removeBlock(parse(parentBlockExternalId), blockIndex + 1);
-  };
+  }, [blockIndex, parentBlockExternalId, removeBlock]);
 
-  const onSuccess = (title: Tree.Tree, events: TreeEvent[]) => {
-    if (!block) throw new Error('Block not found');
-
-    updateLocalBlock(block.uuid, {
-      ...block,
-      properties: {
-        ...block.properties,
-        title,
-      },
-    });
-
-    sendUpdate([
-      {
-        transaction: [
-          {
-            user: userId,
-            uuid: parse(v4()),
-            data: {
-              blockUpdated: {
-                updatePropertyTitle: {
-                  blockExternalId: parse(block.uuid),
-                  transaction: events,
-                },
-              },
-            },
-            timestamp: BigInt(Date.now()) * BigInt(1_000_000),
-          },
-        ],
-      },
-    ]).catch((e) => {
-      if (onError) onError(e);
-
-      throw e;
-    });
-  };
-
-  const onCharacterInserted = (cursorPosition: number, character: string) => {
-    if (!block) throw new Error('Block not found');
-
-    const events = Tree.insertCharacter(
-      block.properties.title,
-      cursorPosition,
-      character
-    );
-    onSuccess(block.properties.title, events);
-  };
-
-  const onCharactersInserted = (
-    characters: string[],
-    cursorPosition: number
-  ) => {
-    if (!block) throw new Error('Block not found');
-
-    const allEvents: TreeEvent[] = [];
-
-    characters.forEach((character, i) => {
-      const events = Tree.insertCharacter(
-        block.properties.title,
-        cursorPosition + i,
-        character
-      );
-      allEvents.push(...events);
-    });
-
-    onSuccess(block.properties.title, allEvents);
-  };
-
-  const onCharacterRemoved = (cursorPosition: number) => {
-    if (!block) throw new Error('Block not found');
-
-    const event = Tree.removeCharacter(
-      block.properties.title,
-      cursorPosition - 1
-    );
-    if (event) onSuccess(block.properties.title, [event]);
-  };
-
-  const onCharactersRemoved = (
-    startPosition: number,
-    endPosition?: number
-  ): void => {
-    if (!block) throw new Error('Block not found');
-
-    if (endPosition === undefined) return onCharacterRemoved(startPosition);
-
-    // Build index array in descending order so that we don't have to worry about
-    // the index changing as we remove characters
-    const characterIndexes = Array.from(
-      { length: endPosition - startPosition },
-      (_, i) => endPosition - i
-    );
-    const allEvents: TreeEvent[] = [];
-
-    characterIndexes.forEach((index) => {
-      const event = Tree.removeCharacter(block.properties.title, index - 1);
-      if (event) allEvents.push(event);
-    });
-
-    onSuccess(block.properties.title, allEvents);
-
-    return undefined;
-  };
+  const removeCharacters = useCallback(
+    (cursorPosition: number) => {
+      if (!block) throw new Error('Block not found');
+      const context = { block, workspaceId, userId };
+      onCharactersRemoved(context, cursorPosition);
+    },
+    [block, userId, workspaceId]
+  );
 
   const handleTab = useTabHandler({
     blockIndex,
     blockExternalId,
     parentBlockExternalId,
   });
+
   const handleShiftTab = useShiftTabHandler({
     blockIndex,
     blockExternalId,
     parentBlockExternalId,
     parentBlockIndex,
   });
+
   const handleArrowDown = useArrowDownHandler();
+
   const handleArrowUp = useArrowUpHandler();
+
   const handleBackspace = useBackspaceHandler({
-    onRemove: onCharactersRemoved,
-    showPlaceholder,
+    removeCharacters,
   });
+
   const handleCut = useCutHandler({
-    onRemove: onCharactersRemoved,
+    removeCharacters,
     showPlaceholder,
   });
+
   const handleEnter = useEnterHandler({
     blockExternalId,
     blockIndex,
@@ -271,77 +93,118 @@ export const useTextBlockKeyboardEventHandlers = ({
   });
 
   const handleWordCharacter = useWordCharacterHandler({
-    onCharacterInserted,
+    onCharacterInserted: (cursorPosition, character) => {
+      if (!block) throw new Error('Block not found');
+
+      onCharacterInserted(
+        { block, workspaceId, userId },
+        cursorPosition,
+        character
+      );
+    },
     hidePlaceholder,
   });
 
-  const onKeyDown = (e: KeyboardEvent<HTMLSpanElement>) => {
-    const { key } = e;
-    let editorAction: EditorAction;
+  const onKeyDown = useCallback(
+    (e: KeyboardEvent<HTMLSpanElement>) => {
+      const { key } = e;
+      let editorAction: EditorAction;
 
-    try {
-      editorAction = parseKeydownEvent(e);
-    } catch (error) {
+      try {
+        editorAction = EditorActionModule.fromKeyboardEvent(e);
+      } catch (error) {
+        return false;
+      }
+
+      const editorActionHandlers = {
+        [EditorAction.Tab]: () => {
+          e.preventDefault();
+          handleTab();
+        },
+        [EditorAction.ShiftTab]: () => {
+          e.preventDefault();
+          handleShiftTab();
+        },
+        [EditorAction.ArrowDown]: () => handleArrowDown(),
+        [EditorAction.ArrowUp]: () => handleArrowUp(),
+        [EditorAction.Backspace]: () =>
+          handleBackspace(e, {
+            hasParentBlock: Boolean(parentBlockExternalId),
+            onRemoveBlock,
+          }),
+        [EditorAction.Enter]: () => {
+          e.preventDefault();
+          handleEnter();
+        },
+        [EditorAction.Character]: () =>
+          handleWordCharacter(key, e.currentTarget),
+      };
+
+      if (editorActionHandlers[editorAction]) {
+        return editorActionHandlers[editorAction]();
+      }
+
       return false;
-    }
-
-    const editorActionHandlers = {
-      [EditorAction.Tab]: () => {
-        e.preventDefault();
-        handleTab();
-      },
-      [EditorAction.ShiftTab]: () => {
-        e.preventDefault();
-        handleShiftTab();
-      },
-      [EditorAction.ArrowDown]: () => handleArrowDown(),
-      [EditorAction.ArrowUp]: () => handleArrowUp(),
-      [EditorAction.Backspace]: () =>
-        handleBackspace(e, {
-          hasParentBlock: Boolean(parentBlockExternalId),
-          onRemoveBlock,
-        }),
-      [EditorAction.Enter]: () => {
-        e.preventDefault();
-        handleEnter();
-      },
-      [EditorAction.Character]: () => handleWordCharacter(key, e.currentTarget),
-    };
-
-    if (editorActionHandlers[editorAction]) {
-      return editorActionHandlers[editorAction]();
-    }
-
-    return false;
-  };
-
-  const onCut = (e: React.ClipboardEvent<HTMLSpanElement>) => {
-    e.preventDefault();
-
-    return handleCut({
-      shouldRemoveBlock: false,
-      shouldShowPlaceholder: false,
+    },
+    [
+      handleArrowDown,
+      handleArrowUp,
+      handleBackspace,
+      handleEnter,
+      handleTab,
+      handleShiftTab,
+      handleWordCharacter,
+      parentBlockExternalId,
       onRemoveBlock,
-    });
-  };
+    ]
+  );
 
-  const onPaste = (e: React.ClipboardEvent<HTMLSpanElement>) => {
-    e.preventDefault();
+  const onCut = useCallback(
+    (e: React.ClipboardEvent<HTMLSpanElement>) => {
+      e.preventDefault();
 
-    const { clipboardData } = e;
-    const clipboardText = getClipboardText(clipboardData);
-    const cursorPosition = getCursorPosition();
-    const target = e.currentTarget;
+      return handleCut(e, {
+        shouldShowPlaceholder: false,
+      });
+    },
+    [handleCut]
+  );
 
-    if (clipboardText.length === 0) {
-      return;
-    }
+  const onPaste = useCallback(
+    (e: React.ClipboardEvent<HTMLSpanElement>) => {
+      e.preventDefault();
 
-    insertTextAtPosition(clipboardText, cursorPosition, target);
-    onCharactersInserted(clipboardText.split(''), cursorPosition);
-    setCursorAtEnd(target);
-    hidePlaceholder();
-  };
+      const { clipboardData } = e;
+      const clipboardText = clipboardData.getData('text/plain');
+      const cursorPosition = window.getSelection()?.anchorOffset;
+      const target = e.currentTarget;
+
+      if (clipboardText.length === 0) {
+        return;
+      }
+
+      if (cursorPosition === undefined) {
+        throw new Error('Unable to determine cursor position');
+      }
+
+      if (!block) throw new Error('Block not found');
+
+      insertTextAtPosition(
+        {
+          block,
+          workspaceId,
+          userId,
+        },
+        clipboardText,
+        cursorPosition,
+        target
+      );
+
+      setCursorAtEnd(target);
+      hidePlaceholder();
+    },
+    [block, hidePlaceholder, userId, workspaceId]
+  );
 
   return {
     onKeyDown,

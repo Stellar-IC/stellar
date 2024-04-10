@@ -1,45 +1,17 @@
 import { useCallback } from 'react';
 
-import { focusPreviousBlock } from '@/modules/editor/utils';
-
-type UseBackspaceHandlerProps = {
-  onRemove: (startCursor: number, endCursor?: number) => void;
-  showPlaceholder: () => void;
-};
+import { focusPreviousBlock } from '@/modules/editor/utils/focus';
+import { deleteCharactersInSelectionRange } from '@/modules/editor/utils/selection';
 
 type DoBackspaceOperationArgs = {
   hasParentBlock: boolean;
   onRemoveBlock: () => void;
 };
 
-function getRangeSelectionEndpoints(selection: Selection) {
-  let startCursor = selection.anchorOffset;
-  let endCursor = selection.focusOffset;
-
-  if (startCursor > endCursor) {
-    startCursor = selection.focusOffset;
-    endCursor = selection.anchorOffset;
-  }
-
-  return [startCursor, endCursor];
-}
-
-export const useBackspaceHandler = ({
-  onRemove,
-  showPlaceholder,
-}: UseBackspaceHandlerProps) => {
-  const deleteCharactersInSelectionRange = useCallback(
-    (selection: Selection) => {
-      const [startCursor, endCursor] = getRangeSelectionEndpoints(selection);
-
-      onRemove(startCursor, endCursor);
-      selection?.deleteFromDocument();
-
-      return false;
-    },
-    [onRemove]
-  );
-
+export const useBackspaceHandler = (props: {
+  removeCharacters: (cursorPosition: number) => void;
+}) => {
+  const { removeCharacters } = props;
   const doBackspaceOperation = useCallback(
     (
       e: React.KeyboardEvent<HTMLSpanElement>,
@@ -48,10 +20,8 @@ export const useBackspaceHandler = ({
       const { hasParentBlock, onRemoveBlock } = args;
       const selection = window.getSelection();
       const cursorPosition = selection?.anchorOffset;
-      const target = e.currentTarget;
-      const shouldRemoveBlock = hasParentBlock && target.innerText === '';
-      const isLastCharacter =
-        target.innerText.length === 1 && cursorPosition === 1;
+      const shouldRemoveBlock =
+        hasParentBlock && e.currentTarget.innerText === '';
 
       if (cursorPosition === undefined) return false;
 
@@ -66,18 +36,16 @@ export const useBackspaceHandler = ({
       if (selection?.type === 'Range') {
         e.preventDefault();
 
-        return deleteCharactersInSelectionRange(selection);
+        return deleteCharactersInSelectionRange(e, selection, {
+          onRemove: removeCharacters,
+        });
       }
 
-      onRemove(cursorPosition);
-
-      if (isLastCharacter) {
-        showPlaceholder();
-      }
+      removeCharacters(cursorPosition);
 
       return true;
     },
-    [deleteCharactersInSelectionRange, onRemove, showPlaceholder]
+    [removeCharacters]
   );
 
   return doBackspaceOperation;

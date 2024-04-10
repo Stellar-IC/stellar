@@ -6,6 +6,7 @@ import { parse, stringify, v4 } from 'uuid';
 import { usePages } from '@/contexts/PagesContext/usePages';
 import { db } from '@/db';
 import { usePagesQuery } from '@/hooks/canisters/workspace/queries/usePagesQuery';
+import { updateBlockLocal } from '@/hooks/documents/useTextBlockKeyboardEventHandlers/utils';
 import { useAuthContext } from '@/modules/auth/contexts/AuthContext';
 import { Block } from '@/types';
 
@@ -40,7 +41,7 @@ export function PagesContextProvider({ children }: PropsWithChildren<{}>) {
     identity,
     workspaceId,
   });
-  const { blocks: blocksContext, handleBlockEvent } = usePages({
+  const { handleBlockEvent } = usePages({
     identity,
     workspaceId,
   });
@@ -115,9 +116,9 @@ export function PagesContextProvider({ children }: PropsWithChildren<{}>) {
         )
       );
 
-      blocksContext.updateLocal(stringify(parentBlockExternalId), parentBlock);
+      updateBlockLocal(parentBlock);
     },
-    [blocksContext, handleBlockEvent, userId]
+    [handleBlockEvent, userId]
   );
 
   const updateBlock = useCallback(

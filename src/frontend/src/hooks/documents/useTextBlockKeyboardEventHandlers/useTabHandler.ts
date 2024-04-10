@@ -6,10 +6,11 @@ import { db } from '@/db';
 import { useSaveEvents } from '@/hooks/canisters/workspace/updates/useSaveEvents';
 import { useAuthContext } from '@/modules/auth/contexts/AuthContext';
 import { store } from '@/modules/data-store';
-import { focusBlock } from '@/modules/editor/utils';
+import { EditorController } from '@/modules/editor/EditorController';
+import { focusBlock } from '@/modules/editor/utils/focus';
 import { ExternalId } from '@/types';
 
-import { buildEvent, EditorController } from './utils';
+import { buildEvent } from './utils';
 
 type UseTabHandler = {
   blockIndex: number;

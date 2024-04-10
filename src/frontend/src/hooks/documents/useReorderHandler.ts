@@ -2,13 +2,12 @@ import { Node, Tree } from '@stellar-ic/lseq-ts';
 import { useCallback } from 'react';
 import { parse } from 'uuid';
 
-import { usePages } from '@/contexts/PagesContext/usePages';
 import { usePagesContext } from '@/contexts/PagesContext/usePagesContext';
-import { useWorkspaceContext } from '@/contexts/WorkspaceContext/useWorkspaceContext';
 import { db } from '@/db';
-import { useAuthContext } from '@/modules/auth/contexts/AuthContext';
 import { store } from '@/modules/data-store';
 import { ExternalId } from '@/types';
+
+import { updateBlockLocal } from './useTextBlockKeyboardEventHandlers/utils';
 
 type UseReorderHandler = {
   parentBlockExternalId?: ExternalId | null;
@@ -17,14 +16,6 @@ type UseReorderHandler = {
 export const useReorderHandler = ({
   parentBlockExternalId,
 }: UseReorderHandler) => {
-  const { identity } = useAuthContext();
-  const { workspaceId } = useWorkspaceContext();
-  const {
-    blocks: { updateLocal: updateLocalBlock },
-  } = usePages({
-    identity,
-    workspaceId,
-  });
   const { updateBlock } = usePagesContext();
 
   const parentBlock = parentBlockExternalId
@@ -145,11 +136,11 @@ export const useReorderHandler = ({
         blockToMove.uuid
       );
 
-      updateLocalBlock(parentBlock.uuid, parentBlock);
+      updateBlockLocal(parentBlock);
 
       return true;
     },
-    [parentBlock, updateBlock, updateLocalBlock]
+    [parentBlock, updateBlock]
   );
 
   return doReorderOperation;

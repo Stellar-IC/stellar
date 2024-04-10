@@ -1,7 +1,7 @@
 import { useCallback } from 'react';
 
 type UseCutHandlerProps = {
-  onRemove: (startCursor: number, endCursor?: number) => void;
+  removeCharacters: (startCursor: number, endCursor?: number) => void;
   showPlaceholder?: () => void;
 };
 
@@ -12,21 +12,14 @@ type DoCutOperationArgs = {
 };
 
 export const useCutHandler = ({
-  onRemove,
+  removeCharacters,
   showPlaceholder,
 }: UseCutHandlerProps) => {
   const doCutOperation = useCallback(
-    ({
-      shouldRemoveBlock,
-      shouldShowPlaceholder,
-      onRemoveBlock,
-    }: DoCutOperationArgs) => {
-      if (shouldRemoveBlock) {
-        if (!onRemoveBlock) return;
-        onRemoveBlock();
-        return;
-      }
-
+    (
+      e: React.ClipboardEvent<HTMLSpanElement>,
+      { shouldShowPlaceholder }: DoCutOperationArgs
+    ) => {
       const selection = window.getSelection();
 
       if (selection?.type === 'Range') {
@@ -38,8 +31,8 @@ export const useCutHandler = ({
           endCursor = selection.anchorOffset;
         }
 
-        onRemove(startCursor, endCursor);
         document.execCommand('copy');
+        removeCharacters(startCursor, endCursor);
         selection.deleteFromDocument();
       }
 
@@ -48,7 +41,7 @@ export const useCutHandler = ({
         showPlaceholder();
       }
     },
-    [onRemove, showPlaceholder]
+    [removeCharacters, showPlaceholder]
   );
 
   return doCutOperation;
