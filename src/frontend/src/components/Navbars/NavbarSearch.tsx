@@ -18,12 +18,14 @@ import { notifications } from '@mantine/notifications';
 import { Tree } from '@stellar-ic/lseq-ts';
 import { IconPlus, IconTrash } from '@tabler/icons-react';
 import { useLiveQuery } from 'dexie-react-hooks';
+import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { parse } from 'uuid';
 
 import { useLayoutManager } from '@/LayoutManager';
 import { useWorkspaceContext } from '@/contexts/WorkspaceContext/useWorkspaceContext';
 import { db } from '@/db';
+import { usePagesQuery } from '@/hooks/canisters/workspace/queries/usePagesQuery';
 import { useCreatePageWithRedirect } from '@/hooks/canisters/workspace/updates/useCreatePageWithRedirect';
 import { useDeletePage } from '@/hooks/canisters/workspace/updates/useDeletePage';
 import { logout } from '@/modules/auth/commands';
@@ -45,6 +47,14 @@ function PageLinksSection() {
     identity,
     workspaceId,
   });
+  const queryPages = usePagesQuery({
+    identity,
+    workspaceId,
+  });
+
+  useEffect(() => {
+    queryPages();
+  }, [queryPages]);
 
   const pages = useLiveQuery<LocalStorageBlock[], LocalStorageBlock[]>(
     () => db.blocks.filter((block) => 'page' in block.blockType).toArray(),

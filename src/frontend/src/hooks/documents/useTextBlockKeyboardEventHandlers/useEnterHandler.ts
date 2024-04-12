@@ -1,9 +1,11 @@
 import { Tree } from '@stellar-ic/lseq-ts';
 import { parse } from 'uuid';
 
-import { usePagesContext } from '@/contexts/PagesContext/usePagesContext';
 import { db } from '@/db';
 import * as BlockkModule from '@/modules/blocks';
+import { EditorControllerV2 } from '@/modules/editor/EditorControllerV2';
+import { EditorSaveFn } from '@/modules/editor/types';
+import { useEditorActions } from '@/modules/editor/useEditorActions';
 import { focusBlock } from '@/modules/editor/utils/focus';
 import { ExternalId } from '@/types';
 
@@ -16,6 +18,7 @@ type UseEnterHandlerProps = {
   blockIndex: number;
   blockType: BlockType;
   parentBlockExternalId?: ExternalId | null;
+  onSave: EditorSaveFn;
 };
 
 export function useEnterHandler({
@@ -23,8 +26,9 @@ export function useEnterHandler({
   blockType,
   blockExternalId,
   parentBlockExternalId,
+  onSave,
 }: UseEnterHandlerProps) {
-  const { addBlock, updateBlock } = usePagesContext();
+  const { updateBlock } = useEditorActions({ onSave });
 
   const onEnterPressed = async () => {
     if (!blockExternalId) return;
@@ -40,13 +44,13 @@ export function useEnterHandler({
     const blockTitleLength = blockTitle.length;
     const blockTitleAfterCursor = blockTitle.slice(cursorPosition);
 
+    const controller = new EditorControllerV2({ onSave });
+
     if (blockTitleLength === 0) {
-      // Create a new block
-      const newBlock = await addBlock(
-        parse(parentBlockExternalId),
-        blockType,
-        blockIndex + 1
-      );
+      await controller
+        .addBlock(parse(parentBlockExternalId), blockIndex + 1, blockType)
+        .save();
+      const newBlock = controller.getNewestBlock();
 
       focusBlock(newBlock.uuid);
 
@@ -54,11 +58,10 @@ export function useEnterHandler({
     }
 
     // Create a new block with the text after the cursor
-    const newBlock = await addBlock(
-      parse(parentBlockExternalId),
-      blockType,
-      blockIndex + 1
-    );
+    await controller
+      .addBlock(parse(parentBlockExternalId), blockIndex + 1, blockType)
+      .save();
+    const newBlock = controller.getNewestBlock();
 
     // Focus on the new block
     focusBlock(newBlock.uuid);
@@ -70,10 +73,8 @@ export function useEnterHandler({
         if (events.length === 0) return;
         updateBlock(updatedBlockExternalId, {
           updatePropertyTitle: {
-            data: {
-              blockExternalId: updatedBlockExternalId,
-              transaction: events,
-            },
+            blockExternalId: updatedBlockExternalId,
+            transaction: events,
           },
         });
       },
@@ -97,10 +98,8 @@ export function useEnterHandler({
           if (events.length === 0) return;
           updateBlock(blockExternalId, {
             updatePropertyTitle: {
-              data: {
-                blockExternalId,
-                transaction: events,
-              },
+              blockExternalId,
+              transaction: events,
             },
           });
         },

@@ -6,6 +6,7 @@ import { memo, useCallback, useEffect, useState } from 'react';
 
 import { useSettingsContext } from '@/contexts/SettingsContext';
 import { db } from '@/db';
+import * as BlockModule from '@/modules/blocks';
 import { store, useStoreQuery } from '@/modules/data-store';
 import { Block } from '@/types';
 
@@ -19,15 +20,12 @@ import { TodoListBlock } from './TodoListBlock';
 interface NestedBlocksProps {
   blockExternalId: string;
   depth: number;
-  parentBlockIndex: number;
 }
 
-const NestedBlocks = ({
-  depth,
-  blockExternalId,
-  parentBlockIndex,
-}: NestedBlocksProps) => {
-  const block = useStoreQuery(() => store.blocks.get(blockExternalId));
+const NestedBlocks = ({ depth, blockExternalId }: NestedBlocksProps) => {
+  const block = useStoreQuery(() => store.blocks.get(blockExternalId), {
+    clone: BlockModule.clone,
+  });
 
   if (!block) return null;
   const nestedBlockIds = Tree.toArray(block.content);
@@ -44,7 +42,6 @@ const NestedBlocks = ({
             externalId={externalId}
             index={i}
             depth={depth}
-            parentBlockIndex={parentBlockIndex}
           />
         </Box>
       ))}
@@ -55,7 +52,6 @@ const NestedBlocks = ({
 interface BlockRendererInnerProps {
   externalId: string;
   index: number;
-  parentBlockIndex?: number;
   placeholder?: string;
   numeral?: number;
 }
@@ -63,11 +59,12 @@ interface BlockRendererInnerProps {
 const BlockRendererInner = ({
   externalId,
   index,
-  parentBlockIndex,
   placeholder,
   numeral,
 }: BlockRendererInnerProps) => {
-  const block = useStoreQuery(() => store.blocks.get(externalId));
+  const block = useStoreQuery(() => store.blocks.get(externalId), {
+    clone: BlockModule.clone,
+  });
 
   if (!block) {
     return null;
@@ -80,7 +77,6 @@ const BlockRendererInner = ({
         block={block}
         index={index}
         placeholder={placeholder}
-        parentBlockIndex={parentBlockIndex}
         blockType={block.blockType}
       />
     );
@@ -99,7 +95,6 @@ const BlockRendererInner = ({
         blockIndex={index}
         blockType={block.blockType}
         parentBlockExternalId={block.parent}
-        parentBlockIndex={parentBlockIndex}
         placeholder={placeholder}
         value={block.properties.title}
       />
@@ -116,7 +111,6 @@ const BlockRendererInner = ({
           blockType={block.blockType}
           placeholder={placeholder}
           parentBlockExternalId={block.parent}
-          parentBlockIndex={parentBlockIndex}
           value={block.properties.title}
         />
       </div>
@@ -133,7 +127,6 @@ const BlockRendererInner = ({
           blockIndex={index}
           blockType={block.blockType}
           parentBlockExternalId={block.parent}
-          parentBlockIndex={parentBlockIndex}
           placeholder={placeholder}
           value={block.properties.title}
         />
@@ -146,13 +139,7 @@ const BlockRendererInner = ({
   }
 
   if ('todoList' in block.blockType) {
-    return (
-      <TodoListBlock
-        block={block}
-        index={index}
-        parentBlockIndex={parentBlockIndex}
-      />
-    );
+    return <TodoListBlock block={block} index={index} />;
   }
 
   if ('numberedList' in block.blockType) {
@@ -171,7 +158,6 @@ const BlockRendererInner = ({
             blockIndex={index}
             blockType={block.blockType}
             parentBlockExternalId={block.parent}
-            parentBlockIndex={parentBlockIndex}
             placeholder={placeholder}
             value={block.properties.title}
           />
@@ -187,7 +173,6 @@ interface BlockRendererProps {
   externalId: string;
   index: number;
   parentBlockExternalId?: string;
-  parentBlockIndex?: number;
   placeholder?: string;
   depth: number;
 }
@@ -197,18 +182,22 @@ export const _BlockRenderer = ({
   index,
   depth,
   parentBlockExternalId,
-  parentBlockIndex,
   placeholder,
 }: BlockRendererProps) => {
   const [blockNumeral, setBlockNumeral] = useState<number | undefined>(
     undefined
   );
   const { getSettingValue } = useSettingsContext();
-  const block = useStoreQuery(() => store.blocks.get(externalId));
-  const parentBlock = useStoreQuery(() => {
-    if (!parentBlockExternalId) return undefined;
-    return store.blocks.get(parentBlockExternalId);
+  const block = useStoreQuery(() => store.blocks.get(externalId), {
+    clone: BlockModule.clone,
   });
+  const parentBlock = useStoreQuery(
+    () => {
+      if (!parentBlockExternalId) return null;
+      return store.blocks.get(parentBlockExternalId);
+    },
+    { clone: BlockModule.clone }
+  );
 
   const getPeviousSiblingBlockExternalId = useCallback(
     (currentBlockIndex: number) => {
@@ -301,7 +290,6 @@ export const _BlockRenderer = ({
         <Box style={getStyle}>
           <BlockRendererInner
             index={index}
-            parentBlockIndex={parentBlockIndex}
             placeholder={placeholder}
             externalId={externalId}
             numeral={blockNumeral}
@@ -321,11 +309,7 @@ export const _BlockRenderer = ({
         </Box>
       </BlockWithActions>
       {!('page' in block.blockType) && (
-        <NestedBlocks
-          blockExternalId={block.uuid}
-          depth={depth + 1}
-          parentBlockIndex={index}
-        />
+        <NestedBlocks blockExternalId={block.uuid} depth={depth + 1} />
       )}
     </Box>
   );

@@ -68,7 +68,11 @@ export function buildEvent(
   });
 
   if ('blockCreated' in input) {
-    // TODO: Implement blockCreated
+    return _build({
+      blockCreated: {
+        ...input.blockCreated.data,
+      },
+    });
   }
 
   if ('blockUpdated' in input) {

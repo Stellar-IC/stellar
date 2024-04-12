@@ -1,27 +1,32 @@
 import { Tree } from '@stellar-ic/lseq-ts';
-import { parse } from 'uuid';
+import { TreeEvent } from '@stellar-ic/lseq-ts/types';
+import { parse, stringify, v4 } from 'uuid';
 
 import { PartialBlockEvent } from '@/hooks/documents/useTextBlockKeyboardEventHandlers/types';
 import { Block } from '@/types';
 
-import { ExternalId } from '../../../../declarations/workspace/workspace.did';
+import {
+  BlockBlockTypeUpdatedEventData,
+  BlockContentUpdatedEventData,
+  BlockParentUpdatedEventData,
+  BlockPropertyCheckedUpdatedEventData,
+  BlockPropertyTitleUpdatedEventData,
+  BlockType,
+  ExternalId,
+  UUID,
+} from '../../../../declarations/workspace/workspace.did';
 import { store } from '../data-store';
 
+import { EditorSaveFn } from './types';
+
 export class EditorControllerV2 {
-  events: PartialBlockEvent[] = [];
-  updatedBlocks: { [key: string]: Block } = {};
+  private events: PartialBlockEvent[] = [];
+  private updatedBlocks: { [key: string]: Block } = {};
+  private createdBlocks: Block[] = [];
 
-  private _onSave: (data: {
-    events: PartialBlockEvent[];
-    updatedBlocks: { [key: string]: Block };
-  }) => void;
+  private _onSave: EditorSaveFn;
 
-  constructor(opts: {
-    onSave: (data: {
-      events: PartialBlockEvent[];
-      updatedBlocks: { [key: string]: Block };
-    }) => void;
-  }) {
+  constructor(opts: { onSave: EditorSaveFn }) {
     this._onSave = opts.onSave;
   }
 
@@ -71,15 +76,13 @@ export class EditorControllerV2 {
     const grandparentBlock = this._getGrandparentBlock(block);
     if (!grandparentBlock) throw new Error('Block has no grandparent');
 
-    const parentBlockIndex = Tree.toArray(grandparentBlock.content).indexOf(
-      block.parent
-    );
+    const index = Tree.toArray(grandparentBlock.content).indexOf(block.parent);
 
-    if (parentBlockIndex === -1) {
+    if (index === -1) {
       throw new Error('Parent block not found in grandparent block');
     }
 
-    return parentBlockIndex;
+    return index;
   };
 
   _getPrecedingBlock = (block: Block): Block | null => {
@@ -121,8 +124,6 @@ export class EditorControllerV2 {
       });
     });
     this.updatedBlocks[block.uuid] = block;
-
-    return this;
   };
 
   _removeContentBlocks = (block: Block, indexes: number[]) => {
@@ -161,10 +162,98 @@ export class EditorControllerV2 {
     };
 
     this.events.push(event);
-    this.updatedBlocks[block.uuid] = { ...block, parent };
+    this.updatedBlocks[block.uuid] = block;
   };
 
-  adoptSiblingBlocks = async (block: Block) => {
+  _updateBlockPropertyChecked(blockExternalId: UUID, checked: boolean) {
+    const block = store.blocks.get(stringify(blockExternalId));
+
+    if (!block) {
+      throw new Error('Block not found');
+    }
+
+    const event: PartialBlockEvent = {
+      blockUpdated: {
+        updatePropertyChecked: {
+          data: {
+            blockExternalId,
+            checked,
+          },
+        },
+      },
+    };
+
+    this.events.push(event);
+    this.updatedBlocks[block.uuid] = block;
+  }
+
+  _updateBlockPropertyTitle(blockExternalId: UUID, transaction: TreeEvent[]) {
+    const block = store.blocks.get(stringify(blockExternalId));
+
+    if (!block) {
+      throw new Error('Block not found');
+    }
+
+    const event: PartialBlockEvent = {
+      blockUpdated: {
+        updatePropertyTitle: {
+          data: {
+            blockExternalId,
+            transaction,
+          },
+        },
+      },
+    };
+
+    this.events.push(event);
+    this.updatedBlocks[block.uuid] = block;
+  }
+
+  _updateBlockBlockType(blockExternalId: UUID, blockType: BlockType) {
+    const block = store.blocks.get(stringify(blockExternalId));
+
+    if (!block) {
+      throw new Error('Block not found');
+    }
+
+    const event: PartialBlockEvent = {
+      blockUpdated: {
+        updateBlockType: {
+          data: {
+            blockExternalId,
+            blockType,
+          },
+        },
+      },
+    };
+
+    this.events.push(event);
+    this.updatedBlocks[block.uuid] = block;
+  }
+
+  _updateBlockContent(blockExternalId: UUID, transaction: TreeEvent[]) {
+    const block = store.blocks.get(stringify(blockExternalId));
+
+    if (!block) {
+      throw new Error('Block not found');
+    }
+
+    const event: PartialBlockEvent = {
+      blockUpdated: {
+        updateContent: {
+          data: {
+            blockExternalId,
+            transaction,
+          },
+        },
+      },
+    };
+
+    this.events.push(event);
+    this.updatedBlocks[block.uuid] = block;
+  }
+
+  adoptSiblingBlocks = (block: Block): void => {
     const parentBlock = this._getParentBlock(block);
     const siblingBlocks = this._getSiblingBlocks(block);
     let insertIndex = Tree.size(block.content);
@@ -197,8 +286,6 @@ export class EditorControllerV2 {
       if (!siblingBlock) return;
       this._updateBlockParent(siblingBlock, block.uuid);
     });
-
-    return this;
   };
 
   moveBlockToGrandparent = (block: Block) => {
@@ -220,7 +307,7 @@ export class EditorControllerV2 {
     return this;
   };
 
-  moveBlockToPreviousBlock = async (block: Block) => {
+  moveBlockToPreviousBlock = (block: Block) => {
     const parentBlock = this._getParentBlock(block);
     const blockIndex = this._getBlockIndex(block);
     const previousBlock = this._getPrecedingBlock(block);
@@ -238,10 +325,143 @@ export class EditorControllerV2 {
     return this;
   };
 
-  async save() {
-    await this._onSave({
+  save(): Promise<void> {
+    return this._onSave({
       updatedBlocks: this.updatedBlocks,
       events: this.events,
     });
+  }
+
+  getNewestBlock(): Block {
+    const block = this.createdBlocks[this.createdBlocks.length - 1];
+    if (!block) throw new Error('No blocks created');
+    return block;
+  }
+
+  getCreatedBlocks(): Block[] {
+    return this.createdBlocks;
+  }
+
+  addBlock(parentExternalId: UUID, index: number, blockType: BlockType) {
+    const blockExternalId = v4();
+    const parentBlock = store.blocks.get(stringify(parentExternalId));
+
+    if (!parentBlock) throw new Error('Parent block not found');
+
+    const block: Block = {
+      content: new Tree.Tree(),
+      parent: stringify(parentExternalId),
+      properties: {
+        title: new Tree.Tree(),
+        checked: false,
+      },
+      blockType,
+      uuid: blockExternalId,
+    };
+
+    const blockCreatedEvent: PartialBlockEvent = {
+      blockCreated: {
+        data: {
+          block: {
+            uuid: parse(blockExternalId),
+            parent: [parentExternalId],
+            blockType,
+          },
+          index: BigInt(index),
+        },
+      },
+    };
+    this.events.push(blockCreatedEvent);
+    this.updatedBlocks[block.uuid] = block;
+    this.createdBlocks.push(block);
+
+    const contentUpdatedEvent: PartialBlockEvent = {
+      blockUpdated: {
+        updateContent: {
+          data: {
+            blockExternalId: parentExternalId,
+            transaction: Tree.insertCharacter(
+              parentBlock.content,
+              index,
+              blockExternalId
+            ),
+          },
+        },
+      },
+    };
+
+    this.events.push(contentUpdatedEvent);
+    this.updatedBlocks[parentBlock.uuid] = parentBlock;
+
+    return this;
+  }
+
+  removeBlock(parentBlockExternalId: UUID, index: number) {
+    const parentId = stringify(parentBlockExternalId);
+    const parentBlock = store.blocks.get(parentId);
+
+    if (!parentBlock) {
+      throw new Error('Parent block not found');
+    }
+
+    const transaction = [Tree.removeCharacter(parentBlock.content, index - 1)];
+    const event: PartialBlockEvent = {
+      blockUpdated: {
+        updateContent: {
+          data: {
+            blockExternalId: parentBlockExternalId,
+            transaction,
+          },
+        },
+      },
+    };
+
+    this.events.push(event);
+    this.updatedBlocks[parentBlock.uuid] = parentBlock;
+
+    return this;
+  }
+
+  updateBlock(
+    blockExternalId: UUID,
+    event:
+      | { updateContent: BlockContentUpdatedEventData }
+      | { updateBlockType: BlockBlockTypeUpdatedEventData }
+      | { updateParent: BlockParentUpdatedEventData }
+      | { updatePropertyChecked: BlockPropertyCheckedUpdatedEventData }
+      | { updatePropertyTitle: BlockPropertyTitleUpdatedEventData }
+  ) {
+    if ('updatePropertyChecked' in event) {
+      this._updateBlockPropertyChecked(
+        blockExternalId,
+        event.updatePropertyChecked.checked
+      );
+    } else if ('updatePropertyTitle' in event) {
+      this._updateBlockPropertyTitle(
+        blockExternalId,
+        event.updatePropertyTitle.transaction
+      );
+    } else if ('updateBlockType' in event) {
+      this._updateBlockBlockType(
+        blockExternalId,
+        event.updateBlockType.blockType
+      );
+    } else if ('updateParent' in event) {
+      const block = store.blocks.get(stringify(blockExternalId));
+
+      if (!block) {
+        throw new Error('Block not found');
+      }
+
+      this._updateBlockParent(
+        block,
+        stringify(event.updateParent.parentBlockExternalId)
+      );
+    } else if ('updateContent' in event) {
+      this._updateBlockContent(
+        blockExternalId,
+        event.updateContent.transaction
+      );
+    }
   }
 }

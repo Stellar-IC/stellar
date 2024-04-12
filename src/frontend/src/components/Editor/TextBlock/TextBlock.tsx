@@ -5,19 +5,20 @@ import { createRef, memo, useEffect, useMemo, useState } from 'react';
 import { useErrorBoundary } from 'react-error-boundary';
 
 import { useTextBlockKeyboardEventHandlers } from '@/hooks/documents/useTextBlockKeyboardEventHandlers';
+import { useEditorSave } from '@/hooks/useEditorSave';
 
 import { useTextStyles } from './hooks/useTextStyles';
 import { TextBlockProps } from './types';
 
 const _TextBlock = ({
   blockIndex,
-  parentBlockIndex,
   blockType,
   blockExternalId,
   parentBlockExternalId,
   placeholder,
   value,
 }: TextBlockProps) => {
+  const onSave = useEditorSave();
   const [initialText, setInitialText] = useState(Tree.toText(value));
   const [initialBlockExternalId, setInitialBlockExternalId] =
     useState(blockExternalId);
@@ -58,12 +59,9 @@ const _TextBlock = ({
     blockIndex,
     blockType,
     parentBlockExternalId,
-    parentBlockIndex,
     hidePlaceholder,
     showPlaceholder,
-    onError: (error) => {
-      showBoundary(error);
-    },
+    onSave,
   });
 
   return (
@@ -109,7 +107,6 @@ export const TextBlock = memo(_TextBlock, (prev, next) => {
     return false;
   }
 
-  if (prev.parentBlockIndex !== next.parentBlockIndex) return false;
   if (prev.parentBlockExternalId !== next.parentBlockExternalId) return false;
   if (prev.placeholder !== next.placeholder) return false;
 

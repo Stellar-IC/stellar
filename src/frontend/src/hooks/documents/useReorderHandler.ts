@@ -2,21 +2,24 @@ import { Node, Tree } from '@stellar-ic/lseq-ts';
 import { useCallback } from 'react';
 import { parse } from 'uuid';
 
-import { usePagesContext } from '@/contexts/PagesContext/usePagesContext';
 import { db } from '@/db';
 import { store } from '@/modules/data-store';
+import { EditorSaveFn } from '@/modules/editor/types';
+import { useEditorActions } from '@/modules/editor/useEditorActions';
 import { ExternalId } from '@/types';
 
 import { updateBlockLocal } from './useTextBlockKeyboardEventHandlers/utils';
 
 type UseReorderHandler = {
   parentBlockExternalId?: ExternalId | null;
+  onSave: EditorSaveFn;
 };
 
 export const useReorderHandler = ({
   parentBlockExternalId,
+  onSave,
 }: UseReorderHandler) => {
-  const { updateBlock } = usePagesContext();
+  const { updateBlock } = useEditorActions({ onSave });
 
   const parentBlock = parentBlockExternalId
     ? store.blocks.get(parentBlockExternalId)
@@ -47,17 +50,15 @@ export const useReorderHandler = ({
       // Remove the block from its current position
       updateBlock(parse(parentBlock.uuid), {
         updateContent: {
-          data: {
-            blockExternalId: parse(parentBlock.uuid),
-            transaction: [
-              {
-                delete: {
-                  transactionType: { delete: null },
-                  position: node.identifier.value,
-                },
+          blockExternalId: parse(parentBlock.uuid),
+          transaction: [
+            {
+              delete: {
+                transactionType: { delete: null },
+                position: node.identifier.value,
               },
-            ],
-          },
+            },
+          ],
         },
       });
 
@@ -65,19 +66,17 @@ export const useReorderHandler = ({
         // Update the parent block's content to include block at new position
         updateBlock(parse(parentBlock.uuid), {
           updateContent: {
-            data: {
-              blockExternalId: parse(parentBlock.uuid),
-              transaction: [
-                {
-                  insert: {
-                    transactionType: { insert: null },
-                    // TODO: Fix me - The block may not have been moved to the middle of the parent block's content
-                    position: node.identifier.value,
-                    value: blockToMove.uuid,
-                  },
+            blockExternalId: parse(parentBlock.uuid),
+            transaction: [
+              {
+                insert: {
+                  transactionType: { insert: null },
+                  // TODO: Fix me - The block may not have been moved to the middle of the parent block's content
+                  position: node.identifier.value,
+                  value: blockToMove.uuid,
                 },
-              ],
-            },
+              },
+            ],
           },
         });
       };
@@ -91,17 +90,15 @@ export const useReorderHandler = ({
         if (nodes.nodeToDelete) {
           updateBlock(parse(parentBlock.uuid), {
             updateContent: {
-              data: {
-                blockExternalId: parse(parentBlock.uuid),
-                transaction: [
-                  {
-                    delete: {
-                      transactionType: { delete: null },
-                      position: nodes.nodeToDelete.identifier.value,
-                    },
+              blockExternalId: parse(parentBlock.uuid),
+              transaction: [
+                {
+                  delete: {
+                    transactionType: { delete: null },
+                    position: nodes.nodeToDelete.identifier.value,
                   },
-                ],
-              },
+                },
+              ],
             },
           });
         }

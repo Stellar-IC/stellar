@@ -12,7 +12,8 @@ import { PropsWithChildren, useCallback } from 'react';
 import { parse } from 'uuid';
 
 import { AddBlockModal } from '@/components/Editor/AddBlockModal';
-import { usePagesContext } from '@/contexts/PagesContext/usePagesContext';
+import { useEditorSave } from '@/hooks/useEditorSave';
+import { useEditorActions } from '@/modules/editor/useEditorActions';
 
 import { BlockType } from '../../../../declarations/workspace/workspace.did';
 
@@ -33,21 +34,29 @@ export const BlockWithActions = ({
   blockType,
   parentBlockExternalId,
 }: BlockWithActionsProps) => {
-  const { addBlock, removeBlock, updateBlock } = usePagesContext();
   const [isOpen, { open, close }] = useDisclosure();
   const theme = useMantineTheme();
   // const shouldShowMobileModal = useMediaQuery(
   //   `(max-width: ${theme.breakpoints.sm})`
   // );
   const shouldShowMobileModal = false;
+
   const [isAddModalOpen, { open: onAddModalOpen, close: onAddModalClose }] =
     useDisclosure();
+
   const [
     isTransformModalOpen,
     { open: onTransformModalOpen, close: onTransformModalClose },
   ] = useDisclosure();
+
   const [isShowingActions, { open: showActions, close: hideActions }] =
     useDisclosure();
+
+  const onSave = useEditorSave();
+
+  const { addBlock, updateBlock, removeBlock } = useEditorActions({
+    onSave,
+  });
 
   const parsedParentExternalId = parentBlockExternalId
     ? parse(parentBlockExternalId)
@@ -57,14 +66,12 @@ export const BlockWithActions = ({
     (item: BlockType) => {
       updateBlock(parse(blockExternalId), {
         updateBlockType: {
-          data: {
-            blockExternalId: parse(blockExternalId),
-            blockType: item,
-          },
+          blockExternalId: parse(blockExternalId),
+          blockType: item,
         },
       });
     },
-    [updateBlock, blockExternalId]
+    [blockExternalId, updateBlock]
   );
 
   return (

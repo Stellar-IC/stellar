@@ -24,7 +24,6 @@ export type TextBlockProps = {
   blockType: TextBlockBlockType;
   blockExternalId: ExternalId;
   parentBlockExternalId?: ExternalId | null;
-  parentBlockIndex?: number;
   placeholder?: string;
   value: Tree.Tree;
 };

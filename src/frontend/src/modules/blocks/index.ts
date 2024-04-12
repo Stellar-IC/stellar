@@ -63,3 +63,16 @@ export function removeTitleCharactersByIndex(
   onUpdateLocal(updatedBlock);
   onUpdateRemote(updatedBlock, allEvents);
 }
+
+export function clone(block: Block | null) {
+  if (!block) return null;
+
+  return {
+    ...block,
+    content: Tree.clone(block.content),
+    properties: {
+      ...block.properties,
+      title: Tree.clone(block.properties.title),
+    },
+  };
+}

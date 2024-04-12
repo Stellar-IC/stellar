@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { Block } from '@/types';
 
 class Table<DataT> {
-  private _data: { [key: string]: DataT } = {};
+  _data: { [key: string]: DataT } = {};
   private _subsctibers: ((table: Table<DataT>) => void)[] = [];
 
   bulkPut = (
@@ -47,13 +47,30 @@ export const store: {
   blocks: new Table(),
 };
 
-export const useStoreQuery = <ReturnT>(queryFn: () => ReturnT | null) => {
+export const useStoreQuery = <ReturnT>(
+  queryFn: () => ReturnT | null,
+  opts: {
+    clone?: (data: ReturnT | null) => ReturnT | null;
+    compare?: (a: ReturnT, b: ReturnT) => boolean;
+  } = {}
+) => {
   const [data, setData] = useState<ReturnT | null>(queryFn());
+  const {
+    compare = (a, b) => a === b,
+    clone = (data) => structuredClone(data),
+  } = opts;
 
   useEffect(() => {
     const subscription = store.blocks.subscribe(() => {
-      const newData = queryFn();
-      if (newData !== data) {
+      const newData = clone(queryFn());
+
+      if (newData === null && data === null) return;
+
+      if (newData === null || data === null) {
+        setData(newData);
+        return;
+      }
+      if (compare(newData, data) === false) {
         setData(newData);
       }
     });
@@ -61,7 +78,7 @@ export const useStoreQuery = <ReturnT>(queryFn: () => ReturnT | null) => {
     return () => {
       subscription.unsubscribe();
     };
-  }, [data, queryFn]);
+  }, [clone, compare, data, queryFn]);
 
   return data;
 };

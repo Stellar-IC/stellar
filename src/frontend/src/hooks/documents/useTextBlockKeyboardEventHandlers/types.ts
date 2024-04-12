@@ -1,4 +1,5 @@
 import { TextBlockBlockType } from '@/components/Editor/TextBlock/types';
+import type { EditorSaveFn } from '@/modules/editor/types';
 
 import {
   BlockBlockTypeUpdatedEventData,
@@ -7,16 +8,25 @@ import {
   BlockParentUpdatedEventData,
   BlockPropertyTitleUpdatedEventData,
   ExternalId,
+  BlockCreatedEventData,
 } from '../../../../../declarations/workspace/workspace.did';
 
-export type PartialBlockEvent = {
-  blockUpdated:
-    | { updateContent: { data: BlockContentUpdatedEventData } }
-    | { updatePropertyChecked: { data: BlockPropertyCheckedUpdatedEventData } }
-    | { updateBlockType: { data: BlockBlockTypeUpdatedEventData } }
-    | { updateParent: { data: BlockParentUpdatedEventData } }
-    | { updatePropertyTitle: { data: BlockPropertyTitleUpdatedEventData } };
-};
+export type PartialBlockEvent =
+  | {
+      blockUpdated:
+        | { updateContent: { data: BlockContentUpdatedEventData } }
+        | {
+            updatePropertyChecked: {
+              data: BlockPropertyCheckedUpdatedEventData;
+            };
+          }
+        | { updateBlockType: { data: BlockBlockTypeUpdatedEventData } }
+        | { updateParent: { data: BlockParentUpdatedEventData } }
+        | { updatePropertyTitle: { data: BlockPropertyTitleUpdatedEventData } };
+    }
+  | {
+      blockCreated: { data: BlockCreatedEventData };
+    };
 
 export type UseTextBlockKeyboardEventHandlersProps = {
   blockExternalId: ExternalId;
@@ -25,5 +35,5 @@ export type UseTextBlockKeyboardEventHandlersProps = {
   parentBlockExternalId?: ExternalId | null;
   showPlaceholder: () => void;
   hidePlaceholder: () => void;
-  onError?: (error: Error) => void;
+  onSave: EditorSaveFn;
 };

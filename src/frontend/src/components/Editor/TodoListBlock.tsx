@@ -1,27 +1,26 @@
 import { Checkbox, Flex } from '@mantine/core';
 import { parse } from 'uuid';
 
-import { usePagesContext } from '@/contexts/PagesContext/usePagesContext';
+import { useEditorSave } from '@/hooks/useEditorSave';
+import { useEditorActions } from '@/modules/editor/useEditorActions';
 import { Block } from '@/types';
 
 import { TextBlock } from './TextBlock';
 
 interface TodoListBlockProps {
-  parentBlockIndex?: number;
   block: Block;
   index: number;
 }
 
-export const TodoListBlock = ({
-  block,
-  index,
-  parentBlockIndex,
-}: TodoListBlockProps) => {
+export const TodoListBlock = ({ block, index }: TodoListBlockProps) => {
   if (!('todoList' in block.blockType)) {
     throw new Error('Expected todoList block');
   }
 
-  const { updateBlock } = usePagesContext();
+  const onSave = useEditorSave();
+  const { updateBlock } = useEditorActions({
+    onSave,
+  });
   const parentExternalId = block.parent;
   const parsedExternalId = parse(block.uuid);
 
@@ -33,10 +32,8 @@ export const TodoListBlock = ({
         onChange={(e) => {
           updateBlock(parsedExternalId, {
             updatePropertyChecked: {
-              data: {
-                checked: e.target.checked,
-                blockExternalId: parsedExternalId,
-              },
+              checked: e.target.checked,
+              blockExternalId: parsedExternalId,
             },
           });
         }}
@@ -46,7 +43,6 @@ export const TodoListBlock = ({
         blockExternalId={block.uuid}
         blockIndex={index}
         parentBlockExternalId={parentExternalId}
-        parentBlockIndex={parentBlockIndex}
         value={block.properties.title}
         blockType={block.blockType}
       />

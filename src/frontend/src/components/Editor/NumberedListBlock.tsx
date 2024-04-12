@@ -4,6 +4,7 @@ import { Tree } from '@stellar-ic/lseq-ts';
 import { createRef, useEffect, useMemo, useState } from 'react';
 
 import { useTextBlockKeyboardEventHandlers } from '@/hooks/documents/useTextBlockKeyboardEventHandlers';
+import { useEditorSave } from '@/hooks/useEditorSave';
 import { Block, ExternalId } from '@/types';
 
 import { useTextStyles } from './TextBlock/hooks/useTextStyles';
@@ -13,14 +14,12 @@ export type NumberedListBlockInnerProps = {
   blockType: { numberedList: null };
   blockExternalId: ExternalId;
   parentBlockExternalId?: ExternalId | null;
-  parentBlockIndex?: number;
   placeholder?: string;
   value: Tree.Tree;
 };
 
 const NumberedListBlockInner = ({
   blockIndex,
-  parentBlockIndex,
   blockType,
   blockExternalId,
   parentBlockExternalId,
@@ -40,14 +39,15 @@ const NumberedListBlockInner = ({
     textBoxRef.current.innerText = initialText;
   }, [initialText, textBoxRef]);
 
+  const onSave = useEditorSave();
   const { onKeyDown, onPaste } = useTextBlockKeyboardEventHandlers({
     blockExternalId,
     blockIndex,
     blockType,
     parentBlockExternalId,
-    parentBlockIndex,
     showPlaceholder,
     hidePlaceholder,
+    onSave,
   });
 
   return (

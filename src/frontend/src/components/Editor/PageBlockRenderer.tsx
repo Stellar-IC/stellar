@@ -8,7 +8,6 @@ import { TextBlock } from './TextBlock';
 interface PageBlockRendererProps {
   block: Block;
   index: number;
-  parentBlockIndex?: number;
   placeholder?: string;
   blockType: { page: null };
 }
@@ -17,7 +16,6 @@ export const PageBlockRenderer = ({
   block,
   blockType,
   index,
-  parentBlockIndex,
   placeholder,
 }: PageBlockRendererProps) => {
   const parentExternalId = block.parent;
@@ -34,7 +32,6 @@ export const PageBlockRenderer = ({
           blockType={blockType}
           blockExternalId={block.uuid}
           parentBlockExternalId={parentExternalId}
-          parentBlockIndex={parentBlockIndex}
           placeholder={placeholder}
           value={block.properties.title}
         />

@@ -1,20 +1,15 @@
 import { KeyboardEvent, useCallback } from 'react';
 import { parse } from 'uuid';
 
-import { usePagesContext } from '@/contexts/PagesContext/usePagesContext';
 import { useWorkspaceContext } from '@/contexts/WorkspaceContext/useWorkspaceContext';
-import { db } from '@/db';
-import { useSaveEvents } from '@/hooks/canisters/workspace/updates/useSaveEvents';
 import { useAuthContext } from '@/modules/auth/contexts/AuthContext';
+import * as BlockModule from '@/modules/blocks';
 import { store, useStoreQuery } from '@/modules/data-store';
 import * as EditorActionModule from '@/modules/editor/EditorAction';
+import { useEditorActions } from '@/modules/editor/useEditorActions';
 import { setCursorAtEnd } from '@/modules/editor/utils/selection';
-import { Block } from '@/types';
 
-import {
-  PartialBlockEvent,
-  UseTextBlockKeyboardEventHandlersProps,
-} from './types';
+import { UseTextBlockKeyboardEventHandlersProps } from './types';
 import { useArrowDownHandler } from './useArrowDownHandler';
 import { useArrowUpHandler } from './useArrowUpHandler';
 import { useBackspaceHandler } from './useBackspaceHandler';
@@ -24,7 +19,6 @@ import { useShiftTabHandler } from './useShiftTabHandler';
 import { useTabHandler } from './useTabHandler';
 import { useWordCharacterHandler } from './useWordCharacterHandler';
 import {
-  buildEvent,
   insertTextAtPosition,
   onCharacterInserted,
   onCharactersRemoved,
@@ -41,39 +35,14 @@ export const useTextBlockKeyboardEventHandlers = ({
   parentBlockExternalId,
   showPlaceholder,
   hidePlaceholder,
-}: // onError,
-UseTextBlockKeyboardEventHandlersProps) => {
+  onSave,
+}: UseTextBlockKeyboardEventHandlersProps) => {
   const { workspaceId } = useWorkspaceContext();
-  const { userId, identity } = useAuthContext();
-  const { removeBlock } = usePagesContext();
-  const block = useStoreQuery(() => store.blocks.get(blockExternalId));
-
-  const [saveEvents] = useSaveEvents({
-    identity,
-    workspaceId,
+  const { userId } = useAuthContext();
+  const { removeBlock } = useEditorActions({ onSave });
+  const block = useStoreQuery(() => store.blocks.get(blockExternalId), {
+    clone: BlockModule.clone,
   });
-
-  const onSave = useCallback(
-    async (data: {
-      events: PartialBlockEvent[];
-      updatedBlocks: { [key: string]: Block };
-    }) => {
-      const { events, updatedBlocks } = data;
-
-      store.blocks.bulkPut(
-        Object.values(updatedBlocks).map((block) => ({
-          key: block.uuid,
-          value: block,
-        }))
-      );
-
-      await db.blocks.bulkPut(Object.values(updatedBlocks));
-      await saveEvents({
-        transaction: events.map((x) => buildEvent(x, userId)),
-      });
-    },
-    [userId, saveEvents]
-  );
 
   const onRemoveBlock = useCallback(() => {
     if (!parentBlockExternalId) return;
@@ -120,6 +89,7 @@ UseTextBlockKeyboardEventHandlersProps) => {
     blockIndex,
     blockType,
     parentBlockExternalId,
+    onSave,
   });
 
   const handleWordCharacter = useWordCharacterHandler({

@@ -10,6 +10,7 @@ import { Page } from '@/components/layout/page/Page';
 import { useWorkspaceContext } from '@/contexts/WorkspaceContext/useWorkspaceContext';
 import { useBlockQuery } from '@/hooks/canisters/workspace/queries/useBlockQuery';
 import { useAuthContext } from '@/modules/auth/contexts/AuthContext';
+import * as BlockModule from '@/modules/blocks';
 import { store, useStoreQuery } from '@/modules/data-store';
 
 import classes from './PageDetail.module.css';
@@ -19,7 +20,9 @@ function PageDetailPageInner(props: { pageId: string }) {
   const { workspaceId } = useWorkspaceContext();
   const { identity } = useAuthContext();
   const queryPage = useBlockQuery({ identity, workspaceId });
-  const page = useStoreQuery(() => store.blocks.get(pageId));
+  const page = useStoreQuery(() => store.blocks.get(pageId), {
+    clone: BlockModule.clone,
+  });
 
   useEffect(() => {
     queryPage(parse(pageId));

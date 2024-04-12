@@ -2,17 +2,13 @@ import { useCallback } from 'react';
 
 import { db } from '@/db';
 import { EditorControllerV2 } from '@/modules/editor/EditorControllerV2';
+import { EditorSaveFn } from '@/modules/editor/types';
 import { focusBlock } from '@/modules/editor/utils/focus';
-import { Block, ExternalId } from '@/types';
-
-import { PartialBlockEvent } from './types';
+import { ExternalId } from '@/types';
 
 type UseTabHandler = {
   blockExternalId: ExternalId;
-  onSave: (data: {
-    events: PartialBlockEvent[];
-    updatedBlocks: { [key: string]: Block };
-  }) => void;
+  onSave: EditorSaveFn;
 };
 
 export const useTabHandler = ({ blockExternalId, onSave }: UseTabHandler) => {
