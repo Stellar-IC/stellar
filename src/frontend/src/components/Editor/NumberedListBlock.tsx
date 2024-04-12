@@ -3,7 +3,7 @@ import { useDisclosure } from '@mantine/hooks';
 import { Tree } from '@stellar-ic/lseq-ts';
 import { createRef, useEffect, useMemo, useState } from 'react';
 
-import { useTextBlockKeyboardEventHandlers } from '@/hooks/documents/useTextBlockKeyboardEventHandlers';
+import { useEditorEventHandlers } from '@/modules/editor/hooks/useEditorEventHandlers';
 import { useEditorSave } from '@/hooks/useEditorSave';
 import { Block, ExternalId } from '@/types';
 
@@ -40,7 +40,7 @@ const NumberedListBlockInner = ({
   }, [initialText, textBoxRef]);
 
   const onSave = useEditorSave();
-  const { onKeyDown, onPaste } = useTextBlockKeyboardEventHandlers({
+  const { onKeyDown, onPaste } = useEditorEventHandlers({
     blockExternalId,
     blockIndex,
     blockType,

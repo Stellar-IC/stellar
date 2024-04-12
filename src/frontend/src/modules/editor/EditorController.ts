@@ -2,7 +2,7 @@ import { Tree } from '@stellar-ic/lseq-ts';
 import { TreeEvent } from '@stellar-ic/lseq-ts/types';
 import { parse, stringify, v4 } from 'uuid';
 
-import { PartialBlockEvent } from '@/hooks/documents/useTextBlockKeyboardEventHandlers/types';
+import { PartialBlockEvent } from '@/modules/editor/hooks/useEditorEventHandlers/types';
 import { Block } from '@/types';
 
 import {
@@ -19,7 +19,7 @@ import { store } from '../data-store';
 
 import { EditorSaveFn } from './types';
 
-export class EditorControllerV2 {
+export class EditorController {
   private events: PartialBlockEvent[] = [];
   private updatedBlocks: { [key: string]: Block } = {};
   private createdBlocks: Block[] = [];

@@ -9,11 +9,11 @@ import * as blockSerializers from '@/modules/blocks/serializers';
 import { store } from '@/modules/data-store';
 import { Block } from '@/types';
 
-import { createActor } from '../../../../../declarations/workspace';
+import { createActor } from '../../../../../../declarations/workspace';
 import {
   BlockEvent,
   SaveEventTransactionUpdateInput,
-} from '../../../../../declarations/workspace/workspace.did';
+} from '../../../../../../declarations/workspace/workspace.did';
 
 import { PartialBlockEvent } from './types';
 

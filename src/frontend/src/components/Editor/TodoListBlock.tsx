@@ -2,7 +2,7 @@ import { Checkbox, Flex } from '@mantine/core';
 import { parse } from 'uuid';
 
 import { useEditorSave } from '@/hooks/useEditorSave';
-import { useEditorActions } from '@/modules/editor/useEditorActions';
+import { useEditorActions } from '@/modules/editor/hooks/useEditorActions';
 import { Block } from '@/types';
 
 import { TextBlock } from './TextBlock';

@@ -13,7 +13,7 @@ import { parse } from 'uuid';
 
 import { AddBlockModal } from '@/components/Editor/AddBlockModal';
 import { useEditorSave } from '@/hooks/useEditorSave';
-import { useEditorActions } from '@/modules/editor/useEditorActions';
+import { useEditorActions } from '@/modules/editor/hooks/useEditorActions';
 
 import { BlockType } from '../../../../declarations/workspace/workspace.did';
 

@@ -5,10 +5,10 @@ import { parse } from 'uuid';
 import { db } from '@/db';
 import { store } from '@/modules/data-store';
 import { EditorSaveFn } from '@/modules/editor/types';
-import { useEditorActions } from '@/modules/editor/useEditorActions';
+import { useEditorActions } from '@/modules/editor/hooks/useEditorActions';
 import { ExternalId } from '@/types';
 
-import { updateBlockLocal } from './useTextBlockKeyboardEventHandlers/utils';
+import { updateBlockLocal } from '../../modules/editor/hooks/useEditorEventHandlers/utils';
 
 type UseReorderHandler = {
   parentBlockExternalId?: ExternalId | null;

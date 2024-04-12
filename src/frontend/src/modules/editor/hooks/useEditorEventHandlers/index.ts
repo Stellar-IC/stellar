@@ -6,10 +6,10 @@ import { useAuthContext } from '@/modules/auth/contexts/AuthContext';
 import * as BlockModule from '@/modules/blocks';
 import { store, useStoreQuery } from '@/modules/data-store';
 import * as EditorActionModule from '@/modules/editor/EditorAction';
-import { useEditorActions } from '@/modules/editor/useEditorActions';
+import { useEditorActions } from '@/modules/editor/hooks/useEditorActions';
 import { setCursorAtEnd } from '@/modules/editor/utils/selection';
 
-import { UseTextBlockKeyboardEventHandlersProps } from './types';
+import { useEditorEventHandlersProps } from './types';
 import { useArrowDownHandler } from './useArrowDownHandler';
 import { useArrowUpHandler } from './useArrowUpHandler';
 import { useBackspaceHandler } from './useBackspaceHandler';
@@ -28,7 +28,7 @@ type EditorAction = EditorActionModule.EditorAction;
 
 const { EditorAction } = EditorActionModule;
 
-export const useTextBlockKeyboardEventHandlers = ({
+export const useEditorEventHandlers = ({
   blockIndex,
   blockType,
   blockExternalId,
@@ -36,7 +36,7 @@ export const useTextBlockKeyboardEventHandlers = ({
   showPlaceholder,
   hidePlaceholder,
   onSave,
-}: UseTextBlockKeyboardEventHandlersProps) => {
+}: useEditorEventHandlersProps) => {
   const { workspaceId } = useWorkspaceContext();
   const { userId } = useAuthContext();
   const { removeBlock } = useEditorActions({ onSave });

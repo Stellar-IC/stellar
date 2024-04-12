@@ -4,7 +4,7 @@ import { Tree } from '@stellar-ic/lseq-ts';
 import { createRef, memo, useEffect, useMemo, useState } from 'react';
 import { useErrorBoundary } from 'react-error-boundary';
 
-import { useTextBlockKeyboardEventHandlers } from '@/hooks/documents/useTextBlockKeyboardEventHandlers';
+import { useEditorEventHandlers } from '@/modules/editor/hooks/useEditorEventHandlers';
 import { useEditorSave } from '@/hooks/useEditorSave';
 
 import { useTextStyles } from './hooks/useTextStyles';
@@ -54,7 +54,7 @@ const _TextBlock = ({
 
   const { showBoundary } = useErrorBoundary();
 
-  const { onKeyDown, onCut, onPaste } = useTextBlockKeyboardEventHandlers({
+  const { onKeyDown, onCut, onPaste } = useEditorEventHandlers({
     blockExternalId,
     blockIndex,
     blockType,

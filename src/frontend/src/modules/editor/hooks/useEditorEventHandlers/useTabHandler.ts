@@ -1,7 +1,7 @@
 import { useCallback } from 'react';
 
 import { db } from '@/db';
-import { EditorControllerV2 } from '@/modules/editor/EditorControllerV2';
+import { EditorController } from '@/modules/editor/EditorController';
 import { EditorSaveFn } from '@/modules/editor/types';
 import { focusBlock } from '@/modules/editor/utils/focus';
 import { ExternalId } from '@/types';
@@ -16,7 +16,7 @@ export const useTabHandler = ({ blockExternalId, onSave }: UseTabHandler) => {
     const blockToMove = await db.blocks.get(blockExternalId);
     if (!blockToMove) return false;
 
-    const controller = new EditorControllerV2({ onSave });
+    const controller = new EditorController({ onSave });
 
     await controller.moveBlockToPreviousBlock(blockToMove);
     await controller.save();

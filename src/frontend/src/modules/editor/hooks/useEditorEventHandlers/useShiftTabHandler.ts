@@ -1,7 +1,7 @@
 import { useCallback } from 'react';
 
 import { store } from '@/modules/data-store';
-import { EditorControllerV2 } from '@/modules/editor/EditorControllerV2';
+import { EditorController } from '@/modules/editor/EditorController';
 import { EditorSaveFn } from '@/modules/editor/types';
 import { focusBlock } from '@/modules/editor/utils/focus';
 import { ExternalId } from '@/types';
@@ -20,7 +20,7 @@ export const useShiftTabHandler = ({
 
     if (!blockToMove) return false;
 
-    const controller = new EditorControllerV2({ onSave });
+    const controller = new EditorController({ onSave });
 
     await controller.adoptSiblingBlocks(blockToMove);
     await controller.moveBlockToGrandparent(blockToMove);

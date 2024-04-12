@@ -3,13 +3,13 @@ import { parse } from 'uuid';
 
 import { db } from '@/db';
 import * as BlockkModule from '@/modules/blocks';
-import { EditorControllerV2 } from '@/modules/editor/EditorControllerV2';
+import { EditorController } from '@/modules/editor/EditorController';
 import { EditorSaveFn } from '@/modules/editor/types';
-import { useEditorActions } from '@/modules/editor/useEditorActions';
+import { useEditorActions } from '@/modules/editor/hooks/useEditorActions';
 import { focusBlock } from '@/modules/editor/utils/focus';
 import { ExternalId } from '@/types';
 
-import { BlockType } from '../../../../../declarations/workspace/workspace.did';
+import { BlockType } from '../../../../../../declarations/workspace/workspace.did';
 
 import { updateBlockLocal } from './utils';
 
@@ -44,7 +44,7 @@ export function useEnterHandler({
     const blockTitleLength = blockTitle.length;
     const blockTitleAfterCursor = blockTitle.slice(cursorPosition);
 
-    const controller = new EditorControllerV2({ onSave });
+    const controller = new EditorController({ onSave });
 
     if (blockTitleLength === 0) {
       await controller

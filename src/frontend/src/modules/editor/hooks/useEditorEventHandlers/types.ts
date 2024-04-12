@@ -9,7 +9,7 @@ import {
   BlockPropertyTitleUpdatedEventData,
   ExternalId,
   BlockCreatedEventData,
-} from '../../../../../declarations/workspace/workspace.did';
+} from '../../../../../../declarations/workspace/workspace.did';
 
 export type PartialBlockEvent =
   | {
@@ -28,7 +28,7 @@ export type PartialBlockEvent =
       blockCreated: { data: BlockCreatedEventData };
     };
 
-export type UseTextBlockKeyboardEventHandlersProps = {
+export type useEditorEventHandlersProps = {
   blockExternalId: ExternalId;
   blockIndex: number;
   blockType: TextBlockBlockType;

@@ -1,4 +1,4 @@
-import { PartialBlockEvent } from '@/hooks/documents/useTextBlockKeyboardEventHandlers/types';
+import { PartialBlockEvent } from '@/modules/editor/hooks/useEditorEventHandlers/types';
 import { Block } from '@/types';
 
 export type EditorSaveFn = (data: {

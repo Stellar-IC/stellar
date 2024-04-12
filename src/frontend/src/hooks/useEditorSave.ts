@@ -8,8 +8,8 @@ import { store } from '@/modules/data-store';
 import { Block } from '@/types';
 
 import { useSaveEvents } from './canisters/workspace/updates/useSaveEvents';
-import { PartialBlockEvent } from './documents/useTextBlockKeyboardEventHandlers/types';
-import { buildEvent } from './documents/useTextBlockKeyboardEventHandlers/utils';
+import { PartialBlockEvent } from '../modules/editor/hooks/useEditorEventHandlers/types';
+import { buildEvent } from '../modules/editor/hooks/useEditorEventHandlers/utils';
 
 export const useEditorSave = () => {
   const { workspaceId } = useWorkspaceContext();
