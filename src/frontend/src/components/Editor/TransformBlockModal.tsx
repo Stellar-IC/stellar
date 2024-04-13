@@ -50,10 +50,6 @@ export const TransformBlockModal = ({
       value: { numberedList: null },
     },
     {
-      label: 'Toggle List',
-      value: { toggleList: null },
-    },
-    {
       label: 'Code',
       value: { code: null },
     },

@@ -6,7 +6,10 @@
   z-index: 100;
   width: 100%;
   height: 100%;
-  background-color: var(--mantine-color-dark-8);
+  background-color: light-dark(
+    var(--mantine-color-gray-1),
+    var(--mantine-color-dark-8)
+  );
   padding: var(--mantine-spacing-md);
   padding-top: rem(56px);
   display: flex;

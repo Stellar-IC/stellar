@@ -4,8 +4,8 @@ import { Tree } from '@stellar-ic/lseq-ts';
 import { createRef, memo, useEffect, useMemo, useState } from 'react';
 import { useErrorBoundary } from 'react-error-boundary';
 
-import { useEditorEventHandlers } from '@/modules/editor/hooks/useEditorEventHandlers';
 import { useEditorSave } from '@/hooks/useEditorSave';
+import { useEditorEventHandlers } from '@/modules/editor/hooks/useEditorEventHandlers';
 
 import { useTextStyles } from './hooks/useTextStyles';
 import { TextBlockProps } from './types';

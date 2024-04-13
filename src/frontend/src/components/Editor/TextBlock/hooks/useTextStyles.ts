@@ -13,7 +13,6 @@ export const useTextStyles = ({ blockType }: UseTextStylesProps) => {
       'todoList' in blockType ||
       'bulletedList' in blockType ||
       'numberedList' in blockType ||
-      'toggleList' in blockType ||
       'code' in blockType ||
       'quote' in blockType ||
       'callout' in blockType

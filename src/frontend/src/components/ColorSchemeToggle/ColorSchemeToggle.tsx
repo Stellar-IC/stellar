@@ -1,13 +1,28 @@
-import { Button, Group, useMantineColorScheme } from '@mantine/core';
+import {
+  Button,
+  Menu,
+  MenuDropdown,
+  MenuItem,
+  MenuTarget,
+  useMantineColorScheme,
+} from '@mantine/core';
+import { IconPaint } from '@tabler/icons-react';
 
 export function ColorSchemeToggle() {
   const { setColorScheme } = useMantineColorScheme();
 
   return (
-    <Group justify="center" mt="xl">
-      <Button onClick={() => setColorScheme('light')}>Light</Button>
-      <Button onClick={() => setColorScheme('dark')}>Dark</Button>
-      <Button onClick={() => setColorScheme('auto')}>Auto</Button>
-    </Group>
+    <Menu width="dropdown">
+      <MenuTarget>
+        <Button size="compact-sm" variant="transparent">
+          <IconPaint />
+        </Button>
+      </MenuTarget>
+      <MenuDropdown>
+        <MenuItem onClick={() => setColorScheme('light')}>Light</MenuItem>
+        <MenuItem onClick={() => setColorScheme('dark')}>Dark</MenuItem>
+        <MenuItem onClick={() => setColorScheme('auto')}>Auto</MenuItem>
+      </MenuDropdown>
+    </Menu>
   );
 }

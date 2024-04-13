@@ -167,7 +167,7 @@ export function updateBlockRemote(
   });
 }
 
-export function onCharacterInserted(
+export function insertCharacter(
   context: Context,
   position: number,
   character: string,
@@ -185,7 +185,7 @@ export function onCharacterInserted(
   });
 }
 
-export function onCharactersInserted(
+export function insertCharacters(
   context: Context,
   characters: string[],
   position: number,
@@ -223,7 +223,7 @@ export function onCharacterRemoved(
   });
 }
 
-export function onCharactersRemoved(
+export function removeCharacters(
   context: Context,
   startPosition: number,
   endPosition?: number,
@@ -278,5 +278,5 @@ export function insertTextAtPosition(
   characters.splice(position, 0, ...clipboardCharacters);
   target.innerText = characters.join(''); // eslint-disable-line no-param-reassign
 
-  onCharactersInserted(context, clipboardCharacters, position, opts);
+  insertCharacters(context, clipboardCharacters, position, opts);
 }

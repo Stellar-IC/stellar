@@ -1,4 +1,4 @@
-import { Box, Flex, MantineTheme, Text } from '@mantine/core';
+import { Box, Flex, MantineTheme, rem, Text } from '@mantine/core';
 import { Tree } from '@stellar-ic/lseq-ts';
 import { getNodeAtPosition } from '@stellar-ic/lseq-ts/Tree';
 import { IconBulbFilled } from '@tabler/icons-react';
@@ -28,12 +28,13 @@ const NestedBlocks = ({ depth, blockExternalId }: NestedBlocksProps) => {
   });
 
   if (!block) return null;
+
   const nestedBlockIds = Tree.toArray(block.content);
 
   if (nestedBlockIds.length === 0) return null;
 
   return (
-    <Box pos="relative" w="100%" pt="0.25rem">
+    <Box pos="relative" w="100%">
       {nestedBlockIds.map((externalId, i) => (
         <Box key={externalId}>
           {/* eslint-disable-next-line @typescript-eslint/no-use-before-define */}
@@ -191,6 +192,7 @@ export const _BlockRenderer = ({
   const block = useStoreQuery(() => store.blocks.get(externalId), {
     clone: BlockModule.clone,
   });
+
   const parentBlock = useStoreQuery(
     () => {
       if (!parentBlockExternalId) return null;
@@ -287,7 +289,7 @@ export const _BlockRenderer = ({
         blockType={block.blockType}
         parentBlockExternalId={parentBlockExternalId}
       >
-        <Box style={getStyle}>
+        <Box style={getStyle} py={rem(3)}>
           <BlockRendererInner
             index={index}
             placeholder={placeholder}

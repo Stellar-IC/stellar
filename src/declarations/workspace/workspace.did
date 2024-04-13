@@ -1,260 +1,230 @@
-type Workspace__1 = 
- record {
-   createdAt: Time;
-   description: WorkspaceDescription;
-   name: WorkspaceName;
-   owner: WorkspaceOwner;
-   updatedAt: Time;
-   uuid: UUID;
- };
-type WorkspaceUserRole = 
- variant {
-   admin;
-   guest;
-   member;
-   moderator;
- };
-type WorkspaceUser = 
- record {
-   canisterId: principal;
-   role: WorkspaceUserRole;
-   username: text;
- };
+type Workspace__1 = record {
+  createdAt : Time;
+  description : WorkspaceDescription;
+  name : WorkspaceName;
+  owner : WorkspaceOwner;
+  updatedAt : Time;
+  uuid : UUID;
+};
+type WorkspaceUserRole = variant {
+  admin;
+  guest;
+  member;
+  moderator;
+};
+type WorkspaceUser = record {
+  canisterId : principal;
+  role : WorkspaceUserRole;
+  username : text;
+};
 type WorkspaceOwner__1 = principal;
 type WorkspaceOwner = principal;
 type WorkspaceName = text;
-type WorkspaceInitData__1 = 
- record {
-   createdAt: Time;
-   description: text;
-   name: text;
-   updatedAt: Time;
-   uuid: UUID;
- };
-type WorkspaceInitData = 
- record {
-   createdAt: Time;
-   description: WorkspaceDescription;
-   name: WorkspaceName;
-   updatedAt: Time;
-   uuid: UUID;
- };
-type WorkspaceInitArgs__1 = 
- record {
-   capacity: nat;
-   owner: WorkspaceOwner__1;
- };
-type WorkspaceInitArgs = 
- record {
-   capacity: nat;
-   owner: WorkspaceOwner;
- };
+type WorkspaceInitData__1 = record {
+  createdAt : Time;
+  description : text;
+  name : text;
+  updatedAt : Time;
+  uuid : UUID;
+};
+type WorkspaceInitData = record {
+  createdAt : Time;
+  description : WorkspaceDescription;
+  name : WorkspaceName;
+  updatedAt : Time;
+  uuid : UUID;
+};
+type WorkspaceInitArgs__1 = record {
+  capacity : nat;
+  owner : WorkspaceOwner__1;
+};
+type WorkspaceInitArgs = record {
+  capacity : nat;
+  owner : WorkspaceOwner;
+};
 type WorkspaceDescription = text;
-type Workspace = 
- service {
-   activityLog: (UUID) -> (ActivityLogOutput) query;
-   addBlock: (AddBlockUpdateInput) -> (AddBlockUpdateOutput);
-   /// ***********************************************************************
-   ///      * Updates
-   ///      ************************************************************************
-   addUsers: (AddUsersUpdateInput) -> (AddUsersUpdateResult);
-   block: (UUID, BlockByUuidOptions) -> (BlockByUuidResult) query;
-   createPage: (CreatePageUpdateInput) -> (CreatePageUpdateOutput);
-   deletePage: (DeletePageUpdateInput) -> (DeletePageUpdateOutput);
-   /// ***********************************************************************
-   ///      * Canister Monitoring
-   ///      ************************************************************************
-   /// * Returns canister information based on passed parameters.
-   ///     * Called from browser.
-   getCanistergeekInformation: (GetInformationRequest) ->
-    (GetInformationResponse) query;
-   /// ***********************************************************************
-   ///      * Initialization helper methods
-   ///      ************************************************************************
-   getInitArgs: () -> (GetInitArgsOutput) query;
-   getInitData: () -> (GetInitDataOutput) query;
-   pages: (PagesOptionsArg) -> (PagesResult) query;
-   saveEvents: (SaveEventTransactionUpdateInput) ->
-    (SaveEventTransactionUpdateOutput);
-   /// ***********************************************************************
-   ///      * Queries
-   ///      ************************************************************************
-   toObject: () -> (Workspace__1) query;
-   updateBlock: (UpdateBlockUpdateInput) -> (UpdateBlockUpdateOutput);
-   /// * Updates canister information based on passed parameters at current time.
-   ///      * Called from browser or any canister "update" method.
-   updateCanistergeekInformation: (UpdateInformationRequest) -> ();
-   walletReceive: () -> (record {accepted: nat64;});
- };
+type Workspace = service {
+  activityLog : (UUID) -> (ActivityLogOutput) query;
+  addBlock : (AddBlockUpdateInput) -> (AddBlockUpdateOutput);
+  /// ***********************************************************************
+  ///      * Updates
+  ///      ************************************************************************
+  addUsers : (AddUsersUpdateInput) -> (AddUsersUpdateResult);
+  block : (UUID, BlockByUuidOptions) -> (BlockByUuidResult) query;
+  createPage : (CreatePageUpdateInput) -> (CreatePageUpdateOutput);
+  deletePage : (DeletePageUpdateInput) -> (DeletePageUpdateOutput);
+  /// ***********************************************************************
+  ///      * Canister Monitoring
+  ///      ************************************************************************
+  /// * Returns canister information based on passed parameters.
+  ///     * Called from browser.
+  getCanistergeekInformation : (GetInformationRequest) -> (GetInformationResponse) query;
+  /// ***********************************************************************
+  ///      * Initialization helper methods
+  ///      ************************************************************************
+  getInitArgs : () -> (GetInitArgsOutput) query;
+  getInitData : () -> (GetInitDataOutput) query;
+  pages : (PagesOptionsArg) -> (PagesResult) query;
+  saveEvents : (SaveEventTransactionUpdateInput) -> (SaveEventTransactionUpdateOutput);
+  /// ***********************************************************************
+  ///      * Queries
+  ///      ************************************************************************
+  toObject : () -> (Workspace__1) query;
+  updateBlock : (UpdateBlockUpdateInput) -> (UpdateBlockUpdateOutput);
+  /// * Updates canister information based on passed parameters at current time.
+  ///      * Called from browser or any canister "update" method.
+  updateCanistergeekInformation : (UpdateInformationRequest) -> ();
+  walletReceive : () -> (record { accepted : nat64 });
+};
 type UpdateInformationRequest = record {
-                                  metrics: opt CollectMetricsRequestType;};
+  metrics : opt CollectMetricsRequestType;
+};
 type UpdateCallsAggregatedData = vec nat64;
-type UpdateBlockUpdateOutputResult = 
- record {
-   blockType: BlockType;
-   content: ShareableBlockContent;
-   parent: opt UUID;
-   properties: ShareableBlockProperties;
-   uuid: UUID;
- };
-type UpdateBlockUpdateOutputError = variant {primaryKeyAttrNotFound;};
-type UpdateBlockUpdateOutput = 
- variant {
-   err: UpdateBlockUpdateOutputError;
-   ok: UpdateBlockUpdateOutputResult;
- };
-type UpdateBlockUpdateInput = 
- record {
-   blockType: BlockType;
-   content: ShareableBlockContent;
-   parent: opt UUID;
-   properties: ShareableBlockProperties;
-   uuid: UUID;
- };
+type UpdateBlockUpdateOutputResult = record {
+  blockType : BlockType;
+  content : ShareableBlockContent;
+  parent : opt UUID;
+  properties : ShareableBlockProperties;
+  uuid : UUID;
+};
+type UpdateBlockUpdateOutputError = variant { primaryKeyAttrNotFound };
+type UpdateBlockUpdateOutput = variant {
+  err : UpdateBlockUpdateOutputError;
+  ok : UpdateBlockUpdateOutputResult;
+};
+type UpdateBlockUpdateInput = record {
+  blockType : BlockType;
+  content : ShareableBlockContent;
+  parent : opt UUID;
+  properties : ShareableBlockProperties;
+  uuid : UUID;
+};
 type UUID = vec nat8;
-type TreeEvent = 
- variant {
-   delete:
-    record {
-      position: NodeIdentifier;
-      transactionType: variant {delete;};
-    };
-   insert:
-    record {
-      position: NodeIdentifier;
-      transactionType: variant {insert;};
-      value: NodeValue;
-    };
- };
+type TreeEvent = variant {
+  delete : record {
+    position : NodeIdentifier;
+    transactionType : variant { delete };
+  };
+  insert : record {
+    position : NodeIdentifier;
+    transactionType : variant { insert };
+    value : NodeValue;
+  };
+};
 type Time = int;
-type StatusResponse = 
- record {
-   cycles: opt nat64;
-   heap_memory_size: opt nat64;
-   memory_size: opt nat64;
- };
-type StatusRequest = 
- record {
-   cycles: bool;
-   heap_memory_size: bool;
-   memory_size: bool;
- };
-type SortOrder = 
- record {
-   direction: SortDirection;
-   fieldName: text;
- };
-type SortDirection = 
- variant {
-   asc;
-   desc;
- };
-type ShareableNode = 
- record {
-   base: NodeBase;
-   children: vec record {
-                   NodeIndex;
-                   ShareableNode;
-                 };
-   deletedAt: opt Time;
-   identifier: NodeIdentifier;
-   value: NodeValue;
- };
-type ShareableBlock__1 = 
- record {
-   blockType: BlockType;
-   content: ShareableBlockContent;
-   parent: opt UUID;
-   properties: ShareableBlockProperties;
-   uuid: UUID;
- };
-type ShareableBlockText = 
- record {
-   allocationStrategies: vec record {
-                               NodeDepth;
-                               AllocationStrategy;
-                             };
-   boundary: NodeBoundary;
-   rootNode: ShareableNode;
- };
-type ShareableBlockProperties__2 = 
- record {
-   checked: opt bool;
-   title: opt ShareableBlockText;
- };
-type ShareableBlockProperties__1 = 
- record {
-   checked: opt bool;
-   title: opt ShareableBlockText;
- };
-type ShareableBlockProperties = 
- record {
-   checked: opt bool;
-   title: opt ShareableBlockText;
- };
-type ShareableBlockContent__1 = 
- record {
-   allocationStrategies: vec record {
-                               NodeDepth;
-                               AllocationStrategy;
-                             };
-   boundary: NodeBoundary;
-   rootNode: ShareableNode;
- };
-type ShareableBlockContent = 
- record {
-   allocationStrategies: vec record {
-                               NodeDepth;
-                               AllocationStrategy;
-                             };
-   boundary: NodeBoundary;
-   rootNode: ShareableNode;
- };
-type ShareableBlock = 
- record {
-   blockType: BlockType;
-   content: ShareableBlockContent;
-   parent: opt UUID;
-   properties: ShareableBlockProperties;
-   uuid: UUID;
- };
+type StatusResponse = record {
+  cycles : opt nat64;
+  heap_memory_size : opt nat64;
+  memory_size : opt nat64;
+};
+type StatusRequest = record {
+  cycles : bool;
+  heap_memory_size : bool;
+  memory_size : bool;
+};
+type SortOrder = record {
+  direction : SortDirection;
+  fieldName : text;
+};
+type SortDirection = variant {
+  asc;
+  desc;
+};
+type ShareableNode = record {
+  base : NodeBase;
+  children : vec record {
+    NodeIndex;
+    ShareableNode;
+  };
+  deletedAt : opt Time;
+  identifier : NodeIdentifier;
+  value : NodeValue;
+};
+type ShareableBlock__1 = record {
+  blockType : BlockType;
+  content : ShareableBlockContent;
+  parent : opt UUID;
+  properties : ShareableBlockProperties;
+  uuid : UUID;
+};
+type ShareableBlockText = record {
+  allocationStrategies : vec record {
+    NodeDepth;
+    AllocationStrategy;
+  };
+  boundary : NodeBoundary;
+  rootNode : ShareableNode;
+};
+type ShareableBlockProperties__2 = record {
+  checked : opt bool;
+  title : opt ShareableBlockText;
+};
+type ShareableBlockProperties__1 = record {
+  checked : opt bool;
+  title : opt ShareableBlockText;
+};
+type ShareableBlockProperties = record {
+  checked : opt bool;
+  title : opt ShareableBlockText;
+};
+type ShareableBlockContent__1 = record {
+  allocationStrategies : vec record {
+    NodeDepth;
+    AllocationStrategy;
+  };
+  boundary : NodeBoundary;
+  rootNode : ShareableNode;
+};
+type ShareableBlockContent = record {
+  allocationStrategies : vec record {
+    NodeDepth;
+    AllocationStrategy;
+  };
+  boundary : NodeBoundary;
+  rootNode : ShareableNode;
+};
+type ShareableBlock = record {
+  blockType : BlockType;
+  content : ShareableBlockContent;
+  parent : opt UUID;
+  properties : ShareableBlockProperties;
+  uuid : UUID;
+};
 type SaveEventTransactionUpdateOutputResult = null;
-type SaveEventTransactionUpdateOutputError = 
- variant {
-   anonymousUser;
-   insufficientCycles;
- };
-type SaveEventTransactionUpdateOutput = 
- variant {
-   err: SaveEventTransactionUpdateOutputError;
-   ok: SaveEventTransactionUpdateOutputResult;
- };
+type SaveEventTransactionUpdateOutputError = variant {
+  anonymousUser;
+  insufficientCycles;
+};
+type SaveEventTransactionUpdateOutput = variant {
+  err : SaveEventTransactionUpdateOutputError;
+  ok : SaveEventTransactionUpdateOutputResult;
+};
 type SaveEventTransactionUpdateInput = record {
-                                         transaction: BlockEventTransaction;};
+  transaction : BlockEventTransaction;
+};
 type PrimaryKey = nat;
-type PaginatedResults = record {edges: vec Edge;};
-type PagesResult = 
- record {
-   pages: PaginatedResults;
-   recordMap: record {blocks: vec record {
-                                    ExternalId;
-                                    ShareableBlock;
-                                  };};
- };
-type PagesOptionsArg = 
- record {
-   cursor: opt PrimaryKey;
-   limit: opt nat;
-   order: opt SortOrder;
- };
-type NumericEntity = 
- record {
-   avg: nat64;
-   first: nat64;
-   last: nat64;
-   max: nat64;
-   min: nat64;
- };
+type PaginatedResults = record { edges : vec Edge };
+type PagesResult = record {
+  pages : PaginatedResults;
+  recordMap : record {
+    blocks : vec record {
+      ExternalId;
+      ShareableBlock;
+    };
+  };
+};
+type PagesOptionsArg = record {
+  cursor : opt PrimaryKey;
+  limit : opt nat;
+  order : opt SortOrder;
+};
+type NumericEntity = record {
+  avg : nat64;
+  first : nat64;
+  last : nat64;
+  max : nat64;
+  min : nat64;
+};
 type NodeValue = text;
 type NodeIndex = nat16;
 type NodeIdentifier = vec NodeIndex;
@@ -262,344 +232,296 @@ type NodeDepth = nat16;
 type NodeBoundary = nat16;
 type NodeBase = nat16;
 type Nanos = nat64;
-type MetricsResponse = record {metrics: opt CanisterMetrics;};
-type MetricsRequest = record {parameters: GetMetricsParameters;};
-type MetricsGranularity = 
- variant {
-   daily;
-   hourly;
- };
-type LogMessagesData = 
- record {
-   message: text;
-   timeNanos: Nanos;
- };
-type HydratedEditItemUser = 
- record {
-   canisterId: principal;
-   username: text;
- };
-type HydratedEditItem = 
- record {
-   blockValue:
-    record {
-      after: ShareableBlock__1;
-      before: opt ShareableBlock__1;
-    };
-   startTime: Time;
-   user: HydratedEditItemUser;
- };
-type HydratedActivity = 
- record {
-   blockExternalId: UUID;
-   edits: vec HydratedEditItem;
-   endTime: Time;
-   id: ActivityId;
-   startTime: Time;
-   users: vec HydratedEditItemUser;
- };
-type HourlyMetricsData = 
- record {
-   canisterCycles: CanisterCyclesAggregatedData;
-   canisterHeapMemorySize: CanisterHeapMemoryAggregatedData;
-   canisterMemorySize: CanisterMemoryAggregatedData;
-   timeMillis: int;
-   updateCalls: UpdateCallsAggregatedData;
- };
-type GetMetricsParameters = 
- record {
-   dateFromMillis: nat;
-   dateToMillis: nat;
-   granularity: MetricsGranularity;
- };
-type GetLogMessagesParameters = 
- record {
-   count: nat32;
-   filter: opt GetLogMessagesFilter;
-   fromTimeNanos: opt Nanos;
- };
-type GetLogMessagesFilter = 
- record {
-   analyzeCount: nat32;
-   messageContains: opt text;
-   messageRegex: opt text;
- };
-type GetLatestLogMessagesParameters = 
- record {
-   count: nat32;
-   filter: opt GetLogMessagesFilter;
-   upToTimeNanos: opt Nanos;
- };
-type GetInitDataOutput = 
- variant {
-   err: variant {unauthorized;};
-   ok: WorkspaceInitData__1;
- };
-type GetInitArgsOutput = 
- variant {
-   err: variant {unauthorized;};
-   ok: WorkspaceInitArgs__1;
- };
-type GetInformationResponse = 
- record {
-   logs: opt CanisterLogResponse;
-   metrics: opt MetricsResponse;
-   status: opt StatusResponse;
-   version: opt nat;
- };
-type GetInformationRequest = 
- record {
-   logs: opt CanisterLogRequest;
-   metrics: opt MetricsRequest;
-   status: opt StatusRequest;
-   version: bool;
- };
+type MetricsResponse = record { metrics : opt CanisterMetrics };
+type MetricsRequest = record { parameters : GetMetricsParameters };
+type MetricsGranularity = variant {
+  daily;
+  hourly;
+};
+type LogMessagesData = record {
+  message : text;
+  timeNanos : Nanos;
+};
+type HydratedEditItemUser = record {
+  canisterId : principal;
+  username : text;
+};
+type HydratedEditItem = record {
+  blockValue : record {
+    after : ShareableBlock__1;
+    before : opt ShareableBlock__1;
+  };
+  startTime : Time;
+  user : HydratedEditItemUser;
+};
+type HydratedActivity = record {
+  blockExternalId : UUID;
+  edits : vec HydratedEditItem;
+  endTime : Time;
+  id : ActivityId;
+  startTime : Time;
+  users : vec HydratedEditItemUser;
+};
+type HourlyMetricsData = record {
+  canisterCycles : CanisterCyclesAggregatedData;
+  canisterHeapMemorySize : CanisterHeapMemoryAggregatedData;
+  canisterMemorySize : CanisterMemoryAggregatedData;
+  timeMillis : int;
+  updateCalls : UpdateCallsAggregatedData;
+};
+type GetMetricsParameters = record {
+  dateFromMillis : nat;
+  dateToMillis : nat;
+  granularity : MetricsGranularity;
+};
+type GetLogMessagesParameters = record {
+  count : nat32;
+  filter : opt GetLogMessagesFilter;
+  fromTimeNanos : opt Nanos;
+};
+type GetLogMessagesFilter = record {
+  analyzeCount : nat32;
+  messageContains : opt text;
+  messageRegex : opt text;
+};
+type GetLatestLogMessagesParameters = record {
+  count : nat32;
+  filter : opt GetLogMessagesFilter;
+  upToTimeNanos : opt Nanos;
+};
+type GetInitDataOutput = variant {
+  err : variant { unauthorized };
+  ok : WorkspaceInitData__1;
+};
+type GetInitArgsOutput = variant {
+  err : variant { unauthorized };
+  ok : WorkspaceInitArgs__1;
+};
+type GetInformationResponse = record {
+  logs : opt CanisterLogResponse;
+  metrics : opt MetricsResponse;
+  status : opt StatusResponse;
+  version : opt nat;
+};
+type GetInformationRequest = record {
+  logs : opt CanisterLogRequest;
+  metrics : opt MetricsRequest;
+  status : opt StatusRequest;
+  version : bool;
+};
 type ExternalId = text;
-type Edge_1 = record {node: HydratedActivity;};
-type Edge = record {node: ExternalId;};
+type Edge_1 = record { node : HydratedActivity };
+type Edge = record { node : ExternalId };
 type DeletePageUpdateOutputResult = null;
 type DeletePageUpdateOutputError = null;
-type DeletePageUpdateOutput = 
- variant {
-   err: DeletePageUpdateOutputError;
-   ok: DeletePageUpdateOutputResult;
- };
-type DeletePageUpdateInput = record {uuid: UUID;};
-type DailyMetricsData = 
- record {
-   canisterCycles: NumericEntity;
-   canisterHeapMemorySize: NumericEntity;
-   canisterMemorySize: NumericEntity;
-   timeMillis: int;
-   updateCalls: nat64;
- };
-type CreatePageUpdateOutputResult = 
- record {
-   blockType: BlockType;
-   content: ShareableBlockContent;
-   parent: opt UUID;
-   properties: ShareableBlockProperties;
-   uuid: UUID;
- };
-type CreatePageUpdateOutputError = 
- variant {
-   anonymousUser;
-   failedToCreate;
-   inputTooLong;
-   insufficientCycles;
-   invalidBlockType;
- };
-type CreatePageUpdateOutput = 
- variant {
-   err: CreatePageUpdateOutputError;
-   ok: CreatePageUpdateOutputResult;
- };
-type CreatePageUpdateInput = 
- record {
-   content: ShareableBlockContent__1;
-   initialBlockUuid: opt UUID;
-   parent: opt UUID;
-   properties: ShareableBlockProperties__1;
-   uuid: UUID;
- };
-type CollectMetricsRequestType = 
- variant {
-   force;
-   normal;
- };
-type CanisterMetricsData = 
- variant {
-   daily: vec DailyMetricsData;
-   hourly: vec HourlyMetricsData;
- };
-type CanisterMetrics = record {data: CanisterMetricsData;};
+type DeletePageUpdateOutput = variant {
+  err : DeletePageUpdateOutputError;
+  ok : DeletePageUpdateOutputResult;
+};
+type DeletePageUpdateInput = record { uuid : UUID };
+type DailyMetricsData = record {
+  canisterCycles : NumericEntity;
+  canisterHeapMemorySize : NumericEntity;
+  canisterMemorySize : NumericEntity;
+  timeMillis : int;
+  updateCalls : nat64;
+};
+type CreatePageUpdateOutputResult = record {
+  blockType : BlockType;
+  content : ShareableBlockContent;
+  parent : opt UUID;
+  properties : ShareableBlockProperties;
+  uuid : UUID;
+};
+type CreatePageUpdateOutputError = variant {
+  anonymousUser;
+  failedToCreate;
+  inputTooLong;
+  insufficientCycles;
+  invalidBlockType;
+};
+type CreatePageUpdateOutput = variant {
+  err : CreatePageUpdateOutputError;
+  ok : CreatePageUpdateOutputResult;
+};
+type CreatePageUpdateInput = record {
+  content : ShareableBlockContent__1;
+  initialBlockUuid : opt UUID;
+  parent : opt UUID;
+  properties : ShareableBlockProperties__1;
+  uuid : UUID;
+};
+type CollectMetricsRequestType = variant {
+  force;
+  normal;
+};
+type CanisterMetricsData = variant {
+  daily : vec DailyMetricsData;
+  hourly : vec HourlyMetricsData;
+};
+type CanisterMetrics = record { data : CanisterMetricsData };
 type CanisterMemoryAggregatedData = vec nat64;
-type CanisterLogResponse = 
- variant {
-   messages: CanisterLogMessages;
-   messagesInfo: CanisterLogMessagesInfo;
- };
-type CanisterLogRequest = 
- variant {
-   getLatestMessages: GetLatestLogMessagesParameters;
-   getMessages: GetLogMessagesParameters;
-   getMessagesInfo;
- };
-type CanisterLogMessagesInfo = 
- record {
-   count: nat32;
-   features: vec opt CanisterLogFeature;
-   firstTimeNanos: opt Nanos;
-   lastTimeNanos: opt Nanos;
- };
-type CanisterLogMessages = 
- record {
-   data: vec LogMessagesData;
-   lastAnalyzedMessageTimeNanos: opt Nanos;
- };
-type CanisterLogFeature = 
- variant {
-   filterMessageByContains;
-   filterMessageByRegex;
- };
+type CanisterLogResponse = variant {
+  messages : CanisterLogMessages;
+  messagesInfo : CanisterLogMessagesInfo;
+};
+type CanisterLogRequest = variant {
+  getLatestMessages : GetLatestLogMessagesParameters;
+  getMessages : GetLogMessagesParameters;
+  getMessagesInfo;
+};
+type CanisterLogMessagesInfo = record {
+  count : nat32;
+  features : vec opt CanisterLogFeature;
+  firstTimeNanos : opt Nanos;
+  lastTimeNanos : opt Nanos;
+};
+type CanisterLogMessages = record {
+  data : vec LogMessagesData;
+  lastAnalyzedMessageTimeNanos : opt Nanos;
+};
+type CanisterLogFeature = variant {
+  filterMessageByContains;
+  filterMessageByRegex;
+};
 type CanisterHeapMemoryAggregatedData = vec nat64;
 type CanisterCyclesAggregatedData = vec nat64;
-type BlockUpdatedEventData = 
- variant {
-   updateBlockType: BlockBlockTypeUpdatedEventData;
-   updateContent: BlockContentUpdatedEventData;
-   updateParent: BlockParentUpdatedEventData;
-   updatePropertyChecked: BlockPropertyCheckedUpdatedEventData;
-   updatePropertyTitle: BlockPropertyTitleUpdatedEventData;
- };
-type BlockType__2 = 
- variant {
-   bulletedList;
-   callout;
-   code;
-   heading1;
-   heading2;
-   heading3;
-   numberedList;
-   page;
-   paragraph;
-   quote;
-   todoList;
-   toggleHeading1;
-   toggleHeading2;
-   toggleHeading3;
-   toggleList;
- };
-type BlockType__1 = 
- variant {
-   bulletedList;
-   callout;
-   code;
-   heading1;
-   heading2;
-   heading3;
-   numberedList;
-   page;
-   paragraph;
-   quote;
-   todoList;
-   toggleHeading1;
-   toggleHeading2;
-   toggleHeading3;
-   toggleList;
- };
-type BlockType = 
- variant {
-   bulletedList;
-   callout;
-   code;
-   heading1;
-   heading2;
-   heading3;
-   numberedList;
-   page;
-   paragraph;
-   quote;
-   todoList;
-   toggleHeading1;
-   toggleHeading2;
-   toggleHeading3;
-   toggleList;
- };
-type BlockPropertyTitleUpdatedEventData = 
- record {
-   blockExternalId: UUID;
-   transaction: vec TreeEvent;
- };
-type BlockPropertyCheckedUpdatedEventData = 
- record {
-   blockExternalId: UUID;
-   checked: bool;
- };
-type BlockParentUpdatedEventData = 
- record {
-   blockExternalId: UUID;
-   parentBlockExternalId: UUID;
- };
+type BlockUpdatedEventData = variant {
+  updateBlockType : BlockBlockTypeUpdatedEventData;
+  updateContent : BlockContentUpdatedEventData;
+  updateParent : BlockParentUpdatedEventData;
+  updatePropertyChecked : BlockPropertyCheckedUpdatedEventData;
+  updatePropertyTitle : BlockPropertyTitleUpdatedEventData;
+};
+type BlockType__2 = variant {
+  bulletedList;
+  callout;
+  code;
+  heading1;
+  heading2;
+  heading3;
+  numberedList;
+  page;
+  paragraph;
+  quote;
+  todoList;
+  toggleHeading1;
+  toggleHeading2;
+  toggleHeading3;
+};
+type BlockType__1 = variant {
+  bulletedList;
+  callout;
+  code;
+  heading1;
+  heading2;
+  heading3;
+  numberedList;
+  page;
+  paragraph;
+  quote;
+  todoList;
+  toggleHeading1;
+  toggleHeading2;
+  toggleHeading3;
+};
+type BlockType = variant {
+  bulletedList;
+  callout;
+  code;
+  heading1;
+  heading2;
+  heading3;
+  numberedList;
+  page;
+  paragraph;
+  quote;
+  todoList;
+  toggleHeading1;
+  toggleHeading2;
+  toggleHeading3;
+};
+type BlockPropertyTitleUpdatedEventData = record {
+  blockExternalId : UUID;
+  transaction : vec TreeEvent;
+};
+type BlockPropertyCheckedUpdatedEventData = record {
+  blockExternalId : UUID;
+  checked : bool;
+};
+type BlockParentUpdatedEventData = record {
+  blockExternalId : UUID;
+  parentBlockExternalId : UUID;
+};
 type BlockEventTransaction = vec BlockEvent;
-type BlockEvent = 
- record {
-   data:
-    variant {
-      blockCreated: BlockCreatedEventData;
-      blockUpdated: BlockUpdatedEventData;
+type BlockEvent = record {
+  data : variant {
+    blockCreated : BlockCreatedEventData;
+    blockUpdated : BlockUpdatedEventData;
+  };
+  timestamp : Time;
+  user : principal;
+  uuid : UUID;
+};
+type BlockCreatedEventData = record {
+  block : record {
+    blockType : BlockType__1;
+    parent : opt UUID;
+    uuid : UUID;
+  };
+  index : nat;
+};
+type BlockContentUpdatedEventData = record {
+  blockExternalId : UUID;
+  transaction : vec TreeEvent;
+};
+type BlockByUuidResult = variant {
+  err : variant { notFound };
+  ok : record {
+    block : ExternalId;
+    recordMap : record {
+      blocks : vec record {
+        ExternalId;
+        ShareableBlock;
+      };
     };
-   timestamp: Time;
-   user: principal;
-   uuid: UUID;
- };
-type BlockCreatedEventData = 
- record {
-   block: record {
-            blockType: BlockType__1;
-            parent: opt UUID;
-            uuid: UUID;
-          };
-   index: nat;
- };
-type BlockContentUpdatedEventData = 
- record {
-   blockExternalId: UUID;
-   transaction: vec TreeEvent;
- };
-type BlockByUuidResult = 
- variant {
-   err: variant {notFound;};
-   ok:
-    record {
-      block: ExternalId;
-      recordMap: record {blocks: vec record {
-                                       ExternalId;
-                                       ShareableBlock;
-                                     };};
-    };
- };
+  };
+};
 type BlockByUuidOptions = record {
-                            contentPagination:
-                             record {
-                               cursor: nat;
-                               limit: nat;
-                             };};
-type BlockBlockTypeUpdatedEventData = 
- record {
-   blockExternalId: UUID;
-   blockType: BlockType__1;
- };
-type AllocationStrategy = 
- variant {
-   boundaryMinus;
-   boundaryPlus;
- };
-type AddUsersUpdateResult = 
- variant {
-   err: variant {unauthorized;};
-   ok;
- };
-type AddUsersUpdateInput = 
- vec record {
-       principal;
-       WorkspaceUser;
-     };
+  contentPagination : record {
+    cursor : nat;
+    limit : nat;
+  };
+};
+type BlockBlockTypeUpdatedEventData = record {
+  blockExternalId : UUID;
+  blockType : BlockType__1;
+};
+type AllocationStrategy = variant {
+  boundaryMinus;
+  boundaryPlus;
+};
+type AddUsersUpdateResult = variant {
+  err : variant { unauthorized };
+  ok;
+};
+type AddUsersUpdateInput = vec record {
+  principal;
+  WorkspaceUser;
+};
 type AddBlockUpdateOutputResult = null;
-type AddBlockUpdateOutputError = variant {unauthorized;};
-type AddBlockUpdateOutput = 
- variant {
-   err: AddBlockUpdateOutputError;
-   ok: AddBlockUpdateOutputResult;
- };
-type AddBlockUpdateInput = 
- record {
-   blockType: BlockType__2;
-   content: ShareableBlockContent__1;
-   parent: opt UUID;
-   properties: ShareableBlockProperties__2;
-   uuid: UUID;
- };
-type ActivityLogOutput = record {edges: vec Edge_1;};
+type AddBlockUpdateOutputError = variant { unauthorized };
+type AddBlockUpdateOutput = variant {
+  err : AddBlockUpdateOutputError;
+  ok : AddBlockUpdateOutputResult;
+};
+type AddBlockUpdateInput = record {
+  blockType : BlockType__2;
+  content : ShareableBlockContent__1;
+  parent : opt UUID;
+  properties : ShareableBlockProperties__2;
+  uuid : UUID;
+};
+type ActivityLogOutput = record { edges : vec Edge_1 };
 type ActivityId = nat;
-service : (WorkspaceInitArgs, WorkspaceInitData) -> Workspace
+service : (WorkspaceInitArgs, WorkspaceInitData) -> Workspace;

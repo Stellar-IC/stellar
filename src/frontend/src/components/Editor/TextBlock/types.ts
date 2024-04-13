@@ -11,7 +11,6 @@ export type TextBlockBlockType =
   | { todoList: null }
   | { bulletedList: null }
   | { numberedList: null }
-  | { toggleList: null }
   | { toggleHeading1: null }
   | { toggleHeading2: null }
   | { toggleHeading3: null }

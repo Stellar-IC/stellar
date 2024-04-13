@@ -20,10 +20,9 @@ import { store } from '../data-store';
 import { EditorSaveFn } from './types';
 
 export class EditorController {
-  private events: PartialBlockEvent[] = [];
-  private updatedBlocks: { [key: string]: Block } = {};
-  private createdBlocks: Block[] = [];
-
+  private _events: PartialBlockEvent[] = [];
+  private _updatedBlocks: { [key: string]: Block } = {};
+  private _createdBlocks: Block[] = [];
   private _onSave: EditorSaveFn;
 
   constructor(opts: { onSave: EditorSaveFn }) {
@@ -112,7 +111,7 @@ export class EditorController {
       const { index, item } = x;
       const transaction = Tree.insertCharacter(block.content, index, item);
 
-      this.events.push({
+      this._events.push({
         blockUpdated: {
           updateContent: {
             data: {
@@ -123,7 +122,7 @@ export class EditorController {
         },
       });
     });
-    this.updatedBlocks[block.uuid] = block;
+    this._updatedBlocks[block.uuid] = block;
   };
 
   _removeContentBlocks = (block: Block, indexes: number[]) => {
@@ -131,7 +130,7 @@ export class EditorController {
       const treeEvent = Tree.removeCharacter(block.content, index);
 
       if (treeEvent) {
-        this.events.push({
+        this._events.push({
           blockUpdated: {
             updateContent: {
               data: {
@@ -141,12 +140,12 @@ export class EditorController {
             },
           },
         });
-        this.updatedBlocks[block.uuid] = block;
+        this._updatedBlocks[block.uuid] = block;
       }
     });
   };
 
-  _updateBlockParent = (block: Block, parent: ExternalId) => {
+  updateBlockParent = (block: Block, parent: ExternalId) => {
     // eslint-disable-next-line no-param-reassign
     block.parent = parent;
 
@@ -161,16 +160,20 @@ export class EditorController {
       },
     };
 
-    this.events.push(event);
-    this.updatedBlocks[block.uuid] = block;
+    this._events.push(event);
+    this._updatedBlocks[block.uuid] = block;
+
+    return this;
   };
 
-  _updateBlockPropertyChecked(blockExternalId: UUID, checked: boolean) {
+  updateBlockPropertyChecked(blockExternalId: UUID, checked: boolean) {
     const block = store.blocks.get(stringify(blockExternalId));
 
     if (!block) {
       throw new Error('Block not found');
     }
+
+    block.properties.checked = checked;
 
     const event: PartialBlockEvent = {
       blockUpdated: {
@@ -183,11 +186,16 @@ export class EditorController {
       },
     };
 
-    this.events.push(event);
-    this.updatedBlocks[block.uuid] = block;
+    this._events.push(event);
+    this._updatedBlocks[block.uuid] = block;
+
+    return this;
   }
 
-  _updateBlockPropertyTitle(blockExternalId: UUID, transaction: TreeEvent[]) {
+  private _updateBlockPropertyTitle(
+    blockExternalId: UUID,
+    transaction: TreeEvent[]
+  ) {
     const block = store.blocks.get(stringify(blockExternalId));
 
     if (!block) {
@@ -205,16 +213,18 @@ export class EditorController {
       },
     };
 
-    this.events.push(event);
-    this.updatedBlocks[block.uuid] = block;
+    this._events.push(event);
+    this._updatedBlocks[block.uuid] = block;
   }
 
-  _updateBlockBlockType(blockExternalId: UUID, blockType: BlockType) {
+  updateBlockBlockType(blockExternalId: UUID, blockType: BlockType) {
     const block = store.blocks.get(stringify(blockExternalId));
 
     if (!block) {
       throw new Error('Block not found');
     }
+
+    block.blockType = blockType;
 
     const event: PartialBlockEvent = {
       blockUpdated: {
@@ -227,11 +237,13 @@ export class EditorController {
       },
     };
 
-    this.events.push(event);
-    this.updatedBlocks[block.uuid] = block;
+    this._events.push(event);
+    this._updatedBlocks[block.uuid] = block;
+
+    return this;
   }
 
-  _updateBlockContent(blockExternalId: UUID, transaction: TreeEvent[]) {
+  updateBlockContent(blockExternalId: UUID, transaction: TreeEvent[]) {
     const block = store.blocks.get(stringify(blockExternalId));
 
     if (!block) {
@@ -249,8 +261,10 @@ export class EditorController {
       },
     };
 
-    this.events.push(event);
-    this.updatedBlocks[block.uuid] = block;
+    this._events.push(event);
+    this._updatedBlocks[block.uuid] = block;
+
+    return this;
   }
 
   adoptSiblingBlocks = (block: Block): void => {
@@ -284,7 +298,7 @@ export class EditorController {
 
     siblingBlocks.forEach((siblingBlock) => {
       if (!siblingBlock) return;
-      this._updateBlockParent(siblingBlock, block.uuid);
+      this.updateBlockParent(siblingBlock, block.uuid);
     });
   };
 
@@ -302,7 +316,7 @@ export class EditorController {
       { index: newBlockIndex, item: block.uuid },
     ]);
     this._removeContentBlocks(parentBlock, [blockIndex]);
-    this._updateBlockParent(block, grandparentBlock.uuid);
+    this.updateBlockParent(block, grandparentBlock.uuid);
 
     return this;
   };
@@ -320,26 +334,26 @@ export class EditorController {
       { index: newBlockIndex, item: block.uuid },
     ]);
     this._removeContentBlocks(parentBlock, [blockIndex]);
-    this._updateBlockParent(block, previousBlock.uuid);
+    this.updateBlockParent(block, previousBlock.uuid);
 
     return this;
   };
 
   save(): Promise<void> {
     return this._onSave({
-      updatedBlocks: this.updatedBlocks,
-      events: this.events,
+      updatedBlocks: this._updatedBlocks,
+      events: this._events,
     });
   }
 
   getNewestBlock(): Block {
-    const block = this.createdBlocks[this.createdBlocks.length - 1];
+    const block = this._createdBlocks[this._createdBlocks.length - 1];
     if (!block) throw new Error('No blocks created');
     return block;
   }
 
   getCreatedBlocks(): Block[] {
-    return this.createdBlocks;
+    return this._createdBlocks;
   }
 
   addBlock(parentExternalId: UUID, index: number, blockType: BlockType) {
@@ -371,9 +385,9 @@ export class EditorController {
         },
       },
     };
-    this.events.push(blockCreatedEvent);
-    this.updatedBlocks[block.uuid] = block;
-    this.createdBlocks.push(block);
+    this._events.push(blockCreatedEvent);
+    this._updatedBlocks[block.uuid] = block;
+    this._createdBlocks.push(block);
 
     const contentUpdatedEvent: PartialBlockEvent = {
       blockUpdated: {
@@ -390,8 +404,8 @@ export class EditorController {
       },
     };
 
-    this.events.push(contentUpdatedEvent);
-    this.updatedBlocks[parentBlock.uuid] = parentBlock;
+    this._events.push(contentUpdatedEvent);
+    this._updatedBlocks[parentBlock.uuid] = parentBlock;
 
     return this;
   }
@@ -416,8 +430,98 @@ export class EditorController {
       },
     };
 
-    this.events.push(event);
-    this.updatedBlocks[parentBlock.uuid] = parentBlock;
+    this._events.push(event);
+    this._updatedBlocks[parentBlock.uuid] = parentBlock;
+
+    return this;
+  }
+
+  removeBlockTitleCharactersByRange(
+    blockExternalId: UUID,
+    startPosition: number,
+    endPosition: number
+  ) {
+    const block = store.blocks.get(stringify(blockExternalId));
+
+    if (!block) {
+      throw new Error('Block not found');
+    }
+
+    // Remove the characters in the range
+    // Here, we are building index array in descending order so that we don't
+    // have to worry about the index changing as we remove characters
+    const characterIndexes = Array.from(
+      { length: endPosition - startPosition },
+      (_, i) => endPosition - i - 1
+    );
+    const allEvents: TreeEvent[] = [];
+
+    characterIndexes.forEach((index) => {
+      const event = Tree.removeCharacter(block.properties.title, index);
+      if (event) allEvents.push(event);
+    });
+
+    const updatedBlock = {
+      ...block,
+      properties: {
+        ...block.properties,
+        title: Tree.clone(block.properties.title),
+      },
+    };
+
+    const event: PartialBlockEvent = {
+      blockUpdated: {
+        updatePropertyTitle: {
+          data: {
+            blockExternalId,
+            transaction: allEvents,
+          },
+        },
+      },
+    };
+
+    this._events.push(event);
+    this._updatedBlocks[block.uuid] = updatedBlock;
+
+    return this;
+  }
+
+  removeBlockTitleCharactersByIndex(blockExternalId: UUID, indexes: number[]) {
+    const block = store.blocks.get(stringify(blockExternalId));
+
+    if (!block) {
+      throw new Error('Block not found');
+    }
+
+    const allEvents: TreeEvent[] = [];
+    const { title } = block.properties;
+    const newTitle = Tree.clone(title);
+
+    indexes.forEach((index) => {
+      const event = Tree.removeCharacter(newTitle, index);
+      if (event) allEvents.push(event);
+    });
+
+    const updatedBlock = {
+      ...block,
+      properties: {
+        ...block.properties,
+        title: newTitle,
+      },
+    };
+    const event: PartialBlockEvent = {
+      blockUpdated: {
+        updatePropertyTitle: {
+          data: {
+            blockExternalId,
+            transaction: allEvents,
+          },
+        },
+      },
+    };
+
+    this._events.push(event);
+    this._updatedBlocks[block.uuid] = updatedBlock;
 
     return this;
   }
@@ -432,7 +536,7 @@ export class EditorController {
       | { updatePropertyTitle: BlockPropertyTitleUpdatedEventData }
   ) {
     if ('updatePropertyChecked' in event) {
-      this._updateBlockPropertyChecked(
+      this.updateBlockPropertyChecked(
         blockExternalId,
         event.updatePropertyChecked.checked
       );
@@ -442,7 +546,7 @@ export class EditorController {
         event.updatePropertyTitle.transaction
       );
     } else if ('updateBlockType' in event) {
-      this._updateBlockBlockType(
+      this.updateBlockBlockType(
         blockExternalId,
         event.updateBlockType.blockType
       );
@@ -453,15 +557,16 @@ export class EditorController {
         throw new Error('Block not found');
       }
 
-      this._updateBlockParent(
+      this.updateBlockParent(
         block,
         stringify(event.updateParent.parentBlockExternalId)
       );
     } else if ('updateContent' in event) {
-      this._updateBlockContent(
-        blockExternalId,
-        event.updateContent.transaction
-      );
+      this.updateBlockContent(blockExternalId, event.updateContent.transaction);
+    } else {
+      throw new Error('Invalid event');
     }
+
+    return this;
   }
 }

@@ -1,3 +1,4 @@
+import { Tree } from '@stellar-ic/lseq-ts';
 import { useEffect, useState } from 'react';
 
 import { Block } from '@/types';
@@ -70,7 +71,7 @@ export const useStoreQuery = <ReturnT>(
         setData(newData);
         return;
       }
-      if (compare(newData, data) === false) {
+      if (compare(data, newData) === false) {
         setData(newData);
       }
     });

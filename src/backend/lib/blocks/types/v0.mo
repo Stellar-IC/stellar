@@ -27,7 +27,6 @@ module {
         #todoList;
         #bulletedList;
         #numberedList;
-        #toggleList;
         #code;
         #quote;
         #callout;
