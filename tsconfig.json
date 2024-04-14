@@ -27,7 +27,8 @@
     "./src/declarations",
     "./src/frontend/src",
     "./src/frontend/test-utils",
-    "./src/integration_tests"
+    "./src/integration_tests",
+    "./e2e"
   ],
   "references": [{ "path": "./tsconfig.node.json" }]
 }
