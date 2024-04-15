@@ -145,7 +145,7 @@ shared ({ caller = initializer }) actor class Workspace(
         var blockRecords = List.fromArray<(Text, ShareableBlock)>([]);
 
         for (contentBlock in Array.vals(contentBlocks)) {
-            blockRecords := List.append(blockRecords, List.fromArray([(UUID.toText(contentBlock.uuid), BlockModule.toShareable(block))]));
+            blockRecords := List.append(blockRecords, List.fromArray([(UUID.toText(contentBlock.uuid), BlockModule.toShareable(contentBlock))]));
         };
 
         blockRecords := List.append(blockRecords, List.fromArray([(UUID.toText(block.uuid), BlockModule.toShareable(block))]));

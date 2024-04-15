@@ -32,7 +32,11 @@ export function HomePage() {
         <div style={{ padding: theme.spacing.sm }}>
           <Flex align="center" justify="space-between">
             <h2>Pages</h2>
-            <ActionIcon variant="subtle" onClick={createPageAndRedirect}>
+            <ActionIcon
+              variant="subtle"
+              onClick={createPageAndRedirect}
+              aria-label="Create a new page"
+            >
               <IconPlus />
             </ActionIcon>
           </Flex>

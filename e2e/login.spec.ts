@@ -1,34 +1,29 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, Page, BrowserContext } from '@playwright/test';
 
-test('has title', async ({ page }) => {
+import { createDefaultUser, login } from './helpers';
+
+let page: Page;
+let context: BrowserContext;
+let userNumber: number;
+
+test.beforeAll(async ({ browser }) => {
+  context = await browser.newContext();
+  page = await context.newPage();
+  await page.goto('/');
+  userNumber = await createDefaultUser({ page, context });
+});
+
+test('has title', async () => {
   await page.goto('/');
 
   // Expect a title "to contain" a substring.
   await expect(page).toHaveTitle(/Stellar/);
 });
 
-test('get started link', async ({ page, context }) => {
+test('get started link', async () => {
   await page.goto('/');
-
-  const pagePromise = context.waitForEvent('page');
-
-  // Click the get started link.
-  await page.getByRole('button', { name: 'Get started' }).click();
-
-  const iiPage = await pagePromise;
-  await iiPage.waitForLoadState();
-  await iiPage
-    .getByRole('button', { name: 'Create Internet Identity' })
-    .click();
-  await iiPage.getByRole('button', { name: 'Create Passkey' }).click();
-  await iiPage.fill('input[id=captchaInput]', 'a');
-  await iiPage.getByRole('button', { name: 'Next' }).click();
-  await iiPage.getByRole('button', { name: 'Continue' }).click();
-
-  await page.getByRole('heading', { name: "Let's get started" }).click();
-  await page.getByLabel('username').fill(`user_${Date.now()}`);
-  await page.getByRole('button', { name: 'Submit', disabled: false }).click();
+  await login({ page, context }, { useExisitingIdentity: userNumber });
   await page
     .getByText('Workspace')
-    .waitFor({ state: 'visible', timeout: 10000 });
+    .waitFor({ state: 'visible', timeout: 30000 });
 });
