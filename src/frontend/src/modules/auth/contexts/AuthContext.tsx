@@ -17,7 +17,7 @@ const AuthContext = createContext<{
   isLoading: boolean;
   userId: Principal;
   profile: SerializedUserProfile;
-  setProfile: (profile: UserProfile) => void;
+  setProfile: React.Dispatch<React.SetStateAction<UserProfile>>;
 } | null>(null);
 
 export const useAuthContext = () => {

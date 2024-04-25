@@ -41,7 +41,13 @@ module {
         #guest;
     };
 
+    public type WorkspaceVisibility = {
+        #Public;
+        #Private;
+    };
+
     public type WorkspaceUser = {
+        identity : Principal;
         canisterId : Principal;
         username : Text;
         role : WorkspaceUserRole;
@@ -167,9 +173,25 @@ module {
                 limit : ?Nat;
                 order : ?CoreTypes.SortOrder;
             };
-            public type PagesResult = {
+            public type PagesOutput = {
                 pages : CoreTypes.PaginatedResults<ExternalId>;
                 recordMap : { blocks : [(ExternalId, ShareableBlock)] };
+            };
+        };
+
+        public module Members {
+            public type MembersOutput = {
+                users : CoreTypes.PaginatedResults<Principal>;
+                recordMap : { users : [(Principal, WorkspaceUser)] };
+            };
+        };
+
+        public module Settings {
+            public type SettingsOutput = {
+                description : Text;
+                name : Text;
+                visibility : WorkspaceVisibility;
+                websiteLink : Text;
             };
         };
     };
@@ -238,6 +260,32 @@ module {
             };
             public type UpdateBlockUpdateOutputResult = ShareableBlock;
             public type UpdateBlockUpdateOutput = Result.Result<UpdateBlockUpdateOutputResult, UpdateBlockUpdateOutputError>;
+        };
+
+        public module UpdateSettingsUpdate {
+            public type UpdateSettingsUpdateInput = {
+                description : ?Text;
+                name : ?Text;
+                visibility : ?WorkspaceVisibility;
+                websiteLink : ?Text;
+            };
+            public type UpdateSettingsUpdateOutputError = {
+                #unauthorized;
+            };
+            public type UpdateSettingsUpdateOutputOk = ();
+            public type UpdateSettingsUpdateOutput = Result.Result<UpdateSettingsUpdateOutputOk, UpdateSettingsUpdateOutputError>;
+        };
+
+        public module UpdateUserRoleUpdate {
+            public type UpdateUserRoleUpdateInput = {
+                user : Principal;
+                role : WorkspaceUserRole;
+            };
+            public type UpdateUserRoleUpdateOutputError = {
+                #unauthorized;
+            };
+            public type UpdateUserRoleUpdateOutputOk = ();
+            public type UpdateUserRoleUpdateOutput = Result.Result<UpdateUserRoleUpdateOutputOk, UpdateUserRoleUpdateOutputError>;
         };
     };
 };

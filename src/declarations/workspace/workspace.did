@@ -6,6 +6,10 @@ type Workspace__1 = record {
   updatedAt : Time;
   uuid : UUID;
 };
+type WorkspaceVisibility = variant {
+  Private;
+  Public;
+};
 type WorkspaceUserRole = variant {
   admin;
   guest;
@@ -64,8 +68,10 @@ type Workspace = service {
   ///      ************************************************************************
   getInitArgs : () -> (GetInitArgsOutput) query;
   getInitData : () -> (GetInitDataOutput) query;
-  pages : (PagesOptionsArg) -> (PagesResult) query;
+  members : () -> (MembersOutput) query;
+  pages : (PagesOptionsArg) -> (PagesOutput) query;
   saveEvents : (SaveEventTransactionUpdateInput) -> (SaveEventTransactionUpdateOutput);
+  settings : () -> (SettingsOutput) query;
   /// ***********************************************************************
   ///      * Queries
   ///      ************************************************************************
@@ -74,7 +80,31 @@ type Workspace = service {
   /// * Updates canister information based on passed parameters at current time.
   ///      * Called from browser or any canister "update" method.
   updateCanistergeekInformation : (UpdateInformationRequest) -> ();
+  updateSettings : (UpdateSettingsUpdateInput) -> (UpdateSettingsUpdateOutput);
+  updateUserRole : (UpdateUserRoleUpdateInput) -> (UpdateUserRoleUpdateOutput);
   walletReceive : () -> (record { accepted : nat64 });
+};
+type UpdateUserRoleUpdateOutputOk = null;
+type UpdateUserRoleUpdateOutputError = variant { unauthorized };
+type UpdateUserRoleUpdateOutput = variant {
+  err : UpdateUserRoleUpdateOutputError;
+  ok : UpdateUserRoleUpdateOutputOk;
+};
+type UpdateUserRoleUpdateInput = record {
+  role : WorkspaceUserRole;
+  user : principal;
+};
+type UpdateSettingsUpdateOutputOk = null;
+type UpdateSettingsUpdateOutputError = variant { unauthorized };
+type UpdateSettingsUpdateOutput = variant {
+  err : UpdateSettingsUpdateOutputError;
+  ok : UpdateSettingsUpdateOutputOk;
+};
+type UpdateSettingsUpdateInput = record {
+  description : opt text;
+  name : opt text;
+  visibility : opt WorkspaceVisibility;
+  websiteLink : opt text;
 };
 type UpdateInformationRequest = record {
   metrics : opt CollectMetricsRequestType;
@@ -190,6 +220,12 @@ type ShareableBlock = record {
   properties : ShareableBlockProperties;
   uuid : UUID;
 };
+type SettingsOutput = record {
+  description : text;
+  name : text;
+  visibility : WorkspaceVisibility;
+  websiteLink : text;
+};
 type SaveEventTransactionUpdateOutputResult = null;
 type SaveEventTransactionUpdateOutputError = variant {
   anonymousUser;
@@ -203,8 +239,9 @@ type SaveEventTransactionUpdateInput = record {
   transaction : BlockEventTransaction;
 };
 type PrimaryKey = nat;
+type PaginatedResults_1 = record { edges : vec Edge_1 };
 type PaginatedResults = record { edges : vec Edge };
-type PagesResult = record {
+type PagesOutput = record {
   pages : PaginatedResults;
   recordMap : record {
     blocks : vec record {
@@ -237,6 +274,15 @@ type MetricsRequest = record { parameters : GetMetricsParameters };
 type MetricsGranularity = variant {
   daily;
   hourly;
+};
+type MembersOutput = record {
+  recordMap : record {
+    users : vec record {
+      principal;
+      WorkspaceUser;
+    };
+  };
+  users : PaginatedResults_1;
 };
 type LogMessagesData = record {
   message : text;
@@ -310,7 +356,8 @@ type GetInformationRequest = record {
   version : bool;
 };
 type ExternalId = text;
-type Edge_1 = record { node : HydratedActivity };
+type Edge_2 = record { node : HydratedActivity };
+type Edge_1 = record { node : principal };
 type Edge = record { node : ExternalId };
 type DeletePageUpdateOutputResult = null;
 type DeletePageUpdateOutputError = null;
@@ -522,6 +569,6 @@ type AddBlockUpdateInput = record {
   properties : ShareableBlockProperties__2;
   uuid : UUID;
 };
-type ActivityLogOutput = record { edges : vec Edge_1 };
+type ActivityLogOutput = record { edges : vec Edge_2 };
 type ActivityId = nat;
 service : (WorkspaceInitArgs, WorkspaceInitData) -> Workspace;

@@ -42,6 +42,7 @@ export function PageWrapper({
             flexGrow: 1,
             transition: 'padding 0.2s ease-in-out',
             overflowY: 'scroll',
+            position: 'relative',
           }}
         >
           <ActionBar
