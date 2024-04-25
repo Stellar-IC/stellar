@@ -4,7 +4,7 @@ import type { IDL } from '@dfinity/candid';
 
 export type ActivityId = bigint;
 export interface ActivityLogOutput {
-  edges: Array<Edge_1>;
+  edges: Array<Edge_2>;
 }
 export interface AddBlockUpdateInput {
   content: ShareableBlockContent__1;
@@ -116,7 +116,8 @@ export type BlockType__2 =
   | { page: null }
   | { callout: null }
   | { quote: null }
-  | { bulletedList: null };
+  | { bulletedList: null }
+  | { paragraph: null };
 export type BlockUpdatedEventData =
   | {
       updatePropertyChecked: BlockPropertyCheckedUpdatedEventData;
@@ -197,6 +198,9 @@ export interface Edge {
   node: ExternalId;
 }
 export interface Edge_1 {
+  node: Principal;
+}
+export interface Edge_2 {
   node: HydratedActivity;
 }
 export type ExternalId = string;
@@ -269,6 +273,10 @@ export interface LogMessagesData {
   timeNanos: Nanos;
   message: string;
 }
+export interface MembersOutput {
+  users: PaginatedResults_1;
+  recordMap: { users: Array<[Principal, WorkspaceUser]> };
+}
 export type MetricsGranularity = { hourly: null } | { daily: null };
 export interface MetricsRequest {
   parameters: GetMetricsParameters;
@@ -295,12 +303,15 @@ export interface PagesOptionsArg {
   cursor: [] | [PrimaryKey];
   limit: [] | [bigint];
 }
-export interface PagesResult {
+export interface PagesOutput {
   pages: PaginatedResults;
   recordMap: { blocks: Array<[ExternalId, ShareableBlock]> };
 }
 export interface PaginatedResults {
   edges: Array<Edge>;
+}
+export interface PaginatedResults_1 {
+  edges: Array<Edge_1>;
 }
 export type PrimaryKey = bigint;
 export interface SaveEventTransactionUpdateInput {
@@ -315,6 +326,12 @@ export type SaveEventTransactionUpdateOutputError =
   | { anonymousUser: null }
   | { insufficientCycles: null };
 export type SaveEventTransactionUpdateOutputResult = null;
+export interface SettingsOutput {
+  websiteLink: string;
+  name: string;
+  description: string;
+  visibility: WorkspaceVisibility;
+}
 export interface ShareableBlock {
   content: ShareableBlockContent;
   uuid: UUID;
@@ -416,6 +433,30 @@ export type UpdateCallsAggregatedData = BigUint64Array | bigint[];
 export interface UpdateInformationRequest {
   metrics: [] | [CollectMetricsRequestType];
 }
+export interface UpdateSettingsUpdateInput {
+  websiteLink: [] | [string];
+  name: [] | [string];
+  description: [] | [string];
+  visibility: [] | [WorkspaceVisibility];
+}
+export type UpdateSettingsUpdateOutput =
+  | {
+      ok: UpdateSettingsUpdateOutputOk;
+    }
+  | { err: UpdateSettingsUpdateOutputError };
+export type UpdateSettingsUpdateOutputError = { unauthorized: null };
+export type UpdateSettingsUpdateOutputOk = null;
+export interface UpdateUserRoleUpdateInput {
+  role: WorkspaceUserRole;
+  user: Principal;
+}
+export type UpdateUserRoleUpdateOutput =
+  | {
+      ok: UpdateUserRoleUpdateOutputOk;
+    }
+  | { err: UpdateUserRoleUpdateOutputError };
+export type UpdateUserRoleUpdateOutputError = { unauthorized: null };
+export type UpdateUserRoleUpdateOutputOk = null;
 export interface Workspace {
   activityLog: ActorMethod<[UUID], ActivityLogOutput>;
   addBlock: ActorMethod<[AddBlockUpdateInput], AddBlockUpdateOutput>;
@@ -429,16 +470,26 @@ export interface Workspace {
   >;
   getInitArgs: ActorMethod<[], GetInitArgsOutput>;
   getInitData: ActorMethod<[], GetInitDataOutput>;
-  pages: ActorMethod<[PagesOptionsArg], PagesResult>;
+  members: ActorMethod<[], MembersOutput>;
+  pages: ActorMethod<[PagesOptionsArg], PagesOutput>;
   saveEvents: ActorMethod<
     [SaveEventTransactionUpdateInput],
     SaveEventTransactionUpdateOutput
   >;
+  settings: ActorMethod<[], SettingsOutput>;
   toObject: ActorMethod<[], Workspace__1>;
   updateBlock: ActorMethod<[UpdateBlockUpdateInput], UpdateBlockUpdateOutput>;
   updateCanistergeekInformation: ActorMethod<
     [UpdateInformationRequest],
     undefined
+  >;
+  updateSettings: ActorMethod<
+    [UpdateSettingsUpdateInput],
+    UpdateSettingsUpdateOutput
+  >;
+  updateUserRole: ActorMethod<
+    [UpdateUserRoleUpdateInput],
+    UpdateUserRoleUpdateOutput
   >;
   walletReceive: ActorMethod<[], { accepted: bigint }>;
 }
@@ -478,6 +529,7 @@ export type WorkspaceUserRole =
   | { admin: null }
   | { moderator: null }
   | { guest: null };
+export type WorkspaceVisibility = { Private: null } | { Public: null };
 export interface Workspace__1 {
   owner: WorkspaceOwner;
   name: WorkspaceName;

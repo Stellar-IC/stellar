@@ -137,8 +137,9 @@ shared ({ caller = initializer }) actor class User(
                     owner = Principal.fromActor(self);
                     controllers = [stable_owner, Principal.fromActor(self)];
                     initialUsers = [(
-                        Principal.fromActor(self),
+                        stable_owner,
                         {
+                            identity = stable_owner;
                             canisterId = Principal.fromActor(self);
                             username = stable_profile.username;
                             role = #admin;
@@ -157,8 +158,6 @@ shared ({ caller = initializer }) actor class User(
         stable_personalWorkspaceId := ?workspaceId;
         stable_personalWorkspace := ?workspace;
 
-        // Debug.print("Workspace created for user: " # debug_show (Principal.fromActor(self)));
-
         // var pageBuilder = BlockBuilder.BlockBuilder({
         //     uuid = await Source.Source().new();
         // }).setTitle("Getting Started");
@@ -167,12 +166,9 @@ shared ({ caller = initializer }) actor class User(
 
         // let pageToCreate = Block.toShareable(pageBuilder.build());
 
-        // Debug.print("Done building page");
         // let result = await workspace.createPage({
         //     pageToCreate with initialBlockUuid = null;
         // });
-
-        // Debug.print("Page created");
 
         #ok(workspaceId);
     };
@@ -183,7 +179,7 @@ shared ({ caller = initializer }) actor class User(
         switch (await checkUsernameAvailability(input.username)) {
             case (#err(error)) { return #err(error) };
             case (#ok(())) {
-        stable_profile.username := input.username;
+                stable_profile.username := input.username;
             };
         };
 

@@ -10,6 +10,8 @@ import RBTree "mo:base/RBTree";
 import Text "mo:base/Text";
 import Time = "mo:base/Time";
 import Timer = "mo:base/Timer";
+import Buffer "mo:base/Buffer";
+import Option "mo:base/Option";
 
 import Canistergeek "mo:canistergeek/canistergeek";
 
@@ -46,7 +48,7 @@ shared ({ caller = initializer }) actor class Workspace(
     type BlocksByPageUuidResult = Types.Queries.BlocksByPageUuid.BlocksByPageUuidResult;
     type PageByUuidResult = Types.Queries.PageByUuid.PageByUuidResult;
     type PagesOptionsArg = Types.Queries.Pages.PagesOptionsArg;
-    type PagesResult = Types.Queries.Pages.PagesResult;
+    type PagesOutput = Types.Queries.Pages.PagesOutput;
     type PrimaryKey = Types.PrimaryKey;
     type WorkspaceUser = Types.WorkspaceUser;
     type WorkspaceOwner = Types.WorkspaceOwner;
@@ -67,6 +69,7 @@ shared ({ caller = initializer }) actor class Workspace(
     stable var _name : CoreTypes.Workspaces.WorkspaceName = initData.name;
     stable var _description : CoreTypes.Workspaces.WorkspaceDescription = initData.name;
     stable var _websiteLink : ?Text = null;
+    stable var _visibility : Types.WorkspaceVisibility = #Private;
     stable var _createdAt : Time.Time = initData.createdAt;
     stable var _updatedAt : Time.Time = initData.updatedAt;
 
@@ -158,7 +161,7 @@ shared ({ caller = initializer }) actor class Workspace(
         });
     };
 
-    public query ({ caller }) func pages(options : PagesOptionsArg) : async PagesResult {
+    public query ({ caller }) func pages(options : PagesOptionsArg) : async PagesOutput {
         let pages = State.getPages(_state);
         let contentOptions = {
             limit = switch (options.limit) {
@@ -187,7 +190,7 @@ shared ({ caller = initializer }) actor class Workspace(
             };
         };
 
-        let result : PagesResult = {
+        let result : PagesOutput = {
             pages = {
                 edges = List.toArray(
                     List.map<BlocksTypes.ShareableBlock, CoreTypes.Edge<Text>>(
@@ -255,6 +258,35 @@ shared ({ caller = initializer }) actor class Workspace(
         return Paginator.paginateList(activities);
     };
 
+    public query func members() : async Types.Queries.Members.MembersOutput {
+        let _users = UserRegistry.getUsers(userRegistry);
+        let userCount = Array.size(_users);
+        let users = Buffer.Buffer<(Principal, WorkspaceUser)>(userCount);
+        let userIds = Buffer.Buffer<Principal>(userCount);
+
+        for (user in Array.vals(_users)) {
+            users.add((user.canisterId, user));
+            userIds.add(user.canisterId);
+        };
+
+        return {
+            users = Paginator.paginateBuffer(userIds);
+            recordMap = { users = Buffer.toArray(users) };
+        };
+    };
+
+    public query func settings() : async Types.Queries.Settings.SettingsOutput {
+        return {
+            description = _description;
+            name = _name;
+            visibility = _visibility;
+            websiteLink = switch (_websiteLink) {
+                case (null) { "" };
+                case (?link) { link };
+            };
+        };
+    };
+
     /*************************************************************************
      * Updates
      *************************************************************************/
@@ -267,10 +299,16 @@ shared ({ caller = initializer }) actor class Workspace(
         };
 
         for (item in input.vals()) {
-            let userId = item.0;
+            let userIdentity = item.0;
             let userDetails = item.1;
+            let userCanisterId = userDetails.canisterId;
 
-            UserRegistry.addUser<WorkspaceUser>(userRegistry, userId, userDetails);
+            UserRegistry.addUser<WorkspaceUser>(
+                userRegistry,
+                userIdentity,
+                userCanisterId,
+                userDetails,
+            );
         };
 
         return #ok;
@@ -321,6 +359,83 @@ shared ({ caller = initializer }) actor class Workspace(
             // TODO: Save events to state
             processEvent(event);
         };
+
+        await updateCanistergeekInformation({ metrics = ? #force });
+
+        return #ok;
+    };
+
+    public shared ({ caller }) func updateSettings(
+        input : Types.Updates.UpdateSettingsUpdate.UpdateSettingsUpdateInput
+    ) : async Types.Updates.UpdateSettingsUpdate.UpdateSettingsUpdateOutput {
+        // Check if the caller is an admin
+        let user = UserRegistry.findUser(userRegistry, caller);
+        switch (user) {
+            case (null) {
+                return #err(#unauthorized);
+            };
+            case (?user) {
+                if (user.role != #admin) {
+                    return #err(#unauthorized);
+                };
+            };
+        };
+
+        switch (input.name) {
+            case (null) {};
+            case (?name) {
+                // TODO: Name should be unique
+                _name := name;
+            };
+        };
+
+        switch (input.description) {
+            case (null) {};
+            case (?description) {
+                _description := description;
+            };
+        };
+
+        switch (input.websiteLink) {
+            case (null) {};
+            case (?websiteLink) {
+                _websiteLink := ?websiteLink;
+            };
+        };
+
+        switch (input.visibility) {
+            case (null) {};
+            case (?visibility) {
+                _visibility := visibility;
+            };
+        };
+
+        await updateCanistergeekInformation({ metrics = ? #force });
+
+        return #ok;
+    };
+
+    public shared ({ caller }) func updateUserRole(
+        input : Types.Updates.UpdateUserRoleUpdate.UpdateUserRoleUpdateInput
+    ) : async Types.Updates.UpdateUserRoleUpdate.UpdateUserRoleUpdateOutput {
+        let user = UserRegistry.getUserByUserId(userRegistry, input.user);
+        let updatedUser = {
+            user with role = input.role;
+        };
+        let adminUsers = UserRegistry.filter<WorkspaceUser>(userRegistry, func(u : WorkspaceUser) { u.role == #admin });
+
+        // Is this the only admin user in the workspace?
+        // If so, don't allow the role to be changed
+        if (
+            Array.size(adminUsers) == 1 and
+            user.role == #admin and
+            updatedUser.role != #admin
+        ) {
+            // TODO: Consider returning a more specific error
+            return #err(#unauthorized);
+        };
+
+        UserRegistry.updateUser<WorkspaceUser>(userRegistry, input.user, updatedUser);
 
         await updateCanistergeekInformation({ metrics = ? #force });
 
