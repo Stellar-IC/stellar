@@ -37,7 +37,7 @@ module Constants {
         };
 
         public let WORKSPACE__INITIAL_CYCLES_BALANCE = {
-            scalar = scalar(#billion(100));
+            scalar = scalar(#billion(400));
             unit = #cycles;
         };
 
@@ -62,7 +62,7 @@ module Constants {
         };
 
         public let USER__INITIAL_CYCLES_BALANCE = {
-            scalar = scalar(#billion(200)) + WORKSPACE__INITIAL_CYCLES_BALANCE.scalar;
+            scalar = scalar(#trillion(2)) + WORKSPACE__INITIAL_CYCLES_BALANCE.scalar;
             unit = #cycles;
         };
 
