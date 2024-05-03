@@ -59,7 +59,6 @@ export function SettingsNavigation({
                   </Button>
                 </MenuTarget>
                 <MenuDropdown>
-                  <MenuItem onClick={() => logout()}>Profile</MenuItem>
                   <MenuItem onClick={() => logout()}>Logout</MenuItem>
                 </MenuDropdown>
               </Menu>

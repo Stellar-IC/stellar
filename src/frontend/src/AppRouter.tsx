@@ -97,7 +97,11 @@ export function AppRouter() {
   const { isAuthenticated, identity, profile, isLoading } = useAuthContext();
 
   if (isLoading) {
-    return <></>;
+    return (
+      <Flex h="100%" align="center" justify="center">
+        <Loader />
+      </Flex>
+    );
   }
 
   if (isAuthenticated && !profile.username) {

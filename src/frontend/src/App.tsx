@@ -12,6 +12,10 @@ import { AppRouter } from './AppRouter';
 
 import './App.css';
 
+const AppShell = ({ children }: { children: React.ReactNode }) => (
+  <div className="AppShell">{children}</div>
+);
+
 export default function App() {
   return (
     <MantineProvider theme={theme} defaultColorScheme="dark">
@@ -19,7 +23,9 @@ export default function App() {
         <QueryContextProvider>
           <SettingsContextProvider>
             <Notifications />
-            <AppRouter />
+            <AppShell>
+              <AppRouter />
+            </AppShell>
           </SettingsContextProvider>
         </QueryContextProvider>
       </AuthContextProvider>

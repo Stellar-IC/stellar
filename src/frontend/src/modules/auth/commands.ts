@@ -24,7 +24,7 @@ export async function logout() {
   const authClient = await getAuthClient();
 
   await authClient.logout({
-    returnTo: 'http://127.0.0.1:5173',
+    returnTo: window.location.host,
   });
 
   await db.delete();

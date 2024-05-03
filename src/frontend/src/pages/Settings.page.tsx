@@ -143,16 +143,7 @@ export function SettingsPage() {
         }}
       >
         <Flex gap="lg" h="100%">
-          <Box
-            w={rem('160px')}
-            h="100%"
-            pr="md"
-            style={{
-              flesShrink: 0,
-              borderRight: '1px solid',
-              borderRightColor: 'var(--mantine-color-gray-7)',
-            }}
-          >
+          <Box w={rem('160px')} h="100%" pr="md" style={{ flexShrink: 0 }}>
             <Menu>
               <Stack gap="lg" h="100%">
                 <div>

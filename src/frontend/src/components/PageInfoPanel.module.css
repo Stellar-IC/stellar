@@ -16,7 +16,6 @@
   flex-shrink: 0;
 
   @media (min-width: $mantine-breakpoint-xs) {
-    position: sticky;
     width: rem(300px);
     padding-top: 0;
   }
