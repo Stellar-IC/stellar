@@ -13,87 +13,74 @@ import IcWebSocketCdkState "mo:ic-websocket-cdk/State";
 import IcWebSocketCdkTypes "mo:ic-websocket-cdk/Types";
 
 import BlocksTypes "../../lib/blocks/types";
+import UserClientMap "./UserClientMap";
 
 actor {
     type AppMessage = {
         #ping : { message : Text };
         #blockEvent : BlocksTypes.BlockEvent;
         #associateUser : {
-            userId : Principal;
+            userId : Principal; // user's identity principal
         };
     };
 
-    stable let userClientMap = Map.new<Principal, [Principal]>();
+    /*
+     * Map from user identity to the list of clients associated with that user.
+     * This is used to send messages to all the clients associated with a user.
+     */
+    stable let _userClientMap = UserClientMap.new();
 
-    let principalHasUtils = (Principal.hash, Principal.equal);
+    public shared func sendMessage(
+        userId : Principal,
+        msg : AppMessage,
+    ) : async () {
+        let clients = UserClientMap.clientsForUser(_userClientMap, userId);
+        var clientsToRemove : [Principal] = [];
 
-    public shared func send_message(userId : Principal, msg : AppMessage) : async () {
-        Debug.print("Sending message to user: " # Principal.toText(userId) # " with message: " # debug_show (msg));
-
-        let clients = switch (Map.get(userClientMap, principalHasUtils, userId)) {
-            case (?clients) { clients };
-            case (null) {
-                Debug.print("Could not find clients for user: " # debug_show (userId));
-                return;
-            };
-        };
-
-        var closedClients : [Principal] = [];
-
-        Debug.print("clients: " # debug_show (clients));
-
-        // add any failed clients to the closed clients list to remove them from the map
         for (client in clients.vals()) {
-            switch (await send_app_message(client, msg)) {
+            let result = await sendMessageToClient(client, msg);
+
+            switch (result) {
                 case (#err(err)) {
-                    closedClients := Array.append([client], closedClients);
+                    clientsToRemove := Array.append(
+                        clientsToRemove,
+                        [client],
+                    );
                 };
                 case (_) {};
             };
         };
 
-        let updatedClients = Array.filter<Principal>(
-            clients,
-            func(c) {
-                if (Array.indexOf<Principal>(c, closedClients, Principal.equal) != null) {
-                    return false;
-                };
-
-                return true;
-            },
-        );
-
-        ignore Map.put(userClientMap, principalHasUtils, userId, updatedClients);
+        if (Array.size(clientsToRemove) > 0) {
+            Debug.print("Removing clients: " # debug_show (clientsToRemove));
+            UserClientMap.removeClients(_userClientMap, userId, clientsToRemove);
+        };
     };
 
-    /// A custom function to send the message to the client
-    func send_app_message(client_principal : IcWebSocketCdk.ClientPrincipal, msg : AppMessage) : async Result.Result<(), Text> {
-        Debug.print("Sending message to " # Principal.toText(client_principal) # ": " # debug_show (msg));
+    func sendMessageToClient(
+        client : IcWebSocketCdk.ClientPrincipal,
+        msg : AppMessage,
+    ) : async Result.Result<(), Text> {
+        let result = await IcWebSocketCdk.send(ws_state, client, to_candid (msg));
 
-        // here we call the send from the CDK!!
-        switch (await IcWebSocketCdk.send(ws_state, client_principal, to_candid (msg))) {
+        switch (result) {
             case (#Err(err)) {
-                Debug.print("Could not send message:" # debug_show (#Err(err)));
                 return #err(err);
             };
             case (_) {
-                Debug.print("Message sent:" # debug_show (msg));
                 return #ok;
             };
         };
     };
 
-    func on_open(args : IcWebSocketCdk.OnOpenCallbackArgs) : async () {
-        let message : AppMessage = #ping({
-            message = "Ping";
-        });
-        ignore await send_app_message(args.client_principal, message);
+    func onOpen(args : IcWebSocketCdk.OnOpenCallbackArgs) : async () {
+        let message : AppMessage = #ping({ message = "Ping" });
+        ignore await sendMessageToClient(args.client_principal, message);
     };
 
     /// The custom logic is just a ping-pong message exchange between frontend and canister.
     /// Note that the message from the WebSocket is serialized in CBOR, so we have to deserialize it first
-
-    func on_message(args : IcWebSocketCdk.OnMessageCallbackArgs) : async () {
+    func onMessage(args : IcWebSocketCdk.OnMessageCallbackArgs) : async () {
         let app_msg : ?AppMessage = from_candid (args.message);
         let msg : AppMessage = switch (app_msg) {
             case (?msg) { msg };
@@ -103,8 +90,6 @@ actor {
             };
         };
 
-        Debug.print("Received message: " # debug_show (msg));
-
         switch (msg) {
             case (#blockEvent(event)) {
                 // ignore
@@ -113,32 +98,21 @@ actor {
                 // ignore
             };
             case (#associateUser(data)) {
-                Debug.print("Received message: associateUser with userId: " # debug_show (data.userId));
-                let currentClients = switch (Map.get<Principal, [Principal]>(userClientMap, (Principal.hash, Principal.equal), data.userId)) {
-                    case (?clients) { clients };
-                    case (null) { [] };
-                };
-
-                if (Array.indexOf<Principal>(args.client_principal, currentClients, Principal.equal) != null) {
-                    // already associated
-                    return;
-                };
-
-                ignore Map.put<Principal, [Principal]>(userClientMap, (Principal.hash, Principal.equal), data.userId, Array.append([args.client_principal], currentClients));
+                UserClientMap.addClient(_userClientMap, data.userId, args.client_principal);
             };
         };
     };
 
-    func on_close(args : IcWebSocketCdk.OnCloseCallbackArgs) : async () {
+    func onClose(args : IcWebSocketCdk.OnCloseCallbackArgs) : async () {
         Debug.print("Client " # debug_show (args.client_principal) # " disconnected");
     };
 
     let params = IcWebSocketCdkTypes.WsInitParams(null, null);
     let ws_state = IcWebSocketCdkState.IcWebSocketState(params);
     let handlers = IcWebSocketCdkTypes.WsHandlers(
-        ?on_open,
-        ?on_message,
-        ?on_close,
+        ?onOpen,
+        ?onMessage,
+        ?onClose,
     );
     let ws = IcWebSocketCdk.IcWebSocket(ws_state, params, handlers);
 
