@@ -13,7 +13,6 @@ import Types_v0 "./v0";
 
 module {
     public type Block = Types_v0.Block;
-    public type UnsavedBlock = Types_v0.UnsavedBlock;
     public type ShareableBlock = Types_v0.ShareableBlock;
     public type ShareableBlockContent = Types_v0.ShareableBlockContent;
     public type ShareableBlockProperties = Types_v0.ShareableBlockProperties;

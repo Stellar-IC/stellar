@@ -1,8 +1,8 @@
 import Map "mo:map/Map";
 import Nat "mo:base/Nat";
 
-import ActivitiesTypes "../../../lib/activities/types";
-import BlocksTypes "../../../lib/blocks/types";
+import ActivitiesTypes "../../../lib/activities/Types";
+import BlocksTypes "../../../lib/blocks/Types";
 
 module State {
     type PrimaryKey = BlocksTypes.PrimaryKey;

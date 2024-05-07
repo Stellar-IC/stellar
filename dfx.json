@@ -1,16 +1,11 @@
 {
   "canisters": {
     "frontend": {
-      "dependencies": [
-        "internet_identity",
-        "user_index"
-      ],
+      "dependencies": ["internet_identity", "user_index"],
       "frontend": {
         "entrypoint": "src/frontend/src/index.html"
       },
-      "source": [
-        "src/frontend/dist"
-      ],
+      "source": ["src/frontend/dist"],
       "type": "assets"
     },
     "cycles_dispenser": {
@@ -19,18 +14,13 @@
       "optimize": "size"
     },
     "workspace_index": {
-      "dependencies": [
-        "user_index",
-        "cycles_dispenser"
-      ],
+      "dependencies": ["user_index", "cycles_dispenser"],
       "main": "src/backend/canisters/workspace_index/main.mo",
       "type": "motoko",
       "optimize": "size"
     },
     "user_index": {
-      "dependencies": [
-        "cycles_dispenser"
-      ],
+      "dependencies": ["cycles_dispenser"],
       "main": "src/backend/canisters/user_index/main.mo",
       "type": "motoko",
       "gzip": true

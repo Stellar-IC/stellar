@@ -11,7 +11,6 @@ import CoreTypes "../../../types";
 
 module {
     public type Block = BlocksTypes.Block;
-    public type UnsavedBlock = BlocksTypes.UnsavedBlock;
     public type ShareableBlock = BlocksTypes.ShareableBlock;
     public type ShareableBlockContent = BlocksTypes.ShareableBlockContent;
     public type ShareableBlockProperties = BlocksTypes.ShareableBlockProperties;
@@ -21,7 +20,7 @@ module {
 
     public module Services {
         public module CreateBlockService {
-            public type CreateBlockServiceInput = UnsavedBlock;
+            public type CreateBlockServiceInput = Block;
             public type CreateBlockServiceOutputError = {
                 #anonymousUser;
                 #failedToCreate;

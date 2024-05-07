@@ -17,15 +17,13 @@ import Map "mo:map/Map";
 
 import UUID "mo:uuid/UUID";
 
-import ActivitiesTypes "../../../../lib/activities/types";
+import ActivitiesTypes "../../../../lib/activities/Types";
 import ActivityModule "../../../../lib/activities/Activity";
 import BlockModule "../../../../lib/blocks/Block";
-import BlocksTypes "../../../../lib/blocks/types";
-import EventsTypes "../../../../lib/events/types";
+import BlocksTypes "../../../../lib/blocks/Types";
+import EventsTypes "../../../../lib/events/Types";
 
-import Models "../../../../utils/data/database/models";
 import QuerySet "../../../../utils/data/database/query_set";
-import IdManager "../../../../utils/data/id_manager";
 import Node "../../../../utils/data/lseq/Node";
 import Tree "../../../../utils/data/lseq/Tree";
 

@@ -14,7 +14,7 @@ import State "../state";
 import Types "../types/v2";
 
 module {
-    type UnsavedBlock = BlocksTypes.UnsavedBlock;
+    type Block = BlocksTypes.Block;
     type ShareableBlockContent = BlocksTypes.ShareableBlockContent;
     type ShareableBlockText = BlocksTypes.ShareableBlockText;
     type ShareableBlockProperties = BlocksTypes.ShareableBlockProperties;
@@ -34,7 +34,7 @@ module {
         };
 
         let initialBlockUuid = input.initialBlockUuid;
-        let initialBlock : ?UnsavedBlock = switch (initialBlockUuid) {
+        let initialBlock : ?Block = switch (initialBlockUuid) {
             case (null) { null };
             case (?uuid) {
                 ?BlockBuilder.BlockBuilder({
@@ -53,7 +53,7 @@ module {
             };
         };
 
-        let pageToCreate : UnsavedBlock = {
+        let pageToCreate : Block = {
             var blockType = #page;
             uuid = input.uuid;
             content = switch (initialBlock) {

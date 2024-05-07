@@ -8,24 +8,20 @@ import Text "mo:base/Text";
 import TrieMap "mo:base/TrieMap";
 import UUID "mo:uuid/UUID";
 
-import ModelManager "../../utils/data/database/model_manager";
 import DatabaseTypes "../../utils/data/database/types";
-import IdManager "../../utils/data/id_manager";
 import Tree "../../utils/data/lseq/Tree";
 
-import Types "./types";
+import Types "./Types";
 
 module BlockModule = {
-    type ShareableBlock = Types.ShareableBlock;
     type Block = Types.Block;
-    type BlockProperties = Types.BlockProperties;
-    type BlockText = Types.BlockText;
-    type UnsavedBlock = Types.UnsavedBlock;
     type BlockContent = Types.BlockContent;
+    type BlockText = Types.BlockText;
+    type BlockProperties = Types.BlockProperties;
+    type ShareableBlock = Types.ShareableBlock;
     type ShareableBlockContent = Types.ShareableBlockContent;
     type ShareableBlockProperties = Types.ShareableBlockProperties;
     type ShareableBlockText = Types.ShareableBlockText;
-    type ShareableUnsavedBlock = Types.ShareableUnsavedBlock;
 
     public func fromShareable(input : ShareableBlock) : Block {
         let title : BlockText = switch (input.properties.title) {
@@ -50,7 +46,7 @@ module BlockModule = {
         };
     };
 
-    public func fromShareableUnsaved(input : ShareableUnsavedBlock) : UnsavedBlock {
+    public func fromShareableUnsaved(input : ShareableBlock) : Block {
         let title : BlockText = switch (input.properties.title) {
             case (null) { Tree.Tree(null) };
             case (?title) {

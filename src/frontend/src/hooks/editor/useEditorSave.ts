@@ -7,10 +7,9 @@ import { useAuthContext } from '@/modules/auth/contexts/AuthContext';
 import { store } from '@/modules/data-store';
 import { Block } from '@/types';
 
-import { PartialBlockEvent } from '../modules/editor/hooks/useEditorEventHandlers/types';
-import { buildEvent } from '../modules/editor/hooks/useEditorEventHandlers/utils';
-
-import { useSaveEvents } from './canisters/workspace/updates/useSaveEvents';
+import { PartialBlockEvent } from '../../modules/editor/hooks/useEditorEventHandlers/types';
+import { buildEvent } from '../../modules/editor/hooks/useEditorEventHandlers/utils';
+import { useSaveEvents } from '../canisters/workspace/updates/useSaveEvents';
 
 export const useEditorSave = () => {
   const { workspaceId } = useWorkspaceContext();

@@ -3,18 +3,22 @@
     "local": "b77ix-eeaaa-aaaaa-qaada-cai"
   },
   "cycles_dispenser": {
-    "local": "bkyz2-fmaaa-aaaaa-qaaaq-cai"
+    "local": "bkyz2-fmaaa-aaaaa-qaaaq-cai",
+    "ic": "skqz7-jiaaa-aaaag-ak7wa-cai"
   },
   "frontend": {
-    "local": "bd3sg-teaaa-aaaaa-qaaba-cai"
+    "local": "bd3sg-teaaa-aaaaa-qaaba-cai",
+    "ic": "4ldlg-kaaaa-aaaan-qdupa-cai"
   },
   "internet_identity": {
     "local": "be2us-64aaa-aaaaa-qaabq-cai"
   },
   "user_index": {
-    "local": "br5f7-7uaaa-aaaaa-qaaca-cai"
+    "local": "br5f7-7uaaa-aaaaa-qaaca-cai",
+    "ic": "4mcns-hyaaa-aaaan-qdupq-cai"
   },
   "workspace_index": {
-    "local": "bw4dl-smaaa-aaaaa-qaacq-cai"
+    "local": "bw4dl-smaaa-aaaaa-qaacq-cai",
+    "ic": "zqzxx-mqaaa-aaaan-qduqa-cai"
   }
 }

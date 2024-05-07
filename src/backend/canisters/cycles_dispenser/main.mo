@@ -21,9 +21,8 @@ import Types "./types";
 actor CyclesDispenser {
     type RegisterableCanister = Types.RegisterableCanister;
 
-    stable let CONSTANTS = Constants.Constants();
-    stable let USER_INDEX__TOP_UP_AMOUNT = CONSTANTS.USER_INDEX__TOP_UP_AMOUNT.scalar;
-    stable let WORKSPACE_INDEX__TOP_UP_AMOUNT = CONSTANTS.WORKSPACE_INDEX__TOP_UP_AMOUNT.scalar;
+    stable let USER_INDEX__TOP_UP_AMOUNT = Constants.USER_INDEX__TOP_UP_AMOUNT.scalar;
+    stable let WORKSPACE_INDEX__TOP_UP_AMOUNT = Constants.WORKSPACE_INDEX__TOP_UP_AMOUNT.scalar;
 
     stable let MAX_TOP_UP_AMOUNT = 1_000_000_000_000_000;
     stable let MIN_INTERVAL = 3 * 60 * 60 * 1_000_000_000_000; // 3 hours
@@ -48,7 +47,7 @@ actor CyclesDispenser {
         #topUpAlreadyInProgress;
         #amountTooHigh;
         #throttled;
-        #insufficientFunds;
+        #insufficientCycles;
     };
 
     type RequestCyclesUpdateOutput = Result.Result<RequestCyclesUpdateOk, RequestCyclesUpdateError>;

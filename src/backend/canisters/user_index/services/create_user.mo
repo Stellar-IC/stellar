@@ -19,16 +19,11 @@ module CreateUser {
         owner : Principal,
         userIndexPrincipal : Principal,
     ) : async Result.Result<{ #created : (Principal, User.User); #existing : (Principal, User.User) }, { #anonymousUser; #insufficientCycles; #canisterNotFoundForRegisteredUser }> {
-        let CONSTANTS = Constants.Constants();
-        let USER__CAPACITY = CONSTANTS.USER__CAPACITY.scalar;
-        let USER__FREEZING_THRESHOLD = CONSTANTS.USER__FREEZING_THRESHOLD.scalar;
-        let USER__INITIAL_CYCLES_BALANCE = CONSTANTS.USER__INITIAL_CYCLES_BALANCE.scalar;
+        let USER__CAPACITY = Constants.USER__CAPACITY.scalar;
+        let USER__FREEZING_THRESHOLD = Constants.USER__FREEZING_THRESHOLD.scalar;
+        let USER__INITIAL_CYCLES_BALANCE = Constants.USER__INITIAL_CYCLES_BALANCE.scalar;
 
-        var balance = Cycles.balance();
-
-        if (balance < USER__INITIAL_CYCLES_BALANCE) {
-            return #err(#insufficientCycles);
-        };
+        let balance = Cycles.balance();
 
         if (Principal.isAnonymous(owner)) {
             return #err(#anonymousUser);
@@ -41,6 +36,10 @@ module CreateUser {
                 let user = state.data.getUserByUserId(userId);
                 return #ok(#existing(userId, user));
             };
+        };
+
+        if (balance < USER__INITIAL_CYCLES_BALANCE) {
+            return #err(#insufficientCycles);
         };
 
         Cycles.add(USER__INITIAL_CYCLES_BALANCE);

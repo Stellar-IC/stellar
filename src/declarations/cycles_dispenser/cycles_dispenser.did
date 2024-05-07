@@ -27,7 +27,7 @@ type RequestCyclesUpdateOk = record {accepted: nat64;};
 type RequestCyclesUpdateError = 
  variant {
    amountTooHigh;
-   insufficientFunds;
+   insufficientCycles;
    throttled;
    topUpAlreadyInProgress;
    unauthorized;

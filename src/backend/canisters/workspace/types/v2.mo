@@ -5,9 +5,9 @@ import Text "mo:base/Text";
 import Time "mo:base/Time";
 import UUID "mo:uuid/UUID";
 
-import ActivitiesTypes "../../../lib/activities/types";
-import BlocksTypes "../../../lib/blocks/types";
-import EventsTypes "../../../lib/events/types";
+import ActivitiesTypes "../../../lib/activities/Types";
+import BlocksTypes "../../../lib/blocks/Types";
+import EventsTypes "../../../lib/events/Types";
 import CoreTypes "../../../types";
 
 module {
@@ -15,7 +15,6 @@ module {
     public type PrimaryKey = Nat;
     public type Block = BlocksTypes.Block;
     public type BlockEvent = BlocksTypes.BlockEvent;
-    public type UnsavedBlock = BlocksTypes.UnsavedBlock;
     public type ShareableBlock = BlocksTypes.ShareableBlock;
     public type ShareableBlockContent = BlocksTypes.ShareableBlockContent;
     public type ShareableBlockProperties = BlocksTypes.ShareableBlockProperties;
@@ -71,7 +70,7 @@ module {
         };
 
         public module CreateBlockService {
-            public type CreateBlockServiceInput = UnsavedBlock;
+            public type CreateBlockServiceInput = Block;
             public type CreateBlockServiceOutputError = {
                 #anonymousUser;
                 #failedToCreate;

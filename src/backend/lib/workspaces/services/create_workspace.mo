@@ -23,11 +23,10 @@ module CreateWorkspace {
     type Output = Result.Result<Workspace.Workspace, { #anonymousUser; #insufficientCycles }>;
 
     public func execute({ controllers; owner; initialUsers } : Input) : async Output {
-        let CONSTANTS = Constants.Constants();
-        let WORKSPACE_CAPACITY = CONSTANTS.WORKSPACE__CAPACITY.scalar;
-        let WORKSPACE_FREEZING_THRESHOLD = CONSTANTS.WORKSPACE__FREEZING_THRESHOLD.scalar;
-        let WORKSPACE_INITIAL_CYCLES_BALANCE = CONSTANTS.WORKSPACE__INITIAL_CYCLES_BALANCE.scalar;
-        let WORKSPACE_MEMORY_ALLOCATION = CONSTANTS.WORKSPACE__MEMORY_ALLOCATION.scalar;
+        let WORKSPACE_CAPACITY = Constants.WORKSPACE__CAPACITY.scalar;
+        let WORKSPACE_FREEZING_THRESHOLD = Constants.WORKSPACE__FREEZING_THRESHOLD.scalar;
+        let WORKSPACE_INITIAL_CYCLES_BALANCE = Constants.WORKSPACE__INITIAL_CYCLES_BALANCE.scalar;
+        let WORKSPACE_MEMORY_ALLOCATION = Constants.WORKSPACE__MEMORY_ALLOCATION.scalar;
 
         if (Cycles.balance() < WORKSPACE_INITIAL_CYCLES_BALANCE) {
             return #err(#insufficientCycles);

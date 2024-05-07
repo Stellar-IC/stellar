@@ -36,7 +36,11 @@ export const registerUser = async (
   );
   const result = await userIndex.registerUser();
 
-  if (!('ok' in result)) {
+  if ('err' in result) {
+    if ('insufficientCycles' in result.err) {
+      throw new Error('Insufficient Cycles for user registration');
+    }
+
     throw new Error('Unknown error occurred during user registration');
   }
 

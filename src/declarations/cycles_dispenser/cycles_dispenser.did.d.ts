@@ -87,7 +87,7 @@ export interface NumericEntity {
   'last' : bigint,
 }
 export type RequestCyclesUpdateError = { 'topUpAlreadyInProgress' : null } |
-  { 'insufficientFunds' : null } |
+  { 'insufficientCycles' : null } |
   { 'unauthorized' : null } |
   { 'throttled' : null } |
   { 'amountTooHigh' : null };

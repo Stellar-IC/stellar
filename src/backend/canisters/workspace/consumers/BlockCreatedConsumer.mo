@@ -9,16 +9,15 @@ import Source "mo:uuid/async/SourceV4";
 
 import Activity "../../../lib/activities/Activity";
 import ActivityBuilder "../../../lib/activities/ActivityBuilder";
-import ActivitiesTypes "../../../lib/activities/types";
-import BlocksTypes "../../../lib/blocks/types";
-import BlocksUtils "../../../lib/blocks/utils";
+import ActivitiesTypes "../../../lib/activities/Types";
+import BlocksTypes "../../../lib/blocks/Types";
+import BlocksUtils "../../../lib/blocks/Utils";
 import Tree "../../../utils/data/lseq/Tree";
 import CoreTypes "../../../types";
 
 import CreateActivity "../services/create_activity";
 import CreateBlock "../services/create_block";
 import State "../state";
-import Types "../types/v2";
 
 module BlockCreatedConsumer {
     type Block = BlocksTypes.Block;

@@ -29,9 +29,8 @@ import Types "./types";
 actor UserIndex {
     type UserId = Principal;
 
-    stable let CONSTANTS = Constants.Constants();
-    stable let USER_CAPACITY = CONSTANTS.USER__CAPACITY.scalar;
-    stable let MAX_TOP_UP_AMOUNT = CONSTANTS.USER__TOP_UP_AMOUNT.scalar;
+    stable let USER_CAPACITY = Constants.USER__CAPACITY.scalar;
+    stable let MAX_TOP_UP_AMOUNT = Constants.USER__TOP_UP_AMOUNT.scalar;
     stable let MIN_TOP_UP_INTERVAL = 3 * 60 * 60 * 1_000_000_000_000; // 3 hours
 
     stable var stable_user_identity_to_canister_id : RBTree.Tree<Principal, UserId> = #leaf;
@@ -237,7 +236,6 @@ actor UserIndex {
     * Called from browser.
     */
     public query ({ caller }) func getCanistergeekInformation(request : Canistergeek.GetInformationRequest) : async Canistergeek.GetInformationResponse {
-        validateCaller(caller);
         Canistergeek.getInformation(?canistergeekMonitor, ?canistergeekLogger, request);
     };
 
@@ -246,12 +244,7 @@ actor UserIndex {
     * Called from browser or any canister "update" method.
     */
     public shared ({ caller }) func updateCanistergeekInformation(request : Canistergeek.UpdateInformationRequest) : async () {
-        validateCaller(caller);
         canistergeekMonitor.updateInformation(request);
-    };
-
-    private func validateCaller(owner : Principal) : () {
-        //limit access here!
     };
 
     private func doCanisterGeekPreUpgrade() {

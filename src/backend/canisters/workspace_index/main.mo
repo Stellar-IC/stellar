@@ -20,6 +20,7 @@ import CanisterTopUp "../../lib/shared/CanisterTopUp";
 import CreateWorkspace "../../lib/workspaces/services/create_workspace";
 import CoreTypes "../../types";
 import CyclesUtils "../../utils/cycles";
+import UUIDUtils "../../utils/uuid";
 
 import Workspace "../workspace/main";
 import WorkspaceTypes "../workspace/types/v2";
@@ -29,14 +30,6 @@ import Paginator "../../lib/pagination/Paginator";
 actor WorkspaceIndex {
     type WorkspaceId = Principal;
     type WorkspaceExternalId = UUID.UUID;
-
-    // TODO: Move this to a library
-    func compareUUIDs(a : UUID.UUID, b : UUID.UUID) : Order.Order {
-        let listA : List.List<Nat8> = List.fromArray(a);
-        let listB : List.List<Nat8> = List.fromArray(b);
-
-        return List.compare<Nat8>(listA, listB, Nat8.compare);
-    };
 
     stable let MAX_TOP_UP_AMOUNT = 1_000_000_000_000_000;
     stable let MIN_INTERVAL = 3 * 60 * 60 * 1_000_000_000_000; // 3 hours
@@ -57,7 +50,7 @@ actor WorkspaceIndex {
      *************************************************************************/
 
     var workspace_id_to_workspace_uuid : RBTree.RBTree<WorkspaceId, WorkspaceExternalId> = RBTree.RBTree<WorkspaceId, WorkspaceExternalId>(Principal.compare);
-    var workspace_uuid_to_workspace_id : RBTree.RBTree<WorkspaceExternalId, WorkspaceId> = RBTree.RBTree<WorkspaceExternalId, WorkspaceId>(compareUUIDs);
+    var workspace_uuid_to_workspace_id : RBTree.RBTree<WorkspaceExternalId, WorkspaceId> = RBTree.RBTree<WorkspaceExternalId, WorkspaceId>(UUIDUtils.compare);
     var workspace_id_to_canister : RBTree.RBTree<WorkspaceId, Workspace.Workspace> = RBTree.RBTree<WorkspaceId, Workspace.Workspace>(Principal.compare);
     let topUps = RBTree.RBTree<Principal, CanisterTopUp.CanisterTopUp>(Principal.compare);
 

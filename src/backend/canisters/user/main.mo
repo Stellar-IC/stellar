@@ -19,7 +19,7 @@ import Block "../../lib/blocks/Block";
 import BlockBuilder "../../lib/blocks/BlockBuilder";
 import CanisterTopUp "../../lib/shared/CanisterTopUp";
 import UserProfile "../../lib/users/UserProfile";
-import UsersTypes "../../lib/users/types";
+import UsersTypes "../../lib/users/Types";
 import CreateWorkspace "../../lib/workspaces/services/create_workspace";
 import CoreTypes "../../types";
 import AuthUtils "../../utils/auth";
@@ -27,7 +27,6 @@ import Tree "../../utils/data/lseq/Tree";
 
 import Workspace "../workspace/main";
 
-import Guards "./guards";
 import Types "./types";
 
 shared ({ caller = initializer }) actor class User(
@@ -35,21 +34,33 @@ shared ({ caller = initializer }) actor class User(
 ) = self {
     type WorkspaceId = Principal;
 
-    stable let CONSTANTS = Constants.Constants();
-    stable let WORKSPACE__TOP_UP_AMOUNT = CONSTANTS.WORKSPACE__TOP_UP_AMOUNT.scalar;
-    stable let WORKSPACE__CAPACITY = CONSTANTS.WORKSPACE__CAPACITY.scalar;
+    stable let WORKSPACE__TOP_UP_AMOUNT = Constants.WORKSPACE__TOP_UP_AMOUNT.scalar;
+    stable let WORKSPACE__CAPACITY = Constants.WORKSPACE__CAPACITY.scalar;
+
     stable let userIndexCanisterId = initializer;
 
-    stable var stable_balance = 0;
-    stable var stable_capacity = initArgs.capacity;
-    stable var stable_owner = initArgs.owner;
-    stable var stable_personalWorkspaceId : ?WorkspaceId = null;
-    stable var stable_personalWorkspace : ?Types.PersonalWorkspace = null;
-    stable var stable_profile : UserProfile.MutableUserProfile = {
+    /* Amount of cycles in this canister */
+    stable var _balance = 0;
+
+    /* Maximum number of cycles */
+    stable var _capacity = initArgs.capacity;
+
+    /* Identity of the user */
+    stable var _owner = initArgs.owner;
+
+    /* Principal of this user's default workspace canister */
+    stable var _personalWorkspaceId : ?WorkspaceId = null;
+
+    /* Default workspace canister */
+    stable var _personalWorkspace : ?Types.PersonalWorkspace = null;
+
+    /* User profile */
+    stable var _profile : UserProfile.MutableUserProfile = {
         var username = "";
         var created_at = Time.now();
         var updatedAt = Time.now();
     };
+
     var timersHaveBeenStarted = false;
 
     func userEventNameToHash(event : Types.UserEventName) : Nat32 {
@@ -107,11 +118,11 @@ shared ({ caller = initializer }) actor class User(
     };
 
     public query ({ caller }) func profile() : async Result.Result<UserProfile.UserProfile, { #unauthorized }> {
-        if (caller != stable_owner) {
+        if (caller != _owner) {
             return #err(#unauthorized);
         };
 
-        return #ok(UserProfile.fromMutableUserProfile(stable_profile));
+        return #ok(UserProfile.fromMutableUserProfile(_profile));
     };
 
     public query ({ caller }) func publicProfile() : async Result.Result<CoreTypes.User.PublicUserProfile, { #unauthorized }> {
@@ -121,27 +132,27 @@ shared ({ caller = initializer }) actor class User(
 
         #ok({
             canisterId = Principal.fromActor(self);
-            username = stable_profile.username;
+            username = _profile.username;
         });
     };
 
     public shared ({ caller }) func personalWorkspace() : async Result.Result<WorkspaceId, { #anonymousUser; #insufficientCycles; #unauthorized }> {
-        if (caller != stable_owner) {
+        if (caller != _owner) {
             return #err(#unauthorized);
         };
 
-        let workspace = switch (stable_personalWorkspaceId) {
+        let workspace = switch (_personalWorkspaceId) {
             case (?workspaceId) { return #ok(workspaceId) };
             case (null) {
                 let result = await CreateWorkspace.execute({
                     owner = Principal.fromActor(self);
-                    controllers = [stable_owner, Principal.fromActor(self)];
+                    controllers = [_owner, Principal.fromActor(self)];
                     initialUsers = [(
-                        stable_owner,
+                        _owner,
                         {
-                            identity = stable_owner;
+                            identity = _owner;
                             canisterId = Principal.fromActor(self);
-                            username = stable_profile.username;
+                            username = _profile.username;
                             role = #admin;
                         },
                     )];
@@ -155,8 +166,8 @@ shared ({ caller = initializer }) actor class User(
         };
         let workspaceId = Principal.fromActor(workspace);
 
-        stable_personalWorkspaceId := ?workspaceId;
-        stable_personalWorkspace := ?workspace;
+        _personalWorkspaceId := ?workspaceId;
+        _personalWorkspace := ?workspace;
 
         // var pageBuilder = BlockBuilder.BlockBuilder({
         //     uuid = await Source.Source().new();
@@ -174,18 +185,18 @@ shared ({ caller = initializer }) actor class User(
     };
 
     public shared ({ caller }) func updateProfile(input : UsersTypes.ProfileInput) : async Result.Result<UserProfile.UserProfile, { #unauthorized; #usernameTaken }> {
-        if (caller != stable_owner) { return #err(#unauthorized) };
+        if (caller != _owner) { return #err(#unauthorized) };
 
         switch (await checkUsernameAvailability(input.username)) {
             case (#err(error)) { return #err(error) };
             case (#ok(())) {
-                stable_profile.username := input.username;
+                _profile.username := input.username;
             };
         };
 
-        stable_profile.updatedAt := Time.now();
+        _profile.updatedAt := Time.now();
 
-        let immutableProfile = UserProfile.fromMutableUserProfile(stable_profile);
+        let immutableProfile = UserProfile.fromMutableUserProfile(_profile);
 
         ignore publishEvent({
             userId = Principal.fromActor(self);
@@ -209,12 +220,12 @@ shared ({ caller = initializer }) actor class User(
         };
 
         let amount = Cycles.available();
-        let limit : Nat = stable_capacity - stable_balance;
+        let limit : Nat = _capacity - _balance;
         let accepted = if (amount <= limit) amount else limit;
         let deposit = Cycles.accept(accepted);
 
         assert (deposit == accepted);
-        stable_balance += accepted;
+        _balance += accepted;
 
         return #ok({ accepted = Nat64.fromNat(accepted) });
     };
@@ -227,13 +238,13 @@ shared ({ caller = initializer }) actor class User(
         let IC0 : CoreTypes.Management = actor "aaaaa-aa";
         let sender_canister_version : ?Nat64 = null;
 
-        let workspaceId = switch (stable_personalWorkspaceId) {
+        let workspaceId = switch (_personalWorkspaceId) {
             case (null) {
                 return #err(#workspaceNotFound("Personal workspace not initialized for user: " # debug_show (Principal.fromActor(self))));
             };
             case (?workspaceId) { workspaceId };
         };
-        let workspace = switch (stable_personalWorkspace) {
+        let workspace = switch (_personalWorkspace) {
             case (null) {
                 return #err(#workspaceNotFound("Personal workspace not initialized for user: " # debug_show (Principal.fromActor(self))));
             };
@@ -277,7 +288,7 @@ shared ({ caller = initializer }) actor class User(
     };
 
     private func checkCyclesBalance() : async () {
-        let amount : Nat = stable_capacity - Cycles.balance();
+        let amount : Nat = _capacity - Cycles.balance();
         let userIndexCanister = actor (Principal.toText(userIndexCanisterId)) : actor {
             requestCycles : (amount : Nat) -> async {
                 accepted : Nat64;
@@ -297,7 +308,7 @@ shared ({ caller = initializer }) actor class User(
             return;
         };
 
-        switch (stable_personalWorkspace) {
+        switch (_personalWorkspace) {
             case (null) {};
             case (?workspace) {
                 personalWorkspaceTopUp.topUpInProgress := true;

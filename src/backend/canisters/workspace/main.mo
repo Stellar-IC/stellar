@@ -17,9 +17,9 @@ import Canistergeek "mo:canistergeek/canistergeek";
 
 import UUID "mo:uuid/UUID";
 
-import ActivitiesTypes "../../lib/activities/types";
+import ActivitiesTypes "../../lib/activities/Types";
 import BlockModule "../../lib/blocks/Block";
-import BlocksTypes "../../lib/blocks/types";
+import BlocksTypes "../../lib/blocks/Types";
 import BlockEvent "../../lib/events/BlockEvent";
 import EventStream "../../lib/events/EventStream";
 import Paginator "../../lib/pagination/Paginator";
