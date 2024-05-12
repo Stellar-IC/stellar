@@ -110,17 +110,12 @@ const WorkspaceMember = memo(
 );
 
 export const WorkspaceMembers = () => {
-  const { identity } = useAuthContext();
-  const { workspaceId } = useWorkspaceContext();
   const [members, setMembers] = useState<[Principal, WorkspaceUser][]>([]);
   const [savingState, setSavingState] = useState<'idle' | 'saving' | 'success'>(
     'idle'
   );
 
-  const queryMembers = useMembersQuery({
-    identity,
-    workspaceId,
-  });
+  const queryMembers = useMembersQuery();
 
   useEffect(() => {
     // Fetch workspace members

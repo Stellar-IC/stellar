@@ -1,4 +1,3 @@
-import { Tree } from '@stellar-ic/lseq-ts';
 import { useEffect, useState } from 'react';
 
 import { Block } from '@/types';

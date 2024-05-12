@@ -1,5 +1,4 @@
-import { Tree } from '@stellar-ic/lseq-ts';
-
+import { Tree } from '@/modules/lseq';
 import { ExternalId } from '@/types';
 
 export type TextBlockBlockType =

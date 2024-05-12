@@ -385,23 +385,29 @@ shared ({ caller = initializer }) actor class Workspace(
             );
 
             let block = switch (State.findBlock(_state, blockExternalId)) {
-                case (null) { continue iterateEvents };
+                case (null) {
+                    continue iterateEvents;
+                };
                 case (?block) { block };
             };
             let page = switch (State.getFirstAncestorPage(_state, block)) {
-                case (null) { continue iterateEvents };
+                case (null) {
+                    if (block.blockType == #page) {
+                        block;
+                    } else {
+                        continue iterateEvents;
+                    };
+                };
                 case (?page) { page };
             };
-            let users = State.getActiveUsersForPage(_state, UUID.toText(page.uuid));
+            let activeUsers = State.getActiveUsersForPage(_state, UUID.toText(page.uuid));
 
             Debug.print("Sending event to users: " # debug_show users);
 
-            for (user in users.vals()) {
-                // Send event to clients
-                await WebSockets.send_message(user, #blockEvent(event));
+            // Send event to all active users
+            for (user in activeUsers.vals()) {
+                await WebSockets.sendMessage(user, #blockEvent(event));
             };
-
-            ();
         };
 
         await updateCanistergeekInformation({ metrics = ? #force });

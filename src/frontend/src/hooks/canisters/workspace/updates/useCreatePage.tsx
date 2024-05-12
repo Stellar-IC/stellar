@@ -1,14 +1,14 @@
 import { Identity } from '@dfinity/agent';
 import { notifications } from '@mantine/notifications';
-import { Tree } from '@stellar-ic/lseq-ts';
 import { useCallback } from 'react';
 import { v4 as uuidv4, parse as uuidParse, parse } from 'uuid';
 
+import { useWorkspaceContext } from '@/contexts/WorkspaceContext/useWorkspaceContext';
 import { db } from '@/db';
-import { useWorkspaceActor } from '@/hooks/canisters/workspace/useWorkspaceActor';
 import { useUpdate } from '@/hooks/useUpdate';
 import { serializeBlock } from '@/modules/blocks/serializers';
 import { store } from '@/modules/data-store';
+import { Tree } from '@/modules/lseq';
 import { CanisterId } from '@/types';
 
 import {
@@ -26,13 +26,12 @@ export const useCreatePage = (options: {
   ) => Promise<CreatePageUpdateOutput>,
   { data: CreatePageUpdateOutput | null; isLoading: boolean }
 ] => {
-  const { identity, workspaceId } = options;
-  const { actor } = useWorkspaceActor({ identity, workspaceId });
+  const { actor } = useWorkspaceContext();
   const [_createPage, ...other] = useUpdate(
     options.workspaceId,
     actor.createPage
   );
-  const queryBlock = useBlockQuery({ identity, workspaceId });
+  const queryBlock = useBlockQuery();
 
   const createPage = useCallback(
     async (input: Omit<CreatePageUpdateInput, 'uuid'>) => {

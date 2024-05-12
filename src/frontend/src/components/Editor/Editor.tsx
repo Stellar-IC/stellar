@@ -1,7 +1,7 @@
 import { Divider, Stack } from '@mantine/core';
-import { Tree } from '@stellar-ic/lseq-ts';
 import { useCallback, useMemo } from 'react';
 
+import { Tree } from '@/modules/lseq';
 import { Block } from '@/types';
 
 import { BlockRenderer } from './BlockRenderer';

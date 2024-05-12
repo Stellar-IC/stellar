@@ -10,7 +10,7 @@ export async function focusBlock(uuid: string) {
           reject(new Error(`Could not focus block: ${uuid}`));
         }
 
-        const selector = `.FocusableBlock[data-id='${uuid}'] span[role="textbox"]`;
+        const selector = `.FocusableBlock[data-blockid='${uuid}'] span[role="textbox"]`;
         const blockToFocus = document.querySelector<HTMLDivElement>(selector);
 
         if (blockToFocus) {

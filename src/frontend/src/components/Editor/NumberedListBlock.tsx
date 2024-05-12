@@ -1,10 +1,10 @@
 import { Box, Flex } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
-import { Tree } from '@stellar-ic/lseq-ts';
 import { createRef, useEffect, useMemo, useState } from 'react';
 
 import { useEditorSave } from '@/hooks/editor/useEditorSave';
 import { useEditorEventHandlers } from '@/modules/editor/hooks/useEditorEventHandlers';
+import { Tree } from '@/modules/lseq';
 import { Block, ExternalId } from '@/types';
 
 import { useTextStyles } from './TextBlock/hooks/useTextStyles';

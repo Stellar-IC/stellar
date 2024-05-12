@@ -1,7 +1,7 @@
 import { Identity } from '@dfinity/agent';
 import { useCallback } from 'react';
 
-import { useWorkspaceActor } from '@/hooks/canisters/workspace/useWorkspaceActor';
+import { useWorkspaceContext } from '@/contexts/WorkspaceContext/useWorkspaceContext';
 import { useUpdate } from '@/hooks/useUpdate';
 import { CanisterId } from '@/types';
 
@@ -19,7 +19,7 @@ export const useSaveEvents = (options: {
   ) => Promise<SaveEventTransactionUpdateOutput>,
   { data: SaveEventTransactionUpdateOutput | null; isLoading: boolean }
 ] => {
-  const { actor } = useWorkspaceActor(options);
+  const { actor } = useWorkspaceContext();
   const [_saveEvents, ...other] = useUpdate(
     options.workspaceId,
     actor.saveEvents

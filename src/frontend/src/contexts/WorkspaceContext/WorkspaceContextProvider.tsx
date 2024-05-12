@@ -2,7 +2,7 @@ import { DelegationIdentity } from '@dfinity/identity';
 import { Principal } from '@dfinity/principal';
 import { PropsWithChildren } from 'react';
 
-import { useWorkspaceActor } from '@/hooks/canisters/workspace/useWorkspaceActor';
+import { createActor } from '../../../../declarations/workspace';
 
 import { WorkspaceContext } from './WorkspaceContext';
 
@@ -14,7 +14,11 @@ export function WorkspaceContextProvider({
   identity: DelegationIdentity;
   workspaceId: Principal;
 }>) {
-  const { actor } = useWorkspaceActor({ identity, workspaceId });
+  const actor = createActor(workspaceId, {
+    agentOptions: {
+      identity,
+    },
+  });
 
   return (
     <WorkspaceContext.Provider value={{ actor, workspaceId }}>

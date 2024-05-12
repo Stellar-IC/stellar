@@ -7,7 +7,7 @@ import Iter "mo:base/Iter";
 import Array "mo:base/Array";
 
 import Logger "../Logger";
-import Types "./types";
+import Types "./Types";
 
 module EventStream {
     type EventId = Types.EventId;

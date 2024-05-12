@@ -6,7 +6,6 @@ import {
   Stack,
   useMantineTheme,
 } from '@mantine/core';
-import { toText } from '@stellar-ic/lseq-ts/Tree';
 import { IconPlus } from '@tabler/icons-react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { Link } from 'react-router-dom';
@@ -14,6 +13,7 @@ import { Link } from 'react-router-dom';
 import { PageWrapper } from '@/PageWrapper';
 import { db } from '@/db';
 import { useCreatePageWithRedirect } from '@/hooks/canisters/workspace/updates/useCreatePageWithRedirect';
+import { toText } from '@/modules/lseq/Tree';
 import { LocalStorageBlock } from '@/types';
 
 export function HomePage() {

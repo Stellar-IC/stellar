@@ -1,6 +1,7 @@
-import { base } from '@stellar-ic/lseq-ts/Node';
-import { DEFAULT_BOUNDARY } from '@stellar-ic/lseq-ts/constants';
 import { stringify } from 'uuid';
+
+import { base } from '@/modules/lseq/Node';
+import { DEFAULT_BOUNDARY } from '@/modules/lseq/constants';
 
 import { BlockEvent } from '../../../../declarations/workspace/workspace.did';
 import { serializeBlock } from '../blocks/serializers';

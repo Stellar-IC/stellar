@@ -1,8 +1,8 @@
 import { Anchor, Box, Checkbox, Flex, Text } from '@mantine/core';
-import { Tree } from '@stellar-ic/lseq-ts';
 import { IconBulbFilled } from '@tabler/icons-react';
 import { Link } from 'react-router-dom';
 
+import { Tree } from '@/modules/lseq';
 import { Block } from '@/types';
 
 interface BlockRendererInnerProps {

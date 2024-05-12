@@ -151,7 +151,15 @@ export function SettingsPage() {
                   <Stack gap="xs">
                     <NavLink
                       active={activeTab === 'ACCOUNT_PROFILE'}
-                      label="My profile"
+                      label="Profile"
+                      variant="light"
+                      onClick={() => {
+                        setActiveTab('ACCOUNT_PROFILE');
+                      }}
+                    />
+                    <NavLink
+                      active={activeTab === 'ACCOUNT_PROFILE'}
+                      label="Settings"
                       variant="light"
                       onClick={() => {
                         setActiveTab('ACCOUNT_PROFILE');

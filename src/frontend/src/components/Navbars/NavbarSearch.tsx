@@ -15,7 +15,6 @@ import {
   MenuTarget,
 } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
-import { Tree } from '@stellar-ic/lseq-ts';
 import { IconPlus, IconTrash } from '@tabler/icons-react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { useEffect } from 'react';
@@ -31,6 +30,7 @@ import { useCreatePageWithRedirect } from '@/hooks/canisters/workspace/updates/u
 import { useDeletePage } from '@/hooks/canisters/workspace/updates/useDeletePage';
 import { logout } from '@/modules/auth/commands';
 import { useAuthContext } from '@/modules/auth/contexts/AuthContext';
+import { Tree } from '@/modules/lseq';
 import { LocalStorageBlock } from '@/types';
 
 import { PrincipalBadge } from '../PrincipalBadge';
@@ -48,10 +48,7 @@ function PageLinksSection() {
     identity,
     workspaceId,
   });
-  const queryPages = usePagesQuery({
-    identity,
-    workspaceId,
-  });
+  const queryPages = usePagesQuery();
 
   useEffect(() => {
     queryPages();

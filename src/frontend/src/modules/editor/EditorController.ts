@@ -1,8 +1,8 @@
-import { Tree } from '@stellar-ic/lseq-ts';
-import { TreeEvent } from '@stellar-ic/lseq-ts/types';
 import { parse, stringify, v4 } from 'uuid';
 
 import { PartialBlockEvent } from '@/modules/editor/hooks/useEditorEventHandlers/types';
+import { Tree } from '@/modules/lseq';
+import { TreeEvent } from '@/modules/lseq/types';
 import { Block } from '@/types';
 
 import {
@@ -28,6 +28,12 @@ export class EditorController {
   constructor(opts: { onSave: EditorSaveFn }) {
     this._onSave = opts.onSave;
   }
+
+  _reset = () => {
+    this._events = [];
+    this._updatedBlocks = {};
+    this._createdBlocks = [];
+  };
 
   _getSiblingBlocks = (block: Block): Block[] => {
     const parentBlock = this._getParentBlock(block);
@@ -202,6 +208,10 @@ export class EditorController {
       throw new Error('Block not found');
     }
 
+    transaction.forEach((event) => {
+      Tree.applyEvent(block.properties.title, event);
+    });
+
     const event: PartialBlockEvent = {
       blockUpdated: {
         updatePropertyTitle: {
@@ -260,6 +270,10 @@ export class EditorController {
         },
       },
     };
+
+    transaction.forEach((event) => {
+      Tree.applyEvent(block.content, event);
+    });
 
     this._events.push(event);
     this._updatedBlocks[block.uuid] = block;
@@ -339,10 +353,12 @@ export class EditorController {
     return this;
   };
 
-  save(): Promise<void> {
+  save(shouldReset = false): Promise<void> {
     return this._onSave({
       updatedBlocks: this._updatedBlocks,
       events: this._events,
+    }).then(() => {
+      if (shouldReset) this._reset;
     });
   }
 

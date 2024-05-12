@@ -1,12 +1,12 @@
 import { Principal } from '@dfinity/principal';
-import { Tree } from '@stellar-ic/lseq-ts';
-import { TreeEvent } from '@stellar-ic/lseq-ts/types';
 import { parse, v4 } from 'uuid';
 
 import { db } from '@/db';
 import { getAuthClient } from '@/modules/auth/client';
 import * as blockSerializers from '@/modules/blocks/serializers';
 import { store } from '@/modules/data-store';
+import { Tree } from '@/modules/lseq';
+import { TreeEvent } from '@/modules/lseq/types';
 import { Block } from '@/types';
 
 import { createActor } from '../../../../../../declarations/workspace';

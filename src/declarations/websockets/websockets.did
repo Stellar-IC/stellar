@@ -150,7 +150,7 @@ type AppMessage =
    ping: record {message: text;};
  };
 service : {
-  send_message: (principal, AppMessage) -> ();
+  sendMessage: (principal, AppMessage) -> ();
   ws_close: (CanisterWsCloseArguments) -> (CanisterWsCloseResult);
   ws_get_messages: (CanisterWsGetMessagesArguments) ->
    (CanisterWsGetMessagesResult) query;

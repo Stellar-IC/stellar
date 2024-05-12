@@ -12,7 +12,7 @@ import IcWebSocketCdk "mo:ic-websocket-cdk";
 import IcWebSocketCdkState "mo:ic-websocket-cdk/State";
 import IcWebSocketCdkTypes "mo:ic-websocket-cdk/Types";
 
-import BlocksTypes "../../lib/blocks/types";
+import BlocksTypes "../../lib/blocks/Types";
 import UserClientMap "./UserClientMap";
 
 actor {
@@ -52,7 +52,6 @@ actor {
         };
 
         if (Array.size(clientsToRemove) > 0) {
-            Debug.print("Removing clients: " # debug_show (clientsToRemove));
             UserClientMap.removeClients(_userClientMap, userId, clientsToRemove);
         };
     };
@@ -78,14 +77,12 @@ actor {
         ignore await sendMessageToClient(args.client_principal, message);
     };
 
-    /// The custom logic is just a ping-pong message exchange between frontend and canister.
-    /// Note that the message from the WebSocket is serialized in CBOR, so we have to deserialize it first
     func onMessage(args : IcWebSocketCdk.OnMessageCallbackArgs) : async () {
+        /// The message from the WebSocket is serialized in CBOR, so we have to deserialize it first
         let app_msg : ?AppMessage = from_candid (args.message);
         let msg : AppMessage = switch (app_msg) {
             case (?msg) { msg };
             case (null) {
-                Debug.print("Could not deserialize message");
                 return;
             };
         };

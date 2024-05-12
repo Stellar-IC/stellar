@@ -1,20 +1,15 @@
-import { Identity } from '@dfinity/agent';
 import { useCallback } from 'react';
 import { stringify } from 'uuid';
 
+import { useWorkspaceContext } from '@/contexts/WorkspaceContext/useWorkspaceContext';
 import { db } from '@/db';
-import { useWorkspaceActor } from '@/hooks/canisters/workspace/useWorkspaceActor';
 import { fromShareable } from '@/modules/blocks/serializers';
-import { Activity, CanisterId } from '@/types';
+import { Activity } from '@/types';
 
 import { UUID } from '../../../../../../declarations/workspace/workspace.did';
 
-export const useActivityLog = (opts: {
-  identity: Identity;
-  workspaceId: CanisterId;
-}) => {
-  const { identity, workspaceId } = opts;
-  const { actor } = useWorkspaceActor({ identity, workspaceId });
+export const useActivityLog = () => {
+  const { actor } = useWorkspaceContext();
 
   const activityLog = useCallback(
     (arg_0: UUID): Promise<Activity[]> =>

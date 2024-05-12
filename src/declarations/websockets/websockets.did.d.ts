@@ -117,7 +117,7 @@ export interface WebsocketMessage {
   'is_service_message' : boolean,
 }
 export interface _SERVICE {
-  'send_message' : ActorMethod<[Principal, AppMessage], undefined>,
+  'sendMessage' : ActorMethod<[Principal, AppMessage], undefined>,
   'ws_close' : ActorMethod<[CanisterWsCloseArguments], CanisterWsCloseResult>,
   'ws_get_messages' : ActorMethod<
     [CanisterWsGetMessagesArguments],

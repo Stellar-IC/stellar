@@ -1,6 +1,7 @@
 // eslint-disable-next-line max-classes-per-file
-import { Tree } from '@stellar-ic/lseq-ts';
 import Dexie, { Table } from 'dexie';
+
+import { Tree } from '@/modules/lseq';
 
 import { SerializedBlockEvent } from './modules/events/types';
 import { LocalStorageActivity, LocalStorageBlock } from './types';

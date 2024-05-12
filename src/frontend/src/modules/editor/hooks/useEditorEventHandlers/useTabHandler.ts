@@ -14,6 +14,7 @@ type UseTabHandler = {
 export const useTabHandler = ({ blockExternalId, onSave }: UseTabHandler) => {
   const doTabOperation = useCallback(async () => {
     const blockToMove = await db.blocks.get(blockExternalId);
+
     if (!blockToMove) return false;
 
     const controller = new EditorController({ onSave });

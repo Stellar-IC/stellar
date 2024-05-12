@@ -1,12 +1,12 @@
-import { Tree } from '@stellar-ic/lseq-ts';
 import { parse } from 'uuid';
 
 import { db } from '@/db';
 import * as BlockkModule from '@/modules/blocks';
 import { EditorController } from '@/modules/editor/EditorController';
-import { EditorSaveFn } from '@/modules/editor/types';
 import { useEditorActions } from '@/modules/editor/hooks/useEditorActions';
+import { EditorSaveFn } from '@/modules/editor/types';
 import { focusBlock } from '@/modules/editor/utils/focus';
+import { Tree } from '@/modules/lseq';
 import { ExternalId } from '@/types';
 
 import { BlockType } from '../../../../../../declarations/workspace/workspace.did';

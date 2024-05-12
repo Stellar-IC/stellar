@@ -128,7 +128,7 @@ export const idlFactory = ({ IDL }) => {
     'Err' : IDL.Text,
   });
   return IDL.Service({
-    'send_message' : IDL.Func([IDL.Principal, AppMessage], [], []),
+    'sendMessage' : IDL.Func([IDL.Principal, AppMessage], [], []),
     'ws_close' : IDL.Func(
         [CanisterWsCloseArguments],
         [CanisterWsCloseResult],
