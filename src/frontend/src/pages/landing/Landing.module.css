@@ -1,0 +1,47 @@
+.LandingHeading {
+  font-weight: 100;
+  letter-spacing: 0.4em;
+  width: fit-content;
+  margin: 0;
+  margin-right: -0.4em;
+}
+
+.LandingHeading .Large {
+  font-size: 3.5rem;
+}
+
+.SubHeading {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin: 0 auto;
+  width: fit-content;
+}
+
+.Section {
+  display: flex;
+  height: 100%;
+  align-items: center;
+}
+
+.TagLine {
+  font-size: 1.5rem;
+  font-weight: 600;
+  background: -webkit-linear-gradient(0deg, #85f0ff 0%, #ea1825 100%);
+  background-clip: text;
+  margin: 0 auto;
+  width: fit-content;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.ScrollContainer {
+  scroll-snap-type: y mandatory;
+}
+
+.ScrollContainer .Section {
+  scroll-snap-align: start;
+}
+
+.Paragraph {
+  padding: var(--mantine-spacing-md);
+}
