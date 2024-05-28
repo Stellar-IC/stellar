@@ -1,3 +1,5 @@
+import FileUpload "canister:file_upload";
+
 import Principal "mo:base/Principal";
 import Cycles "mo:base/ExperimentalCycles";
 import Nat64 "mo:base/Nat64";
@@ -57,6 +59,7 @@ shared ({ caller = initializer }) actor class User(
     /* User profile */
     stable var _profile : UserProfile.MutableUserProfile = {
         var username = "";
+        var avatarUrl = null;
         var created_at = Time.now();
         var updatedAt = Time.now();
     };
@@ -133,6 +136,7 @@ shared ({ caller = initializer }) actor class User(
         #ok({
             canisterId = Principal.fromActor(self);
             username = _profile.username;
+            avatarUrl = _profile.avatarUrl;
         });
     };
 
@@ -182,6 +186,32 @@ shared ({ caller = initializer }) actor class User(
         // });
 
         #ok(workspaceId);
+    };
+
+    public shared ({ caller }) func setAvatar(
+        file : {
+            name : Text;
+            content : [Nat8];
+            content_type : Text;
+        }
+    ) : async Result.Result<UserProfile.UserProfile, { #unauthorized; #fileUploadError : Text }> {
+        if (caller != _owner) {
+            return #err(#unauthorized);
+        };
+
+        let uploadData = {
+            key = file.name;
+            content = file.content;
+            content_type = file.content_type;
+        };
+        let fileUrl = switch (await FileUpload.store(uploadData)) {
+            case (#ok({ url })) { url };
+            case (#err(error)) { return #err(#fileUploadError(error)) };
+        };
+
+        _profile.avatarUrl := ?fileUrl;
+
+        return #ok(UserProfile.fromMutableUserProfile(_profile));
     };
 
     public shared ({ caller }) func updateProfile(input : UsersTypes.ProfileInput) : async Result.Result<UserProfile.UserProfile, { #unauthorized; #usernameTaken }> {

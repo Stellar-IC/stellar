@@ -11,7 +11,7 @@ import Activity "../../../lib/activities/Activity";
 import ActivityBuilder "../../../lib/activities/ActivityBuilder";
 import ActivitiesTypes "../../../lib/activities/Types";
 import BlocksTypes "../../../lib/blocks/Types";
-import BlocksUtils "../../../lib/blocks/Utils";
+import BlocksUtils "../../../lib/blocks/utils";
 import Tree "../../../utils/data/lseq/Tree";
 import CoreTypes "../../../types";
 

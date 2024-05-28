@@ -116,6 +116,7 @@ export const idlFactory = ({ IDL }) => {
     'username' : Username,
     'created_at' : Time,
     'updatedAt' : Time,
+    'avatarUrl' : IDL.Opt(IDL.Text),
   });
   const ProfileUpdatedEventData = IDL.Record({ 'profile' : UserProfile });
   const UserEvent = IDL.Record({

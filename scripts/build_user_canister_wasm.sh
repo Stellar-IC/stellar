@@ -1,6 +1,16 @@
 #!/bin/bash
 
+if [ ! -f ../.env ]
+then
+  echo "Loading variables from .env file"
+  export $(cat .env | xargs)
+fi
+
+echo $CANISTER_ID_FILE_UPLOAD
+
 $(dfx cache show)/moc ./src/backend/canisters/user/main.mo \
+  --actor-alias file_upload $CANISTER_ID_FILE_UPLOAD \
+  --actor-idl ./.dfx/local/lsp \
   --package base .mops/base@0.10.4/src \
   --package matchers .mops/_github/matchers#v1.3.0/src \
   --package encoding .mops/_github/encoding#v0.4.1/src \

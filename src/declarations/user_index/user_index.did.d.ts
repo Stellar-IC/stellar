@@ -131,6 +131,7 @@ export interface UserProfile {
   'username' : Username,
   'created_at' : Time,
   'updatedAt' : Time,
+  'avatarUrl' : [] | [string],
 }
 export type Username = string;
 export interface _SERVICE {

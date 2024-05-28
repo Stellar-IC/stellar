@@ -13,6 +13,11 @@
       "type": "motoko",
       "optimize": "size"
     },
+    "file_upload": {
+      "main": "src/backend/canisters/file_upload/main.mo",
+      "type": "motoko",
+      "optimize": "size"
+    },
     "workspace_index": {
       "dependencies": ["user_index", "cycles_dispenser"],
       "main": "src/backend/canisters/workspace_index/main.mo",

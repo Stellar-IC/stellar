@@ -2,10 +2,10 @@ import { Identity } from '@dfinity/agent';
 import { Principal } from '@dfinity/principal';
 import { createContext, PropsWithChildren, useContext } from 'react';
 
-import { UserProfile } from '../../../../../declarations/user/user.did';
+import { PublicUserProfile } from '../../../../../declarations/user/user.did';
 import { useAuthState } from '../hooks/useAuthState';
 
-type SerializedUserProfile = Omit<UserProfile, 'username'> & {
+type SerializedUserProfile = Omit<PublicUserProfile, 'username'> & {
   username: string;
 };
 
@@ -17,7 +17,7 @@ const AuthContext = createContext<{
   isLoading: boolean;
   userId: Principal;
   profile: SerializedUserProfile;
-  setProfile: React.Dispatch<React.SetStateAction<UserProfile>>;
+  setProfile: React.Dispatch<React.SetStateAction<PublicUserProfile>>;
 } | null>(null);
 
 export const useAuthContext = () => {

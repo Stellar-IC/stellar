@@ -103,8 +103,8 @@ module {
 
     public module User {
         public type PublicUserProfile = {
-            canisterId : Principal;
             username : Text;
+            avatarUrl : ?Text;
         };
     };
 };

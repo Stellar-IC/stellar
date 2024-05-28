@@ -5,7 +5,7 @@ import { useCallback, useState } from 'react';
 
 import { logger as baseLogger } from '@/modules/logger';
 
-import { UserProfile } from '../../../../../declarations/user/user.did';
+import { PublicUserProfile } from '../../../../../declarations/user/user.did';
 import { getAuthClient } from '../client';
 
 import { getUserProfile, registerUser } from './utils';
@@ -30,7 +30,7 @@ export const useHydrate = () => {
           | {
               userId: Principal;
               identity: DelegationIdentity;
-              profile: UserProfile;
+              profile: PublicUserProfile;
             }
           | undefined
         > => {

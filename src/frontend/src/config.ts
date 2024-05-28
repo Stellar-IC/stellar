@@ -1,6 +1,6 @@
 import { canisterId as internetIdentityCanisterId } from '../../declarations/internet_identity';
 
-const network =
+export const network =
   process.env.DFX_NETWORK ||
   (process.env.NODE_ENV === 'production' ? 'ic' : 'local');
 

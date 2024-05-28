@@ -187,9 +187,6 @@ export function SettingsPage() {
 
           <Stack style={{ flexGrow: 1 }}>
             <Flex justify="space-between" align="center">
-              <Title size="h1" tt="uppercase">
-                Settings
-              </Title>
               <Text size="xs">
                 {savingState === 'saving' && 'Saving...'}
                 {savingState === 'success' && 'Saved!'}

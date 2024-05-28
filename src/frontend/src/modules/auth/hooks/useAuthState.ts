@@ -5,17 +5,16 @@ import { useEffect, useState } from 'react';
 
 import { INTERNET_IDENTITY_HOST } from '@/config';
 
-import { UserProfile } from '../../../../../declarations/user/user.did';
+import { PublicUserProfile } from '../../../../../declarations/user/user.did';
 import { getAuthClient } from '../client';
 import { login as _login } from '../commands';
 
 import { useHydrate } from './useHydrate';
 import { getUserProfile, registerUser } from './utils';
 
-export class AnonymousUserProfile implements UserProfile {
+export class AnonymousUserProfile implements PublicUserProfile {
   username = '';
-  created_at = 1000000000000000000n;
-  updatedAt = 1000000000000000000n;
+  avatarUrl: [] | [string] = [];
 }
 
 export const useAuthState = () => {
@@ -23,7 +22,7 @@ export const useAuthState = () => {
   const [isHydrating, setIsHydrating] = useState(true);
   const [userId, setUserId] = useState<Principal>(Principal.anonymous());
   const [identity, setIdentity] = useState<Identity>(new AnonymousIdentity());
-  const [profile, setProfile] = useState<UserProfile>(
+  const [profile, setProfile] = useState<PublicUserProfile>(
     new AnonymousUserProfile()
   );
   const { hydrate } = useHydrate();
@@ -33,26 +32,26 @@ export const useAuthState = () => {
 
     return _login({ identityProvider: `${INTERNET_IDENTITY_HOST}` }).then(
       async () => {
-      getAuthClient()
-        .then(async (authClient) => authClient.getIdentity())
-        .then(async (identity) => {
-          if (identity instanceof DelegationIdentity) {
-            setIdentity(identity);
-            const newUserId = await registerUser(identity);
-            setUserId(newUserId);
-            const result = await getUserProfile({
-              userId: newUserId,
-              identity,
-            });
-            if ('ok' in result) {
-              setProfile(result.ok);
+        getAuthClient()
+          .then(async (authClient) => authClient.getIdentity())
+          .then(async (identity) => {
+            if (identity instanceof DelegationIdentity) {
+              setIdentity(identity);
+              const newUserId = await registerUser(identity);
+              setUserId(newUserId);
+              const result = await getUserProfile({
+                userId: newUserId,
+                identity,
+              });
+              if ('ok' in result) {
+                setProfile(result.ok);
+              }
+              // TODO: handle error
             }
-            // TODO: handle error
-          }
-        })
-        .finally(() => {
-          setIsLoading(false);
-        });
+          })
+          .finally(() => {
+            setIsLoading(false);
+          });
       }
     );
   };

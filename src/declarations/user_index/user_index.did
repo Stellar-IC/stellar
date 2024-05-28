@@ -1,6 +1,7 @@
 type Username = text;
 type UserProfile = 
  record {
+   avatarUrl: opt text;
    created_at: Time;
    updatedAt: Time;
    username: Username;

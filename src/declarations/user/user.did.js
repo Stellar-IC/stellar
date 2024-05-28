@@ -110,7 +110,7 @@ export const idlFactory = ({ IDL }) => {
     'version' : IDL.Opt(IDL.Nat),
   });
   const WorkspaceId = IDL.Principal;
-  const Result_5 = IDL.Variant({
+  const Result_6 = IDL.Variant({
     'ok' : WorkspaceId,
     'err' : IDL.Variant({
       'anonymousUser' : IDL.Null,
@@ -124,25 +124,33 @@ export const idlFactory = ({ IDL }) => {
     'username' : Username__1,
     'created_at' : Time,
     'updatedAt' : Time,
+    'avatarUrl' : IDL.Opt(IDL.Text),
   });
-  const Result_4 = IDL.Variant({
+  const Result_5 = IDL.Variant({
     'ok' : UserProfile,
     'err' : IDL.Variant({ 'unauthorized' : IDL.Null }),
   });
   const PublicUserProfile = IDL.Record({
     'username' : IDL.Text,
+    'avatarUrl' : IDL.Opt(IDL.Text),
     'canisterId' : IDL.Principal,
   });
-  const Result_3 = IDL.Variant({
+  const Result_4 = IDL.Variant({
     'ok' : PublicUserProfile,
     'err' : IDL.Variant({ 'unauthorized' : IDL.Null }),
   });
+  const Result_3 = IDL.Variant({
+    'ok' : UserProfile,
+    'err' : IDL.Variant({
+      'fileUploadError' : IDL.Text,
+      'unauthorized' : IDL.Null,
+    }),
+  });
   const UserEventName = IDL.Variant({ 'profileUpdated' : IDL.Null });
+  const ProfileUpdatedEventData = IDL.Record({ 'profile' : UserProfile });
   const UserEvent = IDL.Record({
     'userId' : IDL.Principal,
-    'event' : IDL.Variant({
-      'profileUpdated' : IDL.Record({ 'profile' : UserProfile }),
-    }),
+    'event' : IDL.Variant({ 'profileUpdated' : ProfileUpdatedEventData }),
   });
   const UserEventSubscription = IDL.Func([UserEvent], [], []);
   const CollectMetricsRequestType = IDL.Variant({
@@ -179,9 +187,20 @@ export const idlFactory = ({ IDL }) => {
         [GetInformationResponse],
         ['query'],
       ),
-    'personalWorkspace' : IDL.Func([], [Result_5], []),
-    'profile' : IDL.Func([], [Result_4], ['query']),
-    'publicProfile' : IDL.Func([], [Result_3], ['query']),
+    'personalWorkspace' : IDL.Func([], [Result_6], []),
+    'profile' : IDL.Func([], [Result_5], ['query']),
+    'publicProfile' : IDL.Func([], [Result_4], ['query']),
+    'setAvatar' : IDL.Func(
+        [
+          IDL.Record({
+            'content' : IDL.Vec(IDL.Nat8),
+            'name' : IDL.Text,
+            'content_type' : IDL.Text,
+          }),
+        ],
+        [Result_3],
+        [],
+      ),
     'subscribe' : IDL.Func([UserEventName, UserEventSubscription], [], []),
     'updateCanistergeekInformation' : IDL.Func(
         [UpdateInformationRequest],
