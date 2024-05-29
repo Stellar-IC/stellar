@@ -6,8 +6,6 @@ import classes from './Landing.module.css';
 
 const sectionContainerWidth = '26rem';
 
-console.log({ classes });
-
 export function LandingPage() {
   const { login } = useAuthContext();
 
@@ -184,7 +182,9 @@ export function LandingPage() {
               decentralized, and we’re building the tools to make that future a
               reality.
             </p>
-            <Button>View the Roadmap</Button>
+            <div>
+              <Button onClick={login}>Join Stellar</Button>
+            </div>
           </Container>
         </section>
         {/* <LandingPageFooter /> */}
