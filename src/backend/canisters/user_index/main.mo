@@ -85,6 +85,13 @@ actor UserIndex {
         return state.data.checkUsername(username);
     };
 
+    public query func userId(userIdentity : Principal) : async Result.Result<Principal, { #userNotFound }> {
+        return switch (state.data.getUserIdByOwner(userIdentity)) {
+            case (null) { #err(#userNotFound) };
+            case (?userId) { #ok(userId) };
+        };
+    };
+
     public shared ({ caller }) func upgradeUsers(wasm_module : Blob) : async Result.Result<(), { #unauthorized }> {
         if ((AuthUtils.isDev(caller)) == false) {
             return #err(#unauthorized);

@@ -12,9 +12,9 @@ import Suite "mo:matchers/Suite";
 import UUID "mo:uuid/UUID";
 
 import ActivityBuilder "../../../../lib/activities/ActivityBuilder";
-import ActivitiesTypes "../../../../lib/activities/types";
+import ActivitiesTypes "../../../../lib/activities/Types";
 import BlockBuilder "../../../../lib/blocks/BlockBuilder";
-import BlocksTypes "../../../../lib/blocks/types";
+import BlocksTypes "../../../../lib/blocks/Types";
 import Tree "../../../../utils/data/lseq/Tree";
 import UUIDUtils "../../../../utils/uuid";
 

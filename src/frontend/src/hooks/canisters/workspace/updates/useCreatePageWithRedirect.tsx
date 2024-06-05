@@ -1,17 +1,20 @@
+import { Principal } from '@dfinity/principal';
 import { DEFAULT_BOUNDARY } from '@stellar-ic/lseq-ts/constants';
 import { base } from '@stellar-ic/lseq-ts/utils';
 import { useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { parse, stringify, v4 } from 'uuid';
 
-import { useWorkspaceContext } from '@/contexts/WorkspaceContext/useWorkspaceContext';
 import { useCreatePage } from '@/hooks/canisters/workspace/updates/useCreatePage';
 import { useAuthContext } from '@/modules/auth/contexts/AuthContext';
 
-export function useCreatePageWithRedirect() {
+export function useCreatePageWithRedirect({
+  workspaceId,
+}: {
+  workspaceId: Principal;
+}) {
   const navigate = useNavigate();
   const { identity } = useAuthContext();
-  const { workspaceId } = useWorkspaceContext();
   const [createPage] = useCreatePage({
     identity,
     workspaceId,
@@ -42,9 +45,13 @@ export function useCreatePageWithRedirect() {
       }
 
       const page = res.ok;
-      navigate(`/pages/${stringify(page.uuid)}`);
+      navigate(`/spaces/${workspaceId}/pages/${stringify(page.uuid)}`);
     });
-  }, [createPage, navigate]);
+  }, [createPage, navigate, workspaceId]);
+
+  if (!workspaceId) {
+    return () => {};
+  }
 
   return createPageAndRedirect;
 }

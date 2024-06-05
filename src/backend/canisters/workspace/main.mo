@@ -9,7 +9,6 @@ import Result "mo:base/Result";
 import RBTree "mo:base/RBTree";
 import Text "mo:base/Text";
 import Time = "mo:base/Time";
-import Timer = "mo:base/Timer";
 import Buffer "mo:base/Buffer";
 import Option "mo:base/Option";
 
@@ -24,6 +23,7 @@ import BlockEvent "../../lib/events/BlockEvent";
 import EventStream "../../lib/events/EventStream";
 import Paginator "../../lib/pagination/Paginator";
 import Logger "../../lib/Logger";
+import PubSub "../../lib/PubSub";
 import UserRegistry "../../lib/UserRegistry";
 
 import CoreTypes "../../types";
@@ -73,6 +73,7 @@ shared ({ caller = initializer }) actor class Workspace(
     stable var _createdAt : Time.Time = initData.createdAt;
     stable var _updatedAt : Time.Time = initData.updatedAt;
 
+    stable var _userIndexCanisterId : Principal = initArgs.userIndexCanisterId;
     stable let _capacity : Nat = initArgs.capacity;
     stable var _balance : Nat = ExperimentalCycles.balance();
 
@@ -290,6 +291,48 @@ shared ({ caller = initializer }) actor class Workspace(
     /*************************************************************************
      * Updates
      *************************************************************************/
+    public shared ({ caller }) func join() : async Result.Result<(), { #unauthorized; #profileQueryFailure; #userUpdateFailure }> {
+        if (caller != _owner) {
+            return #err(#unauthorized);
+        };
+
+        let UserIndex = actor (Principal.toText(_userIndexCanisterId)) : actor {
+            userId : (Principal) -> async Principal;
+        };
+        let userId = await UserIndex.userId(caller);
+        let user = actor (Principal.toText(userId)) : actor {
+            publicProfile : (Principal) -> async Result.Result<CoreTypes.User.PublicUserProfile, { #unauthorized }>;
+            addWorkspace({ canisterId : Principal }) : async Result.Result<[CoreTypes.Workspaces.WorkspaceId], { #unauthorized }>;
+        };
+        let profileResult = await user.publicProfile(caller);
+        let username = switch (profileResult) {
+            case (#err(_)) {
+                return #err(#profileQueryFailure);
+            };
+            case (#ok(profile)) { profile.username };
+        };
+
+        UserRegistry.addUser<WorkspaceUser>(
+            userRegistry,
+            caller,
+            userId,
+            {
+                canisterId = userId;
+                role = #member;
+                username;
+                identity = caller;
+            },
+        );
+
+        switch (await user.addWorkspace({ canisterId = Principal.fromActor(self) })) {
+            case (#err(_)) {
+                return #err(#userUpdateFailure);
+            };
+            case (#ok(_)) {};
+        };
+
+        return #ok;
+    };
 
     public shared ({ caller }) func addUsers(
         input : Types.Updates.AddUsersUpdate.AddUsersUpdateInput
@@ -368,8 +411,9 @@ shared ({ caller = initializer }) actor class Workspace(
     public shared ({ caller }) func updateSettings(
         input : Types.Updates.UpdateSettingsUpdate.UpdateSettingsUpdateInput
     ) : async Types.Updates.UpdateSettingsUpdate.UpdateSettingsUpdateOutput {
-        // Check if the caller is an admin
         let user = UserRegistry.findUser(userRegistry, caller);
+
+        // Check if the caller is an admin
         switch (user) {
             case (null) {
                 return #err(#unauthorized);
@@ -386,6 +430,13 @@ shared ({ caller = initializer }) actor class Workspace(
             case (?name) {
                 // TODO: Name should be unique
                 _name := name;
+                ignore publish(
+                    "workspaceNameUpdated",
+                    #workspaceNameUpdated({
+                        workspaceId = Principal.fromActor(self);
+                        name = _name;
+                    }),
+                );
             };
         };
 
@@ -481,6 +532,29 @@ shared ({ caller = initializer }) actor class Workspace(
         await updateCanistergeekInformation({ metrics = ? #force });
 
         return result;
+    };
+
+    /*************************************************************************
+     * PubSub
+     *************************************************************************/
+    type PubSubEvent = Types.PubSubEvent;
+    type PubSubEventHandler = Types.PubSubEventHandler;
+
+    stable let _publisher = PubSub.Publisher<PubSubEvent, PubSubEventHandler>();
+
+    public shared ({ caller }) func subscribe(eventName : Text, handler : PubSubEventHandler) : async () {
+        PubSub.subscribe(_publisher, caller, eventName, handler);
+    };
+
+    private func publish(eventName : Text, payload : PubSubEvent) : async () {
+        await PubSub.publish(
+            _publisher,
+            eventName,
+            payload,
+            func(handler : PubSubEventHandler, eventName : Text, payload : PubSubEvent) : async () {
+                ignore handler(eventName, payload);
+            },
+        );
     };
 
     /*************************************************************************

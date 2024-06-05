@@ -9,6 +9,7 @@ fi
 echo $CANISTER_ID_FILE_UPLOAD
 
 $(dfx cache show)/moc ./src/backend/canisters/user/main.mo \
+  --idl --stable-types \
   --actor-alias file_upload $CANISTER_ID_FILE_UPLOAD \
   --actor-idl ./.dfx/local/lsp \
   --package base .mops/base@0.10.4/src \
@@ -19,6 +20,7 @@ $(dfx cache show)/moc ./src/backend/canisters/user/main.mo \
   --package io .mops/_github/io#v0.3.2/src \
   --package uuid .mops/_github/uuid#v0.2.0/src \
   --package canistergeek .mops/_github/canistergeek#v0.0.7/src \
+  --package stablebuffer .mops/_github/stablebuffer#v1.3.0/src \
   --package map .mops/map@9.0.1/src \
   -c -o ./.dfx/local/canisters/user/user.wasm
   

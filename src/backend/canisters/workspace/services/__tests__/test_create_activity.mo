@@ -10,7 +10,7 @@ import Suite "mo:matchers/Suite";
 import UUID "mo:uuid/UUID";
 
 import Activity "../../../../lib/activities/Activity";
-import ActivitiesTypes "../../../../lib/activities/types";
+import ActivitiesTypes "../../../../lib/activities/Types";
 import BlockBuilder "../../../../lib/blocks/BlockBuilder";
 import TestHelpers "../../../../tests/helpers";
 import UUIDUtils "../../../../utils/uuid";

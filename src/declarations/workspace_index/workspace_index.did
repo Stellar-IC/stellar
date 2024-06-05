@@ -1,3 +1,22 @@
+type WorkspaceDetailsItem = 
+ record {
+   id: principal;
+   result: variant {
+             found: WorkspaceDetails;
+             notFound;
+           };
+ };
+type WorkspaceDetailsByIdOutput = 
+ variant {
+   err: variant {workspaceNotFound;};
+   ok: WorkspaceDetailsByIdOk;
+ };
+type WorkspaceDetailsByIdOk = vec WorkspaceDetailsItem;
+type WorkspaceDetails = 
+ record {
+   canisterId: principal;
+   name: text;
+ };
 type UpdateInformationRequest = record {
                                   metrics: opt CollectMetricsRequestType;};
 type UpdateCallsAggregatedData = vec nat64;
@@ -24,6 +43,12 @@ type Result =
     };
    ok: principal;
  };
+type PubSubEvent = variant {
+                     workspaceNameUpdated:
+                      record {
+                        name: text;
+                        workspaceId: principal;
+                      };};
 type NumericEntity = 
  record {
    avg: nat64;
@@ -145,14 +170,19 @@ service : {
   /// ***********************************************************************
   ///      * Updates
   ///      ************************************************************************
-  createWorkspace: (record {owner: principal;}) -> (Result);
+  createWorkspace: () -> (Result);
   /// * Returns canister information based on passed parameters.
   ///     * Called from browser.
   getCanistergeekInformation: (GetInformationRequest) ->
    (GetInformationResponse) query;
+  handleWorkspaceEvents: (text, PubSubEvent) -> ();
   requestCycles: (nat) -> (record {accepted: nat64;});
   /// * Updates canister information based on passed parameters at current time.
   ///     * Called from browser or any canister "update" method.
   updateCanistergeekInformation: (UpdateInformationRequest) -> ();
+  /// ***********************************************************************
+  ///      * Cycles Management
+  ///      ************************************************************************
   walletReceive: () -> (record {accepted: nat64;});
+  workspaceDetailsById: (vec principal) -> (WorkspaceDetailsByIdOutput) query;
 }

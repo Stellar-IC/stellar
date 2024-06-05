@@ -1,6 +1,7 @@
 import { Anchor, Box } from '@mantine/core';
 import { Link } from 'react-router-dom';
 
+import { useWorkspaceContext } from '@/contexts/WorkspaceContext/useWorkspaceContext';
 import { Block } from '@/types';
 
 import { TextBlock } from './TextBlock';
@@ -19,12 +20,13 @@ export const PageBlockRenderer = ({
   placeholder,
 }: PageBlockRendererProps) => {
   const parentExternalId = block.parent;
+  const { workspaceId } = useWorkspaceContext();
 
   return (
     <Box>
       <Anchor
         component={Link}
-        to={`/pages/${block.uuid}`}
+        to={`/spaces/${workspaceId}/pages/${block.uuid}`}
         style={{ color: 'inherit' }}
       >
         <TextBlock

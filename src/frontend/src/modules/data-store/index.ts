@@ -1,4 +1,3 @@
-import { Tree } from '@stellar-ic/lseq-ts';
 import { useEffect, useState } from 'react';
 
 import { Block } from '@/types';
@@ -39,6 +38,11 @@ class Table<DataT> {
 
   publish = () => {
     this._subsctibers.forEach((cb) => cb(this));
+  };
+
+  clear = () => {
+    this._data = {};
+    this.publish();
   };
 }
 

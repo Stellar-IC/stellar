@@ -4,11 +4,15 @@ import { Principal } from '@dfinity/principal';
 import { logger as baseLogger } from '@/modules/logger';
 
 import { createActor } from '../../../../../declarations/user';
-import { Result_4 as ProfileQueryResult } from '../../../../../declarations/user/user.did';
+import { Result_8 as ProfileQueryResult } from '../../../../../declarations/user/user.did';
 import {
   canisterId as canisterIdForUserIndex,
   createActor as createActorForUserIndex,
 } from '../../../../../declarations/user_index';
+import {
+  canisterId as canisterIdForWorkspaceIndex,
+  createActor as createActorForWorkspaceIndex,
+} from '../../../../../declarations/workspace_index';
 
 const createAuthenticatedUserIndexActor = (identity: DelegationIdentity) =>
   createActorForUserIndex(canisterIdForUserIndex, {
@@ -44,9 +48,44 @@ export const registerUser = async (
     throw new Error('Unknown error occurred during user registration');
   }
 
-  logger.info(`Retrieved user canister principal: ${result.ok}`);
+  const userId = result.ok;
 
-  return result.ok;
+  // get or create user's personal workspace
+  const userActor = createActor(userId, {
+    agentOptions: {
+      identity,
+    },
+  });
+
+  const personalWorkspaceResult = await userActor.personalWorkspace();
+  if ('err' in personalWorkspaceResult) {
+    throw new Error('Failed to get user personal workspace');
+  }
+
+  if (personalWorkspaceResult.ok.length === 0) {
+    const workspaceIndexActor = createActorForWorkspaceIndex(
+      canisterIdForWorkspaceIndex,
+      {
+        agentOptions: {
+          identity,
+        },
+      }
+    );
+    const createWorkspaceResult = await workspaceIndexActor.createWorkspace();
+
+    if ('err' in createWorkspaceResult) {
+      throw new Error('Failed to create user personal workspace');
+    }
+
+    const workspaceId = createWorkspaceResult.ok;
+    await userActor.setPersonalWorkspace(workspaceId);
+
+    return userId;
+  }
+
+  logger.info(`Retrieved user canister principal: ${userId}`);
+
+  return userId;
 };
 
 export const getUserProfile = async (args: {

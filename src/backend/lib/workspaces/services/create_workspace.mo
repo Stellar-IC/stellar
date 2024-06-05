@@ -19,10 +19,11 @@ module CreateWorkspace {
             Principal,
             Types.WorkspaceUser,
         )];
+        userIndexCanisterId : Principal;
     };
     type Output = Result.Result<Workspace.Workspace, { #anonymousUser; #insufficientCycles }>;
 
-    public func execute({ controllers; owner; initialUsers } : Input) : async Output {
+    public func execute({ controllers; owner; initialUsers; userIndexCanisterId } : Input) : async Output {
         let WORKSPACE_CAPACITY = Constants.WORKSPACE__CAPACITY.scalar;
         let WORKSPACE_FREEZING_THRESHOLD = Constants.WORKSPACE__FREEZING_THRESHOLD.scalar;
         let WORKSPACE_INITIAL_CYCLES_BALANCE = Constants.WORKSPACE__INITIAL_CYCLES_BALANCE.scalar;
@@ -38,6 +39,7 @@ module CreateWorkspace {
 
         let workspaceInitArgs = {
             capacity = WORKSPACE_CAPACITY;
+            userIndexCanisterId;
             owner;
         };
         let workspaceInitData = {

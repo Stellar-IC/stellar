@@ -5,9 +5,10 @@ import { network } from '@/config';
 
 interface UserProfileFormProps {
   src?: string;
+  fallbackSrc?: string;
 }
 
-export const IcImage = ({ src }: UserProfileFormProps) => {
+export const IcImage = ({ src, fallbackSrc }: UserProfileFormProps) => {
   const imageRef = useRef<HTMLImageElement>(null);
   let finalSrc = src;
 
@@ -26,7 +27,7 @@ export const IcImage = ({ src }: UserProfileFormProps) => {
       w={120}
       fit="cover"
       radius="100%"
-      src={finalSrc}
+      src={finalSrc || fallbackSrc}
     />
   );
 };

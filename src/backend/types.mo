@@ -89,6 +89,7 @@ module {
 
         public type WorkspaceInitArgs = {
             capacity : Nat;
+            userIndexCanisterId : CanisterId;
             owner : WorkspaceOwner;
         };
 

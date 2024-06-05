@@ -3,7 +3,7 @@ import Buffer "mo:base/Buffer";
 import Time "mo:base/Time";
 import UUID "mo:uuid/UUID";
 
-import Types "./types";
+import Types "./Types";
 
 module {
     type DraftActivity = {

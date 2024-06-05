@@ -15,6 +15,7 @@ import Array "mo:base/Array";
 import Canistergeek "mo:canistergeek/canistergeek";
 import Source "mo:uuid/async/SourceV4";
 import Map "mo:map/Map";
+import StableBuffer "mo:stablebuffer/StableBuffer";
 
 import Constants "../../constants";
 import Block "../../lib/blocks/Block";
@@ -26,8 +27,6 @@ import CreateWorkspace "../../lib/workspaces/services/create_workspace";
 import CoreTypes "../../types";
 import AuthUtils "../../utils/auth";
 import Tree "../../utils/data/lseq/Tree";
-
-import Workspace "../workspace/main";
 
 import Types "./types";
 
@@ -55,6 +54,8 @@ shared ({ caller = initializer }) actor class User(
 
     /* Default workspace canister */
     stable var _personalWorkspace : ?Types.PersonalWorkspace = null;
+
+    stable var _workspaces = StableBuffer.init<WorkspaceId>();
 
     /* User profile */
     stable var _profile : UserProfile.MutableUserProfile = {
@@ -140,52 +141,64 @@ shared ({ caller = initializer }) actor class User(
         });
     };
 
-    public shared ({ caller }) func personalWorkspace() : async Result.Result<WorkspaceId, { #anonymousUser; #insufficientCycles; #unauthorized }> {
+    public shared ({ caller }) func personalWorkspace() : async Result.Result<?WorkspaceId, { #anonymousUser; #insufficientCycles; #unauthorized }> {
         if (caller != _owner) {
             return #err(#unauthorized);
         };
 
-        let workspace = switch (_personalWorkspaceId) {
-            case (?workspaceId) { return #ok(workspaceId) };
-            case (null) {
-                let result = await CreateWorkspace.execute({
-                    owner = Principal.fromActor(self);
-                    controllers = [_owner, Principal.fromActor(self)];
-                    initialUsers = [(
-                        _owner,
-                        {
-                            identity = _owner;
-                            canisterId = Principal.fromActor(self);
-                            username = _profile.username;
-                            role = #admin;
-                        },
-                    )];
-                });
+        return #ok(_personalWorkspaceId);
+    };
 
-                switch (result) {
-                    case (#err(error)) { return #err(error) };
-                    case (#ok(workspace)) { workspace };
-                };
-            };
+    public shared ({ caller }) func setPersonalWorkspace(
+        workspaceId : WorkspaceId
+    ) : async Result.Result<(), { #unauthorized }> {
+        if (caller != _owner) {
+            return #err(#unauthorized);
         };
-        let workspaceId = Principal.fromActor(workspace);
 
         _personalWorkspaceId := ?workspaceId;
-        _personalWorkspace := ?workspace;
+        _personalWorkspace := ?(actor (Principal.toText(workspaceId)) : Types.PersonalWorkspace);
 
-        // var pageBuilder = BlockBuilder.BlockBuilder({
-        //     uuid = await Source.Source().new();
-        // }).setTitle("Getting Started");
+        StableBuffer.add(_workspaces, workspaceId);
 
-        // var i = 0;
+        #ok();
+    };
 
-        // let pageToCreate = Block.toShareable(pageBuilder.build());
+    public shared ({ caller }) func workspaces() : async Result.Result<[WorkspaceId], { #unauthorized }> {
+        if (caller != _owner) {
+            return #err(#unauthorized);
+        };
 
-        // let result = await workspace.createPage({
-        //     pageToCreate with initialBlockUuid = null;
-        // });
+        return #ok(StableBuffer.toArray(_workspaces));
+    };
 
-        #ok(workspaceId);
+    public shared ({ caller }) func addWorkspace(
+        workspaceDetails : { canisterId : Principal }
+    ) : async Result.Result<(), { #unauthorized }> {
+        if (caller != _owner) {
+            return #err(#unauthorized);
+        };
+
+        StableBuffer.add(_workspaces, workspaceDetails.canisterId);
+
+        return #ok;
+    };
+
+    public shared ({ caller }) func removeWorkspace(
+        workspaceDetails : { canisterId : Principal }
+    ) : async Result.Result<(), { #unauthorized; #removalPrevented }> {
+        if (caller != _owner) {
+            return #err(#unauthorized);
+        };
+
+        if (_personalWorkspaceId == ?workspaceDetails.canisterId) {
+            return #err(#removalPrevented);
+        };
+
+        let workspaceId = workspaceDetails.canisterId;
+        StableBuffer.filterEntries<Principal>(_workspaces, func(i, id) { id != workspaceId });
+
+        return #ok;
     };
 
     public shared ({ caller }) func setAvatar(
@@ -281,7 +294,9 @@ shared ({ caller = initializer }) actor class User(
             case (?workspace) { workspace };
         };
         let initArgs = switch (await workspace.getInitArgs()) {
-            case (#ok(args)) { args };
+            case (#ok(args)) {
+                { args with userIndexCanisterId = userIndexCanisterId };
+            };
             case (#err(err)) {
                 return #err(#failed("Failed to get init args for personal workspace: " # debug_show (err)));
             };

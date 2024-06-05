@@ -3,7 +3,6 @@ import Time "mo:base/Time";
 import UUID "mo:uuid/UUID";
 
 import CoreTypes "../../types";
-import WorkspaceTypes "../workspace/types/v2";
 import UserProfile "../../lib/users/UserProfile";
 
 module {
@@ -14,8 +13,8 @@ module {
 
     public type PersonalWorkspace = actor {
         walletReceive : shared () -> async ({ accepted : Nat64 });
-        getInitArgs : shared query () -> async Result.Result<WorkspaceTypes.WorkspaceInitArgs, { #unauthorized }>;
-        getInitData : shared query () -> async Result.Result<WorkspaceTypes.WorkspaceInitData, { #unauthorized }>;
+        getInitArgs : shared query () -> async Result.Result<CoreTypes.Workspaces.WorkspaceInitArgs, { #unauthorized }>;
+        getInitData : shared query () -> async Result.Result<CoreTypes.Workspaces.WorkspaceInitData, { #unauthorized }>;
     };
 
     public type UserEventName = {

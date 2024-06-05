@@ -22,25 +22,29 @@ type UserEvent =
  };
 type User = 
  service {
+   addWorkspace: (record {canisterId: principal;}) -> (Result_4);
    /// * Returns canister information based on passed parameters.
    ///     * Called from browser.
    getCanistergeekInformation: (GetInformationRequest) ->
     (GetInformationResponse) query;
-   personalWorkspace: () -> (Result_6);
-   profile: () -> (Result_5) query;
-   publicProfile: () -> (Result_4) query;
+   personalWorkspace: () -> (Result_9);
+   profile: () -> (Result_8) query;
+   publicProfile: () -> (Result_7) query;
+   removeWorkspace: (record {canisterId: principal;}) -> (Result_6);
    setAvatar: (record {
                  content: vec nat8;
                  content_type: text;
                  name: text;
-               }) -> (Result_3);
+               }) -> (Result_5);
+   setPersonalWorkspace: (WorkspaceId) -> (Result_4);
    subscribe: (UserEventName, UserEventSubscription) -> ();
    /// * Updates canister information based on passed parameters at current time.
    ///     * Called from browser or any canister "update" method.
    updateCanistergeekInformation: (UpdateInformationRequest) -> ();
-   updateProfile: (ProfileInput) -> (Result_2);
-   upgradePersonalWorkspace: (blob) -> (Result_1);
-   walletReceive: () -> (Result);
+   updateProfile: (ProfileInput) -> (Result_3);
+   upgradePersonalWorkspace: (blob) -> (Result_2);
+   walletReceive: () -> (Result_1);
+   workspaces: () -> (Result);
  };
 type UpdateInformationRequest = record {
                                   metrics: opt CollectMetricsRequestType;};
@@ -58,26 +62,34 @@ type StatusRequest =
    heap_memory_size: bool;
    memory_size: bool;
  };
-type Result_6 = 
+type Result_9 = 
  variant {
    err: variant {
           anonymousUser;
           insufficientCycles;
           unauthorized;
         };
-   ok: WorkspaceId;
+   ok: opt WorkspaceId;
  };
-type Result_5 = 
+type Result_8 = 
  variant {
    err: variant {unauthorized;};
    ok: UserProfile;
  };
-type Result_4 = 
+type Result_7 = 
  variant {
    err: variant {unauthorized;};
    ok: PublicUserProfile;
  };
-type Result_3 = 
+type Result_6 = 
+ variant {
+   err: variant {
+          removalPrevented;
+          unauthorized;
+        };
+   ok;
+ };
+type Result_5 = 
  variant {
    err: variant {
           fileUploadError: text;
@@ -85,7 +97,12 @@ type Result_3 =
         };
    ok: UserProfile;
  };
-type Result_2 = 
+type Result_4 = 
+ variant {
+   err: variant {unauthorized;};
+   ok;
+ };
+type Result_3 = 
  variant {
    err: variant {
           unauthorized;
@@ -93,7 +110,7 @@ type Result_2 =
         };
    ok: UserProfile;
  };
-type Result_1 = 
+type Result_2 = 
  variant {
    err: variant {
           failed: text;
@@ -102,15 +119,19 @@ type Result_1 =
         };
    ok;
  };
-type Result = 
+type Result_1 = 
  variant {
    err: variant {unauthorized;};
    ok: record {accepted: nat64;};
  };
+type Result = 
+ variant {
+   err: variant {unauthorized;};
+   ok: vec WorkspaceId;
+ };
 type PublicUserProfile = 
  record {
    avatarUrl: opt text;
-   canisterId: principal;
    username: text;
  };
 type ProfileUpdatedEventData = record {profile: UserProfile;};

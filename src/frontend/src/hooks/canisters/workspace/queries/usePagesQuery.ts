@@ -55,7 +55,7 @@ export const usePagesQuery = (opts: {
       }
     });
 
-    return result;
+    return pageRecords;
   }, [actor]);
 
   return query;

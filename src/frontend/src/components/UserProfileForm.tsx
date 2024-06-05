@@ -78,7 +78,7 @@ export const UserProfileForm = ({ onSubmit }: UserProfileFormProps) => {
       <Stack>
         <div>
           <InputLabel>
-            <IcImage src={profile.avatarUrl[0]} />
+            <IcImage src={profile.avatarUrl[0]} fallbackSrc="/user.png" />
             <input hidden type="file" onChange={onAvatarChange} />
           </InputLabel>
         </div>

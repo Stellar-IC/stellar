@@ -15,6 +15,7 @@ export function PrincipalBadge({ principal }: PrincipalBadgeProps) {
     <Tooltip label={tooltipLabel} withArrow position="top">
       <Button
         size="sm"
+        px="xs"
         variant="subtle"
         onClick={() => {
           navigator.clipboard.writeText(value);

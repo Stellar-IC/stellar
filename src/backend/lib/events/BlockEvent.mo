@@ -5,7 +5,7 @@ import UUID "mo:uuid/UUID";
 import LseqTypes "../../utils/data/lseq/types";
 import TreeEvent "../../utils/data/lseq/TreeEvent";
 
-import BlocksTypes "../blocks/types";
+import BlocksTypes "../blocks/Types";
 
 module BlockEvent {
     public func getId(event : BlocksTypes.BlockEvent) : UUID.UUID {

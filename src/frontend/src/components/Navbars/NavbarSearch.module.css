@@ -20,7 +20,7 @@
 .section {
   margin-left: calc(var(--mantine-spacing-md) * -1);
   margin-right: calc(var(--mantine-spacing-md) * -1);
-  margin-bottom: var(--mantine-spacing-md);
+  padding: calc(var(--mantine-spacing-xs));
 
   &:not(:last-of-type) {
     border-bottom: rem(1px) solid
@@ -85,7 +85,7 @@
 .pages {
   padding-left: calc(var(--mantine-spacing-md) - rem(6px));
   padding-right: calc(var(--mantine-spacing-md) - rem(6px));
-  padding-bottom: var(--mantine-spacing-md);
+  /* padding-bottom: var(--mantine-spacing-md); */
 }
 
 .pagesHeader {

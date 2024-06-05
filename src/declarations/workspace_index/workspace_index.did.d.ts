@@ -86,6 +86,9 @@ export interface NumericEntity {
   'first' : bigint,
   'last' : bigint,
 }
+export type PubSubEvent = {
+    'workspaceNameUpdated' : { 'name' : string, 'workspaceId' : Principal }
+  };
 export type Result = { 'ok' : Principal } |
   {
     'err' : { 'anonymousUser' : null } |
@@ -107,18 +110,32 @@ export type UpdateCallsAggregatedData = BigUint64Array | bigint[];
 export interface UpdateInformationRequest {
   'metrics' : [] | [CollectMetricsRequestType],
 }
+export interface WorkspaceDetails { 'name' : string, 'canisterId' : Principal }
+export type WorkspaceDetailsByIdOk = Array<WorkspaceDetailsItem>;
+export type WorkspaceDetailsByIdOutput = { 'ok' : WorkspaceDetailsByIdOk } |
+  { 'err' : { 'workspaceNotFound' : null } };
+export interface WorkspaceDetailsItem {
+  'id' : Principal,
+  'result' : { 'found' : WorkspaceDetails } |
+    { 'notFound' : null },
+}
 export interface _SERVICE {
-  'createWorkspace' : ActorMethod<[{ 'owner' : Principal }], Result>,
+  'createWorkspace' : ActorMethod<[], Result>,
   'getCanistergeekInformation' : ActorMethod<
     [GetInformationRequest],
     GetInformationResponse
   >,
+  'handleWorkspaceEvents' : ActorMethod<[string, PubSubEvent], undefined>,
   'requestCycles' : ActorMethod<[bigint], { 'accepted' : bigint }>,
   'updateCanistergeekInformation' : ActorMethod<
     [UpdateInformationRequest],
     undefined
   >,
   'walletReceive' : ActorMethod<[], { 'accepted' : bigint }>,
+  'workspaceDetailsById' : ActorMethod<
+    [Array<Principal>],
+    WorkspaceDetailsByIdOutput
+  >,
 }
 export declare const idlFactory: IDL.InterfaceFactory;
 export declare const init: ({ IDL }: { IDL: IDL }) => IDL.Type[];

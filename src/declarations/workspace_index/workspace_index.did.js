@@ -114,6 +114,12 @@ export const idlFactory = ({ IDL }) => {
     'logs' : IDL.Opt(CanisterLogResponse),
     'version' : IDL.Opt(IDL.Nat),
   });
+  const PubSubEvent = IDL.Variant({
+    'workspaceNameUpdated' : IDL.Record({
+      'name' : IDL.Text,
+      'workspaceId' : IDL.Principal,
+    }),
+  });
   const CollectMetricsRequestType = IDL.Variant({
     'force' : IDL.Null,
     'normal' : IDL.Null,
@@ -121,17 +127,30 @@ export const idlFactory = ({ IDL }) => {
   const UpdateInformationRequest = IDL.Record({
     'metrics' : IDL.Opt(CollectMetricsRequestType),
   });
+  const WorkspaceDetails = IDL.Record({
+    'name' : IDL.Text,
+    'canisterId' : IDL.Principal,
+  });
+  const WorkspaceDetailsItem = IDL.Record({
+    'id' : IDL.Principal,
+    'result' : IDL.Variant({
+      'found' : WorkspaceDetails,
+      'notFound' : IDL.Null,
+    }),
+  });
+  const WorkspaceDetailsByIdOk = IDL.Vec(WorkspaceDetailsItem);
+  const WorkspaceDetailsByIdOutput = IDL.Variant({
+    'ok' : WorkspaceDetailsByIdOk,
+    'err' : IDL.Variant({ 'workspaceNotFound' : IDL.Null }),
+  });
   return IDL.Service({
-    'createWorkspace' : IDL.Func(
-        [IDL.Record({ 'owner' : IDL.Principal })],
-        [Result],
-        [],
-      ),
+    'createWorkspace' : IDL.Func([], [Result], []),
     'getCanistergeekInformation' : IDL.Func(
         [GetInformationRequest],
         [GetInformationResponse],
         ['query'],
       ),
+    'handleWorkspaceEvents' : IDL.Func([IDL.Text, PubSubEvent], [], []),
     'requestCycles' : IDL.Func(
         [IDL.Nat],
         [IDL.Record({ 'accepted' : IDL.Nat64 })],
@@ -146,6 +165,11 @@ export const idlFactory = ({ IDL }) => {
         [],
         [IDL.Record({ 'accepted' : IDL.Nat64 })],
         [],
+      ),
+    'workspaceDetailsById' : IDL.Func(
+        [IDL.Vec(IDL.Principal)],
+        [WorkspaceDetailsByIdOutput],
+        ['query'],
       ),
   });
 };

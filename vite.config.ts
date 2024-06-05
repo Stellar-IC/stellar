@@ -47,6 +47,7 @@ export default defineConfig({
       srcDir: 'src/frontend/src',
     }),
   ],
+  publicDir: './src/frontend/public',
   build: {
     outDir: './src/frontend/dist',
   },

@@ -3,9 +3,9 @@ import T "mo:matchers/Testable";
 import UUID "mo:uuid/UUID";
 
 import Activity "../lib/activities/Activity";
-import ActivitiesTypes "../lib/activities/types";
+import ActivitiesTypes "../lib/activities/Types";
 import Block "../lib/blocks/Block";
-import BlocksTypes "../lib/blocks/types";
+import BlocksTypes "../lib/blocks/Types";
 import UUIDUtils "../utils/uuid";
 
 module {

@@ -3,6 +3,10 @@ export const idlFactory = ({ IDL }) => {
     'owner' : IDL.Principal,
     'capacity' : IDL.Nat,
   });
+  const Result_4 = IDL.Variant({
+    'ok' : IDL.Null,
+    'err' : IDL.Variant({ 'unauthorized' : IDL.Null }),
+  });
   const StatusRequest = IDL.Record({
     'memory_size' : IDL.Bool,
     'cycles' : IDL.Bool,
@@ -110,8 +114,8 @@ export const idlFactory = ({ IDL }) => {
     'version' : IDL.Opt(IDL.Nat),
   });
   const WorkspaceId = IDL.Principal;
-  const Result_6 = IDL.Variant({
-    'ok' : WorkspaceId,
+  const Result_9 = IDL.Variant({
+    'ok' : IDL.Opt(WorkspaceId),
     'err' : IDL.Variant({
       'anonymousUser' : IDL.Null,
       'insufficientCycles' : IDL.Null,
@@ -126,20 +130,26 @@ export const idlFactory = ({ IDL }) => {
     'updatedAt' : Time,
     'avatarUrl' : IDL.Opt(IDL.Text),
   });
-  const Result_5 = IDL.Variant({
+  const Result_8 = IDL.Variant({
     'ok' : UserProfile,
     'err' : IDL.Variant({ 'unauthorized' : IDL.Null }),
   });
   const PublicUserProfile = IDL.Record({
     'username' : IDL.Text,
     'avatarUrl' : IDL.Opt(IDL.Text),
-    'canisterId' : IDL.Principal,
   });
-  const Result_4 = IDL.Variant({
+  const Result_7 = IDL.Variant({
     'ok' : PublicUserProfile,
     'err' : IDL.Variant({ 'unauthorized' : IDL.Null }),
   });
-  const Result_3 = IDL.Variant({
+  const Result_6 = IDL.Variant({
+    'ok' : IDL.Null,
+    'err' : IDL.Variant({
+      'removalPrevented' : IDL.Null,
+      'unauthorized' : IDL.Null,
+    }),
+  });
+  const Result_5 = IDL.Variant({
     'ok' : UserProfile,
     'err' : IDL.Variant({
       'fileUploadError' : IDL.Text,
@@ -162,14 +172,14 @@ export const idlFactory = ({ IDL }) => {
   });
   const Username = IDL.Text;
   const ProfileInput = IDL.Record({ 'username' : Username });
-  const Result_2 = IDL.Variant({
+  const Result_3 = IDL.Variant({
     'ok' : UserProfile,
     'err' : IDL.Variant({
       'unauthorized' : IDL.Null,
       'usernameTaken' : IDL.Null,
     }),
   });
-  const Result_1 = IDL.Variant({
+  const Result_2 = IDL.Variant({
     'ok' : IDL.Null,
     'err' : IDL.Variant({
       'unauthorized' : IDL.Null,
@@ -177,19 +187,33 @@ export const idlFactory = ({ IDL }) => {
       'failed' : IDL.Text,
     }),
   });
-  const Result = IDL.Variant({
+  const Result_1 = IDL.Variant({
     'ok' : IDL.Record({ 'accepted' : IDL.Nat64 }),
     'err' : IDL.Variant({ 'unauthorized' : IDL.Null }),
   });
+  const Result = IDL.Variant({
+    'ok' : IDL.Vec(WorkspaceId),
+    'err' : IDL.Variant({ 'unauthorized' : IDL.Null }),
+  });
   const User = IDL.Service({
+    'addWorkspace' : IDL.Func(
+        [IDL.Record({ 'canisterId' : IDL.Principal })],
+        [Result_4],
+        [],
+      ),
     'getCanistergeekInformation' : IDL.Func(
         [GetInformationRequest],
         [GetInformationResponse],
         ['query'],
       ),
-    'personalWorkspace' : IDL.Func([], [Result_6], []),
-    'profile' : IDL.Func([], [Result_5], ['query']),
-    'publicProfile' : IDL.Func([], [Result_4], ['query']),
+    'personalWorkspace' : IDL.Func([], [Result_9], []),
+    'profile' : IDL.Func([], [Result_8], ['query']),
+    'publicProfile' : IDL.Func([], [Result_7], ['query']),
+    'removeWorkspace' : IDL.Func(
+        [IDL.Record({ 'canisterId' : IDL.Principal })],
+        [Result_6],
+        [],
+      ),
     'setAvatar' : IDL.Func(
         [
           IDL.Record({
@@ -198,18 +222,20 @@ export const idlFactory = ({ IDL }) => {
             'content_type' : IDL.Text,
           }),
         ],
-        [Result_3],
+        [Result_5],
         [],
       ),
+    'setPersonalWorkspace' : IDL.Func([WorkspaceId], [Result_4], []),
     'subscribe' : IDL.Func([UserEventName, UserEventSubscription], [], []),
     'updateCanistergeekInformation' : IDL.Func(
         [UpdateInformationRequest],
         [],
         [],
       ),
-    'updateProfile' : IDL.Func([ProfileInput], [Result_2], []),
-    'upgradePersonalWorkspace' : IDL.Func([IDL.Vec(IDL.Nat8)], [Result_1], []),
-    'walletReceive' : IDL.Func([], [Result], []),
+    'updateProfile' : IDL.Func([ProfileInput], [Result_3], []),
+    'upgradePersonalWorkspace' : IDL.Func([IDL.Vec(IDL.Nat8)], [Result_2], []),
+    'walletReceive' : IDL.Func([], [Result_1], []),
+    'workspaces' : IDL.Func([], [Result], []),
   });
   return User;
 };

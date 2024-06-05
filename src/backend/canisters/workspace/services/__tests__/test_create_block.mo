@@ -9,7 +9,7 @@ import Suite "mo:matchers/Suite";
 
 import UUID "mo:uuid/UUID";
 
-import BlocksTypes "../../../../lib/blocks/types";
+import BlocksTypes "../../../../lib/blocks/Types";
 import Block "../../../../lib/blocks/Block";
 import BlockBuilder "../../../../lib/blocks/BlockBuilder";
 import TestHelpers "../../../../tests/helpers";

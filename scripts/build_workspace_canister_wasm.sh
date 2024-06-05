@@ -1,6 +1,7 @@
 #!/bin/bash
 
 $(dfx cache show)/moc ./src/backend/canisters/workspace/main.mo \
+  --idl --stable-types \
   --package base .mops/base@0.10.4/src \
   --package matchers .mops/_github/matchers#v1.3.0/src \
   --package encoding .mops/_github/encoding#v0.4.1/src \
@@ -10,5 +11,6 @@ $(dfx cache show)/moc ./src/backend/canisters/workspace/main.mo \
   --package uuid .mops/_github/uuid#v0.2.0/src \
   --package canistergeek .mops/_github/canistergeek#v0.0.7/src \
   --package map .mops/map@9.0.1/src \
+  --package stablebuffer .mops/_github/stablebuffer#v1.3.0/src \
   -c -o ./.dfx/local/canisters/workspace/workspace.wasm
   

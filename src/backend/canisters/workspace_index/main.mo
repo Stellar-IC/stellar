@@ -1,3 +1,5 @@
+import UserIndex "canister:user_index";
+
 import Debug "mo:base/Debug";
 import Cycles "mo:base/ExperimentalCycles";
 import Principal "mo:base/Principal";
@@ -13,8 +15,10 @@ import Nat "mo:base/Nat";
 import Timer "mo:base/Timer";
 import Time "mo:base/Time";
 import ExperimentalCycles "mo:base/ExperimentalCycles";
+import Buffer "mo:base/Buffer";
 import UUID "mo:uuid/UUID";
 import Canistergeek "mo:canistergeek/canistergeek";
+import Map "mo:map/Map";
 
 import CanisterTopUp "../../lib/shared/CanisterTopUp";
 import CreateWorkspace "../../lib/workspaces/services/create_workspace";
@@ -26,10 +30,18 @@ import Workspace "../workspace/main";
 import WorkspaceTypes "../workspace/types/v2";
 import Constants "../../constants";
 import Paginator "../../lib/pagination/Paginator";
+import PubSub "../../lib/PubSub";
 
 actor WorkspaceIndex {
     type WorkspaceId = Principal;
     type WorkspaceExternalId = UUID.UUID;
+    type WorkspaceDetails = {
+        canisterId : Principal;
+        name : Text;
+    };
+
+    type PubSubEvent = {};
+    type EventHandler = shared (Text, PubSubEvent) -> async ();
 
     stable let MAX_TOP_UP_AMOUNT = 1_000_000_000_000_000;
     stable let MIN_INTERVAL = 3 * 60 * 60 * 1_000_000_000_000; // 3 hours
@@ -44,6 +56,10 @@ actor WorkspaceIndex {
     stable let _capacity = 100_000_000_000_000;
     stable var _balance = 0 : Nat;
     stable var _topUps : RBTree.Tree<Principal, CanisterTopUp.CanisterTopUp> = #leaf;
+
+    stable let _workspaceDetails = Map.new<Principal, WorkspaceDetails>();
+
+    stable let _publisher = PubSub.Publisher<PubSubEvent, EventHandler>();
 
     /*************************************************************************
      * Transient data
@@ -60,19 +76,53 @@ actor WorkspaceIndex {
     topUps.unshare(_topUps);
 
     /*************************************************************************
+     * Queries
+     *************************************************************************/
+    type WorkspaceDetailsItem = {
+        id : Principal;
+        result : { #found : WorkspaceDetails; #notFound };
+    };
+    type WorkspaceDetailsByIdOk = [WorkspaceDetailsItem];
+    type WorkspaceDetailsByIdOutput = Result.Result<WorkspaceDetailsByIdOk, { #workspaceNotFound }>;
+
+    public query func workspaceDetailsById(workspaceIds : [Principal]) : async WorkspaceDetailsByIdOutput {
+        let result = Buffer.Buffer<WorkspaceDetailsItem>(Array.size(workspaceIds));
+
+        for (workspaceId in workspaceIds.vals()) {
+            let workspace = Map.get(_workspaceDetails, Map.phash, workspaceId);
+
+            switch (workspace) {
+                case (null) {
+                    result.add({
+                        id = workspaceId;
+                        result = #notFound;
+                    });
+                };
+                case (?workspace) {
+                    result.add({
+                        id = workspaceId;
+                        result = #found(workspace);
+                    });
+                };
+            };
+        };
+
+        return #ok(Buffer.toArray(result));
+    };
+
+    /*************************************************************************
      * Updates
      *************************************************************************/
 
     /*
      * Add a workspace to the index.
      */
-    public shared ({ caller }) func createWorkspace(
-        input : { owner : Principal }
-    ) : async Result.Result<Principal, { #anonymousCaller; #anonymousUser; #unauthorizedCaller; #insufficientCycles }> {
+    public shared ({ caller }) func createWorkspace() : async Result.Result<Principal, { #anonymousCaller; #anonymousUser; #unauthorizedCaller; #insufficientCycles }> {
         let result = await CreateWorkspace.execute({
-            owner = input.owner;
-            controllers = [input.owner, Principal.fromActor(WorkspaceIndex)];
+            owner = caller;
+            controllers = [caller, Principal.fromActor(WorkspaceIndex)];
             initialUsers = [];
+            userIndexCanisterId = Principal.fromActor(UserIndex);
         });
 
         switch (result) {
@@ -84,13 +134,42 @@ actor WorkspaceIndex {
                 workspace_id_to_workspace_uuid.put(workspaceId, workspaceData.uuid);
                 workspace_uuid_to_workspace_id.put(workspaceData.uuid, workspaceId);
                 workspace_id_to_canister.put(workspaceId, workspace);
+                saveWorkspaceDetails(workspaceId, { name = workspaceData.name });
 
-                // CyclesDispenser.register(workspace);
+                await workspace.subscribe("workspaceNameUpdated", handleWorkspaceEvents);
 
                 #ok(workspaceId);
             };
         };
     };
+
+    public shared ({ caller }) func handleWorkspaceEvents(eventName : Text, payload : WorkspaceTypes.PubSubEvent) : async () {
+        Debug.print("handleWorkspaceEvents - " # debug_show (caller));
+
+        switch (payload) {
+            case (#workspaceNameUpdated(payload)) {
+                let { name; workspaceId } = payload;
+                let workspace = actor (Principal.toText(workspaceId)) : Workspace.Workspace;
+                saveWorkspaceDetails(workspaceId, { name });
+            };
+        };
+    };
+
+    private func saveWorkspaceDetails(workspaceId : Principal, details : { name : Text }) {
+        ignore Map.put<Principal, WorkspaceDetails>(
+            _workspaceDetails,
+            Map.phash,
+            workspaceId,
+            {
+                canisterId = workspaceId;
+                name = details.name;
+            },
+        );
+    };
+
+    /*************************************************************************
+     * Cycles Management
+     *************************************************************************/
 
     // Returns the cycles received up to the capacity allowed
     public func walletReceive() : async { accepted : Nat64 } {

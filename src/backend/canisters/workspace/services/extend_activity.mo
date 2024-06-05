@@ -7,7 +7,7 @@ import UUID "mo:uuid/UUID";
 
 import Activity "../../../lib/activities/Activity";
 import ActivityBuilder "../../../lib/activities/ActivityBuilder";
-import BlocksTypes "../../../lib/blocks/types";
+import BlocksTypes "../../../lib/blocks/Types";
 
 import State "../state";
 import Types "../types/v2";

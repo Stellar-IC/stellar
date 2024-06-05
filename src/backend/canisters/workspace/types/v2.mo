@@ -3,6 +3,7 @@ import Nat "mo:base/Nat";
 import Result "mo:base/Result";
 import Text "mo:base/Text";
 import Time "mo:base/Time";
+import Principal "mo:base/Principal";
 import UUID "mo:uuid/UUID";
 
 import ActivitiesTypes "../../../lib/activities/Types";
@@ -20,10 +21,13 @@ module {
     public type ShareableBlockProperties = BlocksTypes.ShareableBlockProperties;
     public type WorkspaceOwner = Principal;
 
-    public type WorkspaceInitArgs = {
-        capacity : Nat;
-        owner : WorkspaceOwner;
+    public type PubSubEvent = {
+        #workspaceNameUpdated : {
+            workspaceId : Principal;
+            name : Text;
+        };
     };
+    public type PubSubEventHandler = shared (Text, PubSubEvent) -> async ();
 
     public type WorkspaceInitData = {
         uuid : UUID.UUID;
@@ -155,7 +159,7 @@ module {
         };
 
         public module GetInitArgs {
-            public type GetInitArgsOutput = Result.Result<WorkspaceInitArgs, { #unauthorized }>;
+            public type GetInitArgsOutput = Result.Result<CoreTypes.Workspaces.WorkspaceInitArgs, { #unauthorized }>;
         };
 
         public module GetInitData {

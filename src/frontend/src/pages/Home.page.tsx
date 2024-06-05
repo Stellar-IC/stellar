@@ -1,58 +1,95 @@
-import {
-  ActionIcon,
-  Anchor,
-  Container,
-  Flex,
-  Stack,
-  useMantineTheme,
-} from '@mantine/core';
-import { toText } from '@stellar-ic/lseq-ts/Tree';
-import { IconPlus } from '@tabler/icons-react';
-import { useLiveQuery } from 'dexie-react-hooks';
-import { Link } from 'react-router-dom';
+import { DelegationIdentity } from '@dfinity/identity';
+import { Principal } from '@dfinity/principal';
+import { Flex, Loader } from '@mantine/core';
+import { useEffect, useState } from 'react';
+import { Navigate } from 'react-router-dom';
 
-import { PageWrapper } from '@/PageWrapper';
-import { db } from '@/db';
-import { useCreatePageWithRedirect } from '@/hooks/canisters/workspace/updates/useCreatePageWithRedirect';
-import { LocalStorageBlock } from '@/types';
+import { useUserActor } from '@/hooks/canisters/user/useUserActor';
+import { useAuthContext } from '@/modules/auth/contexts/AuthContext';
+
+function WorkspaceLoader({
+  children,
+}: {
+  children: (props: {
+    isLoading: boolean;
+    workspaceId: Principal;
+  }) => React.ReactNode;
+}) {
+  const [workspaceId, setWorkspaceId] = useState<Principal | null>(null);
+  const [isLoadingWorkspace, setIsLoadingWorkspace] = useState<boolean>(true);
+  const {
+    isLoading: isLoadingUser,
+    identity,
+    userId,
+    isAuthenticated,
+  } = useAuthContext();
+  const { actor: userActor } = useUserActor({ identity, userId });
+  const isLoading = isLoadingUser || isLoadingWorkspace;
+
+  // Load the user's personal workspace
+  useEffect(() => {
+    const timeout = setTimeout(async () => {
+      if (isAuthenticated) {
+        const result = await userActor.personalWorkspace();
+        setIsLoadingWorkspace(false);
+        if (!('ok' in result)) {
+          throw new Error(
+            "There was an error loading the user's default workspace"
+          );
+        }
+        if (result.ok.length === 0) {
+          throw new Error('User has no default workspace');
+        }
+        setWorkspaceId(result.ok[0]);
+      }
+    }, 0);
+
+    return () => {
+      clearTimeout(timeout);
+    };
+  }, [userActor, identity, isAuthenticated]);
+
+  if (!workspaceId) return <></>;
+
+  return <>{children({ isLoading, workspaceId })}</>;
+}
 
 export function HomePage() {
-  const theme = useMantineTheme();
-  const createPageAndRedirect = useCreatePageWithRedirect();
-
-  const pages = useLiveQuery<LocalStorageBlock[], LocalStorageBlock[]>(
-    () => db.blocks.filter((block) => 'page' in block.blockType).toArray(),
-    [],
-    []
-  );
+  const { identity } = useAuthContext();
 
   return (
-    <PageWrapper>
-      <Container>
-        <div style={{ padding: theme.spacing.sm }}>
-          <Flex align="center" justify="space-between">
-            <h2>Pages</h2>
-            <ActionIcon
-              variant="subtle"
-              onClick={createPageAndRedirect}
-              aria-label="Create a new page"
-            >
-              <IconPlus />
-            </ActionIcon>
-          </Flex>
-          <Stack>
-            {pages.map((page) => (
-              <Anchor
-                key={page.uuid}
-                component={Link}
-                to={`/pages/${page.uuid}`}
+    <WorkspaceLoader>
+      {({ isLoading, workspaceId }) => {
+        if (isLoading) {
+          return (
+            <Flex h="100%">
+              <div
+                style={{
+                  display: 'flex',
+                  width: '100%',
+                  height: '100%',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  flexGrow: 1,
+                  transition: 'padding 0.2s ease-in-out',
+                }}
               >
-                {toText(page.properties.title) || 'Untitled'}
-              </Anchor>
-            ))}
-          </Stack>
-        </div>
-      </Container>
-    </PageWrapper>
+                <Loader />
+              </div>
+            </Flex>
+          );
+        }
+
+        if (!workspaceId) {
+          throw new Error('Workspace ID is not set');
+        }
+
+        if (!(identity instanceof DelegationIdentity)) {
+          throw new Error('Anonymous identity is not allowed here');
+        }
+
+        return <Navigate to={`/spaces/${workspaceId.toString()}`} replace />;
+      }}
+    </WorkspaceLoader>
   );
 }

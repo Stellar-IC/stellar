@@ -2,9 +2,6 @@ import type { Principal } from '@dfinity/principal';
 import {
   Text,
   Group,
-  ActionIcon,
-  Tooltip,
-  rem,
   px,
   useMantineTheme,
   Button,
@@ -13,138 +10,111 @@ import {
   MenuDropdown,
   MenuItem,
   MenuTarget,
+  Stack,
 } from '@mantine/core';
-import { notifications } from '@mantine/notifications';
-import { Tree } from '@stellar-ic/lseq-ts';
-import { IconPlus, IconTrash } from '@tabler/icons-react';
-import { useLiveQuery } from 'dexie-react-hooks';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { parse } from 'uuid';
 
 import { useLayoutManager } from '@/LayoutManager';
-import { useWorkspaceContext } from '@/contexts/WorkspaceContext/useWorkspaceContext';
-import { db } from '@/db';
-import { usePagesQuery } from '@/hooks/canisters/workspace/queries/usePagesQuery';
-import { useCreatePageWithRedirect } from '@/hooks/canisters/workspace/updates/useCreatePageWithRedirect';
-import { useDeletePage } from '@/hooks/canisters/workspace/updates/useDeletePage';
+import { useUserActor } from '@/hooks/canisters/user/useUserActor';
 import { logout } from '@/modules/auth/commands';
 import { useAuthContext } from '@/modules/auth/contexts/AuthContext';
-import { LocalStorageBlock } from '@/types';
 
-import { PrincipalBadge } from '../PrincipalBadge';
+import { workspace_index } from '../../../../declarations/workspace_index';
 
-import authButtonClasses from './AuthButton.module.css';
 import classes from './NavbarSearch.module.css';
 
-function PageLinksSection() {
-  const createPageAndRedirect = useCreatePageWithRedirect();
-  const { workspaceId } = useWorkspaceContext();
-  const { layoutManager } = useLayoutManager();
-  const theme = useMantineTheme();
-  const { identity } = useAuthContext();
-  const [deletePage] = useDeletePage({
-    identity,
-    workspaceId,
-  });
-  const queryPages = usePagesQuery({
-    identity,
-    workspaceId,
-  });
+function WorkspaceItem(props: { workspaceDetails: WorkspaceDetails }) {
+  const { workspaceDetails } = props;
+  const { id, name } = workspaceDetails;
 
-  useEffect(() => {
-    queryPages();
-  }, [queryPages]);
-
-  const pages = useLiveQuery<LocalStorageBlock[], LocalStorageBlock[]>(
-    () => db.blocks.filter((block) => 'page' in block.blockType).toArray(),
-    [],
-    []
+  return (
+    <Link to={`/spaces/${id}`}>
+      <Flex gap="sm">
+        <div
+          style={{
+            borderRadius: '0.25rem',
+            backgroundColor: '#aaa',
+            width: '2rem',
+            height: '2rem',
+          }}
+        />
+        <Text size="sm" style={{ marginTop: '0.5rem' }}>
+          {name || 'Untitled'}
+        </Text>
+      </Flex>
+    </Link>
   );
+}
 
-  const xsBreakpoint = Number(`${px(theme.breakpoints.xs)}`.replace('px', ''));
+type WorkspaceDetails = {
+  id: Principal;
+  name: string;
+};
 
-  const pageLinks = Object.values(pages).map((page) => (
-    <Flex justify="space-between" key={page.uuid}>
-      <Link
-        to={`/pages/${page.uuid}`}
-        key={page.uuid}
-        className={classes.pageLink}
-        style={{
-          flexGrow: 1,
-          alignSelf: 'center',
-        }}
-        onClick={() => {
-          if (document.body.clientWidth < xsBreakpoint) {
-            layoutManager.layout = 'CLOSED';
-          }
-        }}
-      >
-        {/* <span style={{ marginRight: rem(9), fontSize: rem(16) }}>
-        {page.emoji}
-      </span>{' '} */}
-        {Tree.toText(page.properties.title) || 'Untitled'}
-      </Link>
-      <Button
-        leftSection={<IconTrash color="gray" size="1.25rem" />}
-        onClick={() => {
-          deletePage([{ uuid: parse(page.uuid) }])
-            .then(() => {
-              notifications.show({
-                title: 'Success',
-                message: `Deleted page '${page.uuid} '`,
-              });
-            })
-            .catch((e) => {
-              notifications.show({
-                title: 'Error',
-                message: e.message,
-                color: 'red',
-              });
-            });
-        }}
-        variant="transparent"
-      />
-    </Flex>
-  ));
-
+function WorkspacesSection({ workspaces }: { workspaces: WorkspaceDetails[] }) {
   return (
     <div className={classes.section}>
       <Group className={classes.pagesHeader} justify="space-between">
         <Text size="xs" fw={500} c="dimmed">
-          Pages
+          Spaces
         </Text>
-        <Tooltip label="Create page" withArrow position="right">
-          <ActionIcon
-            variant="default"
-            size={18}
-            onClick={() => {
-              createPageAndRedirect();
-            }}
-          >
-            <IconPlus
-              style={{ width: rem(12), height: rem(12) }}
-              stroke={1.5}
-            />
-          </ActionIcon>
-        </Tooltip>
       </Group>
-      <div className={classes.pages}>{pageLinks}</div>
+      <div className={classes.pages}>
+        <Stack px="xs" py="sm" gap="xs">
+          {workspaces.map((workspace) => (
+            <WorkspaceItem
+              key={workspace.id.toText()}
+              workspaceDetails={workspace}
+            />
+          ))}
+        </Stack>
+      </div>
     </div>
   );
 }
 
-export function NavbarSearch({
-  workspaceId,
-}: {
-  workspaceId?: Principal | null;
-}) {
+export function NavbarSearch() {
   const theme = useMantineTheme();
   const { layout, layoutManager } = useLayoutManager();
   const isOpen = layout === 'NAVIGATION_OPEN';
-  const { isAuthenticated, login, profile } = useAuthContext();
+  const { identity, userId, isAuthenticated, login, profile } =
+    useAuthContext();
+  const { actor: userActor } = useUserActor({ identity, userId });
 
   const xsBreakpoint = Number(`${px(theme.breakpoints.xs)}`.replace('px', ''));
+
+  const [workspaces, setWorkspaces] = useState<
+    { id: Principal; name: string }[]
+  >([]);
+
+  useEffect(() => {
+    userActor
+      .workspaces()
+      .then((result) => {
+        // console.log({ result });
+        if ('ok' in result) {
+          return workspace_index.workspaceDetailsById(result.ok);
+        }
+        throw new Error(JSON.stringify(result.err));
+      })
+      .then((result) => {
+        if ('err' in result) {
+          throw new Error(JSON.stringify(result.err));
+        }
+
+        const workspacesToStore: WorkspaceDetails[] = [];
+        result.ok.forEach((x) => {
+          if ('notFound' in x.result) {
+            return;
+          }
+
+          workspacesToStore.push({ id: x.id, name: x.result.found.name });
+        });
+
+        setWorkspaces(workspacesToStore);
+      });
+  }, [userActor]);
 
   return (
     <nav
@@ -162,63 +132,50 @@ export function NavbarSearch({
       }
     >
       <div className={classes.section}>
-        <div className={authButtonClasses.section}>
-          {isAuthenticated ? (
-            <Flex>
-              <Menu width="target">
-                <MenuTarget>
-                  <Button size="sm" variant="transparent">
-                    {profile.username || '---'}
-                  </Button>
-                </MenuTarget>
-                <MenuDropdown>
-                  <MenuItem onClick={() => logout()}>Logout</MenuItem>
-                </MenuDropdown>
-              </Menu>
-            </Flex>
-          ) : (
-            <Group>
-              <Text>{profile.username}</Text>
-              <Button size="sm" onClick={login}>
-                Login
-              </Button>
-            </Group>
-          )}
-        </div>
+        {isAuthenticated ? (
+          <Flex>
+            <Menu width="10rem">
+              <MenuTarget>
+                <Button size="sm" variant="transparent" px="xs">
+                  {profile.username || '---'}
+                </Button>
+              </MenuTarget>
+              <MenuDropdown>
+                <MenuItem onClick={() => logout()}>Logout</MenuItem>
+              </MenuDropdown>
+            </Menu>
+          </Flex>
+        ) : (
+          <Group>
+            <Text>{profile.username}</Text>
+            <Button size="sm" onClick={login} px="xs">
+              Login
+            </Button>
+          </Group>
+        )}
       </div>
+
       <div className={classes.section}>
-        <div
+        <Link
+          to="/settings"
+          className={classes.pageLink}
           style={{
-            padding: theme.spacing.xs,
-            paddingTop: 0,
+            flexGrow: 1,
+            alignSelf: 'center',
+          }}
+          onClick={() => {
+            if (document.body.clientWidth < xsBreakpoint) {
+              layoutManager.layout = 'CLOSED';
+            }
           }}
         >
-          <Text size="sm">Workspace</Text>
-          {workspaceId && <PrincipalBadge principal={workspaceId} />}
-        </div>
+          Settings
+        </Link>
       </div>
 
       <div className={classes.section}>
-        <div className={classes.pages}>
-          <Link
-            to="/settings"
-            className={classes.pageLink}
-            style={{
-              flexGrow: 1,
-              alignSelf: 'center',
-            }}
-            onClick={() => {
-              if (document.body.clientWidth < xsBreakpoint) {
-                layoutManager.layout = 'CLOSED';
-              }
-            }}
-          >
-            Settings
-          </Link>
-        </div>
+        <WorkspacesSection workspaces={workspaces} />
       </div>
-
-      {workspaceId && <PageLinksSection />}
     </nav>
   );
 }
