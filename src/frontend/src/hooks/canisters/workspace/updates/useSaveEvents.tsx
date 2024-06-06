@@ -19,7 +19,7 @@ export const useSaveEvents = (options: {
   ) => Promise<SaveEventTransactionUpdateOutput>,
   { data: SaveEventTransactionUpdateOutput | null; isLoading: boolean }
 ] => {
-  const { actor } = useWorkspaceActor(options);
+  const actor = useWorkspaceActor();
   const [_saveEvents, ...other] = useUpdate(
     options.workspaceId,
     actor.saveEvents

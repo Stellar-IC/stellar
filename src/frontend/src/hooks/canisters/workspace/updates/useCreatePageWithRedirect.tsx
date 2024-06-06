@@ -6,17 +6,14 @@ import { useNavigate } from 'react-router-dom';
 import { parse, stringify, v4 } from 'uuid';
 
 import { useCreatePage } from '@/hooks/canisters/workspace/updates/useCreatePage';
-import { useAuthContext } from '@/modules/auth/contexts/AuthContext';
 
-export function useCreatePageWithRedirect({
-  workspaceId,
-}: {
+type Options = {
   workspaceId: Principal;
-}) {
+};
+
+export function useCreatePageWithRedirect({ workspaceId }: Options) {
   const navigate = useNavigate();
-  const { identity } = useAuthContext();
   const [createPage] = useCreatePage({
-    identity,
     workspaceId,
   });
 

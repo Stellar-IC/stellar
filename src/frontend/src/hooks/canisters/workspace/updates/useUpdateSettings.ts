@@ -16,7 +16,7 @@ export const useUpdateSettings = (options: {
   (input: [UpdateSettingsUpdateInput]) => Promise<UpdateSettingsUpdateOutput>,
   { data: UpdateSettingsUpdateOutput | null; isLoading: boolean }
 ] => {
-  const { actor } = useWorkspaceActor(options);
+  const actor = useWorkspaceActor();
 
   return useUpdate(options.workspaceId, actor.updateSettings);
 };

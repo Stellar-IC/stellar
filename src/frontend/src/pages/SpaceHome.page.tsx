@@ -14,6 +14,7 @@ import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 
 import { ActionBar } from '@/components/ActionBar';
+import { WorkspaceContext } from '@/contexts/WorkspaceContext/WorkspaceContext';
 import { WorkspaceContextProvider } from '@/contexts/WorkspaceContext/WorkspaceContextProvider';
 import { usePagesQuery } from '@/hooks/canisters/workspace/queries/usePagesQuery';
 import { useCreatePageWithRedirect } from '@/hooks/canisters/workspace/updates/useCreatePageWithRedirect';
@@ -21,26 +22,21 @@ import { useAuthContext } from '@/modules/auth/contexts/AuthContext';
 import { toLocalStorage } from '@/modules/blocks/serializers';
 import { LocalStorageBlock } from '@/types';
 
-export function SpaceHomePage() {
+export function SpaceHomePage({ workspaceId }: { workspaceId: string }) {
   const { identity } = useAuthContext();
-  const { spaceId } = useParams<{ spaceId: string }>();
-
-  if (!spaceId) throw new Error('Missing workspaceId');
 
   const theme = useMantineTheme();
   const createPageAndRedirect = useCreatePageWithRedirect({
-    workspaceId: Principal.fromText(spaceId),
+    workspaceId: Principal.fromText(workspaceId),
   });
 
-  const queryPages = usePagesQuery({
-    identity,
-    workspaceId: Principal.fromText(spaceId),
-  });
+  const queryPages = usePagesQuery();
 
   const [pages, setPages] = useState<LocalStorageBlock[]>([]);
 
   useEffect(() => {
     queryPages().then((result) => {
+      console.log('result', result);
       setPages(result.map(toLocalStorage));
     });
   }, [queryPages]);
@@ -50,10 +46,7 @@ export function SpaceHomePage() {
   }
 
   return (
-    <WorkspaceContextProvider
-      identity={identity}
-      workspaceId={Principal.fromText(spaceId)}
-    >
+    <>
       <ActionBar />
       <Container>
         <div style={{ padding: theme.spacing.sm }}>
@@ -72,7 +65,7 @@ export function SpaceHomePage() {
               <Anchor
                 key={page.uuid}
                 component={Link}
-                to={`/spaces/${spaceId}/pages/${page.uuid}`}
+                to={`/spaces/${workspaceId}/pages/${page.uuid}`}
               >
                 {toText(page.properties.title) || 'Untitled'}
               </Anchor>
@@ -80,6 +73,24 @@ export function SpaceHomePage() {
           </Stack>
         </div>
       </Container>
+    </>
+  );
+}
+
+export function SpaceHomePageConnector() {
+  const { spaceId: workspaceId } = useParams<{ spaceId: string }>();
+
+  if (!workspaceId) throw new Error('Missing workspaceId');
+
+  return (
+    <WorkspaceContextProvider workspaceId={Principal.fromText(workspaceId)}>
+      <WorkspaceContext.Consumer>
+        {(context) => {
+          if (!context) return null;
+          if (!context.actor) return null;
+          return <SpaceHomePage workspaceId={workspaceId} />;
+        }}
+      </WorkspaceContext.Consumer>
     </WorkspaceContextProvider>
   );
 }

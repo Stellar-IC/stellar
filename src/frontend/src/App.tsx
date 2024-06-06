@@ -9,7 +9,6 @@ import { AuthContextProvider } from '@/modules/auth/contexts/AuthContext';
 import { theme } from '@/theme';
 
 import { AppRouter } from './AppRouter';
-
 import './App.css';
 
 const AppShell = ({ children }: { children: React.ReactNode }) => (

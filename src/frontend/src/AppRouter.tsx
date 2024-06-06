@@ -11,11 +11,11 @@ import { NavbarSearch } from './components/Navbars/NavbarSearch';
 import { useAuthContext } from './modules/auth/contexts/AuthContext';
 import { HomePage } from './pages/Home.page';
 import { SettingsPage } from './pages/Settings.page';
-import { SpaceHomePage } from './pages/SpaceHome.page';
+import { SpaceHomePageConnector } from './pages/SpaceHome.page';
 import { SpaceSettingsPageConnector } from './pages/SpaceSettings.page';
 import { LandingPage } from './pages/landing/Landing.page';
 import { OnboardingPage } from './pages/onboarding/Onboarding.page';
-import { PageDetailPage } from './pages/pages/PageDetail.page';
+import { PageDetailPageConnector } from './pages/pages/PageDetail.page';
 
 const onboardingRoutes: RouteObject[] = [
   { path: '/', element: <OnboardingPage /> },
@@ -49,11 +49,11 @@ const authenticatedRoutes: RouteObject[] = [
         children: [
           {
             path: '/spaces/:spaceId/',
-            element: <SpaceHomePage />,
+            element: <SpaceHomePageConnector />,
           },
           {
             path: '/spaces/:spaceId/pages/:pageId',
-            element: <PageDetailPage />,
+            element: <PageDetailPageConnector />,
           },
           {
             path: '/spaces/:spaceId/settings',

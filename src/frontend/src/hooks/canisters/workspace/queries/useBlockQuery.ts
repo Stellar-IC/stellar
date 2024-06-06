@@ -1,20 +1,15 @@
-import { Identity } from '@dfinity/agent';
 import { useCallback } from 'react';
 
 import { db } from '@/db';
 import { useWorkspaceActor } from '@/hooks/canisters/workspace/useWorkspaceActor';
 import * as blockSerializers from '@/modules/blocks/serializers';
 import { store } from '@/modules/data-store';
-import { Block, CanisterId } from '@/types';
+import { Block } from '@/types';
 
 import { UUID } from '../../../../../../declarations/workspace/workspace.did';
 
-export const useBlockQuery = (opts: {
-  identity: Identity;
-  workspaceId: CanisterId;
-}): ((uuid: UUID) => Promise<Block | null>) => {
-  const { identity, workspaceId } = opts;
-  const { actor } = useWorkspaceActor({ identity, workspaceId });
+export const useBlockQuery = (): ((uuid: UUID) => Promise<Block | null>) => {
+  const actor = useWorkspaceActor();
 
   const query = useCallback(
     async (uuid: UUID) => {

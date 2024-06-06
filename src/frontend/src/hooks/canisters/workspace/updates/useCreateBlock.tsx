@@ -8,7 +8,7 @@ export const useCreateBlock = (options: {
   workspaceId: CanisterId;
   identity: Identity;
 }) => {
-  const { actor } = useWorkspaceActor(options);
+  const actor = useWorkspaceActor();
 
   return useUpdate(options.workspaceId, actor.addBlock);
 };

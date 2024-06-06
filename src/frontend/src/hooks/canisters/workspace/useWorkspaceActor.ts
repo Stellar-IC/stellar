@@ -1,24 +1,11 @@
-import { Identity } from '@dfinity/agent';
-import { useMemo } from 'react';
+import { useWorkspaceContext } from '@/contexts/WorkspaceContext/useWorkspaceContext';
 
-import { CanisterId } from '@/types';
+export const useWorkspaceActor = () => {
+  const context = useWorkspaceContext();
 
-import { createActor } from '../../../../../declarations/workspace';
+  if (!context.actor) {
+    throw new Error('Workspace actor has not been created');
+  }
 
-export const useWorkspaceActor = (options: {
-  identity: Identity;
-  workspaceId: CanisterId;
-}) => {
-  const { identity, workspaceId } = options;
-  const actor = useMemo(
-    () =>
-      createActor(workspaceId, {
-        agentOptions: {
-          identity,
-        },
-      }),
-    [identity, workspaceId]
-  );
-
-  return { actor };
+  return context.actor;
 };

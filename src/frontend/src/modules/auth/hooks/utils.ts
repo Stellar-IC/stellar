@@ -4,7 +4,6 @@ import { Principal } from '@dfinity/principal';
 import { logger as baseLogger } from '@/modules/logger';
 
 import { createActor } from '../../../../../declarations/user';
-import { Result_8 as ProfileQueryResult } from '../../../../../declarations/user/user.did';
 import {
   canisterId as canisterIdForUserIndex,
   createActor as createActorForUserIndex,
@@ -31,6 +30,7 @@ const createAuthenticatedUserIndexActor = (identity: DelegationIdentity) =>
 export const registerUser = async (
   identity: DelegationIdentity
 ): Promise<Principal> => {
+  console.log('registerUser');
   const logger = baseLogger.getLogger('auth');
   const userIndex = createAuthenticatedUserIndexActor(identity);
 
@@ -86,27 +86,4 @@ export const registerUser = async (
   logger.info(`Retrieved user canister principal: ${userId}`);
 
   return userId;
-};
-
-export const getUserProfile = async (args: {
-  userId: Principal;
-  identity: DelegationIdentity;
-}): Promise<ProfileQueryResult> => {
-  const logger = baseLogger.getLogger('auth');
-
-  const { userId, identity } = args;
-  const userActor = createActor(userId, {
-    agentOptions: {
-      identity,
-    },
-  });
-  const result = await userActor.profile();
-
-  if ('ok' in result) {
-    logger.info('Retrieved profile for user:', result.ok.username[0]);
-  } else {
-    logger.error('Error occurred during user profile retrieval');
-  }
-
-  return result;
 };

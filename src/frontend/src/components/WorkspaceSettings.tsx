@@ -2,9 +2,7 @@ import { Group, Radio, Stack, TextInput } from '@mantine/core';
 import { useForm } from '@mantine/form';
 import { useEffect } from 'react';
 
-import { useWorkspaceContext } from '@/contexts/WorkspaceContext/useWorkspaceContext';
 import { useSettingsQuery } from '@/hooks/canisters/workspace/queries/useSettingsQuery';
-import { useAuthContext } from '@/modules/auth/contexts/AuthContext';
 
 export type WorkspaceSettingsFormValues = {
   name: string;
@@ -18,12 +16,7 @@ interface WorkspaceSettingsProps {
 }
 
 export const WorkspaceSettings = ({ onSubmit }: WorkspaceSettingsProps) => {
-  const { identity } = useAuthContext();
-  const { workspaceId } = useWorkspaceContext();
-  const queryWorkspaceSettings = useSettingsQuery({
-    identity,
-    workspaceId,
-  });
+  const queryWorkspaceSettings = useSettingsQuery();
   const form = useForm({
     initialValues: {
       description: '',

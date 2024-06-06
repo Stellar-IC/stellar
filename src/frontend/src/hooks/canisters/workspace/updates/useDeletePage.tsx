@@ -16,7 +16,7 @@ export const useDeletePage = (options: {
   (input: [DeletePageUpdateInput]) => Promise<DeletePageUpdateOutput>,
   { data: DeletePageUpdateOutput | null; isLoading: boolean }
 ] => {
-  const { actor } = useWorkspaceActor(options);
+  const actor = useWorkspaceActor();
 
   return useUpdate(options.workspaceId, actor.deletePage);
 };

@@ -1,20 +1,25 @@
-import { DelegationIdentity } from '@dfinity/identity';
 import { Principal } from '@dfinity/principal';
-import { PropsWithChildren } from 'react';
+import { PropsWithChildren, useEffect, useState } from 'react';
 
-import { useWorkspaceActor } from '@/hooks/canisters/workspace/useWorkspaceActor';
+import * as actorStore from '@/ic/actors/store';
+
+import { _SERVICE } from '../../../../declarations/workspace/workspace.did';
 
 import { WorkspaceContext } from './WorkspaceContext';
 
 export function WorkspaceContextProvider({
   children,
-  identity,
   workspaceId,
 }: PropsWithChildren<{
-  identity: DelegationIdentity;
   workspaceId: Principal;
 }>) {
-  const { actor } = useWorkspaceActor({ identity, workspaceId });
+  const [actor, setActor] = useState<_SERVICE | null>(null);
+
+  useEffect(() => {
+    const { manager } = actorStore.setWorkspace(workspaceId);
+    const actor = manager.getActor();
+    setActor(actor);
+  }, [workspaceId]);
 
   return (
     <WorkspaceContext.Provider value={{ actor, workspaceId }}>

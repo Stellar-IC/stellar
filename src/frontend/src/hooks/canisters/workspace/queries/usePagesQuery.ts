@@ -1,18 +1,13 @@
-import { Identity } from '@dfinity/agent';
 import { useCallback } from 'react';
 
 import { db } from '@/db';
 import { useWorkspaceActor } from '@/hooks/canisters/workspace/useWorkspaceActor';
 import * as blockSerializers from '@/modules/blocks/serializers';
 import { store } from '@/modules/data-store';
-import { Block, CanisterId } from '@/types';
+import { Block } from '@/types';
 
-export const usePagesQuery = (opts: {
-  identity: Identity;
-  workspaceId: CanisterId;
-}) => {
-  const { identity, workspaceId } = opts;
-  const { actor } = useWorkspaceActor({ identity, workspaceId });
+export const usePagesQuery = () => {
+  const actor = useWorkspaceActor();
 
   const query = useCallback(async () => {
     const result = await actor.pages({

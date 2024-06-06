@@ -5,9 +5,7 @@ import { useParams } from 'react-router-dom';
 import { parse } from 'uuid';
 
 import { useLayoutManager } from '@/LayoutManager';
-import { useWorkspaceContext } from '@/contexts/WorkspaceContext/useWorkspaceContext';
 import { useActivityLog } from '@/hooks/canisters/workspace/queries/useActivityLog';
-import { useAuthContext } from '@/modules/auth/contexts/AuthContext';
 import { Activity, ActivityUser } from '@/types';
 
 import { ActivityLogBlockRenderer } from './Editor/ActivityLogBlockRenderer';
@@ -15,10 +13,8 @@ import classes from './PageInfoPanel.module.css';
 
 export function PageInfoPanel() {
   const { pageId } = useParams<{ pageId: string }>();
-  const { workspaceId } = useWorkspaceContext();
-  const { identity } = useAuthContext();
 
-  const getActivityLog = useActivityLog({ identity, workspaceId });
+  const getActivityLog = useActivityLog();
   const [activities, setActivities] = useState<Activity[]>([]);
 
   const { layout } = useLayoutManager();

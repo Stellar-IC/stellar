@@ -1,4 +1,3 @@
-import { Identity } from '@dfinity/agent';
 import { notifications } from '@mantine/notifications';
 import { Tree } from '@stellar-ic/lseq-ts';
 import { useCallback } from 'react';
@@ -18,7 +17,6 @@ import {
 import { useBlockQuery } from '../queries/useBlockQuery';
 
 export const useCreatePage = (options: {
-  identity: Identity;
   workspaceId: CanisterId;
 }): [
   (
@@ -26,13 +24,12 @@ export const useCreatePage = (options: {
   ) => Promise<CreatePageUpdateOutput>,
   { data: CreatePageUpdateOutput | null; isLoading: boolean }
 ] => {
-  const { identity, workspaceId } = options;
-  const { actor } = useWorkspaceActor({ identity, workspaceId });
+  const actor = useWorkspaceActor();
   const [_createPage, ...other] = useUpdate(
     options.workspaceId,
     actor.createPage
   );
-  const queryBlock = useBlockQuery({ identity, workspaceId });
+  const queryBlock = useBlockQuery();
 
   const createPage = useCallback(
     async (input: Omit<CreatePageUpdateInput, 'uuid'>) => {

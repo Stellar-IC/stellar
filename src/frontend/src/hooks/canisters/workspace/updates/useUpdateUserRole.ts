@@ -16,7 +16,7 @@ export const useUpdateUserRole = (options: {
   (input: [UpdateUserRoleUpdateInput]) => Promise<UpdateUserRoleUpdateOutput>,
   { data: UpdateUserRoleUpdateOutput | null; isLoading: boolean }
 ] => {
-  const { actor } = useWorkspaceActor(options);
+  const actor = useWorkspaceActor();
 
   return useUpdate(options.workspaceId, actor.updateUserRole);
 };

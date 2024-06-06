@@ -16,7 +16,7 @@ export const useUpdateBlock = (options: {
   (input: [UpdateBlockUpdateInput]) => Promise<UpdateBlockUpdateOutput>,
   { data: UpdateBlockUpdateOutput | null; isLoading: boolean }
 ] => {
-  const { actor } = useWorkspaceActor(options);
+  const actor = useWorkspaceActor();
 
   return useUpdate(options.workspaceId, actor.updateBlock);
 };

@@ -1,12 +1,9 @@
 import { db } from '@/db';
-
-import { getAuthClient } from './client';
+import { agentManager } from '@/ic/agentManager';
 
 export async function login(options: { identityProvider: string }) {
-  const authClient = await getAuthClient();
-
   return new Promise<void>((resolve, reject) => {
-    authClient.login({
+    agentManager.login({
       // 7 days in nanoseconds
       maxTimeToLive: BigInt(7 * 24 * 60 * 60 * 1000 * 1000 * 1000),
       identityProvider: options.identityProvider,
@@ -21,9 +18,7 @@ export async function login(options: { identityProvider: string }) {
 }
 
 export async function logout() {
-  const authClient = await getAuthClient();
-
-  await authClient.logout({
+  await agentManager.logout({
     returnTo: window.location.host,
   });
 

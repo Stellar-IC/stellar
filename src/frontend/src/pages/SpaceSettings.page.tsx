@@ -1,4 +1,3 @@
-import { DelegationIdentity } from '@dfinity/identity';
 import { Principal } from '@dfinity/principal';
 import {
   Box,
@@ -146,19 +145,14 @@ export function SpaceSettingsPage() {
 }
 
 export function SpaceSettingsPageConnector() {
-  const { identity } = useAuthContext();
   const { spaceId } = useParams<{ spaceId: string }>();
 
   if (!spaceId) throw new Error('Missing workspaceId');
 
-  if (!(identity instanceof DelegationIdentity)) {
-    throw new Error('Anonymous identity is not allowed here');
-  }
-
   const workspaceId = Principal.fromText(spaceId);
 
   return (
-    <WorkspaceContextProvider identity={identity} workspaceId={workspaceId}>
+    <WorkspaceContextProvider workspaceId={workspaceId}>
       <SpaceSettingsPage />
     </WorkspaceContextProvider>
   );

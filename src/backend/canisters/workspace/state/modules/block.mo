@@ -216,7 +216,8 @@ module {
         var pages = Map.toArrayMap<Text, ShareableBlock, ShareableBlock>(
             state.data.blocks,
             func((key : Text, value : ShareableBlock)) {
-                ?value;
+                if (value.blockType == #page) { return ?value };
+                return null;
             },
         );
 
