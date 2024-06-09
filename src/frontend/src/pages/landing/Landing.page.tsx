@@ -135,8 +135,8 @@ export function LandingPage() {
             >
               <p className={classes.Paragraph}>
                 Pages are a great way to organize your thoughts, plans, goals,
-                and much more. You can create private pages or share them with
-                the world.
+                and much more. You can create private pages or collaborate with
+                others in real-time.
               </p>
               <div>
                 <Button onClick={login}>Get started</Button>
@@ -146,43 +146,49 @@ export function LandingPage() {
         </section>
 
         <section className={classes.Section}>
-          <Container
-            maw={sectionContainerWidth}
-            style={{ textAlign: 'center' }}
-          >
+          <Container maw="50rem" style={{ textAlign: 'center' }}>
             <h4 className={classes.SubHeading}>The Mission</h4>
             <p
               className={classes.Paragraph}
               style={{ paddingTop: 0, paddingBottom: 0 }}
             >
-              There is a new frontier for decentralization and world-wide
-              collaboration made possible by the Internet Computer Protocol. The
-              rise of DAOs (Decentralized Autonomous Organizations), and other
-              types of community-driven initiatives, will change the world in
-              ways that are unimaginable, bringing increased levels of ownership
-              and freedom to everyone.
+              Currently, most organizations are built around centralized
+              structures, where power and decision-making are concentrated in
+              the hands of a few. Through the use of blockchain technology, we
+              can create new types of organizations that are decentralized and
+              community-driven. These organizations are known as DAOs, or
+              Decentralized Autonomous Organizations. Through a DAO, many people
+              can work collaboratively to achieve a common goal without the need
+              for a centralized authority.
             </p>
             <p
               className={classes.Paragraph}
               style={{ paddingTop: 0, paddingBottom: 0 }}
             >
               In order for community members to be effective participants and/or
-              contributors, they should have access to the same information and
-              resources as the core development teams. Think product and
-              technical specifications, design files, project planning, and
-              other resources that are typically siloed within the core team.
+              contributors, they need to have access to the same information and
+              resources as the core development teams. Think product/technical
+              specifications, design files, project planning, metrics
+              dashboards, and other resources that are typically siloed within
+              the core team. All of these resources should be on-chain and
+              accessible to all community members. This is where Stellar comes
+              in.
             </p>
             <p
               className={classes.Paragraph}
               style={{ paddingTop: 0, paddingBottom: 0 }}
             >
-              Stellar’s mission is to build products that enable increased
-              levels of collaboration and community-building across
-              decentralized initiatives. We believe that the future of work is
-              decentralized, and we’re building the tools to make that future a
-              reality.
+              Stellar’s mission is to build products that enable transparency,
+              collaboration and community-building across decentralized
+              initiatives. We want to make it easier for contributors to get
+              involved in the projects that resonate with them and be able to
+              contribute in a meaningful way. We believe that by providing the
+              right tools, we can help to accelerate the growth of the
+              decentralized web and the adoption of DAOs, bringing increased
+              levels of ownership and freedom to people everywhere!
             </p>
-            <div>
+
+            <div style={{ display: 'flex', justifyContent: 'center' }}>
               <Button onClick={login}>Join Stellar</Button>
             </div>
           </Container>
