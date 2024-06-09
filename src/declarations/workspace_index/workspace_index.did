@@ -32,16 +32,19 @@ type StatusRequest =
    heap_memory_size: bool;
    memory_size: bool;
  };
+type Result_1 = 
+ variant {
+   err: variant {
+          AnonymousOwner;
+          InsufficientCycles;
+          Unauthorized;
+        };
+   ok: principal;
+ };
 type Result = 
  variant {
-   err:
-    variant {
-      anonymousCaller;
-      anonymousUser;
-      insufficientCycles;
-      unauthorizedCaller;
-    };
-   ok: principal;
+   err: variant {unauthorized;};
+   ok;
  };
 type PubSubEvent = variant {
                      workspaceNameUpdated:
@@ -170,7 +173,7 @@ service : {
   /// ***********************************************************************
   ///      * Updates
   ///      ************************************************************************
-  createWorkspace: () -> (Result);
+  createWorkspace: () -> (Result_1);
   /// * Returns canister information based on passed parameters.
   ///     * Called from browser.
   getCanistergeekInformation: (GetInformationRequest) ->
@@ -180,6 +183,7 @@ service : {
   /// * Updates canister information based on passed parameters at current time.
   ///     * Called from browser or any canister "update" method.
   updateCanistergeekInformation: (UpdateInformationRequest) -> ();
+  upgradeWorkspaces: (blob) -> (Result);
   /// ***********************************************************************
   ///      * Cycles Management
   ///      ************************************************************************

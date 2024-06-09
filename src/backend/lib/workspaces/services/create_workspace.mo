@@ -21,7 +21,7 @@ module CreateWorkspace {
         )];
         userIndexCanisterId : Principal;
     };
-    type Output = Result.Result<Workspace.Workspace, { #anonymousUser; #insufficientCycles }>;
+    type Output = Result.Result<Principal, { #AnonymousOwner; #InsufficientCycles }>;
 
     public func execute({ controllers; owner; initialUsers; userIndexCanisterId } : Input) : async Output {
         let WORKSPACE_CAPACITY = Constants.WORKSPACE__CAPACITY.scalar;
@@ -30,11 +30,11 @@ module CreateWorkspace {
         let WORKSPACE_MEMORY_ALLOCATION = Constants.WORKSPACE__MEMORY_ALLOCATION.scalar;
 
         if (Cycles.balance() < WORKSPACE_INITIAL_CYCLES_BALANCE) {
-            return #err(#insufficientCycles);
+            return #err(#InsufficientCycles);
         };
 
         if (Principal.isAnonymous(owner)) {
-            return #err(#anonymousUser);
+            return #err(#AnonymousOwner);
         };
 
         let workspaceInitArgs = {
@@ -67,6 +67,6 @@ module CreateWorkspace {
             let result = await workspace.addUsers(initialUsers);
         };
 
-        #ok(workspace);
+        #ok(Principal.fromActor(workspace));
     };
 };

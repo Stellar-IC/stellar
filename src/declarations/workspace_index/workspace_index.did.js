@@ -1,11 +1,10 @@
 export const idlFactory = ({ IDL }) => {
-  const Result = IDL.Variant({
+  const Result_1 = IDL.Variant({
     'ok' : IDL.Principal,
     'err' : IDL.Variant({
-      'anonymousUser' : IDL.Null,
-      'anonymousCaller' : IDL.Null,
-      'insufficientCycles' : IDL.Null,
-      'unauthorizedCaller' : IDL.Null,
+      'InsufficientCycles' : IDL.Null,
+      'AnonymousOwner' : IDL.Null,
+      'Unauthorized' : IDL.Null,
     }),
   });
   const StatusRequest = IDL.Record({
@@ -127,6 +126,10 @@ export const idlFactory = ({ IDL }) => {
   const UpdateInformationRequest = IDL.Record({
     'metrics' : IDL.Opt(CollectMetricsRequestType),
   });
+  const Result = IDL.Variant({
+    'ok' : IDL.Null,
+    'err' : IDL.Variant({ 'unauthorized' : IDL.Null }),
+  });
   const WorkspaceDetails = IDL.Record({
     'name' : IDL.Text,
     'canisterId' : IDL.Principal,
@@ -144,7 +147,7 @@ export const idlFactory = ({ IDL }) => {
     'err' : IDL.Variant({ 'workspaceNotFound' : IDL.Null }),
   });
   return IDL.Service({
-    'createWorkspace' : IDL.Func([], [Result], []),
+    'createWorkspace' : IDL.Func([], [Result_1], []),
     'getCanistergeekInformation' : IDL.Func(
         [GetInformationRequest],
         [GetInformationResponse],
@@ -161,6 +164,7 @@ export const idlFactory = ({ IDL }) => {
         [],
         [],
       ),
+    'upgradeWorkspaces' : IDL.Func([IDL.Vec(IDL.Nat8)], [Result], []),
     'walletReceive' : IDL.Func(
         [],
         [IDL.Record({ 'accepted' : IDL.Nat64 })],

@@ -4,7 +4,6 @@ import { Principal } from '@dfinity/principal';
 import { useCallback, useEffect, useState } from 'react';
 
 import { INTERNET_IDENTITY_HOST } from '@/config';
-import * as actorStore from '@/ic/actors/store';
 import { agentManager } from '@/ic/agentManager';
 import { logger as baseLogger } from '@/modules/logger';
 
@@ -48,9 +47,8 @@ export const useAuthState = () => {
 
   const getUserProfile = useCallback(
     async (identity: DelegationIdentity): Promise<AuthenticatedUserDetails> => {
-      const userId = await registerUser(identity);
-      const { manager: userActor } = actorStore.setUser(userId);
-      const profileResult = await userActor.callMethod('profile');
+      const { userId, userActor } = await registerUser(identity);
+      const profileResult = await userActor.profile();
 
       if ('ok' in profileResult) {
         return {

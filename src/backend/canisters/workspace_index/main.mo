@@ -17,6 +17,7 @@ import Time "mo:base/Time";
 import ExperimentalCycles "mo:base/ExperimentalCycles";
 import Buffer "mo:base/Buffer";
 import Error "mo:base/Error";
+import Text "mo:base/Text";
 import UUID "mo:uuid/UUID";
 import Canistergeek "mo:canistergeek/canistergeek";
 import Map "mo:map/Map";
@@ -33,7 +34,7 @@ import WorkspaceTypes "../workspace/types/v2";
 import Constants "../../constants";
 import Paginator "../../lib/pagination/Paginator";
 import PubSub "../../lib/PubSub";
-import Auth "../../utils/auth";
+import AuthUtils "../../utils/auth";
 
 actor WorkspaceIndex {
     type WorkspaceId = Principal;
@@ -107,7 +108,15 @@ actor WorkspaceIndex {
     /*
      * Add a workspace to the index.
      */
-    public shared ({ caller }) func createWorkspace() : async Result.Result<Principal, { #anonymousCaller; #anonymousUser; #unauthorizedCaller; #insufficientCycles }> {
+    public shared ({ caller }) func createWorkspace() : async Result.Result<Principal, { #AnonymousOwner; #Unauthorized; #InsufficientCycles }> {
+        // Assert that the caller is a registered user
+        switch (await UserIndex.userId(caller)) {
+            case (#ok(_)) {};
+            case (#err(_)) {
+                return #err(#Unauthorized);
+            };
+        };
+
         let result = await CreateWorkspace.execute({
             owner = caller;
             controllers = [caller, Principal.fromActor(WorkspaceIndex)];
@@ -117,25 +126,31 @@ actor WorkspaceIndex {
 
         switch (result) {
             case (#err(error)) { #err(error) };
-            case (#ok(workspace)) {
-                let workspaceId = Principal.fromActor(workspace);
+            case (#ok(workspaceId)) {
+                let workspace = actor (Principal.toText(workspaceId)) : Workspace.Workspace;
                 let workspaceData = await workspace.toObject();
-
                 saveWorkspace(workspaceId, { name = workspaceData.name });
-
                 await workspace.subscribe("workspaceNameUpdated", handleWorkspaceEvents);
-
                 #ok(workspaceId);
             };
         };
     };
 
     public shared ({ caller }) func handleWorkspaceEvents(eventName : Text, payload : WorkspaceTypes.PubSubEvent) : async () {
-        Debug.print("handleWorkspaceEvents - " # debug_show (caller));
+        if (Map.get(_workspaces, Map.phash, caller) == null) {
+            Debug.trap("Caller is not a registered workspace");
+        };
+
+        // TODO: Throttle the rate at which workspaces can update their name
 
         switch (payload) {
             case (#workspaceNameUpdated(payload)) {
                 let { name; workspaceId } = payload;
+
+                if (caller != workspaceId) {
+                    Debug.trap("Unauthorized");
+                };
+
                 let workspace = actor (Principal.toText(workspaceId)) : Workspace.Workspace;
                 saveWorkspace(workspaceId, { name });
             };
@@ -143,7 +158,7 @@ actor WorkspaceIndex {
     };
 
     public shared ({ caller }) func upgradeWorkspaces(wasm_module : Blob) : async Result.Result<(), { #unauthorized }> {
-        if ((Auth.isDev(caller)) == false) {
+        if ((AuthUtils.isDev(caller)) == false) {
             return #err(#unauthorized);
         };
 

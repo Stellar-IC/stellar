@@ -89,12 +89,13 @@ export interface NumericEntity {
 export type PubSubEvent = {
     'workspaceNameUpdated' : { 'name' : string, 'workspaceId' : Principal }
   };
-export type Result = { 'ok' : Principal } |
+export type Result = { 'ok' : null } |
+  { 'err' : { 'unauthorized' : null } };
+export type Result_1 = { 'ok' : Principal } |
   {
-    'err' : { 'anonymousUser' : null } |
-      { 'anonymousCaller' : null } |
-      { 'insufficientCycles' : null } |
-      { 'unauthorizedCaller' : null }
+    'err' : { 'InsufficientCycles' : null } |
+      { 'AnonymousOwner' : null } |
+      { 'Unauthorized' : null }
   };
 export interface StatusRequest {
   'memory_size' : boolean,
@@ -120,7 +121,7 @@ export interface WorkspaceDetailsItem {
     { 'notFound' : null },
 }
 export interface _SERVICE {
-  'createWorkspace' : ActorMethod<[], Result>,
+  'createWorkspace' : ActorMethod<[], Result_1>,
   'getCanistergeekInformation' : ActorMethod<
     [GetInformationRequest],
     GetInformationResponse
@@ -131,6 +132,7 @@ export interface _SERVICE {
     [UpdateInformationRequest],
     undefined
   >,
+  'upgradeWorkspaces' : ActorMethod<[Uint8Array | number[]], Result>,
   'walletReceive' : ActorMethod<[], { 'accepted' : bigint }>,
   'workspaceDetailsById' : ActorMethod<
     [Array<Principal>],

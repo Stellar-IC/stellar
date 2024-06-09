@@ -27,7 +27,10 @@ module {
             name : Text;
         };
     };
-    public type PubSubEventHandler = shared (Text, PubSubEvent) -> async ();
+    public type PubSubEventHandler = shared (
+        eventName : Text,
+        event : PubSubEvent,
+    ) -> async ();
 
     public type WorkspaceInitData = {
         uuid : UUID.UUID;

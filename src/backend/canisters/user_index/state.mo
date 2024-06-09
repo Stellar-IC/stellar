@@ -35,7 +35,7 @@ module {
                 userId : Principal;
                 owner : Principal;
             }
-        ) : async () {
+        ) : () {
             var owner = args.owner;
             var user = args.user;
             var userId = args.userId;
@@ -65,12 +65,13 @@ module {
             return actor (Principal.toText(user_id)) : User.User;
         };
 
-        public func checkUsername(username : Text) : Result.Result<(), { #usernameTaken }> {
+        type CheckUserNameResult = Result.Result<(), { #UsernameTaken }>;
+
+        public func checkUsername(username : Text) : CheckUserNameResult {
             switch (username_to_user_id.get(username)) {
                 case (null) { #ok };
                 case (?userId) {
-                    Debug.print("Username already taken");
-                    return #err(#usernameTaken);
+                    return #err(#UsernameTaken);
                 };
             };
         };

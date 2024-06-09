@@ -4,30 +4,34 @@ import User "../user/main";
 
 module {
     public type RegisterUserError = {
-        #anonymousUser;
-        #insufficientCycles;
-        #userNotFound;
-        #canisterNotFoundForRegisteredUser;
+        #AnonymousOwner;
+        #InsufficientCycles;
+        #WorkspaceIndexNotFound;
+        #WorkspaceCreationFailed : {
+            #AnonymousOwner;
+            #InsufficientCycles;
+        };
+        #UserWorkspaceAssignmentFailed : {
+            #AnonymousOwner;
+            #InsufficientCycles;
+        };
     };
     public type RegisterUserResult = Result.Result<Principal, RegisterUserError>;
 
     public type CheckUsernameError = {
-        #usernameTaken;
+        #UsernameTaken;
     };
     public type CheckUsernameResult = Result.Result<(), CheckUsernameError>;
 
-    public module Services {
-        public module CreateUserService {
-            public type CreateUserServiceOutput = {
-                #created : (Principal, User.User);
-                #existing : (Principal, User.User);
-            };
-            public type CreateUserServiceError = {
-                #anonymousUser;
-                #insufficientCycles;
-                #canisterNotFoundForRegisteredUser;
-            };
-            public type CreateUserServiceResult = Result.Result<CreateUserServiceOutput, CreateUserServiceError>;
+    module Services {
+        public type CreateUserServiceOutput = {
+            #Created : Principal;
+            #Existing : Principal;
         };
+        public type CreateUserServiceError = {
+            #AnonymousOwner;
+            #InsufficientCycles;
+        };
+        public type CreateUserServiceResult = Result.Result<CreateUserServiceOutput, CreateUserServiceError>;
     };
 };

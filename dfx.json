@@ -1,12 +1,5 @@
 {
   "canisters": {
-    "frontend": {
-      "frontend": {
-        "entrypoint": "src/frontend/src/index.html"
-      },
-      "source": ["src/frontend/dist"],
-      "type": "assets"
-    },
     "cycles_dispenser": {
       "main": "src/backend/canisters/cycles_dispenser/main.mo",
       "type": "motoko"
@@ -15,16 +8,12 @@
       "main": "src/backend/canisters/file_upload/main.mo",
       "type": "motoko"
     },
-    "workspace_index": {
-      "dependencies": ["user_index", "cycles_dispenser", "file_upload"],
-      "main": "src/backend/canisters/workspace_index/main.mo",
-      "type": "motoko"
-    },
-    "user_index": {
-      "dependencies": ["cycles_dispenser", "file_upload"],
-      "main": "src/backend/canisters/user_index/main.mo",
-      "type": "motoko",
-      "gzip": true
+    "frontend": {
+      "frontend": {
+        "entrypoint": "src/frontend/src/index.html"
+      },
+      "source": ["src/frontend/dist"],
+      "type": "assets"
     },
     "internet_identity": {
       "__0": "The development build of Internet Identity. For more information, see https://github.com/dfinity/internet-identity#build-features-and-flavors",
@@ -38,6 +27,17 @@
           "ic": "rdmx6-jaaaa-aaaaa-aaadq-cai"
         }
       }
+    },
+    "user_index": {
+      "dependencies": ["cycles_dispenser", "file_upload"],
+      "main": "src/backend/canisters/user_index/main.mo",
+      "type": "motoko",
+      "gzip": true
+    },
+    "workspace_index": {
+      "dependencies": ["user_index", "cycles_dispenser", "file_upload"],
+      "main": "src/backend/canisters/workspace_index/main.mo",
+      "type": "motoko"
     }
   },
   "defaults": {

@@ -52,20 +52,33 @@ actor UserIndex {
 
     public shared ({ caller }) func registerUser() : async Types.RegisterUserResult {
         if (Principal.isAnonymous(caller)) {
-            return #err(#anonymousUser);
+            return #err(#AnonymousOwner);
         };
 
-        let result = await CreateUser.execute(state, caller, Principal.fromActor(UserIndex));
-
-        switch (result) {
-            case (#err(err)) { return #err(err) };
-            case (#ok(#existing(userId, user))) { return #ok(userId) };
-            case (#ok(#created(userId, user))) {
-                initializeTopUpsForCanister(userId);
-                await user.subscribe(#profileUpdated, onUserEvent);
+        // Check if the user already exists
+        switch (state.data.getUserIdByOwner(caller)) {
+            case null {};
+            case (?userId) {
+                let user = state.data.getUserByUserId(userId);
                 return #ok(userId);
             };
         };
+
+        // Create User canister
+        let owner = caller;
+        let controllers = ?[caller, Principal.fromActor(UserIndex)];
+        let result = await CreateUser.execute({ owner; controllers });
+        let userId = switch (result) {
+            case (#err(err)) { return #err(err) };
+            case (#ok(userId)) { userId };
+        };
+        let user = actor (Principal.toText(userId)) : User.User;
+
+        state.data.addUser({ user; userId; owner = caller });
+        initializeTopUpsForCanister(userId);
+        await user.subscribe(#profileUpdated, onUserEvent);
+
+        return #ok(userId);
     };
 
     public shared ({ caller }) func onUserEvent(event : UserTypes.UserEvent) : async () {
