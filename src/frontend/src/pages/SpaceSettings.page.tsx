@@ -15,11 +15,13 @@ import _ from 'lodash';
 import { useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
 
+import { ActionBar } from '@/components/ActionBar';
 import { WorkspaceMembers } from '@/components/WorkspaceMembers';
 import {
   WorkspaceSettings,
   WorkspaceSettingsFormValues,
 } from '@/components/WorkspaceSettings';
+import { WorkspaceContext } from '@/contexts/WorkspaceContext/WorkspaceContext';
 import { WorkspaceContextProvider } from '@/contexts/WorkspaceContext/WorkspaceContextProvider';
 import { useWorkspaceContext } from '@/contexts/WorkspaceContext/useWorkspaceContext';
 import { useUpdateSettings } from '@/hooks/canisters/workspace/updates/useUpdateSettings';
@@ -61,6 +63,8 @@ export function SpaceSettingsPage() {
               message: JSON.stringify(res.err),
               color: 'red',
             });
+
+            return;
           }
 
           setSavingState('success');
@@ -88,59 +92,54 @@ export function SpaceSettingsPage() {
   }, [_updateSettings]);
 
   return (
-    <Container
-      style={{
-        position: 'absolute',
-        top: rem('48px'), // 48px is the height of the action bar
-        left: 0,
-        right: 0,
-        bottom: 0,
-      }}
-    >
-      <Flex gap="lg" h="100%">
-        <Box w={rem('160px')} h="100%" pt="md" style={{ flexShrink: 0 }}>
-          <Menu>
-            <Menu.Label>Workspace</Menu.Label>
-            <Stack gap="xs">
-              <NavLink
-                active={activeTab === 'WORKSPACE_SETTINGS'}
-                label="Settings"
-                variant="light"
-                onClick={() => {
-                  setActiveTab('WORKSPACE_SETTINGS');
-                }}
-              />
-              <NavLink
-                active={activeTab === 'WORKSPACE_MEMBERS'}
-                label="People"
-                variant="light"
-                onClick={() => {
-                  setActiveTab('WORKSPACE_MEMBERS');
-                }}
-              />
-            </Stack>
-          </Menu>
-        </Box>
+    <Box>
+      <ActionBar />
+      <Container>
+        <Flex gap="lg" h="100%">
+          <Box w={rem('160px')} h="100%" pt="md" style={{ flexShrink: 0 }}>
+            <Menu>
+              <Menu.Label>Workspace</Menu.Label>
+              <Stack gap="xs">
+                <NavLink
+                  active={activeTab === 'WORKSPACE_SETTINGS'}
+                  label="Settings"
+                  variant="light"
+                  onClick={() => {
+                    setActiveTab('WORKSPACE_SETTINGS');
+                  }}
+                />
+                <NavLink
+                  active={activeTab === 'WORKSPACE_MEMBERS'}
+                  label="People"
+                  variant="light"
+                  onClick={() => {
+                    setActiveTab('WORKSPACE_MEMBERS');
+                  }}
+                />
+              </Stack>
+            </Menu>
+          </Box>
 
-        <Stack style={{ flexGrow: 1 }}>
-          <Flex justify="space-between" align="center">
-            <Text size="xs">
-              {savingState === 'saving' && 'Saving...'}
-              {savingState === 'success' && 'Saved!'}
-            </Text>
-            {savingState === 'saving' && (
-              <div>
-                <Loader size="xs" />
-              </div>
+          <Stack style={{ flexGrow: 1 }}>
+            <Flex justify="space-between" align="center">
+              <Text size="xs">
+                {savingState === 'saving' && 'Saving...'}
+                {savingState === 'success' && 'Saved!'}
+              </Text>
+              {savingState === 'saving' && (
+                <div>
+                  <Loader size="xs" />
+                </div>
+              )}
+            </Flex>
+            {activeTab === 'WORKSPACE_SETTINGS' && (
+              <WorkspaceSettings onSubmit={_.debounce(updateSettings, 1000)} />
             )}
-          </Flex>
-          {activeTab === 'WORKSPACE_SETTINGS' && (
-            <WorkspaceSettings onSubmit={_.debounce(updateSettings, 1000)} />
-          )}
-          {activeTab === 'WORKSPACE_MEMBERS' && <WorkspaceMembers />}
-        </Stack>
-      </Flex>
-    </Container>
+            {activeTab === 'WORKSPACE_MEMBERS' && <WorkspaceMembers />}
+          </Stack>
+        </Flex>
+      </Container>
+    </Box>
   );
 }
 
@@ -153,7 +152,13 @@ export function SpaceSettingsPageConnector() {
 
   return (
     <WorkspaceContextProvider workspaceId={workspaceId}>
-      <SpaceSettingsPage />
+      <WorkspaceContext.Consumer>
+        {(context) => {
+          if (!context) return null;
+          if (!context.actor) return null;
+          return <SpaceSettingsPage />;
+        }}
+      </WorkspaceContext.Consumer>
     </WorkspaceContextProvider>
   );
 }

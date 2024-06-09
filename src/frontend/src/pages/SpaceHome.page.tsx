@@ -5,11 +5,17 @@ import {
   Anchor,
   Container,
   Flex,
+  Menu,
+  MenuDropdown,
+  MenuItem,
+  MenuTarget,
   Stack,
+  Text,
+  Title,
   useMantineTheme,
 } from '@mantine/core';
 import { toText } from '@stellar-ic/lseq-ts/Tree';
-import { IconPlus } from '@tabler/icons-react';
+import { IconDotsVertical, IconPlus } from '@tabler/icons-react';
 import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 
@@ -22,7 +28,15 @@ import { useAuthContext } from '@/modules/auth/contexts/AuthContext';
 import { toLocalStorage } from '@/modules/blocks/serializers';
 import { LocalStorageBlock } from '@/types';
 
-export function SpaceHomePage({ workspaceId }: { workspaceId: string }) {
+import { _SERVICE } from '../../../declarations/workspace/workspace.did';
+
+export function SpaceHomePage({
+  workspaceActor,
+  workspaceId,
+}: {
+  workspaceActor: _SERVICE;
+  workspaceId: string;
+}) {
   const { identity } = useAuthContext();
 
   const theme = useMantineTheme();
@@ -33,13 +47,21 @@ export function SpaceHomePage({ workspaceId }: { workspaceId: string }) {
   const queryPages = usePagesQuery();
 
   const [pages, setPages] = useState<LocalStorageBlock[]>([]);
+  const [workspace, setWorkspace] = useState<{ name: string } | null>(null);
 
   useEffect(() => {
     queryPages().then((result) => {
-      console.log('result', result);
       setPages(result.map(toLocalStorage));
     });
   }, [queryPages]);
+
+  useEffect(() => {
+    workspaceActor.toObject().then((result) => {
+      setWorkspace({
+        name: result.name,
+      });
+    });
+  }, [workspaceActor]);
 
   if (!(identity instanceof DelegationIdentity)) {
     throw new Error('Anonymous identity is not allowed here');
@@ -50,6 +72,32 @@ export function SpaceHomePage({ workspaceId }: { workspaceId: string }) {
       <ActionBar />
       <Container>
         <div style={{ padding: theme.spacing.sm }}>
+          <div style={{ borderBottom: '1px solid #aaa' }}>
+            <Text size="xs" fw={500} c="dimmed">
+              Space
+            </Text>
+            <Flex align="center" justify="space-between">
+              <Title>{workspace?.name || 'Untitled'}</Title>
+              <Menu position="bottom-end">
+                <MenuTarget>
+                  <ActionIcon variant="subtle">
+                    <IconDotsVertical />
+                  </ActionIcon>
+                </MenuTarget>
+                <MenuDropdown>
+                  <MenuItem>
+                    <Anchor
+                      component={Link}
+                      to={`/spaces/${workspaceId}/settings`}
+                      underline="never"
+                    >
+                      Settings
+                    </Anchor>
+                  </MenuItem>
+                </MenuDropdown>
+              </Menu>
+            </Flex>
+          </div>
           <Flex align="center" justify="space-between">
             <h2>Pages</h2>
             <ActionIcon
@@ -88,7 +136,12 @@ export function SpaceHomePageConnector() {
         {(context) => {
           if (!context) return null;
           if (!context.actor) return null;
-          return <SpaceHomePage workspaceId={workspaceId} />;
+          return (
+            <SpaceHomePage
+              workspaceId={workspaceId}
+              workspaceActor={context.actor}
+            />
+          );
         }}
       </WorkspaceContext.Consumer>
     </WorkspaceContextProvider>
