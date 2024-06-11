@@ -206,7 +206,7 @@ export const idlFactory = ({ IDL }) => {
         [GetInformationResponse],
         ['query'],
       ),
-    'personalWorkspace' : IDL.Func([], [Result_9], []),
+    'personalWorkspace' : IDL.Func([], [Result_9], ['query']),
     'profile' : IDL.Func([], [Result_8], ['query']),
     'publicProfile' : IDL.Func([], [Result_7], ['query']),
     'removeWorkspace' : IDL.Func(
