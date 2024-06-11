@@ -6,9 +6,9 @@ import Time "mo:base/Time";
 import Principal "mo:base/Principal";
 import UUID "mo:uuid/UUID";
 
-import ActivitiesTypes "../../../lib/activities/Types";
-import BlocksTypes "../../../lib/blocks/Types";
-import EventsTypes "../../../lib/events/Types";
+import ActivitiesTypes "../../../lib/activities/types";
+import BlocksTypes "../../../lib/blocks/types";
+import EventsTypes "../../../lib/events/types";
 import CoreTypes "../../../types";
 
 module {

@@ -17,11 +17,11 @@ import Map "mo:map/Map";
 
 import UUID "mo:uuid/UUID";
 
-import ActivitiesTypes "../../../../lib/activities/Types";
-import ActivityModule "../../../../lib/activities/Activity";
-import BlockModule "../../../../lib/blocks/Block";
-import BlocksTypes "../../../../lib/blocks/Types";
-import EventsTypes "../../../../lib/events/Types";
+import ActivitiesTypes "../../../../lib/activities/types";
+import ActivityModule "../../../../lib/activities/activity";
+import BlockModule "../../../../lib/blocks/block";
+import BlocksTypes "../../../../lib/blocks/types";
+import EventsTypes "../../../../lib/events/types";
 
 import QuerySet "../../../../utils/data/database/query_set";
 import Node "../../../../utils/data/lseq/Node";

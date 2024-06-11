@@ -1,5 +1,5 @@
-import EventStream "../EventStream";
-import Logger "../../Logger";
+import EventStream "../event_stream";
+import Logger "../../logger";
 
 module Builders {
     class DefaultEventStreamAdapter<EventT>() {

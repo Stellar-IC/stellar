@@ -23,7 +23,7 @@ import Canistergeek "mo:canistergeek/canistergeek";
 import Map "mo:map/Map";
 import StableBuffer "mo:stablebuffer/StableBuffer";
 
-import CanisterTopUp "../../lib/shared/CanisterTopUp";
+import CanisterTopUp "../../lib/canister_top_up";
 import CreateWorkspace "../../lib/workspaces/services/create_workspace";
 import CoreTypes "../../types";
 import CyclesUtils "../../utils/cycles";
@@ -32,8 +32,8 @@ import UUIDUtils "../../utils/uuid";
 import Workspace "../workspace/main";
 import WorkspaceTypes "../workspace/types/v2";
 import Constants "../../constants";
-import Paginator "../../lib/pagination/Paginator";
-import PubSub "../../lib/PubSub";
+import Paginator "../../lib/pagination/paginator";
+import PubSub "../../lib/pub_sub";
 import AuthUtils "../../utils/auth";
 
 actor WorkspaceIndex {

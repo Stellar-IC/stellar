@@ -11,7 +11,7 @@ import UUID "mo:uuid/UUID";
 import DatabaseTypes "../../utils/data/database/types";
 import Tree "../../utils/data/lseq/Tree";
 
-import Types "./Types";
+import Types "./types";
 
 module BlockModule = {
     type Block = Types.Block;

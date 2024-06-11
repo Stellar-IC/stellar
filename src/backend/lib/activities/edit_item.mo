@@ -1,5 +1,5 @@
-import Block "../../lib/blocks/Block";
-import Types "./Types";
+import Block "../../lib/blocks/block";
+import Types "./types";
 
 module EditItem {
     public func fromShareable(input : Types.ShareableEditItem) : Types.EditItem {

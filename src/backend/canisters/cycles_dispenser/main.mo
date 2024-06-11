@@ -12,7 +12,7 @@ import Iter "mo:base/Iter";
 import Result "mo:base/Result";
 import Canistergeek "mo:canistergeek/canistergeek";
 
-import CanisterTopUp "../../lib/shared/CanisterTopUp";
+import CanisterTopUp "../../lib/canister_top_up";
 import Constants "../../constants";
 import AuthUtils "../../utils/auth";
 

@@ -14,7 +14,7 @@ import HMMatchers "mo:matchers/matchers/Hashmap";
 import T "mo:matchers/Testable";
 import Suite "mo:matchers/Suite";
 
-import EventStream "../EventStream";
+import EventStream "../event_stream";
 import Types "../types";
 import Builders "./builders";
 

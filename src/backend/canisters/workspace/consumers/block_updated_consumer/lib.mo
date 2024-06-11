@@ -14,10 +14,10 @@ import Text "mo:base/Text";
 import UUID "mo:uuid/UUID";
 import Source "mo:uuid/async/SourceV4";
 
-import Activity "../../../../lib/activities/Activity";
-import ActivitiesTypes "../../../../lib/activities/Types";
-import BlockModule "../../../../lib/blocks/Block";
-import BlocksTypes "../../../../lib/blocks/Types";
+import Activity "../../../../lib/activities/activity";
+import ActivitiesTypes "../../../../lib/activities/types";
+import BlockModule "../../../../lib/blocks/block";
+import BlocksTypes "../../../../lib/blocks/types";
 import BlocksUtils "../../../../lib/blocks/utils";
 import Tree "../../../../utils/data/lseq/Tree";
 import CoreTypes "../../../../types";
@@ -27,7 +27,7 @@ import ExtendActivity "../../services/extend_activity";
 import State "../../state";
 import Types "../../types/v2";
 
-import UpdateProperty "./UpdateProperty";
+import UpdateProperty "./update_property";
 
 module BlockUpdatedConsumer {
     type Block = BlocksTypes.Block;

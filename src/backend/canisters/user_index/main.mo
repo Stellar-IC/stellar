@@ -17,7 +17,7 @@ import Canistergeek "mo:canistergeek/canistergeek";
 
 import Constants "../../constants";
 import AuthUtils "../../utils/auth";
-import CanisterTopUp "../../lib/shared/CanisterTopUp";
+import CanisterTopUp "../../lib/canister_top_up";
 import CoreTypes "../../types";
 import User "../user/main";
 import UserTypes "../user/types";

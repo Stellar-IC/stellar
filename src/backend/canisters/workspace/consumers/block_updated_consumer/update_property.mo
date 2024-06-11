@@ -2,7 +2,7 @@ import Array "mo:base/Array";
 import Debug "mo:base/Debug";
 import UUID "mo:uuid/UUID";
 
-import BlocksTypes "../../../../lib/blocks/Types";
+import BlocksTypes "../../../../lib/blocks/types";
 import Tree "../../../../utils/data/lseq/Tree";
 import LseqTypes "../../../../utils/data/lseq/types";
 

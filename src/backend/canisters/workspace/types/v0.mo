@@ -6,7 +6,7 @@ import Text "mo:base/Text";
 import Time "mo:base/Time";
 import UUID "mo:uuid/UUID";
 
-import BlocksTypes "../../../lib/blocks/Types";
+import BlocksTypes "../../../lib/blocks/types";
 import CoreTypes "../../../types";
 
 module {

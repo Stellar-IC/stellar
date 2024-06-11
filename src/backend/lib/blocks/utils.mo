@@ -1,4 +1,4 @@
-import Types "./Types";
+import Types "./types";
 import Tree "../../utils/data/lseq/Tree";
 
 module {

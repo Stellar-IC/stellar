@@ -2,7 +2,7 @@ import Bool "mo:base/Bool";
 import Time "mo:base/Time";
 import UUID "mo:uuid/UUID";
 
-import BlocksTypes "../blocks/Types";
+import BlocksTypes "../blocks/types";
 
 module {
     public type BlockEvent = BlocksTypes.BlockEvent;

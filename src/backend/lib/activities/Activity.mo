@@ -1,10 +1,10 @@
 import Array "mo:base/Array";
 import UUID "mo:uuid/UUID";
 
-import EditItem "../../lib/activities/EditItem";
+import EditItem "../../lib/activities/edit_item";
 import LseqTree "../../utils/data/lseq/Tree";
 
-import Types "./Types";
+import Types "./types";
 
 module Activity {
     public func fromShareable(input : Types.ShareableActivity) : Types.Activity {

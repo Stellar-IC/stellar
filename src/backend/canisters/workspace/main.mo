@@ -16,22 +16,22 @@ import Canistergeek "mo:canistergeek/canistergeek";
 
 import UUID "mo:uuid/UUID";
 
-import ActivitiesTypes "../../lib/activities/Types";
-import BlockModule "../../lib/blocks/Block";
-import BlocksTypes "../../lib/blocks/Types";
-import BlockEvent "../../lib/events/BlockEvent";
-import EventStream "../../lib/events/EventStream";
-import Paginator "../../lib/pagination/Paginator";
-import Logger "../../lib/Logger";
-import PubSub "../../lib/PubSub";
-import UserRegistry "../../lib/UserRegistry";
+import ActivitiesTypes "../../lib/activities/types";
+import BlockModule "../../lib/blocks/block";
+import BlocksTypes "../../lib/blocks/types";
+import BlockEvent "../../lib/events/block_event";
+import EventStream "../../lib/events/event_stream";
+import Paginator "../../lib/pagination/paginator";
+import Logger "../../lib/logger";
+import PubSub "../../lib/pub_sub";
+import UserRegistry "../../lib/user_registry";
 
 import CoreTypes "../../types";
 
 import CyclesUtils "../../utils/cycles";
 
-import BlockCreatedConsumer "./consumers/BlockCreatedConsumer";
-import BlockUpdatedConsumer "./consumers/BlockUpdatedConsumer";
+import BlockCreatedConsumer "./consumers/block_created_consumer";
+import BlockUpdatedConsumer "./consumers/block_updated_consumer";
 import CreatePage "./services/create_page";
 import State "./state";
 import Types "./types/v2";

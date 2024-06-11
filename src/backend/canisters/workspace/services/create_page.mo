@@ -6,8 +6,8 @@ import Result "mo:base/Result";
 import UUID "mo:uuid/UUID";
 import Source "mo:uuid/async/SourceV4";
 
-import BlockBuilder "../../../lib/blocks/BlockBuilder";
-import BlocksTypes "../../../lib/blocks/Types";
+import BlockBuilder "../../../lib/blocks/block_builder";
+import BlocksTypes "../../../lib/blocks/types";
 import Tree "../../../utils/data/lseq/Tree";
 
 import State "../state";

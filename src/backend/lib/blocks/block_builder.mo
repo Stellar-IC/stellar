@@ -5,7 +5,7 @@ import UUID "mo:uuid/UUID";
 
 import Tree "../../utils/data/lseq/Tree";
 
-import Types "./Types";
+import Types "./types";
 
 module BlockBuilder {
     public class BlockBuilder(

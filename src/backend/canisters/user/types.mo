@@ -3,7 +3,7 @@ import Time "mo:base/Time";
 import UUID "mo:uuid/UUID";
 
 import CoreTypes "../../types";
-import UserProfile "../../lib/users/UserProfile";
+import UserProfile "../../lib/users/user_profile";
 
 module {
     public type UserInitArgs = {

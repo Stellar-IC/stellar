@@ -1,7 +1,7 @@
 import Time "mo:base/Time";
 import UUID "mo:uuid/UUID";
 
-import BlocksTypes "../../lib/blocks/Types";
+import BlocksTypes "../../lib/blocks/types";
 
 module {
     public type ActivityId = Nat;

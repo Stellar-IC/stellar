@@ -4,7 +4,7 @@ import Principal "mo:base/Principal";
 import List "mo:base/List";
 import UUID "mo:uuid/UUID";
 
-import BlocksTypes "../../../lib/blocks/Types";
+import BlocksTypes "../../../lib/blocks/types";
 
 import State "../state";
 import Types "../types/v2";

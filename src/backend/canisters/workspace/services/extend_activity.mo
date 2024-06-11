@@ -5,9 +5,9 @@ import Principal "mo:base/Principal";
 import List "mo:base/List";
 import UUID "mo:uuid/UUID";
 
-import Activity "../../../lib/activities/Activity";
-import ActivityBuilder "../../../lib/activities/ActivityBuilder";
-import BlocksTypes "../../../lib/blocks/Types";
+import Activity "../../../lib/activities/activity";
+import ActivityBuilder "../../../lib/activities/activity_builder";
+import BlocksTypes "../../../lib/blocks/types";
 
 import State "../state";
 import Types "../types/v2";

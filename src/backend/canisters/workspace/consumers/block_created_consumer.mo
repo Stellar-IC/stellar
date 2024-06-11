@@ -7,10 +7,10 @@ import Result "mo:base/Result";
 import UUID "mo:uuid/UUID";
 import Source "mo:uuid/async/SourceV4";
 
-import Activity "../../../lib/activities/Activity";
-import ActivityBuilder "../../../lib/activities/ActivityBuilder";
-import ActivitiesTypes "../../../lib/activities/Types";
-import BlocksTypes "../../../lib/blocks/Types";
+import Activity "../../../lib/activities/activity";
+import ActivityBuilder "../../../lib/activities/activity_builder";
+import ActivitiesTypes "../../../lib/activities/types";
+import BlocksTypes "../../../lib/blocks/types";
 import BlocksUtils "../../../lib/blocks/utils";
 import Tree "../../../utils/data/lseq/Tree";
 import CoreTypes "../../../types";

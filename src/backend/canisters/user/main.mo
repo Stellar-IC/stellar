@@ -18,11 +18,11 @@ import Map "mo:map/Map";
 import StableBuffer "mo:stablebuffer/StableBuffer";
 
 import Constants "../../constants";
-import Block "../../lib/blocks/Block";
-import BlockBuilder "../../lib/blocks/BlockBuilder";
-import CanisterTopUp "../../lib/shared/CanisterTopUp";
-import UserProfile "../../lib/users/UserProfile";
-import UsersTypes "../../lib/users/Types";
+import Block "../../lib/blocks/block";
+import BlockBuilder "../../lib/blocks/block_builder";
+import CanisterTopUp "../../lib/canister_top_up";
+import UserProfile "../../lib/users/user_profile";
+import UsersTypes "../../lib/users/types";
 import CreateWorkspace "../../lib/workspaces/services/create_workspace";
 import CoreTypes "../../types";
 import AuthUtils "../../utils/auth";

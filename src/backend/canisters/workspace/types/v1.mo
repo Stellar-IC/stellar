@@ -5,9 +5,9 @@ import Text "mo:base/Text";
 import Time "mo:base/Time";
 import UUID "mo:uuid/UUID";
 
-import ActivitiesTypes "../../../lib/activities/Types";
-import BlocksTypes "../../../lib/blocks/Types";
-import EventsTypes "../../../lib/events/Types";
+import ActivitiesTypes "../../../lib/activities/types";
+import BlocksTypes "../../../lib/blocks/types";
+import EventsTypes "../../../lib/events/types";
 
 import Types_v0 "./v0";
 

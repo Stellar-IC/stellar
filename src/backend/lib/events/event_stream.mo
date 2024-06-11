@@ -6,8 +6,8 @@ import Time "mo:base/Time";
 import Iter "mo:base/Iter";
 import Array "mo:base/Array";
 
-import Logger "../Logger";
-import Types "./Types";
+import Logger "../logger";
+import Types "./types";
 
 module EventStream {
     type EventId = Types.EventId;

@@ -1,7 +1,7 @@
 import Time "mo:base/Time";
 import Text "mo:base/Text";
 
-import Types "./Types";
+import Types "./types";
 
 module UserProfile {
     type Username = Types.Username;
