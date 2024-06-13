@@ -213,19 +213,7 @@ actor WorkspaceIndex {
             try {
                 await IC0.install_code(
                     {
-                        arg = to_candid (
-                            // // These values will not be used by the canister
-                            // {
-                            //     capacity = Constants.WORKSPACE__CAPACITY.scalar;
-                            //     userIndexCanisterId = Principal.fromActor(UserIndex);
-                            //     owners = [];
-                            //     name = "";
-                            //     uuid = await Source.Source().new();
-                            //     description = "";
-                            //     createdAt = Time.now();
-                            //     updatedAt = Time.now();
-                            // },
-                        );
+                        arg = to_candid ();
                         canister_id = canisterId;
                         mode = #upgrade(?{ skip_pre_upgrade = ?false });
                         sender_canister_version = sender_canister_version;
