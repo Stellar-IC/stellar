@@ -110,20 +110,6 @@ shared ({ caller = initializer }) actor class Workspace(
     };
 
     /*************************************************************************
-     * Upgrade helper methods
-     *************************************************************************/
-
-    type GetInitArgsOutput = Types.Queries.GetInitArgs.GetInitArgsOutput;
-
-    public query ({ caller }) func getInitArgs() : async GetInitArgsOutput {
-        if (not isOwner(caller)) {
-            return #err(#unauthorized);
-        };
-
-        return #ok(initArgs);
-    };
-
-    /*************************************************************************
      * Queries
      *************************************************************************/
 

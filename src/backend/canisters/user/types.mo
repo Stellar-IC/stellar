@@ -13,7 +13,6 @@ module {
 
     public type PersonalWorkspace = actor {
         walletReceive : shared () -> async ({ accepted : Nat64 });
-        getInitArgs : shared query () -> async Result.Result<CoreTypes.Workspaces.WorkspaceInitArgs, { #unauthorized }>;
     };
 
     public type UserEventName = {

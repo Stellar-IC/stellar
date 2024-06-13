@@ -294,10 +294,6 @@ export const idlFactory = ({ IDL }) => {
     'logs' : IDL.Opt(CanisterLogResponse),
     'version' : IDL.Opt(IDL.Nat),
   });
-  const GetInitArgsOutput = IDL.Variant({
-    'ok' : WorkspaceInitArgs,
-    'err' : IDL.Variant({ 'unauthorized' : IDL.Null }),
-  });
   const Result_1 = IDL.Variant({
     'ok' : IDL.Null,
     'err' : IDL.Variant({
@@ -503,7 +499,6 @@ export const idlFactory = ({ IDL }) => {
         [GetInformationResponse],
         ['query'],
       ),
-    'getInitArgs' : IDL.Func([], [GetInitArgsOutput], ['query']),
     'join' : IDL.Func([], [Result_1], []),
     'members' : IDL.Func([], [MembersOutput], ['query']),
     'pages' : IDL.Func([PagesOptionsArg], [PagesOutput], ['query']),
@@ -516,6 +511,7 @@ export const idlFactory = ({ IDL }) => {
     'settings' : IDL.Func([], [SettingsOutput], ['query']),
     'subscribe' : IDL.Func([IDL.Text, PubSubEventHandler], [], []),
     'toObject' : IDL.Func([], [Workspace__1], ['query']),
+    'unsubscribe' : IDL.Func([IDL.Text, PubSubEventHandler], [], []),
     'updateBlock' : IDL.Func(
         [UpdateBlockUpdateInput],
         [UpdateBlockUpdateOutput],

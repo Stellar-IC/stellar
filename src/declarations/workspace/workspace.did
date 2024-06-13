@@ -52,7 +52,6 @@ type Workspace =
    ///      ************************************************************************
    getCanistergeekInformation: (GetInformationRequest) ->
     (GetInformationResponse) query;
-   getInitArgs: () -> (GetInitArgsOutput) query;
    /// ***********************************************************************
    ///      * Updates
    ///      ************************************************************************
@@ -68,6 +67,7 @@ type Workspace =
    ///      * Queries
    ///      ************************************************************************
    toObject: () -> (Workspace__1) query;
+   unsubscribe: (text, PubSubEventHandler) -> ();
    updateBlock: (UpdateBlockUpdateInput) -> (UpdateBlockUpdateOutput);
    updateCanistergeekInformation: (UpdateInformationRequest) -> ();
    updateSettings: (UpdateSettingsUpdateInput) ->
@@ -374,11 +374,6 @@ type GetLatestLogMessagesParameters =
    count: nat32;
    filter: opt GetLogMessagesFilter;
    upToTimeNanos: opt Nanos;
- };
-type GetInitArgsOutput = 
- variant {
-   err: variant {unauthorized;};
-   ok: WorkspaceInitArgs;
  };
 type GetInformationResponse = 
  record {

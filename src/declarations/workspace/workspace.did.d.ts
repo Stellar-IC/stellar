@@ -158,8 +158,6 @@ export interface GetInformationResponse {
   'logs' : [] | [CanisterLogResponse],
   'version' : [] | [bigint],
 }
-export type GetInitArgsOutput = { 'ok' : WorkspaceInitArgs } |
-  { 'err' : { 'unauthorized' : null } };
 export interface GetLatestLogMessagesParameters {
   'upToTimeNanos' : [] | [Nanos],
   'count' : number,
@@ -392,7 +390,6 @@ export interface Workspace {
     [GetInformationRequest],
     GetInformationResponse
   >,
-  'getInitArgs' : ActorMethod<[], GetInitArgsOutput>,
   'join' : ActorMethod<[], Result_1>,
   'members' : ActorMethod<[], MembersOutput>,
   'pages' : ActorMethod<[PagesOptionsArg], PagesOutput>,
@@ -404,6 +401,7 @@ export interface Workspace {
   'settings' : ActorMethod<[], SettingsOutput>,
   'subscribe' : ActorMethod<[string, [Principal, string]], undefined>,
   'toObject' : ActorMethod<[], Workspace__1>,
+  'unsubscribe' : ActorMethod<[string, [Principal, string]], undefined>,
   'updateBlock' : ActorMethod<
     [UpdateBlockUpdateInput],
     UpdateBlockUpdateOutput

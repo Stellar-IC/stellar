@@ -153,10 +153,6 @@ module {
             };
         };
 
-        public module GetInitArgs {
-            public type GetInitArgsOutput = Result.Result<CoreTypes.Workspaces.WorkspaceInitArgs, { #unauthorized }>;
-        };
-
         public module PageByUuid {
             public type PageByUuidResult = Result.Result<{ page : ExternalId; recordMap : { blocks : [(ExternalId, ShareableBlock)] } }, { #notFound }>;
         };
