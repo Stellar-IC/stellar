@@ -2,12 +2,9 @@ import B "./modules/block";
 import S "./state";
 
 module {
-    public let { State; Data } = S;
     public type State = S.State;
 
-    public func init() : S.State {
-        return State(Data());
-    };
+    public let { State; Data; init } = S;
 
     public let {
         addActivity;

@@ -4,6 +4,7 @@ import Principal "mo:base/Principal";
 import Result "mo:base/Result";
 import Time "mo:base/Time";
 import Debug "mo:base/Debug";
+import Buffer "mo:base/Buffer";
 import Source "mo:uuid/async/SourceV4";
 
 import Workspace "../../../canisters/workspace/main";
@@ -13,39 +14,51 @@ import Constants "../../../constants";
 
 module CreateWorkspace {
     type Input = {
-        owner : Principal;
         controllers : [Principal];
+        description : Text;
         initialUsers : [(
             Principal,
             Types.WorkspaceUser,
         )];
+        name : Text;
+        owners : [Principal];
         userIndexCanisterId : Principal;
     };
     type Output = Result.Result<Principal, { #AnonymousOwner; #InsufficientCycles }>;
 
-    public func execute({ controllers; owner; initialUsers; userIndexCanisterId } : Input) : async Output {
-        let WORKSPACE_CAPACITY = Constants.WORKSPACE__CAPACITY.scalar;
-        let WORKSPACE_FREEZING_THRESHOLD = Constants.WORKSPACE__FREEZING_THRESHOLD.scalar;
+    public func execute(input : Input) : async Output {
         let WORKSPACE_INITIAL_CYCLES_BALANCE = Constants.WORKSPACE__INITIAL_CYCLES_BALANCE.scalar;
-        let WORKSPACE_MEMORY_ALLOCATION = Constants.WORKSPACE__MEMORY_ALLOCATION.scalar;
 
         if (Cycles.balance() < WORKSPACE_INITIAL_CYCLES_BALANCE) {
             return #err(#InsufficientCycles);
         };
 
-        if (Principal.isAnonymous(owner)) {
-            return #err(#AnonymousOwner);
-        };
+        let WORKSPACE_CAPACITY = Constants.WORKSPACE__CAPACITY.scalar;
+        let WORKSPACE_FREEZING_THRESHOLD = Constants.WORKSPACE__FREEZING_THRESHOLD.scalar;
+        let WORKSPACE_MEMORY_ALLOCATION = Constants.WORKSPACE__MEMORY_ALLOCATION.scalar;
+
+        let owners = Array.mapFilter<Principal, Principal>(
+            input.owners,
+            func(owner) {
+                if (Principal.isAnonymous(owner)) { return null };
+                return ?owner;
+            },
+        );
+
+        let {
+            controllers;
+            description;
+            name;
+            userIndexCanisterId;
+        } = input;
 
         let workspaceInitArgs = {
             capacity = WORKSPACE_CAPACITY;
             userIndexCanisterId;
-            owner;
-        };
-        let workspaceInitData = {
+            owners;
             uuid = await Source.Source().new();
-            name = "";
-            description = "";
+            name;
+            description;
             createdAt = Time.now();
             updatedAt = Time.now();
         };
@@ -61,11 +74,7 @@ module CreateWorkspace {
                     freezing_threshold = ?WORKSPACE_FREEZING_THRESHOLD;
                 };
             }
-        )(workspaceInitArgs, workspaceInitData);
-
-        if (Array.size(initialUsers) > 0) {
-            let result = await workspace.addUsers(initialUsers);
-        };
+        )(workspaceInitArgs);
 
         #ok(Principal.fromActor(workspace));
     };

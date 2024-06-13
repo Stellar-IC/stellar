@@ -9,14 +9,14 @@ import Suite "mo:matchers/Suite";
 
 import UUID "mo:uuid/UUID";
 
-import BlocksTypes "../../../../lib/blocks/Types";
-import Block "../../../../lib/blocks/Block";
-import BlockBuilder "../../../../lib/blocks/BlockBuilder";
+import BlocksTypes "../../../../lib/blocks/types";
+import Block "../../../../lib/blocks/block";
+import BlockBuilder "../../../../lib/blocks/block_builder";
 import TestHelpers "../../../../tests/helpers";
 import Tree "../../../../utils/data/lseq/Tree";
 import UUIDUtils "../../../../utils/uuid";
 
-import State "../../model/state";
+import State "../../state";
 
 import CreatePage "../create_page";
 

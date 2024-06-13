@@ -79,26 +79,21 @@ module {
         public type WorkspaceMember = Principal;
 
         public type Workspace = {
-            uuid : UUID.UUID;
-            name : WorkspaceName;
-            description : WorkspaceDescription;
-            owner : WorkspaceOwner;
             createdAt : Time.Time;
+            description : WorkspaceDescription;
+            name : WorkspaceName;
             updatedAt : Time.Time;
         };
 
         public type WorkspaceInitArgs = {
             capacity : Nat;
-            userIndexCanisterId : CanisterId;
-            owner : WorkspaceOwner;
-        };
-
-        public type WorkspaceInitData = {
-            uuid : UUID.UUID;
-            name : WorkspaceName;
-            description : WorkspaceDescription;
             createdAt : Time.Time;
+            description : WorkspaceDescription;
+            name : WorkspaceName;
+            uuid : UUID.UUID;
             updatedAt : Time.Time;
+            userIndexCanisterId : CanisterId;
+            owners : [WorkspaceOwner];
         };
     };
 

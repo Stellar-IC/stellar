@@ -122,7 +122,5 @@ assert result.ok ~= record { username = "stewie" };
 
 
 // TODO: Test the following:
-// - upgradePersonalWorkspace
 // - updatePersonalWorkspaceCanisterSettings
-// - upgradePersonalWorkspace
 // - walletReceive

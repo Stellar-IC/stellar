@@ -3,9 +3,7 @@ type Workspace__1 =
    createdAt: Time;
    description: WorkspaceDescription;
    name: WorkspaceName;
-   owner: WorkspaceOwner;
    updatedAt: Time;
-   uuid: UUID;
  };
 type WorkspaceVisibility = 
  variant {
@@ -28,33 +26,23 @@ type WorkspaceUser =
  };
 type WorkspaceOwner = principal;
 type WorkspaceName = text;
-type WorkspaceInitData__1 = 
- record {
-   createdAt: Time;
-   description: text;
-   name: text;
-   updatedAt: Time;
-   uuid: UUID;
- };
-type WorkspaceInitData = 
- record {
-   createdAt: Time;
-   description: WorkspaceDescription;
-   name: WorkspaceName;
-   updatedAt: Time;
-   uuid: UUID;
- };
 type WorkspaceInitArgs = 
  record {
    capacity: nat;
-   owner: WorkspaceOwner;
+   createdAt: Time;
+   description: WorkspaceDescription;
+   name: WorkspaceName;
+   owners: vec WorkspaceOwner;
+   updatedAt: Time;
    userIndexCanisterId: CanisterId;
+   uuid: UUID;
  };
 type WorkspaceDescription = text;
 type Workspace = 
  service {
    activityLog: (UUID) -> (ActivityLogOutput) query;
    addBlock: (AddBlockUpdateInput) -> (AddBlockUpdateOutput);
+   addOwner: (principal) -> (Result);
    addUsers: (AddUsersUpdateInput) -> (AddUsersUpdateResult);
    block: (UUID, BlockByUuidOptions) -> (BlockByUuidResult) query;
    createPage: (CreatePageUpdateInput) -> (CreatePageUpdateOutput);
@@ -62,21 +50,16 @@ type Workspace =
    /// ***********************************************************************
    ///      * Canister Monitoring
    ///      ************************************************************************
-   /// * Returns canister information based on passed parameters.
-   ///     * Called from browser.
    getCanistergeekInformation: (GetInformationRequest) ->
     (GetInformationResponse) query;
-   /// ***********************************************************************
-   ///      * Initialization helper methods
-   ///      ************************************************************************
    getInitArgs: () -> (GetInitArgsOutput) query;
-   getInitData: () -> (GetInitDataOutput) query;
    /// ***********************************************************************
    ///      * Updates
    ///      ************************************************************************
-   join: () -> (Result);
+   join: () -> (Result_1);
    members: () -> (MembersOutput) query;
    pages: (PagesOptionsArg) -> (PagesOutput) query;
+   removeOwner: (principal) -> (Result);
    saveEvents: (SaveEventTransactionUpdateInput) ->
     (SaveEventTransactionUpdateOutput);
    settings: () -> (SettingsOutput) query;
@@ -86,13 +69,14 @@ type Workspace =
    ///      ************************************************************************
    toObject: () -> (Workspace__1) query;
    updateBlock: (UpdateBlockUpdateInput) -> (UpdateBlockUpdateOutput);
-   /// * Updates canister information based on passed parameters at current time.
-   ///      * Called from browser or any canister "update" method.
    updateCanistergeekInformation: (UpdateInformationRequest) -> ();
    updateSettings: (UpdateSettingsUpdateInput) ->
     (UpdateSettingsUpdateOutput);
    updateUserRole: (UpdateUserRoleUpdateInput) ->
     (UpdateUserRoleUpdateOutput);
+   /// ***********************************************************************
+   ///      * Cycles Management
+   ///      ************************************************************************
    walletReceive: () -> (record {accepted: nat64;});
  };
 type UpdateUserRoleUpdateOutputOk = null;
@@ -259,11 +243,20 @@ type SaveEventTransactionUpdateOutput =
  };
 type SaveEventTransactionUpdateInput = record {
                                          transaction: BlockEventTransaction;};
+type Result_1 = 
+ variant {
+   err: variant {
+          profileQueryFailure;
+          unauthorized;
+          userUpdateFailure;
+        };
+   ok;
+ };
 type Result = 
  variant {
    err: variant {
-          profileQueryFailed;
           unauthorized;
+          userUpdateFailure;
         };
    ok;
  };
@@ -381,11 +374,6 @@ type GetLatestLogMessagesParameters =
    count: nat32;
    filter: opt GetLogMessagesFilter;
    upToTimeNanos: opt Nanos;
- };
-type GetInitDataOutput = 
- variant {
-   err: variant {unauthorized;};
-   ok: WorkspaceInitData__1;
  };
 type GetInitArgsOutput = 
  variant {
@@ -619,4 +607,4 @@ type AddBlockUpdateInput =
  };
 type ActivityLogOutput = record {edges: vec Edge_2;};
 type ActivityId = nat;
-service : (WorkspaceInitArgs, WorkspaceInitData) -> Workspace
+service : (WorkspaceInitArgs) -> Workspace

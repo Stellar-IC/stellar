@@ -11,7 +11,7 @@ import { NavbarSearch } from './components/Navbars/NavbarSearch';
 import { useAuthContext } from './modules/auth/contexts/AuthContext';
 import { HomePage } from './pages/Home.page';
 import { SettingsPage } from './pages/Settings.page';
-import { SpaceHomePageConnector } from './pages/SpaceHome.page';
+import { SpaceHomePageConnector } from './pages/SpaceHome/SpaceHome.page';
 import { SpaceSettingsPageConnector } from './pages/SpaceSettings.page';
 import { LandingPage } from './pages/landing/Landing.page';
 import { OnboardingPage } from './pages/onboarding/Onboarding.page';
@@ -25,6 +25,19 @@ const onboardingRouter = createBrowserRouter(onboardingRoutes);
 
 const unauthenticatedRoutes: RouteObject[] = [
   { path: '/', element: <LandingPage /> },
+  {
+    path: '/spaces/:spaceId/',
+    children: [
+      {
+        path: '/spaces/:spaceId/',
+        element: <SpaceHomePageConnector />,
+      },
+      {
+        path: '/spaces/:spaceId/pages/:pageId',
+        element: <PageDetailPageConnector />,
+      },
+    ],
+  },
   { path: '*', element: <Navigate to="/" /> },
 ];
 const unauthenticatedRouter = createBrowserRouter(unauthenticatedRoutes);

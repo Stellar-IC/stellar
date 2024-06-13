@@ -11,12 +11,12 @@ import Suite "mo:matchers/Suite";
 
 import UUID "mo:uuid/UUID";
 
-import ActivityBuilder "../../../../lib/activities/ActivityBuilder";
-import ActivitiesTypes "../../../../lib/activities/Types";
-import BlockBuilder "../../../../lib/blocks/BlockBuilder";
-import BlocksTypes "../../../../lib/blocks/Types";
-import Tree "../../../../utils/data/lseq/Tree";
-import UUIDUtils "../../../../utils/uuid";
+import ActivityBuilder "../../../lib/activities/activity_builder";
+import ActivitiesTypes "../../../lib/activities/types";
+import BlockBuilder "../../../lib/blocks/block_builder";
+import BlocksTypes "../../../lib/blocks/types";
+import Tree "../../../utils/data/lseq/Tree";
+import UUIDUtils "../../../utils/uuid";
 
 import State "../state";
 
@@ -84,51 +84,57 @@ let mockBlock : BlocksTypes.Block = {
     var parent = null;
     properties = {
         var checked = ?false;
-        title = ?Tree.Tree(null);
+        var title = ?Tree.Tree(null);
     };
     uuid = blockUuid;
 };
 
 func testAddBlockAddsBlockToState() : Text {
-    let data = State.Data();
-    data.addBlock(mockBlock);
-    let block = data.getBlock(UUID.toText(blockUuid));
+    let state = State.init();
+    ignore State.addBlock(state, mockBlock);
+    let block = State.getBlock(state, UUID.toText(blockUuid));
 
     return UUID.toText(block.uuid);
 };
 
 func testUpdateBlockUpdatesBlockInState() : Text {
-    let data = State.Data();
-    data.addBlock(mockBlock);
-    let result = data.updateBlock({
-        var blockType = #heading1;
-        content = mockBlock.content;
-        var parent = mockBlock.parent;
-        properties = mockBlock.properties;
-        uuid = mockBlock.uuid;
-    });
-    let block = data.getBlock(UUID.toText(blockUuid));
+    let state = State.init();
+    ignore State.addBlock(state, mockBlock);
+    let result = State.updateBlock(
+        state,
+        {
+            var blockType = #heading1;
+            content = mockBlock.content;
+            var parent = mockBlock.parent;
+            properties = mockBlock.properties;
+            uuid = mockBlock.uuid;
+        },
+    );
+    let block = State.getBlock(state, UUID.toText(blockUuid));
 
     return debug_show (block.blockType);
 };
 
 func testUpdateBlockReturnsErrorIfBlockDoesNotExist() : Bool {
-    let data = State.Data();
+    let state = State.init();
     let blockUuid = switch (UUIDUtils.fromText("12345678-1234-5678-1234-567812345678")) {
         case (#err(msg)) { Debug.trap(msg) };
         case (#ok(uuid)) { uuid };
     };
 
-    let result = data.updateBlock({
-        var blockType = #paragraph;
-        content = Tree.Tree(null);
-        var parent = null;
-        properties = {
-            var checked = ?false;
-            title = ?Tree.Tree(null);
-        };
-        uuid = blockUuid;
-    });
+    let result = State.updateBlock(
+        state,
+        {
+            var blockType = #paragraph;
+            content = Tree.Tree(null);
+            var parent = null;
+            properties = {
+                var checked = ?false;
+                var title = ?Tree.Tree(null);
+            };
+            uuid = blockUuid;
+        },
+    );
 
     switch (result) {
         case (#err(msg)) { true };
@@ -137,24 +143,27 @@ func testUpdateBlockReturnsErrorIfBlockDoesNotExist() : Bool {
 };
 
 func testDeleteBlockRemovesBlockFromState() : Bool {
-    let data = State.Data();
+    let state = State.init();
     let blockUuid = switch (UUIDUtils.fromText("12345678-1234-5678-1234-567812345678")) {
         case (#err(msg)) { Debug.trap(msg) };
         case (#ok(uuid)) { uuid };
     };
 
-    data.addBlock({
-        var blockType = #paragraph;
-        content = Tree.Tree(null);
-        var parent = null;
-        properties = {
-            var checked = ?false;
-            title = ?Tree.Tree(null);
-        };
-        uuid = blockUuid;
-    });
-    data.deleteBlock(UUID.toText(blockUuid));
-    let block = data.findBlock(UUID.toText(blockUuid));
+    ignore State.addBlock(
+        state,
+        {
+            var blockType = #paragraph;
+            content = Tree.Tree(null);
+            var parent = null;
+            properties = {
+                var checked = ?false;
+                var title = ?Tree.Tree(null);
+            };
+            uuid = blockUuid;
+        },
+    );
+    State.deleteBlock(state, UUID.toText(blockUuid));
+    let block = State.findBlock(state, UUID.toText(blockUuid));
 
     switch (block) {
         case (null) { true };
@@ -217,8 +226,8 @@ let suite = Suite.suite(
                         Suite.testLazy<?BlocksTypes.Block>(
                             "Should return null if the block does not exist",
                             func() {
-                                let data = State.Data();
-                                data.findBlock(UUID.toText(blockUuid));
+                                let state = State.init();
+                                State.findBlock(state, UUID.toText(blockUuid));
                             },
                             Matchers.equals<?BlocksTypes.Block>(
                                 T.optional<BlocksTypes.Block>(
@@ -230,9 +239,9 @@ let suite = Suite.suite(
                         Suite.testLazy<?BlocksTypes.Block>(
                             "Should return the block if it exists",
                             func() {
-                                let data = State.Data();
-                                data.addBlock(mockBlock);
-                                data.findBlock(UUID.toText(blockUuid));
+                                let state = State.init();
+                                ignore State.addBlock(state, mockBlock);
+                                State.findBlock(state, UUID.toText(blockUuid));
                             },
                             Matchers.equals<?BlocksTypes.Block>(
                                 T.optional<BlocksTypes.Block>(
@@ -256,9 +265,9 @@ let suite = Suite.suite(
                         Suite.testLazy<BlocksTypes.Block>(
                             "Should return a block from the state",
                             func() {
-                                let data = State.Data();
-                                data.addBlock(mockBlock);
-                                data.getBlock(UUID.toText(blockUuid));
+                                let state = State.init();
+                                ignore State.addBlock(state, mockBlock);
+                                State.getBlock(state, UUID.toText(blockUuid));
                             },
                             Matchers.equals<BlocksTypes.Block>(block(mockBlock)),
                         ),
@@ -266,41 +275,11 @@ let suite = Suite.suite(
                 ),
                 // Suite.suite(
                 //     "getContentForBlock",
-                //     [
-                //         Suite.testLazy<Text>(
-                //             "Should return an error if the block does not exist",
-                //             func() { "" },
-                //             Matchers.equals(
-                //                 T.text("#heading1")
-                //             ),
-                //         ),
-                //         Suite.testLazy<Text>(
-                //             "Should return a list of the blocks's content blocks, including deeply nested blocks",
-                //             func() { "" },
-                //             Matchers.equals(
-                //                 T.text("12345678-1234-5678-1234-567812345678")
-                //             ),
-                //         ),
-                //         Suite.testLazy<Text>(
-                //             "Should return an empty list if the blocks has no content",
-                //             func() { "" },
-                //             Matchers.equals(
-                //                 T.text("12345678-1234-5678-1234-567812345678")
-                //             ),
-                //         ),
-                //     ],
+                //     [],
                 // ),
                 // Suite.suite(
                 //     "getPages",
-                //     [
-                //         Suite.testLazy<Text>(
-                //             "Should return a list of all page blocks in the state",
-                //             func() { "" },
-                //             Matchers.equals(
-                //                 T.text("12345678-1234-5678-1234-567812345678")
-                //             ),
-                //         ),
-                //     ],
+                //     [],
                 // ),
                 Suite.suite(
                     "getFirstAncestorPage",
@@ -308,7 +287,7 @@ let suite = Suite.suite(
                         Suite.testLazy<?BlocksTypes.Block>(
                             "Should return the first page ancestor of the block, if it exists",
                             func() {
-                                let data = State.Data();
+                                let state = State.init();
                                 let block = BlockBuilder.BlockBuilder({
                                     uuid = blockUuid;
                                 }).build();
@@ -318,9 +297,9 @@ let suite = Suite.suite(
 
                                 block.parent := ?parentBlock.uuid;
 
-                                data.addBlock(block);
-                                data.addBlock(parentBlock);
-                                data.getFirstAncestorPage(block);
+                                ignore State.addBlock(state, block);
+                                ignore State.addBlock(state, parentBlock);
+                                State.getFirstAncestorPage(state, block);
                             },
                             Matchers.equals<?BlocksTypes.Block>(
                                 T.optional<BlocksTypes.Block>(
@@ -334,14 +313,14 @@ let suite = Suite.suite(
                         Suite.testLazy<?BlocksTypes.Block>(
                             "Should return null if the block has no ancestors",
                             func() {
-                                let data = State.Data();
+                                let state = State.init();
                                 let block = BlockBuilder.BlockBuilder({
                                     uuid = blockUuid;
                                 }).build();
 
-                                data.addBlock(block);
+                                ignore State.addBlock(state, block);
 
-                                let firstAncestor = data.getFirstAncestorPage(block);
+                                let firstAncestor = State.getFirstAncestorPage(state, block);
 
                                 return firstAncestor;
                             },
@@ -378,13 +357,13 @@ let suite = Suite.suite(
                                     }
                                 ).build();
 
-                                var data = State.Data();
+                                let state = State.init();
 
-                                data.addBlock(block1);
-                                data.addActivity(activity1);
-                                data.addActivity(activity2);
+                                ignore State.addBlock(state, block1);
+                                ignore State.addActivity(state, activity1);
+                                ignore State.addActivity(state, activity2);
 
-                                let mostRecentActivity = data.getMostRecentActivityForPage(UUID.toText(blockUuid));
+                                let mostRecentActivity = State.getMostRecentActivityForPage(state, UUID.toText(blockUuid));
 
                                 return mostRecentActivity;
                             },
@@ -407,10 +386,10 @@ let suite = Suite.suite(
                                     uuid = blockUuid;
                                 }).build();
 
-                                var data = State.Data();
-                                data.addBlock(block1);
+                                let state = State.init();
+                                ignore State.addBlock(state, block1);
 
-                                let mostRecentActivity = data.getMostRecentActivityForPage(UUID.toText(blockUuid));
+                                let mostRecentActivity = State.getMostRecentActivityForPage(state, UUID.toText(blockUuid));
 
                                 return mostRecentActivity;
                             },
@@ -448,15 +427,15 @@ let suite = Suite.suite(
                                     }
                                 ).build();
 
-                                var data = State.Data();
+                                let state = State.init();
 
-                                data.addBlock(childBlock);
-                                data.addBlock(parentBlock);
-                                data.addBlock(grandparentBlock);
-                                data.addActivity(grandparentBlockActivity);
-                                data.addActivity(parentBlockActivity);
+                                ignore State.addBlock(state, childBlock);
+                                ignore State.addBlock(state, parentBlock);
+                                ignore State.addBlock(state, grandparentBlock);
+                                ignore State.addActivity(state, grandparentBlockActivity);
+                                ignore State.addActivity(state, parentBlockActivity);
 
-                                let mostRecentActivity = data.getMostRecentActivityForPage(UUID.toText(grandparentBlock.uuid));
+                                let mostRecentActivity = State.getMostRecentActivityForPage(state, UUID.toText(grandparentBlock.uuid));
 
                                 return mostRecentActivity;
                             },
@@ -476,29 +455,7 @@ let suite = Suite.suite(
                 ),
                 // Suite.suite(
                 //     "getActivitiesForPage",
-                //     [
-                //         Suite.testLazy<Text>(
-                //             "Should return a list of activities for the block, if they exist",
-                //             func() { "" },
-                //             Matchers.equals(
-                //                 T.text("12345678-1234-5678-1234-567812345678")
-                //             ),
-                //         ),
-                //         Suite.testLazy<Text>(
-                //             "Should return null if the block doesn't exist",
-                //             func() { "" },
-                //             Matchers.equals(
-                //                 T.text("12345678-1234-5678-1234-567812345678")
-                //             ),
-                //         ),
-                //         Suite.testLazy<Text>(
-                //             "Should return null if there are no activities for the block",
-                //             func() { "" },
-                //             Matchers.equals(
-                //                 T.text("12345678-1234-5678-1234-567812345678")
-                //             ),
-                //         ),
-                //     ],
+                //     [],
                 // ),
             ],
         )

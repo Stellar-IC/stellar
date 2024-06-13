@@ -2,13 +2,8 @@ import { Button, Card, Checkbox, Flex, Group, TextInput } from '@mantine/core';
 import { useForm } from '@mantine/form';
 
 import { useUpdateProfile } from '@/hooks/canisters/user/updates/useUpdateProfile';
-import * as actorStore from '@/ic/actors/store';
+import * as actors from '@/ic/actors/store';
 import { useAuthContext } from '@/modules/auth/contexts/AuthContext';
-
-import {
-  canisterId as canisterIdForWorkspaceIndex,
-  createActor as createActorForWorkspaceIndex,
-} from '../../../../declarations/workspace_index';
 
 export function OnboardingPage() {
   const form = useForm({
@@ -32,7 +27,7 @@ export function OnboardingPage() {
         <h3>Let&apos;s get started</h3>
         <form
           onSubmit={form.onSubmit((values) => {
-            const userActor = actorStore.actorStore.user?.getActor();
+            const userActor = actors.actorStore.user?.getActor();
 
             if (!userActor) {
               throw new Error('User actor is not available');
@@ -44,7 +39,7 @@ export function OnboardingPage() {
                 return;
               }
 
-              const userActor = actorStore.actorStore.user?.getActor();
+              const userActor = actors.actorStore.user?.getActor();
 
               if (!userActor) {
                 throw new Error('User actor is not available');
@@ -65,47 +60,6 @@ export function OnboardingPage() {
               }
 
               const { username } = profileResult.ok;
-
-              // Create a default workspace for the user if they don't have one.
-              // This should always be the case for new users.
-              if (personalWorkspaceResult.ok.length === 0) {
-                const workspaceIndexActor = createActorForWorkspaceIndex(
-                  canisterIdForWorkspaceIndex,
-                  {
-                    agentOptions: {
-                      identity,
-                    },
-                  }
-                );
-                const createWorkspaceResult =
-                  await workspaceIndexActor.createWorkspace({
-                    name: `${username}'s space`,
-                    description: 'Wow! My very own space',
-                  });
-
-                if ('err' in createWorkspaceResult) {
-                  throw new Error('Failed to create user personal workspace');
-                }
-
-                const workspaceId = createWorkspaceResult.ok;
-                const { actor: workspaceActor } =
-                  actorStore.setWorkspace(workspaceId);
-
-                await Promise.all([
-                  userActor.setPersonalWorkspace(workspaceId),
-                  workspaceActor.addUsers([
-                    [
-                      identity.getPrincipal(),
-                      {
-                        username,
-                        role: { admin: null },
-                        identity: identity.getPrincipal(),
-                        canisterId: userId,
-                      },
-                    ],
-                  ]),
-                ]);
-              }
 
               setProfile({ ...profile, username });
             });

@@ -160,8 +160,6 @@ export interface GetInformationResponse {
 }
 export type GetInitArgsOutput = { 'ok' : WorkspaceInitArgs } |
   { 'err' : { 'unauthorized' : null } };
-export type GetInitDataOutput = { 'ok' : WorkspaceInitData__1 } |
-  { 'err' : { 'unauthorized' : null } };
 export interface GetLatestLogMessagesParameters {
   'upToTimeNanos' : [] | [Nanos],
   'count' : number,
@@ -249,7 +247,13 @@ export type PubSubEvent = {
   };
 export type PubSubEventHandler = ActorMethod<[string, PubSubEvent], undefined>;
 export type Result = { 'ok' : null } |
-  { 'err' : { 'profileQueryFailed' : null } | { 'unauthorized' : null } };
+  { 'err' : { 'unauthorized' : null } | { 'userUpdateFailure' : null } };
+export type Result_1 = { 'ok' : null } |
+  {
+    'err' : { 'profileQueryFailure' : null } |
+      { 'unauthorized' : null } |
+      { 'userUpdateFailure' : null }
+  };
 export interface SaveEventTransactionUpdateInput {
   'transaction' : BlockEventTransaction,
 }
@@ -379,6 +383,7 @@ export type UpdateUserRoleUpdateOutputOk = null;
 export interface Workspace {
   'activityLog' : ActorMethod<[UUID], ActivityLogOutput>,
   'addBlock' : ActorMethod<[AddBlockUpdateInput], AddBlockUpdateOutput>,
+  'addOwner' : ActorMethod<[Principal], Result>,
   'addUsers' : ActorMethod<[AddUsersUpdateInput], AddUsersUpdateResult>,
   'block' : ActorMethod<[UUID, BlockByUuidOptions], BlockByUuidResult>,
   'createPage' : ActorMethod<[CreatePageUpdateInput], CreatePageUpdateOutput>,
@@ -388,10 +393,10 @@ export interface Workspace {
     GetInformationResponse
   >,
   'getInitArgs' : ActorMethod<[], GetInitArgsOutput>,
-  'getInitData' : ActorMethod<[], GetInitDataOutput>,
-  'join' : ActorMethod<[], Result>,
+  'join' : ActorMethod<[], Result_1>,
   'members' : ActorMethod<[], MembersOutput>,
   'pages' : ActorMethod<[PagesOptionsArg], PagesOutput>,
+  'removeOwner' : ActorMethod<[Principal], Result>,
   'saveEvents' : ActorMethod<
     [SaveEventTransactionUpdateInput],
     SaveEventTransactionUpdateOutput
@@ -419,23 +424,14 @@ export interface Workspace {
 }
 export type WorkspaceDescription = string;
 export interface WorkspaceInitArgs {
-  'owner' : WorkspaceOwner,
-  'userIndexCanisterId' : CanisterId,
-  'capacity' : bigint,
-}
-export interface WorkspaceInitData {
+  'owners' : Array<WorkspaceOwner>,
   'name' : WorkspaceName,
   'createdAt' : Time,
   'uuid' : UUID,
   'description' : WorkspaceDescription,
   'updatedAt' : Time,
-}
-export interface WorkspaceInitData__1 {
-  'name' : string,
-  'createdAt' : Time,
-  'uuid' : UUID,
-  'description' : string,
-  'updatedAt' : Time,
+  'userIndexCanisterId' : CanisterId,
+  'capacity' : bigint,
 }
 export type WorkspaceName = string;
 export type WorkspaceOwner = Principal;
@@ -452,10 +448,8 @@ export type WorkspaceUserRole = { 'member' : null } |
 export type WorkspaceVisibility = { 'Private' : null } |
   { 'Public' : null };
 export interface Workspace__1 {
-  'owner' : WorkspaceOwner,
   'name' : WorkspaceName,
   'createdAt' : Time,
-  'uuid' : UUID,
   'description' : WorkspaceDescription,
   'updatedAt' : Time,
 }

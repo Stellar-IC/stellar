@@ -1,7 +1,7 @@
 import { DelegationIdentity } from '@dfinity/identity';
 import { Principal } from '@dfinity/principal';
 
-import * as actorStore from '@/ic/actors/store';
+import * as actors from '@/ic/actors/store';
 import { logger as baseLogger } from '@/modules/logger';
 
 import { _SERVICE } from '../../../../../declarations/user/user.did';
@@ -17,7 +17,7 @@ export const registerUser = async (
   identity: DelegationIdentity
 ): Promise<{ userId: Principal; userActor: _SERVICE }> => {
   const logger = baseLogger.getLogger('auth');
-  const userIndex = actorStore.actorStore.user_index.getActor();
+  const userIndex = actors.actorStore.user_index.getActor();
 
   if (!userIndex) {
     throw new Error('User index actor is not available');
@@ -39,7 +39,7 @@ export const registerUser = async (
   }
 
   const userId = result.ok;
-  const { actor: userActor } = actorStore.setUser(userId);
+  const { actor: userActor } = actors.setUser(userId);
 
   logger.info(`Retrieved user canister principal: ${userId}`);
 

@@ -68,6 +68,7 @@ type RegisterUserError =
  variant {
    AnonymousOwner;
    InsufficientCycles;
+   LoginDisabled;
    UserWorkspaceAssignmentFailed:
     variant {
       AnonymousOwner;
@@ -205,6 +206,8 @@ type CanisterHeapMemoryAggregatedData = vec nat64;
 type CanisterCyclesAggregatedData = vec nat64;
 service : {
   checkUsername: (text) -> (CheckUsernameResult) query;
+  disableLogin: () -> (Result_2);
+  enableLogin: () -> (Result_2);
   /// * Returns canister information based on passed parameters.
   ///     * Called from browser.
   getCanistergeekInformation: (GetInformationRequest) ->
@@ -212,6 +215,7 @@ service : {
   onUserEvent: (UserEvent) -> ();
   registerUser: () -> (RegisterUserResult);
   requestCycles: (nat) -> (Result_4);
+  settings: () -> (record {loginDisabled: bool;}) query;
   /// * Updates canister information based on passed parameters at current time.
   ///     * Called from browser or any canister "update" method.
   updateCanistergeekInformation: (UpdateInformationRequest) -> ();

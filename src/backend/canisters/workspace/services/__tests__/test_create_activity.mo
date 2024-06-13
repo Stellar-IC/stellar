@@ -9,13 +9,13 @@ import Suite "mo:matchers/Suite";
 
 import UUID "mo:uuid/UUID";
 
-import Activity "../../../../lib/activities/Activity";
-import ActivitiesTypes "../../../../lib/activities/Types";
-import BlockBuilder "../../../../lib/blocks/BlockBuilder";
+import Activity "../../../../lib/activities/activity";
+import ActivitiesTypes "../../../../lib/activities/types";
+import BlockBuilder "../../../../lib/blocks/block_builder";
 import TestHelpers "../../../../tests/helpers";
 import UUIDUtils "../../../../utils/uuid";
 
-import State "../../model/state";
+import State "../../state";
 
 import CreateActivity "../create_activity";
 

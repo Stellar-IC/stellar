@@ -1,5 +1,7 @@
 #!/bin/bash
 
+mkdir -p ./.dfx/local/canisters/workspace
+
 $(dfx cache show)/moc ./src/backend/canisters/workspace/main.mo \
   --idl --stable-types \
   --package base .mops/base@0.10.4/src \

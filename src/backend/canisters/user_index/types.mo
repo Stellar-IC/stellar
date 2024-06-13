@@ -6,6 +6,7 @@ module {
     public type RegisterUserError = {
         #AnonymousOwner;
         #InsufficientCycles;
+        #LoginDisabled;
         #WorkspaceIndexNotFound;
         #WorkspaceCreationFailed : {
             #AnonymousOwner;

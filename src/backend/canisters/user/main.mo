@@ -12,6 +12,7 @@ import ExperimentalCycles "mo:base/ExperimentalCycles";
 import Error "mo:base/Error";
 import Text "mo:base/Text";
 import Array "mo:base/Array";
+import Iter "mo:base/Iter";
 import Canistergeek "mo:canistergeek/canistergeek";
 import Source "mo:uuid/async/SourceV4";
 import Map "mo:map/Map";
@@ -20,10 +21,8 @@ import StableBuffer "mo:stablebuffer/StableBuffer";
 import Constants "../../constants";
 import Block "../../lib/blocks/block";
 import BlockBuilder "../../lib/blocks/block_builder";
-import CanisterTopUp "../../lib/canister_top_up";
 import UserProfile "../../lib/users/user_profile";
 import UsersTypes "../../lib/users/types";
-import CreateWorkspace "../../lib/workspaces/services/create_workspace";
 import CoreTypes "../../types";
 import AuthUtils "../../utils/auth";
 import Tree "../../utils/data/lseq/Tree";
@@ -35,9 +34,7 @@ shared ({ caller = initializer }) actor class User(
 ) = self {
     type WorkspaceId = Principal;
 
-    stable let WORKSPACE__TOP_UP_AMOUNT = Constants.WORKSPACE__TOP_UP_AMOUNT.scalar;
-    stable let WORKSPACE__CAPACITY = Constants.WORKSPACE__CAPACITY.scalar;
-
+    /* Principal of UserIndex canister */
     stable let userIndexCanisterId = initializer;
 
     /* Amount of cycles in this canister */
@@ -55,6 +52,7 @@ shared ({ caller = initializer }) actor class User(
     /* Default workspace canister */
     stable var _personalWorkspace : ?Types.PersonalWorkspace = null;
 
+    /* List of workspaces that the user has access to */
     stable var _workspaces = StableBuffer.init<WorkspaceId>();
 
     /* User profile */
@@ -64,6 +62,12 @@ shared ({ caller = initializer }) actor class User(
         var created_at = Time.now();
         var updatedAt = Time.now();
     };
+
+    /*************************************************************************
+     * User Events
+     *************************************************************************/
+
+    stable var canisterSubscriptions = Map.new<Types.UserEventName, Map.Map<Principal, Types.ProfileUpdatedSubscription>>();
 
     var timersHaveBeenStarted = false;
 
@@ -78,8 +82,6 @@ shared ({ caller = initializer }) actor class User(
     };
 
     let userEventNameHash = (userEventNameToHash, userEventNameCompare);
-
-    stable var canisterSubscriptions = Map.new<Types.UserEventName, Map.Map<Principal, Types.ProfileUpdatedSubscription>>();
 
     public shared ({ caller }) func subscribe(
         event : Types.UserEventName,
@@ -103,23 +105,17 @@ shared ({ caller = initializer }) actor class User(
     /* public shared ({ caller }) func unsubscribe() : async () {} */
 
     func publishEvent(event : Types.UserEvent) : async () {
-        let subscribers = switch (event.event) {
-            case (#profileUpdated({ profile })) {
-                Map.get(canisterSubscriptions, userEventNameHash, #profileUpdated);
-            };
-        };
+        let subscriptions = getEventSubscriptions(event);
 
-        switch (subscribers) {
-            case (null) {};
-            case (?subscribers) {
-                let subscriptions = Map.entries(subscribers);
-                for (subscription in subscriptions) {
-                    let handler = subscription.1;
-                    ignore handler(event);
-                };
-            };
+        for (subscription in Array.vals(subscriptions)) {
+            let handler = subscription.1;
+            ignore handler(event);
         };
     };
+
+    /*************************************************************************
+     * Queries
+     *************************************************************************/
 
     public query ({ caller }) func profile() : async Result.Result<UserProfile.UserProfile, { #unauthorized }> {
         if (caller != _owner) {
@@ -141,13 +137,25 @@ shared ({ caller = initializer }) actor class User(
         });
     };
 
-    public shared ({ caller }) func personalWorkspace() : async Result.Result<?WorkspaceId, { #anonymousUser; #insufficientCycles; #unauthorized }> {
+    public shared query ({ caller }) func personalWorkspace() : async Result.Result<?WorkspaceId, { #anonymousUser; #insufficientCycles; #unauthorized }> {
         if (caller != _owner) {
             return #err(#unauthorized);
         };
 
         return #ok(_personalWorkspaceId);
     };
+
+    public shared ({ caller }) func workspaces() : async Result.Result<[WorkspaceId], { #unauthorized }> {
+        if (caller != _owner) {
+            return #err(#unauthorized);
+        };
+
+        return #ok(StableBuffer.toArray(_workspaces));
+    };
+
+    /*************************************************************************
+     * Updates
+     *************************************************************************/
 
     public shared ({ caller }) func setPersonalWorkspace(
         workspaceId : WorkspaceId
@@ -159,17 +167,9 @@ shared ({ caller = initializer }) actor class User(
         _personalWorkspaceId := ?workspaceId;
         _personalWorkspace := ?(actor (Principal.toText(workspaceId)) : Types.PersonalWorkspace);
 
-        StableBuffer.add(_workspaces, workspaceId);
+        _addWorkspace(_workspaces, workspaceId);
 
         #ok();
-    };
-
-    public shared ({ caller }) func workspaces() : async Result.Result<[WorkspaceId], { #unauthorized }> {
-        if (caller != _owner) {
-            return #err(#unauthorized);
-        };
-
-        return #ok(StableBuffer.toArray(_workspaces));
     };
 
     public shared ({ caller }) func addWorkspace(
@@ -179,7 +179,7 @@ shared ({ caller = initializer }) actor class User(
             return #err(#unauthorized);
         };
 
-        StableBuffer.add(_workspaces, workspaceDetails.canisterId);
+        _addWorkspace(_workspaces, workspaceDetails.canisterId);
 
         return #ok;
     };
@@ -273,63 +273,32 @@ shared ({ caller = initializer }) actor class User(
         return #ok({ accepted = Nat64.fromNat(accepted) });
     };
 
-    public shared ({ caller }) func upgradePersonalWorkspace(wasm_module : Blob) : async Result.Result<(), { #unauthorized; #workspaceNotFound : Text; #failed : Text }> {
-        if (caller != initializer and AuthUtils.isDev(caller) == false) {
-            return #err(#unauthorized);
+    private func _addWorkspace(
+        workspaces : StableBuffer.StableBuffer<WorkspaceId>,
+        workspaceId : WorkspaceId,
+    ) : () {
+        if (StableBuffer.contains(workspaces, workspaceId, Principal.equal)) {
+            return;
         };
 
-        let IC0 : CoreTypes.Management = actor "aaaaa-aa";
-        let sender_canister_version : ?Nat64 = null;
+        StableBuffer.add(workspaces, workspaceId);
+    };
 
-        let workspaceId = switch (_personalWorkspaceId) {
+    private func getEventSubscriptions(event : Types.UserEvent) : [(Principal, Types.ProfileUpdatedSubscription)] {
+        let eventSubscriptions = switch (event.event) {
+            case (#profileUpdated({ profile })) {
+                Map.get(canisterSubscriptions, userEventNameHash, #profileUpdated);
+            };
+        };
+
+        switch (eventSubscriptions) {
             case (null) {
-                return #err(#workspaceNotFound("Personal workspace not initialized for user: " # debug_show (Principal.fromActor(self))));
+                return [];
             };
-            case (?workspaceId) { workspaceId };
-        };
-        let workspace = switch (_personalWorkspace) {
-            case (null) {
-                return #err(#workspaceNotFound("Personal workspace not initialized for user: " # debug_show (Principal.fromActor(self))));
-            };
-            case (?workspace) { workspace };
-        };
-        let initArgs = switch (await workspace.getInitArgs()) {
-            case (#ok(args)) {
-                { args with userIndexCanisterId = userIndexCanisterId };
-            };
-            case (#err(err)) {
-                return #err(#failed("Failed to get init args for personal workspace: " # debug_show (err)));
+            case (?subscriptions) {
+                return Iter.toArray(Map.entries(subscriptions));
             };
         };
-        let initData = switch (await workspace.getInitData()) {
-            case (#ok(data)) { data };
-            case (#err(err)) {
-                return #err(#failed("Failed to get init data for personal workspace: " # debug_show (err)));
-            };
-        };
-
-        try {
-            await IC0.install_code(
-                {
-                    arg = to_candid (
-                        initArgs,
-                        initData,
-                    );
-                    canister_id = workspaceId;
-                    mode = #upgrade(
-                        ?{
-                            skip_pre_upgrade = ?false;
-                        }
-                    );
-                    sender_canister_version = sender_canister_version;
-                    wasm_module = wasm_module;
-                }
-            );
-        } catch (err) {
-            return #err(#failed(Error.message(err)));
-        };
-
-        return #ok(());
     };
 
     private func checkCyclesBalance() : async () {
@@ -343,28 +312,6 @@ shared ({ caller = initializer }) actor class User(
         let accepted = result.accepted;
     };
 
-    let personalWorkspaceTopUp : CanisterTopUp.CanisterTopUp = {
-        var topUpInProgress = false;
-        var latestTopUp = null;
-    };
-
-    private func topUpKnownCanisters() : async () {
-        if (personalWorkspaceTopUp.topUpInProgress) {
-            return;
-        };
-
-        switch (_personalWorkspace) {
-            case (null) {};
-            case (?workspace) {
-                personalWorkspaceTopUp.topUpInProgress := true;
-                let amount = WORKSPACE__TOP_UP_AMOUNT;
-                ExperimentalCycles.add(amount);
-                let result = await workspace.walletReceive();
-                personalWorkspaceTopUp.topUpInProgress := false;
-            };
-        };
-    };
-
     /*************************************************************************
      * Timers
      *************************************************************************/
@@ -375,10 +322,6 @@ shared ({ caller = initializer }) actor class User(
         ignore Timer.recurringTimer(
             #seconds(60),
             checkCyclesBalance,
-        );
-        ignore Timer.recurringTimer(
-            #seconds(60),
-            topUpKnownCanisters,
         );
         timersHaveBeenStarted := true;
     };

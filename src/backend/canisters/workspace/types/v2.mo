@@ -32,14 +32,6 @@ module {
         event : PubSubEvent,
     ) -> async ();
 
-    public type WorkspaceInitData = {
-        uuid : UUID.UUID;
-        name : Text;
-        description : Text;
-        createdAt : Time.Time;
-        updatedAt : Time.Time;
-    };
-
     public type WorkspaceUserRole = {
         #admin;
         #moderator;
@@ -163,10 +155,6 @@ module {
 
         public module GetInitArgs {
             public type GetInitArgsOutput = Result.Result<CoreTypes.Workspaces.WorkspaceInitArgs, { #unauthorized }>;
-        };
-
-        public module GetInitData {
-            public type GetInitDataOutput = Result.Result<WorkspaceInitData, { #unauthorized }>;
         };
 
         public module PageByUuid {

@@ -100,7 +100,8 @@ export type RegisterUserError = {
       { 'AnonymousOwner' : null }
   } |
   { 'WorkspaceIndexNotFound' : null } |
-  { 'AnonymousOwner' : null };
+  { 'AnonymousOwner' : null } |
+  { 'LoginDisabled' : null };
 export type RegisterUserResult = { 'ok' : Principal } |
   { 'err' : RegisterUserError };
 export type Result = { 'ok' : { 'accepted' : bigint } } |
@@ -145,6 +146,8 @@ export interface UserProfile {
 export type Username = string;
 export interface _SERVICE {
   'checkUsername' : ActorMethod<[string], CheckUsernameResult>,
+  'disableLogin' : ActorMethod<[], Result_2>,
+  'enableLogin' : ActorMethod<[], Result_2>,
   'getCanistergeekInformation' : ActorMethod<
     [GetInformationRequest],
     GetInformationResponse
@@ -152,6 +155,7 @@ export interface _SERVICE {
   'onUserEvent' : ActorMethod<[UserEvent], undefined>,
   'registerUser' : ActorMethod<[], RegisterUserResult>,
   'requestCycles' : ActorMethod<[bigint], Result_4>,
+  'settings' : ActorMethod<[], { 'loginDisabled' : boolean }>,
   'updateCanistergeekInformation' : ActorMethod<
     [UpdateInformationRequest],
     undefined

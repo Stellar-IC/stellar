@@ -1,10 +1,11 @@
 import { DelegationIdentity } from '@dfinity/identity';
 import { Principal } from '@dfinity/principal';
-import { Flex, Loader } from '@mantine/core';
+import { Button, Container, Flex, Loader, Stack, Text } from '@mantine/core';
 import { useEffect, useState } from 'react';
-import { Navigate } from 'react-router-dom';
+import { Navigate, useNavigate } from 'react-router-dom';
 
 import { useUserActor } from '@/hooks/canisters/user/useUserActor';
+import { useCreateDefaultWorkspace } from '@/hooks/canisters/workspace_index/useCreateDefaultWorkspace';
 import { useAuthContext } from '@/modules/auth/contexts/AuthContext';
 
 function WorkspaceLoader({
@@ -12,7 +13,7 @@ function WorkspaceLoader({
 }: {
   children: (props: {
     isLoading: boolean;
-    workspaceId: Principal;
+    workspaceId: Principal | null;
   }) => React.ReactNode;
 }) {
   const [workspaceId, setWorkspaceId] = useState<Principal | null>(null);
@@ -31,15 +32,19 @@ function WorkspaceLoader({
     const timeout = setTimeout(async () => {
       if (isAuthenticated) {
         const result = await userActor.personalWorkspace();
+
         setIsLoadingWorkspace(false);
+
         if (!('ok' in result)) {
           throw new Error(
-            "There was an error loading the user's default workspace"
+            `There was an error loading the user's default workspace: ${result.err}`
           );
         }
+
         if (result.ok.length === 0) {
-          throw new Error('User has no default workspace');
+          return;
         }
+
         setWorkspaceId(result.ok[0]);
       }
     }, 0);
@@ -49,9 +54,41 @@ function WorkspaceLoader({
     };
   }, [userActor, identity, isAuthenticated]);
 
-  if (!workspaceId) return <></>;
-
   return <>{children({ isLoading, workspaceId })}</>;
+}
+
+function CreateDefaultWorkspaceView() {
+  const { createWorkspace } = useCreateDefaultWorkspace();
+  const navigate = useNavigate();
+
+  return (
+    <Container>
+      <Stack
+        gap={0}
+        align="center"
+        style={{
+          textAlign: 'center',
+        }}
+      >
+        <h1>Welcome!</h1>
+        <Text>
+          In order to get started, you will need to create a Space where you can
+          create pages and collaborate with others.
+        </Text>
+        <Flex justify="center" style={{ marginTop: '50px' }}>
+          <Button
+            onClick={() =>
+              createWorkspace().then(([workspaceId]) => {
+                navigate(`/spaces/${workspaceId.toString()}`);
+              })
+            }
+          >
+            Let&apos;s do it!
+          </Button>
+        </Flex>
+      </Stack>
+    </Container>
+  );
 }
 
 export function HomePage() {
@@ -81,14 +118,14 @@ export function HomePage() {
         }
 
         if (!workspaceId) {
-          throw new Error('Workspace ID is not set');
+          return <CreateDefaultWorkspaceView />;
         }
 
         if (!(identity instanceof DelegationIdentity)) {
           throw new Error('Anonymous identity is not allowed here');
         }
 
-        return <Navigate to={`/spaces/${workspaceId.toString()}`} replace />;
+        return <Navigate to={`/spaces/${workspaceId.toString()}`} />;
       }}
     </WorkspaceLoader>
   );

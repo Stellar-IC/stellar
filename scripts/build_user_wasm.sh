@@ -6,7 +6,8 @@ then
   export $(cat .env | xargs)
 fi
 
-echo $CANISTER_ID_FILE_UPLOAD
+mkdir -p ./.dfx/local/canisters/user
+
 
 $(dfx cache show)/moc ./src/backend/canisters/user/main.mo \
   --idl --stable-types \
@@ -23,4 +24,3 @@ $(dfx cache show)/moc ./src/backend/canisters/user/main.mo \
   --package stablebuffer .mops/_github/stablebuffer#v1.3.0/src \
   --package map .mops/map@9.0.1/src \
   -c -o ./.dfx/local/canisters/user/user.wasm
-  

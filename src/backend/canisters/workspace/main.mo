@@ -11,9 +11,10 @@ import Text "mo:base/Text";
 import Time = "mo:base/Time";
 import Buffer "mo:base/Buffer";
 import Option "mo:base/Option";
+import Iter "mo:base/Iter";
 
 import Canistergeek "mo:canistergeek/canistergeek";
-
+import StableBuffer "mo:stablebuffer/StableBuffer";
 import UUID "mo:uuid/UUID";
 
 import ActivitiesTypes "../../lib/activities/types";
@@ -37,8 +38,7 @@ import State "./state";
 import Types "./types/v2";
 
 shared ({ caller = initializer }) actor class Workspace(
-    initArgs : CoreTypes.Workspaces.WorkspaceInitArgs,
-    initData : CoreTypes.Workspaces.WorkspaceInitData,
+    initArgs : CoreTypes.Workspaces.WorkspaceInitArgs
 ) = self {
     /*************************************************************************
      * Types
@@ -57,6 +57,11 @@ shared ({ caller = initializer }) actor class Workspace(
     type ShareableBlock = BlocksTypes.ShareableBlock;
     type BlockEvent = BlocksTypes.BlockEvent;
 
+    type UserActor = actor {
+        publicProfile : (Principal) -> async Result.Result<CoreTypes.User.PublicUserProfile, { #unauthorized }>;
+        addWorkspace({ canisterId : Principal }) : async Result.Result<[CoreTypes.Workspaces.WorkspaceId], { #unauthorized }>;
+    };
+
     /*************************************************************************
      * Stable Data
      *************************************************************************/
@@ -64,14 +69,13 @@ shared ({ caller = initializer }) actor class Workspace(
     stable var _activitiesIdCounter : Nat = 0;
     stable var _events : RBTree.Tree<Text, BlockEvent> = #leaf;
 
-    stable var _owner : WorkspaceOwner = initArgs.owner;
-    stable var _uuid : UUID.UUID = initData.uuid;
-    stable var _name : CoreTypes.Workspaces.WorkspaceName = initData.name;
-    stable var _description : CoreTypes.Workspaces.WorkspaceDescription = initData.name;
+    stable var _owners = StableBuffer.fromArray<WorkspaceOwner>(initArgs.owners);
+    stable var _name : CoreTypes.Workspaces.WorkspaceName = initArgs.name;
+    stable var _description : CoreTypes.Workspaces.WorkspaceDescription = initArgs.name;
     stable var _websiteLink : ?Text = null;
     stable var _visibility : Types.WorkspaceVisibility = #Private;
-    stable var _createdAt : Time.Time = initData.createdAt;
-    stable var _updatedAt : Time.Time = initData.updatedAt;
+    stable var _createdAt : Time.Time = initArgs.createdAt;
+    stable var _updatedAt : Time.Time = initArgs.updatedAt;
 
     stable var _userIndexCanisterId : Principal = initArgs.userIndexCanisterId;
     stable let _capacity : Nat = initArgs.capacity;
@@ -101,24 +105,22 @@ shared ({ caller = initializer }) actor class Workspace(
         { logger },
     );
 
+    private func isOwner(caller : Principal) : Bool {
+        StableBuffer.contains(_owners, caller, Principal.equal);
+    };
+
     /*************************************************************************
-     * Initialization helper methods
+     * Upgrade helper methods
      *************************************************************************/
 
-    public query ({ caller }) func getInitArgs() : async Types.Queries.GetInitArgs.GetInitArgsOutput {
-        if (caller != _owner) {
+    type GetInitArgsOutput = Types.Queries.GetInitArgs.GetInitArgsOutput;
+
+    public query ({ caller }) func getInitArgs() : async GetInitArgsOutput {
+        if (not isOwner(caller)) {
             return #err(#unauthorized);
         };
 
         return #ok(initArgs);
-    };
-
-    public query ({ caller }) func getInitData() : async Types.Queries.GetInitData.GetInitDataOutput {
-        if (caller != _owner) {
-            return #err(#unauthorized);
-        };
-
-        return #ok(initData);
     };
 
     /*************************************************************************
@@ -127,10 +129,9 @@ shared ({ caller = initializer }) actor class Workspace(
 
     public query func toObject() : async CoreTypes.Workspaces.Workspace {
         return {
-            uuid = _uuid;
             name = _name;
             description = _description;
-            owner = _owner;
+            owners = _owners;
             createdAt = _createdAt;
             updatedAt = _updatedAt;
         };
@@ -145,25 +146,27 @@ shared ({ caller = initializer }) actor class Workspace(
             case (null) { return #err(#notFound) };
             case (?block) { block };
         };
-        let contentBlocks = List.toArray(State.getContentForBlock(_state, blockId, options.contentPagination));
-        var blockRecords = List.fromArray<(Text, ShareableBlock)>([]);
+        let contentBlocks = State.getContentForBlock(_state, blockId, options.contentPagination);
+        var blockRecords = Buffer.fromArray<(Text, ShareableBlock)>([]);
 
-        for (contentBlock in Array.vals(contentBlocks)) {
-            blockRecords := List.append(blockRecords, List.fromArray([(UUID.toText(contentBlock.uuid), BlockModule.toShareable(contentBlock))]));
+        blockRecords.add((blockId, BlockModule.toShareable(block)));
+
+        for (contentBlock in contentBlocks) {
+            let contentBlockId = UUID.toText(contentBlock.uuid);
+            let record = (contentBlockId, BlockModule.toShareable(contentBlock));
+            blockRecords.add(record);
         };
-
-        blockRecords := List.append(blockRecords, List.fromArray([(UUID.toText(block.uuid), BlockModule.toShareable(block))]));
 
         return #ok({
             block = blockId;
             recordMap = {
-                blocks = List.toArray(blockRecords);
+                blocks = Buffer.toArray(blockRecords);
             };
         });
     };
 
     public query ({ caller }) func pages(options : PagesOptionsArg) : async PagesOutput {
-        let pages = State.getPages(_state);
+        let pages = Iter.toArray(State.getPages(_state));
         let contentOptions = {
             limit = switch (options.limit) {
                 case (null) { 10 };
@@ -174,18 +177,17 @@ shared ({ caller = initializer }) actor class Workspace(
                 case (?cursor) { cursor };
             };
         };
-
         var blockRecords = List.fromArray<(Text, ShareableBlock)>([]);
 
-        for (page in List.toIter(pages)) {
+        for (page in Array.vals(pages)) {
             let pageId = UUID.toText(page.uuid);
             let pageFromState = State.findBlock(_state, pageId);
-            let pageContent = List.toArray(State.getContentForBlock(_state, pageId, contentOptions));
+            let pageContent = State.getContentForBlock(_state, pageId, contentOptions);
             let pageRecord = (pageId, page);
 
             blockRecords := List.append(blockRecords, List.fromArray([pageRecord]));
 
-            for (block in Array.vals(pageContent)) {
+            for (block in pageContent) {
                 let record = (UUID.toText(block.uuid), BlockModule.toShareable(block));
                 blockRecords := List.append(blockRecords, List.fromArray([record]));
             };
@@ -193,13 +195,11 @@ shared ({ caller = initializer }) actor class Workspace(
 
         let result : PagesOutput = {
             pages = {
-                edges = List.toArray(
-                    List.map<BlocksTypes.ShareableBlock, CoreTypes.Edge<Text>>(
-                        pages,
-                        func(block) {
-                            { node = UUID.toText(block.uuid) };
-                        },
-                    )
+                edges = Array.map<BlocksTypes.ShareableBlock, CoreTypes.Edge<Text>>(
+                    pages,
+                    func(block) {
+                        { node = UUID.toText(block.uuid) };
+                    },
                 );
             };
             recordMap = {
@@ -291,21 +291,14 @@ shared ({ caller = initializer }) actor class Workspace(
     /*************************************************************************
      * Updates
      *************************************************************************/
-    public shared ({ caller }) func join() : async Result.Result<(), { #unauthorized; #profileQueryFailure; #userUpdateFailure }> {
-        if (caller != _owner) {
-            return #err(#unauthorized);
-        };
 
+    public shared ({ caller }) func join() : async Result.Result<(), { #unauthorized; #profileQueryFailure; #userUpdateFailure }> {
         let UserIndex = actor (Principal.toText(_userIndexCanisterId)) : actor {
             userId : (Principal) -> async Principal;
         };
         let userId = await UserIndex.userId(caller);
-        let user = actor (Principal.toText(userId)) : actor {
-            publicProfile : (Principal) -> async Result.Result<CoreTypes.User.PublicUserProfile, { #unauthorized }>;
-            addWorkspace({ canisterId : Principal }) : async Result.Result<[CoreTypes.Workspaces.WorkspaceId], { #unauthorized }>;
-        };
-        let profileResult = await user.publicProfile(caller);
-        let username = switch (profileResult) {
+        let user = actor (Principal.toText(userId)) : UserActor;
+        let username = switch (await user.publicProfile(caller)) {
             case (#err(_)) {
                 return #err(#profileQueryFailure);
             };
@@ -334,10 +327,47 @@ shared ({ caller = initializer }) actor class Workspace(
         return #ok;
     };
 
+    public shared ({ caller }) func addOwner(owner : Principal) : async Result.Result<(), { #unauthorized; #userUpdateFailure }> {
+        if (not isOwner(caller)) {
+            return #err(#unauthorized);
+        };
+
+        if (StableBuffer.contains(_owners, owner, Principal.equal)) {
+            return #ok;
+        };
+
+        StableBuffer.add<Principal>(_owners, owner);
+
+        #ok;
+    };
+
+    public shared ({ caller }) func removeOwner(owner : Principal) : async Result.Result<(), { #unauthorized; #userUpdateFailure }> {
+        if (not isOwner(caller)) {
+            return #err(#unauthorized);
+        };
+
+        if (not StableBuffer.contains(_owners, owner, Principal.equal)) {
+            return #ok;
+        };
+
+        if (StableBuffer.size(_owners) == 1) {
+            return #err(#unauthorized);
+        };
+
+        StableBuffer.filterEntries<Principal>(
+            _owners,
+            func(_, entry) {
+                entry != owner;
+            },
+        );
+
+        return #ok;
+    };
+
     public shared ({ caller }) func addUsers(
         input : Types.Updates.AddUsersUpdate.AddUsersUpdateInput
     ) : async Types.Updates.AddUsersUpdate.AddUsersUpdateResult {
-        if (caller != _owner) {
+        if (not isOwner(caller)) {
             return #err(#unauthorized);
         };
 
@@ -371,7 +401,7 @@ shared ({ caller = initializer }) actor class Workspace(
     ) : async Types.Updates.AddBlockUpdate.AddBlockUpdateOutput {
         let block = BlockModule.fromShareableUnsaved(input);
         ignore State.addBlock(_state, block);
-        await updateCanistergeekInformation({ metrics = ? #force });
+        await updateCanistergeekInformation({ metrics = ? #normal });
 
         return #ok;
     };
@@ -381,7 +411,7 @@ shared ({ caller = initializer }) actor class Workspace(
     ) : async Types.Updates.UpdateBlockUpdate.UpdateBlockUpdateOutput {
         let block = BlockModule.fromShareable(input);
         let result = State.updateBlock(_state, block);
-        await updateCanistergeekInformation({ metrics = ? #force });
+        await updateCanistergeekInformation({ metrics = ? #normal });
 
         return #ok(BlockModule.toShareable(block));
     };
@@ -390,7 +420,7 @@ shared ({ caller = initializer }) actor class Workspace(
         input : Types.Updates.DeletePageUpdate.DeletePageUpdateInput
     ) : async Types.Updates.DeletePageUpdate.DeletePageUpdateOutput {
         State.deleteBlock(_state, UUID.toText(input.uuid));
-        await updateCanistergeekInformation({ metrics = ? #force });
+        await updateCanistergeekInformation({ metrics = ? #normal });
 
         return #ok;
     };
@@ -399,11 +429,10 @@ shared ({ caller = initializer }) actor class Workspace(
         input : Types.Updates.SaveEventTransactionUpdate.SaveEventTransactionUpdateInput
     ) : async Types.Updates.SaveEventTransactionUpdate.SaveEventTransactionUpdateOutput {
         for (event in input.transaction.vals()) {
-            // TODO: Save events to state
             processEvent(event);
         };
 
-        await updateCanistergeekInformation({ metrics = ? #force });
+        await updateCanistergeekInformation({ metrics = ? #normal });
 
         return #ok;
     };
@@ -461,7 +490,7 @@ shared ({ caller = initializer }) actor class Workspace(
             };
         };
 
-        await updateCanistergeekInformation({ metrics = ? #force });
+        await updateCanistergeekInformation({ metrics = ? #normal });
 
         return #ok;
     };
@@ -470,13 +499,11 @@ shared ({ caller = initializer }) actor class Workspace(
         input : Types.Updates.UpdateUserRoleUpdate.UpdateUserRoleUpdateInput
     ) : async Types.Updates.UpdateUserRoleUpdate.UpdateUserRoleUpdateOutput {
         let user = UserRegistry.getUserByUserId(userRegistry, input.user);
-        let updatedUser = {
-            user with role = input.role;
-        };
+        let updatedUser = { user with role = input.role };
         let adminUsers = UserRegistry.filter<WorkspaceUser>(userRegistry, func(u : WorkspaceUser) { u.role == #admin });
 
         // Is this the only admin user in the workspace?
-        // If so, don't allow the role to be changed
+        // If so, prevent the role from being changed
         if (
             Array.size(adminUsers) == 1 and
             user.role == #admin and
@@ -488,7 +515,7 @@ shared ({ caller = initializer }) actor class Workspace(
 
         UserRegistry.updateUser<WorkspaceUser>(userRegistry, input.user, updatedUser);
 
-        await updateCanistergeekInformation({ metrics = ? #force });
+        await updateCanistergeekInformation({ metrics = ? #normal });
 
         return #ok;
     };
@@ -526,10 +553,14 @@ shared ({ caller = initializer }) actor class Workspace(
         _activitiesIdCounter := _activitiesIdCounter + 1;
     };
 
+    /*************************************************************************
+     * Cycles Management
+     *************************************************************************/
+
     // Returns the cycles received up to the capacity allowed
     public shared func walletReceive() : async { accepted : Nat64 } {
         let result = await CyclesUtils.walletReceive(_capacity - ExperimentalCycles.balance());
-        await updateCanistergeekInformation({ metrics = ? #force });
+        await updateCanistergeekInformation({ metrics = ? #normal });
 
         return result;
     };
@@ -537,6 +568,7 @@ shared ({ caller = initializer }) actor class Workspace(
     /*************************************************************************
      * PubSub
      *************************************************************************/
+
     type PubSubEvent = Types.PubSubEvent;
     type PubSubEventHandler = Types.PubSubEventHandler;
 
@@ -544,6 +576,14 @@ shared ({ caller = initializer }) actor class Workspace(
 
     public shared ({ caller }) func subscribe(eventName : Text, handler : PubSubEventHandler) : async () {
         PubSub.subscribe(_publisher, caller, eventName, handler);
+    };
+
+    public shared ({ caller }) func unsubscribe(eventName : Text, handler : PubSubEventHandler) : async () {
+        PubSub.unsubscribe<PubSubEvent, PubSubEventHandler>(
+            _publisher,
+            caller,
+            eventName,
+        );
     };
 
     private func publish(eventName : Text, payload : PubSubEvent) : async () {
@@ -561,20 +601,12 @@ shared ({ caller = initializer }) actor class Workspace(
      * Canister Monitoring
      *************************************************************************/
 
-    /**
-    * Returns canister information based on passed parameters.
-    * Called from browser.
-    */
     public query ({ caller }) func getCanistergeekInformation(
         request : Canistergeek.GetInformationRequest
     ) : async Canistergeek.GetInformationResponse {
         Canistergeek.getInformation(?canistergeekMonitor, ?canistergeekLogger, request);
     };
 
-    /**
-     * Updates canister information based on passed parameters at current time.
-     * Called from browser or any canister "update" method.
-     */
     public shared ({ caller }) func updateCanistergeekInformation(
         request : Canistergeek.UpdateInformationRequest
     ) : async () {

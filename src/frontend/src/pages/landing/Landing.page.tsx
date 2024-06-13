@@ -1,5 +1,7 @@
 import { Box, Button, Container, Flex, Stack } from '@mantine/core';
+import { useEffect, useState } from 'react';
 
+import { actorStore } from '@/ic/actors/store';
 import { useAuthContext } from '@/modules/auth/contexts/AuthContext';
 
 import classes from './Landing.module.css';
@@ -8,6 +10,19 @@ const sectionContainerWidth = '26rem';
 
 export function LandingPage() {
   const { login } = useAuthContext();
+  const [loginEnabled, setLoginEnabled] = useState(false);
+
+  useEffect(() => {
+    const userIndex = actorStore.user_index.getActor();
+
+    if (!userIndex) {
+      return;
+    }
+
+    userIndex.settings().then((settings) => {
+      setLoginEnabled(!settings.loginDisabled);
+    });
+  });
 
   return (
     <Box style={{ width: '100%', overflowY: 'scroll' }}>
@@ -34,9 +49,11 @@ export function LandingPage() {
                 </h1>
                 <h4 className={classes.TagLine}>Space to shape our future.</h4>
               </Flex>
-              <Flex style={{ justifyContent: 'center' }}>
-                <Button onClick={login}>Sign In</Button>
-              </Flex>
+              {loginEnabled && (
+                <Flex style={{ justifyContent: 'center' }}>
+                  <Button onClick={login}>Sign In</Button>
+                </Flex>
+              )}
             </Stack>
           </Container>
         </section>
@@ -87,9 +104,11 @@ export function LandingPage() {
                 with others in real-time. You maintain control of the data in
                 your Space, which is stored securely and completely on-chain.
               </p>
-              <div>
-                <Button onClick={login}>Get started</Button>
-              </div>
+              {loginEnabled && (
+                <div>
+                  <Button onClick={login}>Get started</Button>
+                </div>
+              )}
             </Flex>
           </Container>
         </section>
@@ -138,9 +157,11 @@ export function LandingPage() {
                 and much more. You can create private pages or collaborate with
                 others in real-time.
               </p>
-              <div>
-                <Button onClick={login}>Get started</Button>
-              </div>
+              {loginEnabled && (
+                <div>
+                  <Button onClick={login}>Get started</Button>
+                </div>
+              )}
             </Flex>
           </Container>
         </section>
@@ -155,11 +176,12 @@ export function LandingPage() {
               Currently, most organizations are built around centralized
               structures, where power and decision-making are concentrated in
               the hands of a few. Through the use of blockchain technology, we
-              can create new types of organizations that are decentralized and
-              community-driven. These organizations are known as DAOs, or
-              Decentralized Autonomous Organizations. Through a DAO, many people
-              can work collaboratively to achieve a common goal without the need
-              for a centralized authority.
+              can create new types of organizations that operate on transparent
+              protocols, governed by the members of the organization. These
+              organizations are known as DAOs, or Decentralized Autonomous
+              Organizations. Through a DAO, many people can work collaboratively
+              to achieve a common goal without the need for a centralized
+              authority.
             </p>
             <p
               className={classes.Paragraph}
@@ -170,9 +192,8 @@ export function LandingPage() {
               resources as the core development teams. Think product/technical
               specifications, design files, project planning, metrics
               dashboards, and other resources that are typically siloed within
-              the core team. All of these resources should be on-chain and
-              accessible to all community members. This is where Stellar comes
-              in.
+              the core team. These resources should be on-chain and accessible
+              to all community members. This is where Stellar comes in.
             </p>
             <p
               className={classes.Paragraph}
@@ -188,9 +209,11 @@ export function LandingPage() {
               levels of ownership and freedom to people everywhere!
             </p>
 
-            <div style={{ display: 'flex', justifyContent: 'center' }}>
-              <Button onClick={login}>Join Stellar</Button>
-            </div>
+            {loginEnabled && (
+              <div style={{ display: 'flex', justifyContent: 'center' }}>
+                <Button onClick={login}>Join Stellar</Button>
+              </div>
+            )}
           </Container>
         </section>
         {/* <LandingPageFooter /> */}

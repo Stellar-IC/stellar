@@ -1,4 +1,16 @@
 export const idlFactory = ({ IDL }) => {
+  const WorkspaceUserRole = IDL.Variant({
+    'member' : IDL.Null,
+    'admin' : IDL.Null,
+    'moderator' : IDL.Null,
+    'guest' : IDL.Null,
+  });
+  const WorkspaceUser = IDL.Record({
+    'username' : IDL.Text,
+    'role' : WorkspaceUserRole,
+    'identity' : IDL.Principal,
+    'canisterId' : IDL.Principal,
+  });
   const Result_1 = IDL.Variant({
     'ok' : IDL.Principal,
     'err' : IDL.Variant({
@@ -119,16 +131,16 @@ export const idlFactory = ({ IDL }) => {
       'workspaceId' : IDL.Principal,
     }),
   });
+  const Result = IDL.Variant({
+    'ok' : IDL.Null,
+    'err' : IDL.Variant({ 'unauthorized' : IDL.Null }),
+  });
   const CollectMetricsRequestType = IDL.Variant({
     'force' : IDL.Null,
     'normal' : IDL.Null,
   });
   const UpdateInformationRequest = IDL.Record({
     'metrics' : IDL.Opt(CollectMetricsRequestType),
-  });
-  const Result = IDL.Variant({
-    'ok' : IDL.Null,
-    'err' : IDL.Variant({ 'unauthorized' : IDL.Null }),
   });
   const WorkspaceDetails = IDL.Record({
     'name' : IDL.Text,
@@ -147,13 +159,25 @@ export const idlFactory = ({ IDL }) => {
     'err' : IDL.Variant({ 'workspaceNotFound' : IDL.Null }),
   });
   return IDL.Service({
-    'createWorkspace' : IDL.Func([], [Result_1], []),
+    'createWorkspace' : IDL.Func(
+        [
+          IDL.Record({
+            'name' : IDL.Text,
+            'description' : IDL.Text,
+            'initialUsers' : IDL.Vec(IDL.Tuple(IDL.Principal, WorkspaceUser)),
+            'additionalOwners' : IDL.Vec(IDL.Principal),
+          }),
+        ],
+        [Result_1],
+        [],
+      ),
     'getCanistergeekInformation' : IDL.Func(
         [GetInformationRequest],
         [GetInformationResponse],
         ['query'],
       ),
     'handleWorkspaceEvents' : IDL.Func([IDL.Text, PubSubEvent], [], []),
+    'removeWorkspace' : IDL.Func([IDL.Principal], [Result], []),
     'requestCycles' : IDL.Func(
         [IDL.Nat],
         [IDL.Record({ 'accepted' : IDL.Nat64 })],

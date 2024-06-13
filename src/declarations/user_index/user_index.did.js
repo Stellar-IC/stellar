@@ -4,6 +4,10 @@ export const idlFactory = ({ IDL }) => {
     'ok' : IDL.Null,
     'err' : CheckUsernameError,
   });
+  const Result_2 = IDL.Variant({
+    'ok' : IDL.Null,
+    'err' : IDL.Variant({ 'unauthorized' : IDL.Null }),
+  });
   const StatusRequest = IDL.Record({
     'memory_size' : IDL.Bool,
     'cycles' : IDL.Bool,
@@ -135,6 +139,7 @@ export const idlFactory = ({ IDL }) => {
     }),
     'WorkspaceIndexNotFound' : IDL.Null,
     'AnonymousOwner' : IDL.Null,
+    'LoginDisabled' : IDL.Null,
   });
   const RegisterUserResult = IDL.Variant({
     'ok' : IDL.Principal,
@@ -162,10 +167,6 @@ export const idlFactory = ({ IDL }) => {
       'failed' : IDL.Text,
     }),
   });
-  const Result_2 = IDL.Variant({
-    'ok' : IDL.Null,
-    'err' : IDL.Variant({ 'unauthorized' : IDL.Null }),
-  });
   const Result_1 = IDL.Variant({
     'ok' : IDL.Principal,
     'err' : IDL.Variant({ 'userNotFound' : IDL.Null }),
@@ -176,6 +177,8 @@ export const idlFactory = ({ IDL }) => {
   });
   return IDL.Service({
     'checkUsername' : IDL.Func([IDL.Text], [CheckUsernameResult], ['query']),
+    'disableLogin' : IDL.Func([], [Result_2], []),
+    'enableLogin' : IDL.Func([], [Result_2], []),
     'getCanistergeekInformation' : IDL.Func(
         [GetInformationRequest],
         [GetInformationResponse],
@@ -184,6 +187,11 @@ export const idlFactory = ({ IDL }) => {
     'onUserEvent' : IDL.Func([UserEvent], [], []),
     'registerUser' : IDL.Func([], [RegisterUserResult], []),
     'requestCycles' : IDL.Func([IDL.Nat], [Result_4], []),
+    'settings' : IDL.Func(
+        [],
+        [IDL.Record({ 'loginDisabled' : IDL.Bool })],
+        ['query'],
+      ),
     'updateCanistergeekInformation' : IDL.Func(
         [UpdateInformationRequest],
         [],

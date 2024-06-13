@@ -74,16 +74,13 @@ module {
             var parent = input.parent;
         };
 
-        ignore State.addBlock(state, pageToCreate);
+        let result = State.addBlock(state, pageToCreate);
 
-        let shareableTitle : ShareableBlockText = switch (pageToCreate.properties.title) {
-            case (null) {
-                Tree.toShareableTree(Tree.Tree(null));
-            };
-            case (?title) {
-                Tree.toShareableTree(title);
-            };
+        let title = switch (pageToCreate.properties.title) {
+            case (null) { Tree.Tree(null) };
+            case (?title) { title };
         };
+        let shareableTitle = Tree.toShareableTree(title);
         let shareableContent : ShareableBlockContent = Tree.toShareableTree(pageToCreate.content);
         let shareableProperties : ShareableBlockProperties = {
             pageToCreate.properties with title = ?shareableTitle;

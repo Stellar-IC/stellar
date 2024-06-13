@@ -62,9 +62,6 @@ shared ({ caller = initializer }) actor class FileUpload() = self {
     ) : async AssetStorage.HttpResponse {
         let key = request.url;
         let headers = request.headers;
-        Debug.print("Requesting Key: " # debug_show key);
-        Debug.print("headers: " # debug_show headers);
-        Debug.print("Assets: " # debug_show _assets);
 
         let assetCanisterId = switch (Map.get(_assets, Map.thash, key)) {
             case (?id) { id };

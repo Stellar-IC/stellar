@@ -22,6 +22,7 @@ import UUID "mo:uuid/UUID";
 import Canistergeek "mo:canistergeek/canistergeek";
 import Map "mo:map/Map";
 import StableBuffer "mo:stablebuffer/StableBuffer";
+import Source "mo:uuid/async/SourceV4";
 
 import CanisterTopUp "../../lib/canister_top_up";
 import CreateWorkspace "../../lib/workspaces/services/create_workspace";
@@ -108,19 +109,51 @@ actor WorkspaceIndex {
     /*
      * Add a workspace to the index.
      */
-    public shared ({ caller }) func createWorkspace() : async Result.Result<Principal, { #AnonymousOwner; #Unauthorized; #InsufficientCycles }> {
+    public shared ({ caller }) func createWorkspace(
+        input : {
+            name : Text;
+            description : Text;
+            initialUsers : [(Principal, WorkspaceTypes.WorkspaceUser)];
+            additionalOwners : [Principal];
+        }
+    ) : async Result.Result<Principal, { #AnonymousOwner; #Unauthorized; #InsufficientCycles }> {
+        let { name; description; initialUsers; additionalOwners } = input;
+
         // Assert that the caller is a registered user
-        switch (await UserIndex.userId(caller)) {
-            case (#ok(_)) {};
+        let userId = switch (await UserIndex.userId(caller)) {
+            case (#ok(_)) {
+
+            };
             case (#err(_)) {
-                return #err(#Unauthorized);
+                switch (AuthUtils.isDev(caller)) {
+                    case (true) {};
+                    case (false) {
+                        return #err(#Unauthorized);
+                    };
+                };
             };
         };
 
+        // Build the list of owners
+        let owners = Buffer.fromArray<Principal>([caller]);
+        label addOwners for (owner in Array.vals(additionalOwners)) {
+            if (Principal.isAnonymous(owner)) {
+                continue addOwners;
+            };
+            if (Buffer.contains(owners, owner, Principal.equal)) {
+                continue addOwners;
+            };
+            owners.add(owner);
+        };
+        owners.append(Buffer.fromArray(additionalOwners));
+
+        // Create the workspace
         let result = await CreateWorkspace.execute({
-            owner = caller;
+            name;
+            description;
+            owners = Buffer.toArray(owners);
             controllers = [caller, Principal.fromActor(WorkspaceIndex)];
-            initialUsers = [];
+            initialUsers;
             userIndexCanisterId = Principal.fromActor(UserIndex);
         });
 
@@ -134,6 +167,17 @@ actor WorkspaceIndex {
                 #ok(workspaceId);
             };
         };
+    };
+
+    public shared ({ caller }) func removeWorkspace(workspaceId : Principal) : async Result.Result<(), { #unauthorized }> {
+        if ((AuthUtils.isDev(caller)) == false) {
+            return #err(#unauthorized);
+        };
+
+        let workspace = actor (Principal.toText(workspaceId)) : Workspace.Workspace;
+        await workspace.unsubscribe("workspaceNameUpdated", handleWorkspaceEvents);
+        Map.delete(_workspaces, Map.phash, workspaceId);
+        #ok;
     };
 
     public shared ({ caller }) func handleWorkspaceEvents(eventName : Text, payload : WorkspaceTypes.PubSubEvent) : async () {
@@ -169,7 +213,19 @@ actor WorkspaceIndex {
             try {
                 await IC0.install_code(
                     {
-                        arg = to_candid ();
+                        arg = to_candid (
+                            // // These values will not be used by the canister
+                            // {
+                            //     capacity = Constants.WORKSPACE__CAPACITY.scalar;
+                            //     userIndexCanisterId = Principal.fromActor(UserIndex);
+                            //     owners = [];
+                            //     name = "";
+                            //     uuid = await Source.Source().new();
+                            //     description = "";
+                            //     createdAt = Time.now();
+                            //     updatedAt = Time.now();
+                            // },
+                        );
                         canister_id = canisterId;
                         mode = #upgrade(?{ skip_pre_upgrade = ?false });
                         sender_canister_version = sender_canister_version;

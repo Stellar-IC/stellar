@@ -1,8 +1,8 @@
-import { DelegationIdentity } from '@dfinity/identity';
 import { Principal } from '@dfinity/principal';
 import {
   ActionIcon,
   Anchor,
+  Box,
   Container,
   Flex,
   Menu,
@@ -24,21 +24,22 @@ import { WorkspaceContext } from '@/contexts/WorkspaceContext/WorkspaceContext';
 import { WorkspaceContextProvider } from '@/contexts/WorkspaceContext/WorkspaceContextProvider';
 import { usePagesQuery } from '@/hooks/canisters/workspace/queries/usePagesQuery';
 import { useCreatePageWithRedirect } from '@/hooks/canisters/workspace/updates/useCreatePageWithRedirect';
-import { useAuthContext } from '@/modules/auth/contexts/AuthContext';
 import { toLocalStorage } from '@/modules/blocks/serializers';
 import { LocalStorageBlock } from '@/types';
 
-import { _SERVICE } from '../../../declarations/workspace/workspace.did';
+import { _SERVICE } from '../../../../declarations/workspace/workspace.did';
+
+import classes from './SpaceHome.module.css';
+
+interface SpaceHomePageProps {
+  workspaceActor: _SERVICE;
+  workspaceId: string;
+}
 
 export function SpaceHomePage({
   workspaceActor,
   workspaceId,
-}: {
-  workspaceActor: _SERVICE;
-  workspaceId: string;
-}) {
-  const { identity } = useAuthContext();
-
+}: SpaceHomePageProps) {
   const theme = useMantineTheme();
   const createPageAndRedirect = useCreatePageWithRedirect({
     workspaceId: Principal.fromText(workspaceId),
@@ -57,47 +58,43 @@ export function SpaceHomePage({
 
   useEffect(() => {
     workspaceActor.toObject().then((result) => {
-      setWorkspace({
-        name: result.name,
-      });
+      setWorkspace({ name: result.name });
     });
   }, [workspaceActor]);
-
-  if (!(identity instanceof DelegationIdentity)) {
-    throw new Error('Anonymous identity is not allowed here');
-  }
 
   return (
     <>
       <ActionBar />
+      <Box className={classes.SpaceHeader} py="md">
+        <Container>
+          <Text size="xs" fw={500} c="dimmed">
+            Space
+          </Text>
+          <Flex align="center" justify="space-between">
+            <Title>{workspace?.name || 'Untitled'}</Title>
+            <Menu position="bottom-end">
+              <MenuTarget>
+                <ActionIcon variant="subtle">
+                  <IconDotsVertical />
+                </ActionIcon>
+              </MenuTarget>
+              <MenuDropdown>
+                <MenuItem>
+                  <Anchor
+                    component={Link}
+                    to={`/spaces/${workspaceId}/settings`}
+                    underline="never"
+                  >
+                    Settings
+                  </Anchor>
+                </MenuItem>
+              </MenuDropdown>
+            </Menu>
+          </Flex>
+        </Container>
+      </Box>
       <Container>
         <div style={{ padding: theme.spacing.sm }}>
-          <div style={{ borderBottom: '1px solid #aaa' }}>
-            <Text size="xs" fw={500} c="dimmed">
-              Space
-            </Text>
-            <Flex align="center" justify="space-between">
-              <Title>{workspace?.name || 'Untitled'}</Title>
-              <Menu position="bottom-end">
-                <MenuTarget>
-                  <ActionIcon variant="subtle">
-                    <IconDotsVertical />
-                  </ActionIcon>
-                </MenuTarget>
-                <MenuDropdown>
-                  <MenuItem>
-                    <Anchor
-                      component={Link}
-                      to={`/spaces/${workspaceId}/settings`}
-                      underline="never"
-                    >
-                      Settings
-                    </Anchor>
-                  </MenuItem>
-                </MenuDropdown>
-              </Menu>
-            </Flex>
-          </div>
           <Flex align="center" justify="space-between">
             <h2>Pages</h2>
             <ActionIcon

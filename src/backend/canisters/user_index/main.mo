@@ -41,6 +41,8 @@ actor UserIndex {
     stable let stable_capacity = 100_000_000_000_000;
     stable var stable_balance = 0 : Nat;
 
+    stable var loginDisabled = true;
+
     var stable_data = {
         user_identity_to_canister_id = stable_user_identity_to_canister_id;
         user_canister_id_to_identity = stable_user_canister_id_to_identity;
@@ -51,6 +53,10 @@ actor UserIndex {
     let topUps = RBTree.RBTree<Principal, CanisterTopUp.CanisterTopUp>(Principal.compare);
 
     public shared ({ caller }) func registerUser() : async Types.RegisterUserResult {
+        if (loginDisabled) {
+            return #err(#LoginDisabled);
+        };
+
         if (Principal.isAnonymous(caller)) {
             return #err(#AnonymousOwner);
         };
@@ -105,6 +111,32 @@ actor UserIndex {
         };
     };
 
+    public shared ({ caller }) func upgradeUser(userId : Principal, wasm_module : Blob) : async Result.Result<(), { #unauthorized }> {
+        if ((AuthUtils.isDev(caller)) == false) {
+            return #err(#unauthorized);
+        };
+
+        let IC0 : CoreTypes.Management = actor "aaaaa-aa";
+        let sender_canister_version : ?Nat64 = null;
+
+        await IC0.install_code(
+            {
+                arg = to_candid (
+                    {
+                        capacity = USER_CAPACITY;
+                        owner = Principal.fromActor(UserIndex);
+                    }
+                );
+                canister_id = userId;
+                mode = #upgrade(?{ skip_pre_upgrade = ?false });
+                sender_canister_version = sender_canister_version;
+                wasm_module = wasm_module;
+            }
+        );
+
+        #ok;
+    };
+
     public shared ({ caller }) func upgradeUsers(wasm_module : Blob) : async Result.Result<(), { #unauthorized }> {
         if ((AuthUtils.isDev(caller)) == false) {
             return #err(#unauthorized);
@@ -133,29 +165,6 @@ actor UserIndex {
                 );
             } catch (err) {
                 Debug.print("Error upgrading user canister: " # debug_show (Error.code(err)) # ": " # debug_show (Error.message(err)));
-            };
-        };
-
-        #ok;
-    };
-
-    public shared ({ caller }) func upgradePersonalWorkspaces(wasm_module : Blob) : async Result.Result<(), { #failed : Text; #unauthorized; #workspaceNotFound : Text }> {
-        if ((AuthUtils.isDev(caller)) == false) {
-            return #err(#unauthorized);
-        };
-
-        let IC0 : CoreTypes.Management = actor "aaaaa-aa";
-        let sender_canister_version : ?Nat64 = null;
-
-        for (entry in state.data.user_canister_id_to_identity.entries()) {
-            var userId = entry.0;
-            var userCanister = actor (Principal.toText(userId)) : User.User;
-
-            try {
-                let result = await userCanister.upgradePersonalWorkspace(wasm_module);
-                return result;
-            } catch (err) {
-                Debug.print("Error upgrading user personal workspace canister: " # debug_show (Error.code(err)) # ": " # debug_show (Error.message(err)));
             };
         };
 
@@ -231,6 +240,22 @@ actor UserIndex {
                 };
             };
         };
+    };
+
+    public query func settings() : async { loginDisabled : Bool } {
+        return { loginDisabled };
+    };
+
+    public shared ({ caller }) func enableLogin() : async Result.Result<(), { #unauthorized }> {
+        if ((AuthUtils.isDev(caller)) == false) { return #err(#unauthorized) };
+        loginDisabled := false;
+        #ok;
+    };
+
+    public shared ({ caller }) func disableLogin() : async Result.Result<(), { #unauthorized }> {
+        if ((AuthUtils.isDev(caller)) == false) { return #err(#unauthorized) };
+        loginDisabled := true;
+        #ok;
     };
 
     private func initializeTopUpsForCanister(canisterId : Principal) : () {

@@ -1,19 +1,12 @@
-import { DelegationIdentity } from '@dfinity/identity';
 import { Flex, useMantineTheme } from '@mantine/core';
 import { PropsWithChildren } from 'react';
 
 import { ActionBar } from './components/ActionBar';
-import { useAuthContext } from './modules/auth/contexts/AuthContext';
 
 type PageWrapperProps = PropsWithChildren<{}>;
 
 export function PageWrapper({ children }: PageWrapperProps) {
-  const { identity } = useAuthContext();
   const theme = useMantineTheme();
-
-  if (!(identity instanceof DelegationIdentity)) {
-    throw new Error('Anonymous identity is not allowed here');
-  }
 
   return (
     <Flex h="100%">

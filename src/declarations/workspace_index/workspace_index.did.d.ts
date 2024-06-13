@@ -120,13 +120,34 @@ export interface WorkspaceDetailsItem {
   'result' : { 'found' : WorkspaceDetails } |
     { 'notFound' : null },
 }
+export interface WorkspaceUser {
+  'username' : string,
+  'role' : WorkspaceUserRole,
+  'identity' : Principal,
+  'canisterId' : Principal,
+}
+export type WorkspaceUserRole = { 'member' : null } |
+  { 'admin' : null } |
+  { 'moderator' : null } |
+  { 'guest' : null };
 export interface _SERVICE {
-  'createWorkspace' : ActorMethod<[], Result_1>,
+  'createWorkspace' : ActorMethod<
+    [
+      {
+        'name' : string,
+        'description' : string,
+        'initialUsers' : Array<[Principal, WorkspaceUser]>,
+        'additionalOwners' : Array<Principal>,
+      },
+    ],
+    Result_1
+  >,
   'getCanistergeekInformation' : ActorMethod<
     [GetInformationRequest],
     GetInformationResponse
   >,
   'handleWorkspaceEvents' : ActorMethod<[string, PubSubEvent], undefined>,
+  'removeWorkspace' : ActorMethod<[Principal], Result>,
   'requestCycles' : ActorMethod<[bigint], { 'accepted' : bigint }>,
   'updateCanistergeekInformation' : ActorMethod<
     [UpdateInformationRequest],

@@ -33,6 +33,22 @@ module PubSub {
         };
     };
 
+    public func unsubscribe<DataT, HandlerT>(
+        publisher : Publisher<DataT, HandlerT>,
+        subscriber : Principal,
+        eventName : EventName,
+    ) : () {
+        let subscribers = publisher.subscribers;
+        let subscriptionsForEvent = Map.get(subscribers, Map.thash, eventName);
+
+        switch (subscriptionsForEvent) {
+            case (null) {};
+            case (?subscriptions) {
+                Map.delete(subscriptions, Map.phash, subscriber);
+            };
+        };
+    };
+
     public func publish<DataT, HandlerT>(
         publisher : Publisher<DataT, HandlerT>,
         eventName : EventName,

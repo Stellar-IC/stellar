@@ -28,8 +28,20 @@ function WorkspaceItem(props: { workspaceDetails: WorkspaceDetails }) {
   const { workspaceDetails } = props;
   const { id, name } = workspaceDetails;
 
+  const theme = useMantineTheme();
+  const { layoutManager } = useLayoutManager();
+
+  const xsBreakpoint = Number(`${px(theme.breakpoints.xs)}`.replace('px', ''));
+
   return (
-    <Link to={`/spaces/${id}`}>
+    <Link
+      to={`/spaces/${id}`}
+      onClick={() => {
+        if (document.body.clientWidth < xsBreakpoint) {
+          layoutManager.layout = 'CLOSED';
+        }
+      }}
+    >
       <Flex gap="sm">
         <div
           style={{
@@ -92,7 +104,6 @@ export function NavbarSearch() {
     userActor
       .workspaces()
       .then((result) => {
-        // console.log({ result });
         if ('ok' in result) {
           return workspace_index.workspaceDetailsById(result.ok);
         }

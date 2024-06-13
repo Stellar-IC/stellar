@@ -23,6 +23,7 @@ import BlockModule "../../../../lib/blocks/block";
 import BlocksTypes "../../../../lib/blocks/types";
 import EventsTypes "../../../../lib/events/types";
 
+import Collection "../../../../utils/data/database/collection/collection";
 import QuerySet "../../../../utils/data/database/query_set";
 import Node "../../../../utils/data/lseq/Node";
 import Tree "../../../../utils/data/lseq/Tree";
@@ -49,84 +50,32 @@ module {
 
     let fromShareable = BlockModule.fromShareable;
 
-    public func addBlock(state : S.State, input : Block) : Result<Block, { #failed }> {
-        let result = Map.put<Text, ShareableBlock>(
-            state.data.blocks,
-            (Text.hash, Text.equal),
-            UUID.toText(input.uuid),
-            BlockModule.toShareable(input),
-        );
+    public func addBlock(state : S.State, input : Block) : Result<(), { #PkAlreadyInUse }> {
+        let pk = UUID.toText(input.uuid);
+        let item = BlockModule.toShareable(input);
+        let result = Collection.add(state.data.blocks, pk, item);
 
         switch (result) {
-            case (null) { return #err(#failed) };
-            case (?block) { return #ok(fromShareable(block)) };
+            case (#err(err)) { return #err(err) };
+            case (#ok) { return #ok };
         };
     };
 
-    public func addActivity(state : S.State, input : Activity) : Result<Activity, { #failed }> {
-        let result = Map.put<ActivityId, ShareableActivity>(
-            state.data.activities,
-            (Nat32.fromNat, Nat.equal),
-            input.id,
-            ActivityModule.toShareable(input),
-        );
+    public func updateBlock(state : S.State, input : Block) : Result<(), { #NotFound }> {
+        let pk = UUID.toText(input.uuid);
+        let item = BlockModule.toShareable(input);
 
-        switch (result) {
-            case (null) { return #err(#failed) };
-            case (?activity) {
-                return #ok(ActivityModule.fromShareable(activity));
-            };
-        };
-    };
-
-    public func updateActivity(state : S.State, input : Activity) : Result<Activity, { #failed }> {
-        let result = Map.put<ActivityId, ShareableActivity>(
-            state.data.activities,
-            (Nat32.fromNat, Nat.equal),
-            input.id,
-            ActivityModule.toShareable(input),
-        );
-
-        switch (result) {
-            case (null) { return #err(#failed) };
-            case (?activity) {
-                return #ok(ActivityModule.fromShareable(activity));
-            };
-        };
-    };
-
-    public func updateBlock(state : S.State, input : Block) : Result<Block, { #failed }> {
-        let result = Map.put<Text, ShareableBlock>(
-            state.data.blocks,
-            (Text.hash, Text.equal),
-            UUID.toText(input.uuid),
-            BlockModule.toShareable(input),
-        );
-
-        switch (result) {
-            case (null) { return #err(#failed) };
-            case (?block) { return #ok(fromShareable(block)) };
-        };
+        Collection.update(state.data.blocks, pk, item);
     };
 
     public func deleteBlock(state : S.State, uuid : Text) : () {
-        Map.delete<Text, ShareableBlock>(
-            state.data.blocks,
-            (Text.hash, Text.equal),
-            uuid,
-        );
+        Collection.delete(state.data.blocks, uuid);
     };
 
     public func findBlock(state : S.State, uuid : Text) : ?Block {
-        let result = Map.get<Text, ShareableBlock>(
-            state.data.blocks,
-            (Text.hash, Text.equal),
-            uuid,
-        );
-
-        switch result {
+        switch (Collection.find(state.data.blocks, uuid)) {
             case (null) { return null };
-            case (?block) { return ?fromShareable(block) };
+            case (?block) { return ?BlockModule.fromShareable(block) };
         };
     };
 
@@ -139,16 +88,30 @@ module {
         };
     };
 
-    public func findActivity(state : S.State, id : ActivityId) : ?Activity {
-        let result = Map.get<ActivitiesTypes.ActivityId, ShareableActivity>(
-            state.data.activities,
-            (Nat32.fromNat, Nat.equal),
-            id,
-        );
+    public func addActivity(state : S.State, input : Activity) : Result<(), { #PkAlreadyInUse }> {
+        let pk = Nat.toText(input.id);
+        let item = ActivityModule.toShareable(input);
+        let result = Collection.add(state.data.activities, pk, item);
 
-        switch result {
+        switch (result) {
+            case (#err(err)) { return #err(err) };
+            case (#ok) { return #ok };
+        };
+    };
+
+    public func updateActivity(state : S.State, input : Activity) : Result<(), { #NotFound }> {
+        let pk = Nat.toText(input.id);
+        let item = ActivityModule.toShareable(input);
+
+        Collection.update(state.data.activities, pk, item);
+    };
+
+    public func findActivity(state : S.State, id : ActivityId) : ?Activity {
+        let _id = Nat.toText(id);
+
+        switch (Collection.find(state.data.activities, _id)) {
             case (null) { return null };
-            case (?activity) { return ?ActivityModule.fromShareable(activity) };
+            case (?block) { return ?ActivityModule.fromShareable(block) };
         };
     };
 
@@ -161,7 +124,7 @@ module {
         };
     };
 
-    public func getContentForBlock(state : S.State, uuid : BlocksTypes.PrimaryKey, options : PaginationOptions) : List.List<Block> {
+    public func getContentForBlock(state : S.State, uuid : BlocksTypes.PrimaryKey, options : PaginationOptions) : Iter.Iter<Block> {
         var finalBlocks = List.fromArray<Block>([]);
 
         func getReversedBlockContent(block : Block) : [BlocksTypes.PrimaryKey] {
@@ -173,7 +136,7 @@ module {
         let page = switch (findBlock(state, uuid)) {
             case (null) {
                 // Page not found, return empty list
-                return List.fromArray<Block>([]);
+                return Array.vals<Block>([]);
             };
             case (?page) { page };
         };
@@ -209,19 +172,21 @@ module {
             };
         };
 
-        return finalBlocks;
+        return List.toIter(finalBlocks);
     };
 
-    public func getPages(state : S.State) : List.List<ShareableBlock> {
+    public func getPages(state : S.State) : Iter.Iter<ShareableBlock> {
+        // TODO: This should be optimized to avoid iterating over all blocks.
+        // Ideally, we should have a separate index for pages.
         var pages = Map.toArrayMap<Text, ShareableBlock, ShareableBlock>(
-            state.data.blocks,
-            func((key : Text, value : ShareableBlock)) {
+            state.data.blocks.data,
+            func((key, value)) {
                 if (value.blockType == #page) { return ?value };
                 return null;
             },
         );
 
-        return List.fromArray(pages);
+        return Array.vals(pages);
     };
 
     public func getFirstAncestorPage(state : S.State, block : Block) : ?Block {
@@ -254,7 +219,7 @@ module {
 
     func isActivityOnBlockOrContent(
         state : S.State,
-        activity : ActivitiesTypes.ShareableActivity,
+        activity : ShareableActivity,
         block : Block,
     ) : Bool {
         let activityBlock = UUID.toText(activity.blockExternalId);
@@ -341,38 +306,39 @@ module {
         };
     };
 
+    private func relatedActivities(
+        state : S.State,
+        block : Block,
+    ) : [ShareableActivity] {
+        let blockId = UUID.toText(block.uuid);
+
+        func isRelevantActivity(activityId : Text, activity : ShareableActivity) : Bool {
+            return isActivityOnBlockOrContent(state, activity, block);
+        };
+
+        return Map.toArrayMap<Text, ShareableActivity, ShareableActivity>(
+            Map.filter(
+                state.data.activities.data,
+                Map.thash,
+                isRelevantActivity,
+            ),
+            func((_, value)) { ?value },
+        );
+    };
+
     public func getActivitiesForPage(
         state : S.State,
         uuid : BlocksTypes.PrimaryKey,
-    ) : List.List<ActivitiesTypes.ShareableActivity> {
+    ) : List.List<ShareableActivity> {
         let page = switch (findBlock(state, uuid)) {
             case (?page) { page };
             case (null) { return null };
         };
         let content = page.content;
-
-        func isRelevantActivity(activityId : ActivitiesTypes.ActivityId, activity : ActivitiesTypes.ShareableActivity) : Bool {
-            return isActivityOnBlockOrContent(state, activity, page);
-        };
-
-        func compareActivitiesByEndTimeDesc(activityA : ActivitiesTypes.ShareableActivity, activityB : ActivitiesTypes.ShareableActivity) : Order.Order {
-            return Int.compare(activityB.endTime, activityA.endTime);
-        };
-
-        let relevantActivities = Map.toArrayMap<ActivitiesTypes.ActivityId, ActivitiesTypes.ShareableActivity, ActivitiesTypes.ShareableActivity>(
-            Map.filter<ActivitiesTypes.ActivityId, ActivitiesTypes.ShareableActivity>(
-                state.data.activities,
-                (Nat32.fromNat, Nat.equal),
-                isRelevantActivity,
-            ),
-            func((key : Nat, value : ActivitiesTypes.ShareableActivity)) {
-                ?value;
-            },
-        );
-
+        let relevantActivities = relatedActivities(state, page);
         let querySet = QuerySet.QuerySet(?relevantActivities);
 
-        return QuerySet.QuerySet<ActivitiesTypes.ShareableActivity>(?relevantActivities).sort(compareActivitiesByEndTimeDesc).value();
+        return querySet.sort(compareActivitiesByEndTime).value();
     };
 
     public func getMostRecentActivityForPage(
@@ -385,35 +351,21 @@ module {
         };
         let content = page.content;
 
-        func isRelevantActivity(activityId : ActivitiesTypes.ActivityId, activity : ActivitiesTypes.ShareableActivity) : Bool {
-            return isActivityOnBlockOrContent(state, activity, page);
-        };
-
-        func compareByEndTime(activityA : ActivitiesTypes.ShareableActivity, activityB : ActivitiesTypes.ShareableActivity) : Order.Order {
-            let result = Int.compare(activityB.endTime, activityA.endTime);
-            switch result {
-                case (#equal) { Int.compare(activityB.id, activityA.id) };
-                case (result) { result };
-            };
-        };
-
-        let relevantActivities = Map.toArrayMap<ActivitiesTypes.ActivityId, ActivitiesTypes.ShareableActivity, ActivitiesTypes.ShareableActivity>(
-            Map.filter<ActivitiesTypes.ActivityId, ActivitiesTypes.ShareableActivity>(
-                state.data.activities,
-                (Nat32.fromNat, Nat.equal),
-                isRelevantActivity,
-            ),
-            func((key : Nat, value : ActivitiesTypes.ShareableActivity)) {
-                ?value;
-            },
-        );
-
+        let relevantActivities = relatedActivities(state, page);
         let querySet = QuerySet.QuerySet(?relevantActivities);
-        let activity = querySet.sort(compareByEndTime).first();
+        let activity = querySet.sort(compareActivitiesByEndTime).first();
 
         switch (activity) {
             case (null) { null };
             case (?activity) { ?ActivityModule.fromShareable(activity) };
+        };
+    };
+
+    private func compareActivitiesByEndTime(activityA : ShareableActivity, activityB : ShareableActivity) : Order.Order {
+        let result = Int.compare(activityB.endTime, activityA.endTime);
+        switch result {
+            case (#equal) { Int.compare(activityB.id, activityA.id) };
+            case (result) { result };
         };
     };
 };
