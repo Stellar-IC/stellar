@@ -23,6 +23,19 @@ module {
     public type ShareableBlockProperties = BlocksTypes.ShareableBlockProperties;
     public type WorkspaceOwner = Principal;
 
+    public type PageAccessLevel = {
+        #full;
+        #edit;
+        #view;
+        #none;
+    };
+
+    public type PageAccessSetting = {
+        #invited;
+        #workspaceMember : PageAccessLevel;
+        #everyone : PageAccessLevel;
+    };
+
     public type PubSubEvent = {
         #workspaceNameUpdated : {
             workspaceId : Principal;
@@ -57,14 +70,6 @@ module {
         canisterId : Principal;
         username : Text;
         role : WorkspaceUserRole;
-    };
-
-    public type WorkspaceUserV2 = {
-        identity : Principal;
-        canisterId : Principal;
-        username : Text;
-        role : WorkspaceUserRole;
-        rolesByBlock : Map.Map<Text, BlockUserRole>;
     };
 
     public module Services {
@@ -169,6 +174,10 @@ module {
             };
         };
 
+        public module PageAccessSettings {
+            public type PageAccessSettingsOutput = PageAccessSetting;
+        };
+
         public module PageByUuid {
             public type PageByUuidResult = Result.Result<{ page : ExternalId; recordMap : { blocks : [(ExternalId, ShareableBlock)] } }, { #notFound }>;
         };
@@ -203,95 +212,107 @@ module {
     };
 
     public module Updates {
-        public module AddBlockUpdate {
-            public type AddBlockUpdateInput = {
+        public module AddBlock {
+            public type AddBlockInput = {
                 uuid : BlockId;
                 blockType : BlocksTypes.BlockType;
                 content : BlocksTypes.ShareableBlockContent;
                 parent : ?BlockId;
                 properties : BlocksTypes.ShareableBlockProperties;
             };
-            public type AddBlockUpdateOutputError = { #unauthorized };
-            public type AddBlockUpdateOutputResult = ();
-            public type AddBlockUpdateOutput = Result.Result<AddBlockUpdateOutputResult, AddBlockUpdateOutputError>;
+            public type AddBlockOutputError = { #unauthorized };
+            public type AddBlockOutputResult = ();
+            public type AddBlockOutput = Result.Result<AddBlockOutputResult, AddBlockOutputError>;
         };
 
-        public module AddUsersUpdate {
-            public type AddUsersUpdateInput = [(Principal, WorkspaceUser)];
-            public type AddUsersUpdateResult = Result.Result<(), { #unauthorized }>;
+        public module AddUsers {
+            public type AddUsersInput = [(Principal, WorkspaceUser)];
+            public type AddUsersResult = Result.Result<(), { #unauthorized }>;
         };
 
-        public module CreatePageUpdate {
-            public type CreatePageUpdateInput = {
+        public module CreatePage {
+            public type CreatePageInput = {
                 uuid : BlockId;
                 content : BlocksTypes.ShareableBlockContent;
                 parent : ?BlockId;
                 properties : ShareableBlockProperties;
                 initialBlockUuid : ?BlockId;
             };
-            public type CreatePageUpdateOutputError = {
+            public type CreatePageOutputError = {
                 #anonymousUser;
                 #failedToCreate;
                 #inputTooLong;
                 #invalidBlockType;
                 #insufficientCycles;
             };
-            public type CreatePageUpdateOutputResult = ShareableBlock;
-            public type CreatePageUpdateOutput = Result.Result<CreatePageUpdateOutputResult, CreatePageUpdateOutputError>;
+            public type CreatePageOutputResult = ShareableBlock;
+            public type CreatePageOutput = Result.Result<CreatePageOutputResult, CreatePageOutputError>;
         };
 
-        public module DeletePageUpdate {
-            public type DeletePageUpdateInput = { uuid : BlockId };
-            public type DeletePageUpdateOutputError = ();
-            public type DeletePageUpdateOutputResult = ();
-            public type DeletePageUpdateOutput = Result.Result<DeletePageUpdateOutputResult, DeletePageUpdateOutputError>;
+        public module DeletePage {
+            public type DeletePageInput = { uuid : BlockId };
+            public type DeletePageOutputError = ();
+            public type DeletePageOutputResult = ();
+            public type DeletePageOutput = Result.Result<DeletePageOutputResult, DeletePageOutputError>;
         };
 
-        public module SaveEventTransactionUpdate {
-            public type SaveEventTransactionUpdateInput = {
+        public module SaveEventTransaction {
+            public type SaveEventTransactionInput = {
                 transaction : BlocksTypes.BlockEventTransaction;
             };
-            public type SaveEventTransactionUpdateOutputError = {
+            public type SaveEventTransactionOutputError = {
                 #anonymousUser;
                 #insufficientCycles;
             };
-            public type SaveEventTransactionUpdateOutputResult = ();
-            public type SaveEventTransactionUpdateOutput = Result.Result<SaveEventTransactionUpdateOutputResult, SaveEventTransactionUpdateOutputError>;
+            public type SaveEventTransactionOutputResult = ();
+            public type SaveEventTransactionOutput = Result.Result<SaveEventTransactionOutputResult, SaveEventTransactionOutputError>;
         };
 
-        public module UpdateBlockUpdate {
-            public type UpdateBlockUpdateInput = ShareableBlock;
-            public type UpdateBlockUpdateOutputError = {
+        public module SetPageAccess {
+            public type SetPageAccessInput = {
+                pageId : BlockId;
+                access : PageAccessSetting;
+            };
+            public type SetPageAccessOutputError = {
+                #unauthorized;
+            };
+            public type SetPageAccessOutputResult = ();
+            public type SetPageAccessOutput = Result.Result<SetPageAccessOutputResult, SetPageAccessOutputError>;
+        };
+
+        public module UpdateBlock {
+            public type UpdateBlockInput = ShareableBlock;
+            public type UpdateBlockOutputError = {
                 #primaryKeyAttrNotFound;
             };
-            public type UpdateBlockUpdateOutputResult = ShareableBlock;
-            public type UpdateBlockUpdateOutput = Result.Result<UpdateBlockUpdateOutputResult, UpdateBlockUpdateOutputError>;
+            public type UpdateBlockOutputResult = ShareableBlock;
+            public type UpdateBlockOutput = Result.Result<UpdateBlockOutputResult, UpdateBlockOutputError>;
         };
 
-        public module UpdateSettingsUpdate {
-            public type UpdateSettingsUpdateInput = {
+        public module UpdateSettings {
+            public type UpdateSettingsInput = {
                 description : ?Text;
                 name : ?Text;
                 visibility : ?WorkspaceVisibility;
                 websiteLink : ?Text;
             };
-            public type UpdateSettingsUpdateOutputError = {
+            public type UpdateSettingsOutputError = {
                 #unauthorized;
             };
-            public type UpdateSettingsUpdateOutputOk = ();
-            public type UpdateSettingsUpdateOutput = Result.Result<UpdateSettingsUpdateOutputOk, UpdateSettingsUpdateOutputError>;
+            public type UpdateSettingsOutputOk = ();
+            public type UpdateSettingsOutput = Result.Result<UpdateSettingsOutputOk, UpdateSettingsOutputError>;
         };
 
-        public module UpdateUserRoleUpdate {
-            public type UpdateUserRoleUpdateInput = {
+        public module UpdateUserRole {
+            public type UpdateUserRoleInput = {
                 user : Principal;
                 role : WorkspaceUserRole;
             };
-            public type UpdateUserRoleUpdateOutputError = {
+            public type UpdateUserRoleOutputError = {
                 #unauthorized;
             };
-            public type UpdateUserRoleUpdateOutputOk = ();
-            public type UpdateUserRoleUpdateOutput = Result.Result<UpdateUserRoleUpdateOutputOk, UpdateUserRoleUpdateOutputError>;
+            public type UpdateUserRoleOutputOk = ();
+            public type UpdateUserRoleOutput = Result.Result<UpdateUserRoleOutputOk, UpdateUserRoleOutputError>;
         };
     };
 };

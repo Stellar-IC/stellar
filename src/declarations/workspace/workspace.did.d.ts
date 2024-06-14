@@ -4,25 +4,25 @@ import type { IDL } from '@dfinity/candid';
 
 export type ActivityId = bigint;
 export interface ActivityLogOutput { 'edges' : Array<Edge_2> }
-export interface AddBlockUpdateInput {
+export interface AddBlockInput {
   'content' : ShareableBlockContent,
-  'uuid' : UUID,
+  'uuid' : BlockId__1,
   'blockType' : BlockType,
   'properties' : ShareableBlockProperties,
-  'parent' : [] | [UUID],
+  'parent' : [] | [BlockId__1],
 }
-export type AddBlockUpdateOutput = { 'ok' : AddBlockUpdateOutputResult } |
-  { 'err' : AddBlockUpdateOutputError };
-export type AddBlockUpdateOutputError = { 'unauthorized' : null };
-export type AddBlockUpdateOutputResult = null;
-export type AddUsersUpdateInput = Array<[Principal, WorkspaceUser]>;
-export type AddUsersUpdateResult = { 'ok' : null } |
+export type AddBlockOutput = { 'ok' : AddBlockOutputResult } |
+  { 'err' : AddBlockOutputError };
+export type AddBlockOutputError = { 'unauthorized' : null };
+export type AddBlockOutputResult = null;
+export type AddUsersInput = Array<[Principal, WorkspaceUser]>;
+export type AddUsersResult = { 'ok' : null } |
   { 'err' : { 'unauthorized' : null } };
 export type AllocationStrategy = { 'boundaryPlus' : null } |
   { 'boundaryMinus' : null };
 export interface BlockBlockTypeUpdatedEventData {
   'blockType' : BlockType,
-  'blockExternalId' : UUID,
+  'blockExternalId' : BlockId,
 }
 export interface BlockByUuidOptions {
   'contentPagination' : { 'cursor' : bigint, 'limit' : bigint },
@@ -36,31 +36,37 @@ export type BlockByUuidResult = {
   { 'err' : { 'notFound' : null } };
 export interface BlockContentUpdatedEventData {
   'transaction' : Array<TreeEvent>,
-  'blockExternalId' : UUID,
+  'blockExternalId' : BlockId,
 }
 export interface BlockCreatedEventData {
-  'block' : { 'uuid' : UUID, 'blockType' : BlockType, 'parent' : [] | [UUID] },
+  'block' : {
+    'uuid' : BlockId,
+    'blockType' : BlockType,
+    'parent' : [] | [BlockId],
+  },
   'index' : bigint,
 }
 export interface BlockEvent {
   'data' : { 'blockCreated' : BlockCreatedEventData } |
     { 'blockUpdated' : BlockUpdatedEventData },
   'user' : Principal,
-  'uuid' : UUID,
+  'uuid' : BlockId,
   'timestamp' : Time,
 }
 export type BlockEventTransaction = Array<BlockEvent>;
+export type BlockId = Uint8Array | number[];
+export type BlockId__1 = Uint8Array | number[];
 export interface BlockParentUpdatedEventData {
-  'parentBlockExternalId' : UUID,
-  'blockExternalId' : UUID,
+  'parentBlockExternalId' : BlockId,
+  'blockExternalId' : BlockId,
 }
 export interface BlockPropertyCheckedUpdatedEventData {
   'checked' : boolean,
-  'blockExternalId' : UUID,
+  'blockExternalId' : BlockId,
 }
 export interface BlockPropertyTitleUpdatedEventData {
   'transaction' : Array<TreeEvent>,
-  'blockExternalId' : UUID,
+  'blockExternalId' : BlockId,
 }
 export type BlockType = { 'numberedList' : null } |
   { 'todoList' : null } |
@@ -109,26 +115,26 @@ export type CanisterMetricsData = { 'hourly' : Array<HourlyMetricsData> } |
   { 'daily' : Array<DailyMetricsData> };
 export type CollectMetricsRequestType = { 'force' : null } |
   { 'normal' : null };
-export interface CreatePageUpdateInput {
-  'initialBlockUuid' : [] | [UUID],
+export interface CreatePageInput {
+  'initialBlockUuid' : [] | [BlockId__1],
   'content' : ShareableBlockContent,
-  'uuid' : UUID,
+  'uuid' : BlockId__1,
   'properties' : ShareableBlockProperties__1,
-  'parent' : [] | [UUID],
+  'parent' : [] | [BlockId__1],
 }
-export type CreatePageUpdateOutput = { 'ok' : CreatePageUpdateOutputResult } |
-  { 'err' : CreatePageUpdateOutputError };
-export type CreatePageUpdateOutputError = { 'failedToCreate' : null } |
+export type CreatePageOutput = { 'ok' : CreatePageOutputResult } |
+  { 'err' : CreatePageOutputError };
+export type CreatePageOutputError = { 'failedToCreate' : null } |
   { 'anonymousUser' : null } |
   { 'invalidBlockType' : null } |
   { 'insufficientCycles' : null } |
   { 'inputTooLong' : null };
-export interface CreatePageUpdateOutputResult {
+export interface CreatePageOutputResult {
   'content' : ShareableBlockContent,
-  'uuid' : UUID,
+  'uuid' : BlockId,
   'blockType' : BlockType,
   'properties' : ShareableBlockProperties,
-  'parent' : [] | [UUID],
+  'parent' : [] | [BlockId],
 }
 export interface DailyMetricsData {
   'updateCalls' : bigint,
@@ -137,11 +143,11 @@ export interface DailyMetricsData {
   'canisterMemorySize' : NumericEntity,
   'timeMillis' : bigint,
 }
-export interface DeletePageUpdateInput { 'uuid' : UUID }
-export type DeletePageUpdateOutput = { 'ok' : DeletePageUpdateOutputResult } |
-  { 'err' : DeletePageUpdateOutputError };
-export type DeletePageUpdateOutputError = null;
-export type DeletePageUpdateOutputResult = null;
+export interface DeletePageInput { 'uuid' : BlockId__1 }
+export type DeletePageOutput = { 'ok' : DeletePageOutputResult } |
+  { 'err' : DeletePageOutputError };
+export type DeletePageOutputError = null;
+export type DeletePageOutputResult = null;
 export interface Edge { 'node' : ExternalId }
 export interface Edge_1 { 'node' : Principal }
 export interface Edge_2 { 'node' : HydratedActivity }
@@ -228,6 +234,16 @@ export interface NumericEntity {
   'first' : bigint,
   'last' : bigint,
 }
+export type PageAccessLevel = { 'edit' : null } |
+  { 'full' : null } |
+  { 'none' : null } |
+  { 'view' : null };
+export type PageAccessSetting = { 'everyone' : PageAccessLevel } |
+  { 'invited' : null } |
+  { 'workspaceMember' : PageAccessLevel };
+export type PageAccessSettingsOutput = { 'everyone' : PageAccessLevel } |
+  { 'invited' : null } |
+  { 'workspaceMember' : PageAccessLevel };
 export interface PagesOptionsArg {
   'order' : [] | [SortOrder],
   'cursor' : [] | [PrimaryKey],
@@ -252,16 +268,24 @@ export type Result_1 = { 'ok' : null } |
       { 'unauthorized' : null } |
       { 'userUpdateFailure' : null }
   };
-export interface SaveEventTransactionUpdateInput {
+export interface SaveEventTransactionInput {
   'transaction' : BlockEventTransaction,
 }
-export type SaveEventTransactionUpdateOutput = {
-    'ok' : SaveEventTransactionUpdateOutputResult
+export type SaveEventTransactionOutput = {
+    'ok' : SaveEventTransactionOutputResult
   } |
-  { 'err' : SaveEventTransactionUpdateOutputError };
-export type SaveEventTransactionUpdateOutputError = { 'anonymousUser' : null } |
+  { 'err' : SaveEventTransactionOutputError };
+export type SaveEventTransactionOutputError = { 'anonymousUser' : null } |
   { 'insufficientCycles' : null };
-export type SaveEventTransactionUpdateOutputResult = null;
+export type SaveEventTransactionOutputResult = null;
+export interface SetPageAccessInput {
+  'access' : PageAccessSetting,
+  'pageId' : BlockId__1,
+}
+export type SetPageAccessOutput = { 'ok' : SetPageAccessOutputResult } |
+  { 'err' : SetPageAccessOutputError };
+export type SetPageAccessOutputError = { 'unauthorized' : null };
+export type SetPageAccessOutputResult = null;
 export interface SettingsOutput {
   'websiteLink' : string,
   'name' : string,
@@ -270,10 +294,10 @@ export interface SettingsOutput {
 }
 export interface ShareableBlock {
   'content' : ShareableBlockContent,
-  'uuid' : UUID,
+  'uuid' : BlockId,
   'blockType' : BlockType,
   'properties' : ShareableBlockProperties,
-  'parent' : [] | [UUID],
+  'parent' : [] | [BlockId],
 }
 export interface ShareableBlockContent {
   'boundary' : NodeBoundary,
@@ -295,10 +319,10 @@ export interface ShareableBlockText {
 }
 export interface ShareableBlock__1 {
   'content' : ShareableBlockContent,
-  'uuid' : UUID,
+  'uuid' : BlockId,
   'blockType' : BlockType,
   'properties' : ShareableBlockProperties,
-  'parent' : [] | [UUID],
+  'parent' : [] | [BlockId],
 }
 export interface ShareableNode {
   'value' : NodeValue,
@@ -335,89 +359,81 @@ export type TreeEvent = {
     }
   };
 export type UUID = Uint8Array | number[];
-export interface UpdateBlockUpdateInput {
+export interface UpdateBlockInput {
   'content' : ShareableBlockContent,
-  'uuid' : UUID,
+  'uuid' : BlockId,
   'blockType' : BlockType,
   'properties' : ShareableBlockProperties,
-  'parent' : [] | [UUID],
+  'parent' : [] | [BlockId],
 }
-export type UpdateBlockUpdateOutput = { 'ok' : UpdateBlockUpdateOutputResult } |
-  { 'err' : UpdateBlockUpdateOutputError };
-export type UpdateBlockUpdateOutputError = { 'primaryKeyAttrNotFound' : null };
-export interface UpdateBlockUpdateOutputResult {
+export type UpdateBlockOutput = { 'ok' : UpdateBlockOutputResult } |
+  { 'err' : UpdateBlockOutputError };
+export type UpdateBlockOutputError = { 'primaryKeyAttrNotFound' : null };
+export interface UpdateBlockOutputResult {
   'content' : ShareableBlockContent,
-  'uuid' : UUID,
+  'uuid' : BlockId,
   'blockType' : BlockType,
   'properties' : ShareableBlockProperties,
-  'parent' : [] | [UUID],
+  'parent' : [] | [BlockId],
 }
 export type UpdateCallsAggregatedData = BigUint64Array | bigint[];
 export interface UpdateInformationRequest {
   'metrics' : [] | [CollectMetricsRequestType],
 }
-export interface UpdateSettingsUpdateInput {
+export interface UpdateSettingsInput {
   'websiteLink' : [] | [string],
   'name' : [] | [string],
   'description' : [] | [string],
   'visibility' : [] | [WorkspaceVisibility],
 }
-export type UpdateSettingsUpdateOutput = {
-    'ok' : UpdateSettingsUpdateOutputOk
-  } |
-  { 'err' : UpdateSettingsUpdateOutputError };
-export type UpdateSettingsUpdateOutputError = { 'unauthorized' : null };
-export type UpdateSettingsUpdateOutputOk = null;
-export interface UpdateUserRoleUpdateInput {
+export type UpdateSettingsOutput = { 'ok' : UpdateSettingsOutputOk } |
+  { 'err' : UpdateSettingsOutputError };
+export type UpdateSettingsOutputError = { 'unauthorized' : null };
+export type UpdateSettingsOutputOk = null;
+export interface UpdateUserRoleInput {
   'role' : WorkspaceUserRole,
   'user' : Principal,
 }
-export type UpdateUserRoleUpdateOutput = {
-    'ok' : UpdateUserRoleUpdateOutputOk
-  } |
-  { 'err' : UpdateUserRoleUpdateOutputError };
-export type UpdateUserRoleUpdateOutputError = { 'unauthorized' : null };
-export type UpdateUserRoleUpdateOutputOk = null;
+export type UpdateUserRoleOutput = { 'ok' : UpdateUserRoleOutputOk } |
+  { 'err' : UpdateUserRoleOutputError };
+export type UpdateUserRoleOutputError = { 'unauthorized' : null };
+export type UpdateUserRoleOutputOk = null;
 export interface Workspace {
   'activityLog' : ActorMethod<[UUID], ActivityLogOutput>,
-  'addBlock' : ActorMethod<[AddBlockUpdateInput], AddBlockUpdateOutput>,
+  'addBlock' : ActorMethod<[AddBlockInput], AddBlockOutput>,
   'addOwner' : ActorMethod<[Principal], Result>,
-  'addUsers' : ActorMethod<[AddUsersUpdateInput], AddUsersUpdateResult>,
+  'addUsers' : ActorMethod<[AddUsersInput], AddUsersResult>,
   'block' : ActorMethod<[UUID, BlockByUuidOptions], BlockByUuidResult>,
-  'createPage' : ActorMethod<[CreatePageUpdateInput], CreatePageUpdateOutput>,
-  'deletePage' : ActorMethod<[DeletePageUpdateInput], DeletePageUpdateOutput>,
+  'createPage' : ActorMethod<[CreatePageInput], CreatePageOutput>,
+  'deletePage' : ActorMethod<[DeletePageInput], DeletePageOutput>,
   'getCanistergeekInformation' : ActorMethod<
     [GetInformationRequest],
     GetInformationResponse
   >,
   'join' : ActorMethod<[], Result_1>,
   'members' : ActorMethod<[], MembersOutput>,
+  'pageAccessSettings' : ActorMethod<[UUID], PageAccessSettingsOutput>,
   'pages' : ActorMethod<[PagesOptionsArg], PagesOutput>,
   'removeOwner' : ActorMethod<[Principal], Result>,
   'saveEvents' : ActorMethod<
-    [SaveEventTransactionUpdateInput],
-    SaveEventTransactionUpdateOutput
+    [SaveEventTransactionInput],
+    SaveEventTransactionOutput
+  >,
+  'setPageAccessSettings' : ActorMethod<
+    [SetPageAccessInput],
+    SetPageAccessOutput
   >,
   'settings' : ActorMethod<[], SettingsOutput>,
   'subscribe' : ActorMethod<[string, [Principal, string]], undefined>,
   'toObject' : ActorMethod<[], Workspace__1>,
   'unsubscribe' : ActorMethod<[string, [Principal, string]], undefined>,
-  'updateBlock' : ActorMethod<
-    [UpdateBlockUpdateInput],
-    UpdateBlockUpdateOutput
-  >,
+  'updateBlock' : ActorMethod<[UpdateBlockInput], UpdateBlockOutput>,
   'updateCanistergeekInformation' : ActorMethod<
     [UpdateInformationRequest],
     undefined
   >,
-  'updateSettings' : ActorMethod<
-    [UpdateSettingsUpdateInput],
-    UpdateSettingsUpdateOutput
-  >,
-  'updateUserRole' : ActorMethod<
-    [UpdateUserRoleUpdateInput],
-    UpdateUserRoleUpdateOutput
-  >,
+  'updateSettings' : ActorMethod<[UpdateSettingsInput], UpdateSettingsOutput>,
+  'updateUserRole' : ActorMethod<[UpdateUserRoleInput], UpdateUserRoleOutput>,
   'walletReceive' : ActorMethod<[], { 'accepted' : bigint }>,
 }
 export type WorkspaceDescription = string;

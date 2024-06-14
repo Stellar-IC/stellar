@@ -40,13 +40,16 @@ type WorkspaceInitArgs =
 type WorkspaceDescription = text;
 type Workspace = 
  service {
+   /// ***********************************************************************
+   ///      * Queries
+   ///      ************************************************************************
    activityLog: (UUID) -> (ActivityLogOutput) query;
-   addBlock: (AddBlockUpdateInput) -> (AddBlockUpdateOutput);
+   addBlock: (AddBlockInput) -> (AddBlockOutput);
    addOwner: (principal) -> (Result);
-   addUsers: (AddUsersUpdateInput) -> (AddUsersUpdateResult);
+   addUsers: (AddUsersInput) -> (AddUsersResult);
    block: (UUID, BlockByUuidOptions) -> (BlockByUuidResult) query;
-   createPage: (CreatePageUpdateInput) -> (CreatePageUpdateOutput);
-   deletePage: (DeletePageUpdateInput) -> (DeletePageUpdateOutput);
+   createPage: (CreatePageInput) -> (CreatePageOutput);
+   deletePage: (DeletePageInput) -> (DeletePageOutput);
    /// ***********************************************************************
    ///      * Canister Monitoring
    ///      ************************************************************************
@@ -57,48 +60,44 @@ type Workspace =
    ///      ************************************************************************
    join: () -> (Result_1);
    members: () -> (MembersOutput) query;
+   pageAccessSettings: (UUID) -> (PageAccessSettingsOutput) query;
    pages: (PagesOptionsArg) -> (PagesOutput) query;
    removeOwner: (principal) -> (Result);
-   saveEvents: (SaveEventTransactionUpdateInput) ->
-    (SaveEventTransactionUpdateOutput);
+   saveEvents: (SaveEventTransactionInput) -> (SaveEventTransactionOutput);
+   setPageAccessSettings: (SetPageAccessInput) -> (SetPageAccessOutput);
    settings: () -> (SettingsOutput) query;
    subscribe: (text, PubSubEventHandler) -> ();
-   /// ***********************************************************************
-   ///      * Queries
-   ///      ************************************************************************
    toObject: () -> (Workspace__1) query;
    unsubscribe: (text, PubSubEventHandler) -> ();
-   updateBlock: (UpdateBlockUpdateInput) -> (UpdateBlockUpdateOutput);
+   updateBlock: (UpdateBlockInput) -> (UpdateBlockOutput);
    updateCanistergeekInformation: (UpdateInformationRequest) -> ();
-   updateSettings: (UpdateSettingsUpdateInput) ->
-    (UpdateSettingsUpdateOutput);
-   updateUserRole: (UpdateUserRoleUpdateInput) ->
-    (UpdateUserRoleUpdateOutput);
+   updateSettings: (UpdateSettingsInput) -> (UpdateSettingsOutput);
+   updateUserRole: (UpdateUserRoleInput) -> (UpdateUserRoleOutput);
    /// ***********************************************************************
    ///      * Cycles Management
    ///      ************************************************************************
    walletReceive: () -> (record {accepted: nat64;});
  };
-type UpdateUserRoleUpdateOutputOk = null;
-type UpdateUserRoleUpdateOutputError = variant {unauthorized;};
-type UpdateUserRoleUpdateOutput = 
+type UpdateUserRoleOutputOk = null;
+type UpdateUserRoleOutputError = variant {unauthorized;};
+type UpdateUserRoleOutput = 
  variant {
-   err: UpdateUserRoleUpdateOutputError;
-   ok: UpdateUserRoleUpdateOutputOk;
+   err: UpdateUserRoleOutputError;
+   ok: UpdateUserRoleOutputOk;
  };
-type UpdateUserRoleUpdateInput = 
+type UpdateUserRoleInput = 
  record {
    role: WorkspaceUserRole;
    user: principal;
  };
-type UpdateSettingsUpdateOutputOk = null;
-type UpdateSettingsUpdateOutputError = variant {unauthorized;};
-type UpdateSettingsUpdateOutput = 
+type UpdateSettingsOutputOk = null;
+type UpdateSettingsOutputError = variant {unauthorized;};
+type UpdateSettingsOutput = 
  variant {
-   err: UpdateSettingsUpdateOutputError;
-   ok: UpdateSettingsUpdateOutputOk;
+   err: UpdateSettingsOutputError;
+   ok: UpdateSettingsOutputOk;
  };
-type UpdateSettingsUpdateInput = 
+type UpdateSettingsInput = 
  record {
    description: opt text;
    name: opt text;
@@ -108,27 +107,27 @@ type UpdateSettingsUpdateInput =
 type UpdateInformationRequest = record {
                                   metrics: opt CollectMetricsRequestType;};
 type UpdateCallsAggregatedData = vec nat64;
-type UpdateBlockUpdateOutputResult = 
+type UpdateBlockOutputResult = 
  record {
    blockType: BlockType;
    content: ShareableBlockContent;
-   parent: opt UUID;
+   parent: opt BlockId;
    properties: ShareableBlockProperties;
-   uuid: UUID;
+   uuid: BlockId;
  };
-type UpdateBlockUpdateOutputError = variant {primaryKeyAttrNotFound;};
-type UpdateBlockUpdateOutput = 
+type UpdateBlockOutputError = variant {primaryKeyAttrNotFound;};
+type UpdateBlockOutput = 
  variant {
-   err: UpdateBlockUpdateOutputError;
-   ok: UpdateBlockUpdateOutputResult;
+   err: UpdateBlockOutputError;
+   ok: UpdateBlockOutputResult;
  };
-type UpdateBlockUpdateInput = 
+type UpdateBlockInput = 
  record {
    blockType: BlockType;
    content: ShareableBlockContent;
-   parent: opt UUID;
+   parent: opt BlockId;
    properties: ShareableBlockProperties;
-   uuid: UUID;
+   uuid: BlockId;
  };
 type UUID = vec nat8;
 type TreeEvent = 
@@ -183,9 +182,9 @@ type ShareableBlock__1 =
  record {
    blockType: BlockType;
    content: ShareableBlockContent;
-   parent: opt UUID;
+   parent: opt BlockId;
    properties: ShareableBlockProperties;
-   uuid: UUID;
+   uuid: BlockId;
  };
 type ShareableBlockText = 
  record {
@@ -219,9 +218,9 @@ type ShareableBlock =
  record {
    blockType: BlockType;
    content: ShareableBlockContent;
-   parent: opt UUID;
+   parent: opt BlockId;
    properties: ShareableBlockProperties;
-   uuid: UUID;
+   uuid: BlockId;
  };
 type SettingsOutput = 
  record {
@@ -230,19 +229,30 @@ type SettingsOutput =
    visibility: WorkspaceVisibility;
    websiteLink: text;
  };
-type SaveEventTransactionUpdateOutputResult = null;
-type SaveEventTransactionUpdateOutputError = 
+type SetPageAccessOutputResult = null;
+type SetPageAccessOutputError = variant {unauthorized;};
+type SetPageAccessOutput = 
+ variant {
+   err: SetPageAccessOutputError;
+   ok: SetPageAccessOutputResult;
+ };
+type SetPageAccessInput = 
+ record {
+   access: PageAccessSetting;
+   pageId: BlockId__1;
+ };
+type SaveEventTransactionOutputResult = null;
+type SaveEventTransactionOutputError = 
  variant {
    anonymousUser;
    insufficientCycles;
  };
-type SaveEventTransactionUpdateOutput = 
+type SaveEventTransactionOutput = 
  variant {
-   err: SaveEventTransactionUpdateOutputError;
-   ok: SaveEventTransactionUpdateOutputResult;
+   err: SaveEventTransactionOutputError;
+   ok: SaveEventTransactionOutputResult;
  };
-type SaveEventTransactionUpdateInput = record {
-                                         transaction: BlockEventTransaction;};
+type SaveEventTransactionInput = record {transaction: BlockEventTransaction;};
 type Result_1 = 
  variant {
    err: variant {
@@ -283,6 +293,25 @@ type PagesOptionsArg =
    cursor: opt PrimaryKey;
    limit: opt nat;
    order: opt SortOrder;
+ };
+type PageAccessSettingsOutput = 
+ variant {
+   everyone: PageAccessLevel;
+   invited;
+   workspaceMember: PageAccessLevel;
+ };
+type PageAccessSetting = 
+ variant {
+   everyone: PageAccessLevel;
+   invited;
+   workspaceMember: PageAccessLevel;
+ };
+type PageAccessLevel = 
+ variant {
+   edit;
+   full;
+   none;
+   view;
  };
 type NumericEntity = 
  record {
@@ -393,14 +422,14 @@ type ExternalId = text;
 type Edge_2 = record {node: HydratedActivity;};
 type Edge_1 = record {node: principal;};
 type Edge = record {node: ExternalId;};
-type DeletePageUpdateOutputResult = null;
-type DeletePageUpdateOutputError = null;
-type DeletePageUpdateOutput = 
+type DeletePageOutputResult = null;
+type DeletePageOutputError = null;
+type DeletePageOutput = 
  variant {
-   err: DeletePageUpdateOutputError;
-   ok: DeletePageUpdateOutputResult;
+   err: DeletePageOutputError;
+   ok: DeletePageOutputResult;
  };
-type DeletePageUpdateInput = record {uuid: UUID;};
+type DeletePageInput = record {uuid: BlockId__1;};
 type DailyMetricsData = 
  record {
    canisterCycles: NumericEntity;
@@ -409,15 +438,15 @@ type DailyMetricsData =
    timeMillis: int;
    updateCalls: nat64;
  };
-type CreatePageUpdateOutputResult = 
+type CreatePageOutputResult = 
  record {
    blockType: BlockType;
    content: ShareableBlockContent;
-   parent: opt UUID;
+   parent: opt BlockId;
    properties: ShareableBlockProperties;
-   uuid: UUID;
+   uuid: BlockId;
  };
-type CreatePageUpdateOutputError = 
+type CreatePageOutputError = 
  variant {
    anonymousUser;
    failedToCreate;
@@ -425,18 +454,18 @@ type CreatePageUpdateOutputError =
    insufficientCycles;
    invalidBlockType;
  };
-type CreatePageUpdateOutput = 
+type CreatePageOutput = 
  variant {
-   err: CreatePageUpdateOutputError;
-   ok: CreatePageUpdateOutputResult;
+   err: CreatePageOutputError;
+   ok: CreatePageOutputResult;
  };
-type CreatePageUpdateInput = 
+type CreatePageInput = 
  record {
    content: ShareableBlockContent;
-   initialBlockUuid: opt UUID;
-   parent: opt UUID;
+   initialBlockUuid: opt BlockId__1;
+   parent: opt BlockId__1;
    properties: ShareableBlockProperties__1;
-   uuid: UUID;
+   uuid: BlockId__1;
  };
 type CollectMetricsRequestType = 
  variant {
@@ -508,19 +537,21 @@ type BlockType =
  };
 type BlockPropertyTitleUpdatedEventData = 
  record {
-   blockExternalId: UUID;
+   blockExternalId: BlockId;
    transaction: vec TreeEvent;
  };
 type BlockPropertyCheckedUpdatedEventData = 
  record {
-   blockExternalId: UUID;
+   blockExternalId: BlockId;
    checked: bool;
  };
 type BlockParentUpdatedEventData = 
  record {
-   blockExternalId: UUID;
-   parentBlockExternalId: UUID;
+   blockExternalId: BlockId;
+   parentBlockExternalId: BlockId;
  };
+type BlockId__1 = vec nat8;
+type BlockId = vec nat8;
 type BlockEventTransaction = vec BlockEvent;
 type BlockEvent = 
  record {
@@ -531,20 +562,20 @@ type BlockEvent =
     };
    timestamp: Time;
    user: principal;
-   uuid: UUID;
+   uuid: BlockId;
  };
 type BlockCreatedEventData = 
  record {
    block: record {
             blockType: BlockType;
-            parent: opt UUID;
-            uuid: UUID;
+            parent: opt BlockId;
+            uuid: BlockId;
           };
    index: nat;
  };
 type BlockContentUpdatedEventData = 
  record {
-   blockExternalId: UUID;
+   blockExternalId: BlockId;
    transaction: vec TreeEvent;
  };
 type BlockByUuidResult = 
@@ -567,7 +598,7 @@ type BlockByUuidOptions = record {
                              };};
 type BlockBlockTypeUpdatedEventData = 
  record {
-   blockExternalId: UUID;
+   blockExternalId: BlockId;
    blockType: BlockType;
  };
 type AllocationStrategy = 
@@ -575,30 +606,30 @@ type AllocationStrategy =
    boundaryMinus;
    boundaryPlus;
  };
-type AddUsersUpdateResult = 
+type AddUsersResult = 
  variant {
    err: variant {unauthorized;};
    ok;
  };
-type AddUsersUpdateInput = 
+type AddUsersInput = 
  vec record {
        principal;
        WorkspaceUser;
      };
-type AddBlockUpdateOutputResult = null;
-type AddBlockUpdateOutputError = variant {unauthorized;};
-type AddBlockUpdateOutput = 
+type AddBlockOutputResult = null;
+type AddBlockOutputError = variant {unauthorized;};
+type AddBlockOutput = 
  variant {
-   err: AddBlockUpdateOutputError;
-   ok: AddBlockUpdateOutputResult;
+   err: AddBlockOutputError;
+   ok: AddBlockOutputResult;
  };
-type AddBlockUpdateInput = 
+type AddBlockInput = 
  record {
    blockType: BlockType;
    content: ShareableBlockContent;
-   parent: opt UUID;
+   parent: opt BlockId__1;
    properties: ShareableBlockProperties;
-   uuid: UUID;
+   uuid: BlockId__1;
  };
 type ActivityLogOutput = record {edges: vec Edge_2;};
 type ActivityId = nat;

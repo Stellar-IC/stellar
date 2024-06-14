@@ -12,6 +12,7 @@ import RBTree "mo:base/RBTree";
 import Result "mo:base/Result";
 import Stack "mo:base/Stack";
 import Text "mo:base/Text";
+import Buffer "mo:base/Buffer";
 
 import Map "mo:map/Map";
 
@@ -215,6 +216,28 @@ module {
         };
 
         return null;
+    };
+
+    public func getAncestorPages(state : S.State, block : Block) : Iter.Iter<Block> {
+        let MAX_ITERATIONS = 1000;
+        var current = block;
+        var iteration = 0;
+
+        return {
+            next = func() {
+                let ancestor = getFirstAncestorPage(state, current);
+                switch (ancestor) {
+                    case (null) {
+                        return null;
+                    };
+                    case (?ancestor) {
+                        iteration := iteration + 1;
+                        current := ancestor;
+                        return ?ancestor;
+                    };
+                };
+            };
+        };
     };
 
     func isActivityOnBlockOrContent(

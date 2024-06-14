@@ -14,6 +14,7 @@ module {
         findBlock;
         getActivitiesForPage;
         getActivity;
+        getAncestorPages;
         getBlock;
         getContentForBlock;
         getFirstAncestorPage;

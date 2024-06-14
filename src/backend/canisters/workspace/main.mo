@@ -35,7 +35,8 @@ import CyclesUtils "../../utils/cycles";
 
 import BlockCreatedConsumer "./consumers/block_created_consumer";
 import BlockUpdatedConsumer "./consumers/block_updated_consumer";
-import Migration_001_Add_Roles_By_Block_To_User_Registry_Items "./migrations/001_add_roles_by_block_to_user_registry_items";
+import Migration001ConvertUserRegistryToStableMap "./migrations/001_convert_user_registry_to_stable_map";
+import PageAccessManager "./page_access_manager";
 import CreatePage "./services/create_page";
 import State "./state";
 import Types "./types/v2";
@@ -47,15 +48,9 @@ shared ({ caller = initializer }) actor class Workspace(
      * Types
      *************************************************************************/
 
-    type BlockByUuidResult = Types.Queries.BlockByUuid.BlockByUuidResult;
-    type BlocksByPageUuidResult = Types.Queries.BlocksByPageUuid.BlocksByPageUuidResult;
     type BlockUserRole = Types.BlockUserRole;
-    type PageByUuidResult = Types.Queries.PageByUuid.PageByUuidResult;
-    type PagesOptionsArg = Types.Queries.Pages.PagesOptionsArg;
-    type PagesOutput = Types.Queries.Pages.PagesOutput;
     type PrimaryKey = Types.PrimaryKey;
     type WorkspaceUser = Types.WorkspaceUser;
-    type WorkspaceUserV2 = Types.WorkspaceUserV2;
     type WorkspaceOwner = Types.WorkspaceOwner;
 
     type Block = BlocksTypes.Block;
@@ -72,7 +67,7 @@ shared ({ caller = initializer }) actor class Workspace(
      *************************************************************************/
 
     stable var _name : CoreTypes.Workspaces.WorkspaceName = initArgs.name;
-    stable var _description : CoreTypes.Workspaces.WorkspaceDescription = initArgs.name;
+    stable var _description : CoreTypes.Workspaces.WorkspaceDescription = initArgs.description;
     stable var _websiteLink : ?Text = null;
     stable var _visibility : Types.WorkspaceVisibility = #Private;
     stable var _createdAt : Time.Time = initArgs.createdAt;
@@ -87,11 +82,16 @@ shared ({ caller = initializer }) actor class Workspace(
     stable var _eventStreamUpgradeData : ?EventStream.UpgradeData<BlocksTypes.BlockEvent> = null;
 
     stable var _state = State.init();
-    stable var _users = UserRegistryV2.UserRegistry<WorkspaceUserV2>();
+    stable var _users = UserRegistryV2.UserRegistry<WorkspaceUser>();
     stable var _owners = StableBuffer.fromArray<WorkspaceOwner>(initArgs.owners);
     stable var _events : RBTree.Tree<Text, BlockEvent> = #leaf;
+    stable var _pageAccessManager = PageAccessManager.PageAccessManager();
 
     stable var _activitiesIdCounter : Nat = 0;
+
+    /*************************************************************************
+     * Transient Data
+     *************************************************************************/
 
     let canistergeekMonitor = Canistergeek.Monitor();
     let canistergeekLogger = Canistergeek.Logger();
@@ -112,104 +112,105 @@ shared ({ caller = initializer }) actor class Workspace(
     /* deprecated - use _users instead */
     let userRegistry = UserRegistry.UserRegistry<WorkspaceUser>();
     stable var _userRegistryUpgradeData : RBTree.Tree<Principal, WorkspaceUser> = #leaf;
-
     userRegistry.postupgrade(_userRegistryUpgradeData);
 
-    Migration_001_Add_Roles_By_Block_To_User_Registry_Items.up(
+    /*************************************************************************
+     * Migrations
+     *************************************************************************/
+
+    // Copy all users from the old user registry to the new one
+    Migration001ConvertUserRegistryToStableMap.up(
         userRegistry,
         _users,
     );
+
+    /*************************************************************************
+     * Helpers
+     *************************************************************************/
 
     private func isOwner(caller : Principal) : Bool {
         StableBuffer.contains(_owners, caller, Principal.equal);
     };
 
+    private func _pageAccessSettings(
+        pageId : UUID.UUID
+    ) : Types.Queries.PageAccessSettings.PageAccessSettingsOutput {
+        let pageIdText = UUID.toText(pageId);
+        let page = switch (State.findBlock(_state, pageIdText)) {
+            case (null) { return PageAccessManager.defaultAccessSetting };
+            case (?page) { page };
+        };
+        var accessSetting = PageAccessManager.get(_pageAccessManager, pageIdText);
+
+        switch (accessSetting) {
+            case (null) {
+                // Find the first page with an access setting
+                for (ancestorPage in State.getAncestorPages(_state, page)) {
+                    accessSetting := ?_pageAccessSettings(ancestorPage.uuid);
+
+                    switch (accessSetting) {
+                        case (null) {};
+                        case (?setting) {
+                            return setting;
+                        };
+                    };
+                };
+
+                return PageAccessManager.defaultAccessSetting;
+            };
+            case (?setting) { return setting };
+        };
+    };
+
+    private func getUserAccessLevel(
+        caller : Principal,
+        pageId : UUID.UUID,
+    ) : Types.PageAccessLevel {
+        let pageIdText = UUID.toText(pageId);
+        let user = UserRegistry.findUser(userRegistry, caller);
+        let page = switch (State.findBlock(_state, pageIdText)) {
+            case (null) { null };
+            case (?page) { ?page };
+        };
+        let pageAccessSetting = _pageAccessSettings(pageId);
+
+        switch (user) {
+            case (null) { return #none };
+            case (?user) {
+                let isMember = switch (user.role) {
+                    case (#admin) { true };
+                    case (#guest) { false };
+                    case (#member) { true };
+                    case (#moderator) { true };
+                };
+
+                return PageAccessManager.getUserAccessLevel(
+                    _pageAccessManager,
+                    pageIdText,
+                    caller,
+                    isMember,
+                );
+            };
+        };
+    };
+
+    private func userHasViewAccess(
+        caller : Principal,
+        blockId : UUID.UUID,
+    ) : Bool {
+        let accessLevel = getUserAccessLevel(caller, blockId);
+
+        switch (accessLevel) {
+            case (#none) { false };
+            case (#view) { true };
+            case (#edit) { true };
+            case (#full) { true };
+        };
+    };
+
     /*************************************************************************
      * Queries
      *************************************************************************/
-
-    public query func toObject() : async CoreTypes.Workspaces.Workspace {
-        return {
-            name = _name;
-            description = _description;
-            owners = _owners;
-            createdAt = _createdAt;
-            updatedAt = _updatedAt;
-        };
-    };
-
-    public query func block(
-        uuid : UUID.UUID,
-        options : Types.Queries.BlockByUuid.BlockByUuidOptions,
-    ) : async Types.Queries.BlockByUuid.BlockByUuidResult {
-        let blockId = UUID.toText(uuid);
-        let block = switch (State.findBlock(_state, blockId)) {
-            case (null) { return #err(#notFound) };
-            case (?block) { block };
-        };
-        let contentBlocks = State.getContentForBlock(_state, blockId, options.contentPagination);
-        var blockRecords = Buffer.fromArray<(Text, ShareableBlock)>([]);
-
-        blockRecords.add((blockId, BlockModule.toShareable(block)));
-
-        for (contentBlock in contentBlocks) {
-            let contentBlockId = UUID.toText(contentBlock.uuid);
-            let record = (contentBlockId, BlockModule.toShareable(contentBlock));
-            blockRecords.add(record);
-        };
-
-        return #ok({
-            block = blockId;
-            recordMap = {
-                blocks = Buffer.toArray(blockRecords);
-            };
-        });
-    };
-
-    public query ({ caller }) func pages(options : PagesOptionsArg) : async PagesOutput {
-        let pages = Iter.toArray(State.getPages(_state));
-        let contentOptions = {
-            limit = switch (options.limit) {
-                case (null) { 10 };
-                case (?limit) { limit };
-            };
-            cursor = switch (options.cursor) {
-                case (null) { 0 };
-                case (?cursor) { cursor };
-            };
-        };
-        var blockRecords = List.fromArray<(Text, ShareableBlock)>([]);
-
-        for (page in Array.vals(pages)) {
-            let pageId = UUID.toText(page.uuid);
-            let pageFromState = State.findBlock(_state, pageId);
-            let pageContent = State.getContentForBlock(_state, pageId, contentOptions);
-            let pageRecord = (pageId, page);
-
-            blockRecords := List.append(blockRecords, List.fromArray([pageRecord]));
-
-            for (block in pageContent) {
-                let record = (UUID.toText(block.uuid), BlockModule.toShareable(block));
-                blockRecords := List.append(blockRecords, List.fromArray([record]));
-            };
-        };
-
-        let result : PagesOutput = {
-            pages = {
-                edges = Array.map<BlocksTypes.ShareableBlock, CoreTypes.Edge<Text>>(
-                    pages,
-                    func(block) {
-                        { node = UUID.toText(block.uuid) };
-                    },
-                );
-            };
-            recordMap = {
-                blocks = List.toArray(blockRecords);
-            };
-        };
-
-        return result;
-    };
 
     public query func activityLog(
         pageUuid : UUID.UUID
@@ -260,6 +261,47 @@ shared ({ caller = initializer }) actor class Workspace(
         return Paginator.paginateList(activities);
     };
 
+    public query ({ caller }) func block(
+        blockId : UUID.UUID,
+        options : Types.Queries.BlockByUuid.BlockByUuidOptions,
+    ) : async Types.Queries.BlockByUuid.BlockByUuidResult {
+        let blockIdText = UUID.toText(blockId);
+        let block = switch (State.findBlock(_state, blockIdText)) {
+            case (null) { return #err(#notFound) };
+            case (?block) { block };
+        };
+
+        // Check if the user has access to view the block
+        if (block.blockType == #page) {
+            let canView = userHasViewAccess(caller, blockId);
+            if (not canView) { return #err(#notFound) };
+        };
+
+        let contentBlocks = State.getContentForBlock(_state, blockIdText, options.contentPagination);
+        var blockRecords = Buffer.fromArray<(Text, ShareableBlock)>([]);
+
+        blockRecords.add((blockIdText, BlockModule.toShareable(block)));
+
+        label contentLoop for (contentBlock in contentBlocks) {
+            // Check if the user has access to view the block
+            if (block.blockType == #page) {
+                let canView = userHasViewAccess(caller, blockId);
+                if (not canView) { continue contentLoop };
+            };
+
+            let contentBlockId = UUID.toText(contentBlock.uuid);
+            let record = (contentBlockId, BlockModule.toShareable(contentBlock));
+            blockRecords.add(record);
+        };
+
+        return #ok({
+            block = blockIdText;
+            recordMap = {
+                blocks = Buffer.toArray(blockRecords);
+            };
+        });
+    };
+
     public query func members() : async Types.Queries.Members.MembersOutput {
         let users = UserRegistryV2.getUsers(_users);
         let userCount = Array.size(users);
@@ -277,6 +319,72 @@ shared ({ caller = initializer }) actor class Workspace(
         };
     };
 
+    public query ({ caller }) func pageAccessSettings(
+        pageId : UUID.UUID
+    ) : async Types.Queries.PageAccessSettings.PageAccessSettingsOutput {
+        _pageAccessSettings(pageId);
+    };
+
+    public query ({ caller }) func pages(
+        options : Types.Queries.Pages.PagesOptionsArg
+    ) : async Types.Queries.Pages.PagesOutput {
+        let pages = Iter.toArray(State.getPages(_state));
+        let contentOptions = {
+            limit = switch (options.limit) {
+                case (null) { 10 };
+                case (?limit) { limit };
+            };
+            cursor = switch (options.cursor) {
+                case (null) { 0 };
+                case (?cursor) { cursor };
+            };
+        };
+        var blockRecords = List.fromArray<(Text, ShareableBlock)>([]);
+
+        label pageLoop for (page in Array.vals(pages)) {
+            let canViewPage = userHasViewAccess(caller, page.uuid);
+
+            if (not canViewPage) {
+                continue pageLoop;
+            };
+
+            let pageId = UUID.toText(page.uuid);
+            let pageFromState = State.findBlock(_state, pageId);
+            let pageContent = State.getContentForBlock(
+                _state,
+                pageId,
+                contentOptions,
+            );
+            let pageRecord = (pageId, page);
+
+            blockRecords := List.append(blockRecords, List.fromArray([pageRecord]));
+
+            label contentLoop for (block in pageContent) {
+                if (block.blockType == #page) {
+                    let canView = userHasViewAccess(caller, block.uuid);
+                    if (not canView) { continue contentLoop };
+                };
+
+                let record = (UUID.toText(block.uuid), BlockModule.toShareable(block));
+                blockRecords := List.append(blockRecords, List.fromArray([record]));
+            };
+        };
+
+        return {
+            pages = {
+                edges = Array.map<BlocksTypes.ShareableBlock, CoreTypes.Edge<Text>>(
+                    pages,
+                    func(block) {
+                        { node = UUID.toText(block.uuid) };
+                    },
+                );
+            };
+            recordMap = {
+                blocks = List.toArray(blockRecords);
+            };
+        };
+    };
+
     public query func settings() : async Types.Queries.Settings.SettingsOutput {
         return {
             description = _description;
@@ -286,6 +394,16 @@ shared ({ caller = initializer }) actor class Workspace(
                 case (null) { "" };
                 case (?link) { link };
             };
+        };
+    };
+
+    public query func toObject() : async CoreTypes.Workspaces.Workspace {
+        return {
+            name = _name;
+            description = _description;
+            owners = _owners;
+            createdAt = _createdAt;
+            updatedAt = _updatedAt;
         };
     };
 
@@ -306,7 +424,20 @@ shared ({ caller = initializer }) actor class Workspace(
         };
         let user = actor (Principal.toText(canisterId)) : UserActor;
 
-        UserRegistryV2.addUser<WorkspaceUserV2>(
+        // TODO: Remove once userRegistry is fully replaced
+        UserRegistry.addUser<WorkspaceUser>(
+            userRegistry,
+            caller,
+            canisterId,
+            {
+                canisterId;
+                role = #member;
+                username;
+                identity = caller;
+            },
+        );
+
+        UserRegistryV2.addUser<WorkspaceUser>(
             _users,
             caller,
             canisterId,
@@ -315,7 +446,6 @@ shared ({ caller = initializer }) actor class Workspace(
                 role = #member;
                 username;
                 identity = caller;
-                rolesByBlock = Map.new();
             },
         );
 
@@ -367,8 +497,8 @@ shared ({ caller = initializer }) actor class Workspace(
     };
 
     public shared ({ caller }) func addUsers(
-        input : Types.Updates.AddUsersUpdate.AddUsersUpdateInput
-    ) : async Types.Updates.AddUsersUpdate.AddUsersUpdateResult {
+        input : Types.Updates.AddUsers.AddUsersInput
+    ) : async Types.Updates.AddUsers.AddUsersResult {
         if (not isOwner(caller)) {
             return #err(#unauthorized);
         };
@@ -390,17 +520,18 @@ shared ({ caller = initializer }) actor class Workspace(
     };
 
     public shared ({ caller }) func createPage(
-        input : Types.Updates.CreatePageUpdate.CreatePageUpdateInput
-    ) : async Types.Updates.CreatePageUpdate.CreatePageUpdateOutput {
+        input : Types.Updates.CreatePage.CreatePageInput
+    ) : async Types.Updates.CreatePage.CreatePageOutput {
         let result = CreatePage.execute(_state, caller, input);
+
         await updateCanistergeekInformation({ metrics = ? #force });
 
         return result;
     };
 
     public shared ({ caller }) func addBlock(
-        input : Types.Updates.AddBlockUpdate.AddBlockUpdateInput
-    ) : async Types.Updates.AddBlockUpdate.AddBlockUpdateOutput {
+        input : Types.Updates.AddBlock.AddBlockInput
+    ) : async Types.Updates.AddBlock.AddBlockOutput {
         let block = BlockModule.fromShareableUnsaved(input);
         ignore State.addBlock(_state, block);
         await updateCanistergeekInformation({ metrics = ? #normal });
@@ -409,8 +540,8 @@ shared ({ caller = initializer }) actor class Workspace(
     };
 
     public shared ({ caller }) func updateBlock(
-        input : Types.Updates.UpdateBlockUpdate.UpdateBlockUpdateInput
-    ) : async Types.Updates.UpdateBlockUpdate.UpdateBlockUpdateOutput {
+        input : Types.Updates.UpdateBlock.UpdateBlockInput
+    ) : async Types.Updates.UpdateBlock.UpdateBlockOutput {
         let block = BlockModule.fromShareable(input);
         let result = State.updateBlock(_state, block);
         await updateCanistergeekInformation({ metrics = ? #normal });
@@ -419,8 +550,8 @@ shared ({ caller = initializer }) actor class Workspace(
     };
 
     public shared ({ caller }) func deletePage(
-        input : Types.Updates.DeletePageUpdate.DeletePageUpdateInput
-    ) : async Types.Updates.DeletePageUpdate.DeletePageUpdateOutput {
+        input : Types.Updates.DeletePage.DeletePageInput
+    ) : async Types.Updates.DeletePage.DeletePageOutput {
         State.deleteBlock(_state, UUID.toText(input.uuid));
         //  TODO: Delete all blocks in the page
         await updateCanistergeekInformation({ metrics = ? #normal });
@@ -429,8 +560,8 @@ shared ({ caller = initializer }) actor class Workspace(
     };
 
     public shared ({ caller }) func saveEvents(
-        input : Types.Updates.SaveEventTransactionUpdate.SaveEventTransactionUpdateInput
-    ) : async Types.Updates.SaveEventTransactionUpdate.SaveEventTransactionUpdateOutput {
+        input : Types.Updates.SaveEventTransaction.SaveEventTransactionInput
+    ) : async Types.Updates.SaveEventTransaction.SaveEventTransactionOutput {
         for (event in input.transaction.vals()) {
             processEvent(event);
         };
@@ -441,8 +572,8 @@ shared ({ caller = initializer }) actor class Workspace(
     };
 
     public shared ({ caller }) func updateSettings(
-        input : Types.Updates.UpdateSettingsUpdate.UpdateSettingsUpdateInput
-    ) : async Types.Updates.UpdateSettingsUpdate.UpdateSettingsUpdateOutput {
+        input : Types.Updates.UpdateSettings.UpdateSettingsInput
+    ) : async Types.Updates.UpdateSettings.UpdateSettingsOutput {
         let user = UserRegistry.findUser(userRegistry, caller);
 
         // Check if the caller is an admin
@@ -499,8 +630,8 @@ shared ({ caller = initializer }) actor class Workspace(
     };
 
     public shared ({ caller }) func updateUserRole(
-        input : Types.Updates.UpdateUserRoleUpdate.UpdateUserRoleUpdateInput
-    ) : async Types.Updates.UpdateUserRoleUpdate.UpdateUserRoleUpdateOutput {
+        input : Types.Updates.UpdateUserRole.UpdateUserRoleInput
+    ) : async Types.Updates.UpdateUserRole.UpdateUserRoleOutput {
         let user = UserRegistry.getUserByUserId(userRegistry, input.user);
         let updatedUser = { user with role = input.role };
         let adminUsers = UserRegistry.filter<WorkspaceUser>(userRegistry, func(u : WorkspaceUser) { u.role == #admin });
@@ -518,6 +649,16 @@ shared ({ caller = initializer }) actor class Workspace(
 
         UserRegistry.updateUser<WorkspaceUser>(userRegistry, input.user, updatedUser);
 
+        await updateCanistergeekInformation({ metrics = ? #normal });
+
+        return #ok;
+    };
+
+    public shared ({ caller }) func setPageAccessSettings(
+        input : Types.Updates.SetPageAccess.SetPageAccessInput
+    ) : async Types.Updates.SetPageAccess.SetPageAccessOutput {
+        let pageId = UUID.toText(input.pageId);
+        PageAccessManager.set(_pageAccessManager, pageId, input.access);
         await updateCanistergeekInformation({ metrics = ? #normal });
 
         return #ok;

@@ -6,14 +6,13 @@ import UserRegistryV2 "../../../lib/user_registry_v2";
 
 import Types "../types/v2";
 
-module Migration_001_Add_Roles_By_Block_To_User_Registry_Items {
+module Migration001ConvertUserRegistryToStableMap {
     type BlockUserRole = Types.BlockUserRole;
     type WorkspaceUser = Types.WorkspaceUser;
-    type WorkspaceUserV2 = Types.WorkspaceUserV2;
 
     public func up(
         initial : UserRegistry.UserRegistry<WorkspaceUser>,
-        final : UserRegistryV2.UserRegistry<WorkspaceUserV2>,
+        final : UserRegistryV2.UserRegistry<WorkspaceUser>,
     ) {
         for (entry in initial.users.entries()) {
             let user = {
