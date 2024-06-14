@@ -16,6 +16,7 @@ import Iter "mo:base/Iter";
 import Canistergeek "mo:canistergeek/canistergeek";
 import StableBuffer "mo:stablebuffer/StableBuffer";
 import UUID "mo:uuid/UUID";
+import Map "mo:map/Map";
 
 import ActivitiesTypes "../../lib/activities/types";
 import BlockModule "../../lib/blocks/block";
@@ -26,6 +27,7 @@ import Paginator "../../lib/pagination/paginator";
 import Logger "../../lib/logger";
 import PubSub "../../lib/pub_sub";
 import UserRegistry "../../lib/user_registry";
+import UserRegistryV2 "../../lib/user_registry_v2";
 
 import CoreTypes "../../types";
 
@@ -33,6 +35,7 @@ import CyclesUtils "../../utils/cycles";
 
 import BlockCreatedConsumer "./consumers/block_created_consumer";
 import BlockUpdatedConsumer "./consumers/block_updated_consumer";
+import Migration_001_Add_Roles_By_Block_To_User_Registry_Items "./migrations/001_add_roles_by_block_to_user_registry_items";
 import CreatePage "./services/create_page";
 import State "./state";
 import Types "./types/v2";
@@ -46,11 +49,13 @@ shared ({ caller = initializer }) actor class Workspace(
 
     type BlockByUuidResult = Types.Queries.BlockByUuid.BlockByUuidResult;
     type BlocksByPageUuidResult = Types.Queries.BlocksByPageUuid.BlocksByPageUuidResult;
+    type BlockUserRole = Types.BlockUserRole;
     type PageByUuidResult = Types.Queries.PageByUuid.PageByUuidResult;
     type PagesOptionsArg = Types.Queries.Pages.PagesOptionsArg;
     type PagesOutput = Types.Queries.Pages.PagesOutput;
     type PrimaryKey = Types.PrimaryKey;
     type WorkspaceUser = Types.WorkspaceUser;
+    type WorkspaceUserV2 = Types.WorkspaceUserV2;
     type WorkspaceOwner = Types.WorkspaceOwner;
 
     type Block = BlocksTypes.Block;
@@ -66,10 +71,6 @@ shared ({ caller = initializer }) actor class Workspace(
      * Stable Data
      *************************************************************************/
 
-    stable var _activitiesIdCounter : Nat = 0;
-    stable var _events : RBTree.Tree<Text, BlockEvent> = #leaf;
-
-    stable var _owners = StableBuffer.fromArray<WorkspaceOwner>(initArgs.owners);
     stable var _name : CoreTypes.Workspaces.WorkspaceName = initArgs.name;
     stable var _description : CoreTypes.Workspaces.WorkspaceDescription = initArgs.name;
     stable var _websiteLink : ?Text = null;
@@ -83,10 +84,14 @@ shared ({ caller = initializer }) actor class Workspace(
 
     stable var _canistergeekMonitorUD : ?Canistergeek.UpgradeData = null;
     stable var _canistergeekLoggerUD : ?Canistergeek.LoggerUpgradeData = null;
-    stable var _userRegistryUpgradeData : RBTree.Tree<Principal, WorkspaceUser> = #leaf;
     stable var _eventStreamUpgradeData : ?EventStream.UpgradeData<BlocksTypes.BlockEvent> = null;
 
     stable var _state = State.init();
+    stable var _users = UserRegistryV2.UserRegistry<WorkspaceUserV2>();
+    stable var _owners = StableBuffer.fromArray<WorkspaceOwner>(initArgs.owners);
+    stable var _events : RBTree.Tree<Text, BlockEvent> = #leaf;
+
+    stable var _activitiesIdCounter : Nat = 0;
 
     let canistergeekMonitor = Canistergeek.Monitor();
     let canistergeekLogger = Canistergeek.Logger();
@@ -95,7 +100,6 @@ shared ({ caller = initializer }) actor class Workspace(
         Logger.DebugLoggerAdapter(),
     ]);
 
-    let userRegistry = UserRegistry.UserRegistry<WorkspaceUser>();
     let eventStream = EventStream.EventStream<BlocksTypes.BlockEvent>(
         {
             getEventId = func(event) {
@@ -103,6 +107,17 @@ shared ({ caller = initializer }) actor class Workspace(
             };
         },
         { logger },
+    );
+
+    /* deprecated - use _users instead */
+    let userRegistry = UserRegistry.UserRegistry<WorkspaceUser>();
+    stable var _userRegistryUpgradeData : RBTree.Tree<Principal, WorkspaceUser> = #leaf;
+
+    userRegistry.postupgrade(_userRegistryUpgradeData);
+
+    Migration_001_Add_Roles_By_Block_To_User_Registry_Items.up(
+        userRegistry,
+        _users,
     );
 
     private func isOwner(caller : Principal) : Bool {
@@ -246,19 +261,19 @@ shared ({ caller = initializer }) actor class Workspace(
     };
 
     public query func members() : async Types.Queries.Members.MembersOutput {
-        let _users = UserRegistry.getUsers(userRegistry);
-        let userCount = Array.size(_users);
-        let users = Buffer.Buffer<(Principal, WorkspaceUser)>(userCount);
+        let users = UserRegistryV2.getUsers(_users);
+        let userCount = Array.size(users);
+        let usersBuffer = Buffer.Buffer<(Principal, WorkspaceUser)>(userCount);
         let userIds = Buffer.Buffer<Principal>(userCount);
 
-        for (user in Array.vals(_users)) {
-            users.add((user.canisterId, user));
+        for (user in Array.vals(users)) {
+            usersBuffer.add((user.canisterId, user));
             userIds.add(user.canisterId);
         };
 
         return {
             users = Paginator.paginateBuffer(userIds);
-            recordMap = { users = Buffer.toArray(users) };
+            recordMap = { users = Buffer.toArray(usersBuffer) };
         };
     };
 
@@ -280,26 +295,27 @@ shared ({ caller = initializer }) actor class Workspace(
 
     public shared ({ caller }) func join() : async Result.Result<(), { #unauthorized; #profileQueryFailure; #userUpdateFailure }> {
         let UserIndex = actor (Principal.toText(_userIndexCanisterId)) : actor {
-            userId : (Principal) -> async Principal;
+            userDetailsByIdentity : (Principal) -> async Result.Result<{ canisterId : Principal; username : Text }, { #notFound }>;
         };
-        let userId = await UserIndex.userId(caller);
-        let user = actor (Principal.toText(userId)) : UserActor;
-        let username = switch (await user.publicProfile(caller)) {
+        let result = await UserIndex.userDetailsByIdentity(caller);
+        let { canisterId; username } = switch (result) {
             case (#err(_)) {
                 return #err(#profileQueryFailure);
             };
-            case (#ok(profile)) { profile.username };
+            case (#ok(userDetails)) { userDetails };
         };
+        let user = actor (Principal.toText(canisterId)) : UserActor;
 
-        UserRegistry.addUser<WorkspaceUser>(
-            userRegistry,
+        UserRegistryV2.addUser<WorkspaceUserV2>(
+            _users,
             caller,
-            userId,
+            canisterId,
             {
-                canisterId = userId;
+                canisterId;
                 role = #member;
                 username;
                 identity = caller;
+                rolesByBlock = Map.new();
             },
         );
 
@@ -406,6 +422,7 @@ shared ({ caller = initializer }) actor class Workspace(
         input : Types.Updates.DeletePageUpdate.DeletePageUpdateInput
     ) : async Types.Updates.DeletePageUpdate.DeletePageUpdateOutput {
         State.deleteBlock(_state, UUID.toText(input.uuid));
+        //  TODO: Delete all blocks in the page
         await updateCanistergeekInformation({ metrics = ? #normal });
 
         return #ok;
@@ -634,7 +651,5 @@ shared ({ caller = initializer }) actor class Workspace(
                 _eventStreamUpgradeData := null;
             };
         };
-
-        userRegistry.postupgrade(_userRegistryUpgradeData);
     };
 };

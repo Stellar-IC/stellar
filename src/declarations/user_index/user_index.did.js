@@ -145,7 +145,7 @@ export const idlFactory = ({ IDL }) => {
     'ok' : IDL.Principal,
     'err' : RegisterUserError,
   });
-  const Result_4 = IDL.Variant({
+  const Result_3 = IDL.Variant({
     'ok' : IDL.Record({ 'accepted' : IDL.Nat64 }),
     'err' : IDL.Variant({
       'userNotFound' : IDL.Null,
@@ -159,13 +159,9 @@ export const idlFactory = ({ IDL }) => {
   const UpdateInformationRequest = IDL.Record({
     'metrics' : IDL.Opt(CollectMetricsRequestType),
   });
-  const Result_3 = IDL.Variant({
-    'ok' : IDL.Null,
-    'err' : IDL.Variant({
-      'unauthorized' : IDL.Null,
-      'workspaceNotFound' : IDL.Text,
-      'failed' : IDL.Text,
-    }),
+  const UserDetailsByIdentityResult = IDL.Variant({
+    'ok' : IDL.Record({ 'username' : IDL.Text, 'canisterId' : IDL.Principal }),
+    'err' : IDL.Variant({ 'userNotFound' : IDL.Null }),
   });
   const Result_1 = IDL.Variant({
     'ok' : IDL.Principal,
@@ -186,7 +182,7 @@ export const idlFactory = ({ IDL }) => {
       ),
     'onUserEvent' : IDL.Func([UserEvent], [], []),
     'registerUser' : IDL.Func([], [RegisterUserResult], []),
-    'requestCycles' : IDL.Func([IDL.Nat], [Result_4], []),
+    'requestCycles' : IDL.Func([IDL.Nat], [Result_3], []),
     'settings' : IDL.Func(
         [],
         [IDL.Record({ 'loginDisabled' : IDL.Bool })],
@@ -197,8 +193,17 @@ export const idlFactory = ({ IDL }) => {
         [],
         [],
       ),
-    'upgradePersonalWorkspaces' : IDL.Func([IDL.Vec(IDL.Nat8)], [Result_3], []),
+    'upgradeUser' : IDL.Func(
+        [IDL.Principal, IDL.Vec(IDL.Nat8)],
+        [Result_2],
+        [],
+      ),
     'upgradeUsers' : IDL.Func([IDL.Vec(IDL.Nat8)], [Result_2], []),
+    'userDetailsByIdentity' : IDL.Func(
+        [IDL.Principal],
+        [UserDetailsByIdentityResult],
+        ['query'],
+      ),
     'userId' : IDL.Func([IDL.Principal], [Result_1], ['query']),
     'walletReceive' : IDL.Func([], [Result], []),
   });

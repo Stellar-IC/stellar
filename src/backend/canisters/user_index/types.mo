@@ -24,7 +24,7 @@ module {
     };
     public type CheckUsernameResult = Result.Result<(), CheckUsernameError>;
 
-    module Services {
+    public module Services {
         public type CreateUserServiceOutput = {
             #Created : Principal;
             #Existing : Principal;
@@ -34,5 +34,9 @@ module {
             #InsufficientCycles;
         };
         public type CreateUserServiceResult = Result.Result<CreateUserServiceOutput, CreateUserServiceError>;
+    };
+
+    public module Queries {
+        public type UserDetailsByIdentityResult = Result.Result<{ canisterId : Principal; username : Text }, { #userNotFound }>;
     };
 };

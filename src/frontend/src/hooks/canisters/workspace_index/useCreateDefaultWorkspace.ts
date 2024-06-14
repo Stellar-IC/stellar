@@ -2,7 +2,7 @@ import * as actors from '@/ic/actors/store';
 import { useAuthContext } from '@/modules/auth/contexts/AuthContext';
 
 export const useCreateDefaultWorkspace = () => {
-  const { identity, userId, profile } = useAuthContext();
+  const { profile } = useAuthContext();
 
   const createWorkspace = () => {
     const workspaceIndexActor = actors.actorStore.workspace_index.getActor();
@@ -22,18 +22,6 @@ export const useCreateDefaultWorkspace = () => {
       .createWorkspace({
         name: `${username}'s space`,
         description: 'Wow! My very own space',
-        additionalOwners: [],
-        initialUsers: [
-          [
-            identity.getPrincipal(),
-            {
-              username,
-              role: { admin: null },
-              identity: identity.getPrincipal(),
-              canisterId: userId,
-            },
-          ],
-        ],
       })
       .then(async (res) => {
         if ('err' in res) {

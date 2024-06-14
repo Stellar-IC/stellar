@@ -110,13 +110,7 @@ export type Result_1 = { 'ok' : Principal } |
   { 'err' : { 'userNotFound' : null } };
 export type Result_2 = { 'ok' : null } |
   { 'err' : { 'unauthorized' : null } };
-export type Result_3 = { 'ok' : null } |
-  {
-    'err' : { 'unauthorized' : null } |
-      { 'workspaceNotFound' : string } |
-      { 'failed' : string }
-  };
-export type Result_4 = { 'ok' : { 'accepted' : bigint } } |
+export type Result_3 = { 'ok' : { 'accepted' : bigint } } |
   { 'err' : { 'userNotFound' : null } | { 'unauthorized' : null } };
 export interface StatusRequest {
   'memory_size' : boolean,
@@ -133,6 +127,10 @@ export type UpdateCallsAggregatedData = BigUint64Array | bigint[];
 export interface UpdateInformationRequest {
   'metrics' : [] | [CollectMetricsRequestType],
 }
+export type UserDetailsByIdentityResult = {
+    'ok' : { 'username' : string, 'canisterId' : Principal }
+  } |
+  { 'err' : { 'userNotFound' : null } };
 export interface UserEvent {
   'userId' : Principal,
   'event' : { 'profileUpdated' : ProfileUpdatedEventData },
@@ -154,14 +152,18 @@ export interface _SERVICE {
   >,
   'onUserEvent' : ActorMethod<[UserEvent], undefined>,
   'registerUser' : ActorMethod<[], RegisterUserResult>,
-  'requestCycles' : ActorMethod<[bigint], Result_4>,
+  'requestCycles' : ActorMethod<[bigint], Result_3>,
   'settings' : ActorMethod<[], { 'loginDisabled' : boolean }>,
   'updateCanistergeekInformation' : ActorMethod<
     [UpdateInformationRequest],
     undefined
   >,
-  'upgradePersonalWorkspaces' : ActorMethod<[Uint8Array | number[]], Result_3>,
+  'upgradeUser' : ActorMethod<[Principal, Uint8Array | number[]], Result_2>,
   'upgradeUsers' : ActorMethod<[Uint8Array | number[]], Result_2>,
+  'userDetailsByIdentity' : ActorMethod<
+    [Principal],
+    UserDetailsByIdentityResult
+  >,
   'userId' : ActorMethod<[Principal], Result_1>,
   'walletReceive' : ActorMethod<[], Result>,
 }

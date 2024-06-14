@@ -5,6 +5,7 @@ import Text "mo:base/Text";
 import Time "mo:base/Time";
 import Principal "mo:base/Principal";
 import UUID "mo:uuid/UUID";
+import Map "mo:map/Map";
 
 import ActivitiesTypes "../../../lib/activities/types";
 import BlocksTypes "../../../lib/blocks/types";
@@ -15,6 +16,7 @@ module {
     public type ExternalId = Text;
     public type PrimaryKey = Nat;
     public type Block = BlocksTypes.Block;
+    public type BlockId = BlocksTypes.BlockId;
     public type BlockEvent = BlocksTypes.BlockEvent;
     public type ShareableBlock = BlocksTypes.ShareableBlock;
     public type ShareableBlockContent = BlocksTypes.ShareableBlockContent;
@@ -39,6 +41,12 @@ module {
         #guest;
     };
 
+    public type BlockUserRole = {
+        #owner;
+        #editor;
+        #viewer;
+    };
+
     public type WorkspaceVisibility = {
         #Public;
         #Private;
@@ -51,12 +59,20 @@ module {
         role : WorkspaceUserRole;
     };
 
+    public type WorkspaceUserV2 = {
+        identity : Principal;
+        canisterId : Principal;
+        username : Text;
+        role : WorkspaceUserRole;
+        rolesByBlock : Map.Map<Text, BlockUserRole>;
+    };
+
     public module Services {
         public module CreateActivityService {
             public type CreateActivityServiceInput = {
                 id : Nat;
                 edits : [ActivitiesTypes.EditItem];
-                blockExternalId : UUID.UUID;
+                blockExternalId : BlockId;
             };
             public type CreateActivityServiceOutputError = {
                 #anonymousUser;
@@ -113,11 +129,11 @@ module {
 
         public module CreatePageService {
             public type CreatePageServiceInput = {
-                uuid : UUID.UUID;
+                uuid : BlockId;
                 content : ShareableBlockContent;
-                parent : ?UUID.UUID;
+                parent : ?BlockId;
                 properties : ShareableBlockProperties;
-                initialBlockUuid : ?UUID.UUID;
+                initialBlockUuid : ?BlockId;
             };
             public type CreatePageServiceOutputError = {
                 #anonymousUser;
@@ -189,10 +205,10 @@ module {
     public module Updates {
         public module AddBlockUpdate {
             public type AddBlockUpdateInput = {
-                uuid : UUID.UUID;
+                uuid : BlockId;
                 blockType : BlocksTypes.BlockType;
                 content : BlocksTypes.ShareableBlockContent;
-                parent : ?UUID.UUID;
+                parent : ?BlockId;
                 properties : BlocksTypes.ShareableBlockProperties;
             };
             public type AddBlockUpdateOutputError = { #unauthorized };
@@ -207,11 +223,11 @@ module {
 
         public module CreatePageUpdate {
             public type CreatePageUpdateInput = {
-                uuid : UUID.UUID;
+                uuid : BlockId;
                 content : BlocksTypes.ShareableBlockContent;
-                parent : ?UUID.UUID;
+                parent : ?BlockId;
                 properties : ShareableBlockProperties;
-                initialBlockUuid : ?UUID.UUID;
+                initialBlockUuid : ?BlockId;
             };
             public type CreatePageUpdateOutputError = {
                 #anonymousUser;
@@ -225,7 +241,7 @@ module {
         };
 
         public module DeletePageUpdate {
-            public type DeletePageUpdateInput = { uuid : UUID.UUID };
+            public type DeletePageUpdateInput = { uuid : BlockId };
             public type DeletePageUpdateOutputError = ();
             public type DeletePageUpdateOutputResult = ();
             public type DeletePageUpdateOutput = Result.Result<DeletePageUpdateOutputResult, DeletePageUpdateOutputError>;

@@ -113,47 +113,31 @@ actor WorkspaceIndex {
         input : {
             name : Text;
             description : Text;
-            initialUsers : [(Principal, WorkspaceTypes.WorkspaceUser)];
-            additionalOwners : [Principal];
         }
     ) : async Result.Result<Principal, { #AnonymousOwner; #Unauthorized; #InsufficientCycles }> {
-        let { name; description; initialUsers; additionalOwners } = input;
+        let { name; description } = input;
 
         // Assert that the caller is a registered user
-        let userId = switch (await UserIndex.userId(caller)) {
-            case (#ok(_)) {
-
-            };
-            case (#err(_)) {
-                switch (AuthUtils.isDev(caller)) {
-                    case (true) {};
-                    case (false) {
-                        return #err(#Unauthorized);
-                    };
-                };
-            };
+        let user = switch (await UserIndex.userDetailsByIdentity(caller)) {
+            case (#ok(user)) { user };
+            case (#err(_)) { return #err(#Unauthorized) };
         };
-
-        // Build the list of owners
-        let owners = Buffer.fromArray<Principal>([caller]);
-        label addOwners for (owner in Array.vals(additionalOwners)) {
-            if (Principal.isAnonymous(owner)) {
-                continue addOwners;
-            };
-            if (Buffer.contains(owners, owner, Principal.equal)) {
-                continue addOwners;
-            };
-            owners.add(owner);
-        };
-        owners.append(Buffer.fromArray(additionalOwners));
 
         // Create the workspace
         let result = await CreateWorkspace.execute({
             name;
             description;
-            owners = Buffer.toArray(owners);
+            owners = [caller];
             controllers = [caller, Principal.fromActor(WorkspaceIndex)];
-            initialUsers;
+            initialUsers = [(
+                caller,
+                {
+                    identity = caller;
+                    canisterId = user.canisterId;
+                    role = #admin;
+                    username = user.username;
+                },
+            )];
             userIndexCanisterId = Principal.fromActor(UserIndex);
         });
 
@@ -162,22 +146,11 @@ actor WorkspaceIndex {
             case (#ok(workspaceId)) {
                 let workspace = actor (Principal.toText(workspaceId)) : Workspace.Workspace;
                 let workspaceData = await workspace.toObject();
-                saveWorkspace(workspaceId, { name = workspaceData.name });
+                saveWorkspaceDetails(workspaceId, { name = workspaceData.name });
                 await workspace.subscribe("workspaceNameUpdated", handleWorkspaceEvents);
                 #ok(workspaceId);
             };
         };
-    };
-
-    public shared ({ caller }) func removeWorkspace(workspaceId : Principal) : async Result.Result<(), { #unauthorized }> {
-        if ((AuthUtils.isDev(caller)) == false) {
-            return #err(#unauthorized);
-        };
-
-        let workspace = actor (Principal.toText(workspaceId)) : Workspace.Workspace;
-        await workspace.unsubscribe("workspaceNameUpdated", handleWorkspaceEvents);
-        Map.delete(_workspaces, Map.phash, workspaceId);
-        #ok;
     };
 
     public shared ({ caller }) func handleWorkspaceEvents(eventName : Text, payload : WorkspaceTypes.PubSubEvent) : async () {
@@ -196,7 +169,7 @@ actor WorkspaceIndex {
                 };
 
                 let workspace = actor (Principal.toText(workspaceId)) : Workspace.Workspace;
-                saveWorkspace(workspaceId, { name });
+                saveWorkspaceDetails(workspaceId, { name });
             };
         };
     };
@@ -213,7 +186,24 @@ actor WorkspaceIndex {
             try {
                 await IC0.install_code(
                     {
-                        arg = to_candid ();
+                        arg = to_candid (
+                            // These values will not be used since the canister
+                            // stores the init args as stable variables.
+                            //
+                            // TODO: Remove these values from the install_code
+                            // and create a separate initialization function for the
+                            // canister.
+                            {
+                                capacity = Constants.WORKSPACE__CAPACITY.scalar;
+                                userIndexCanisterId = Principal.fromActor(UserIndex);
+                                owners = [];
+                                name = "";
+                                uuid = await Source.Source().new();
+                                description = "";
+                                createdAt = Time.now();
+                                updatedAt = Time.now();
+                            },
+                        );
                         canister_id = canisterId;
                         mode = #upgrade(?{ skip_pre_upgrade = ?false });
                         sender_canister_version = sender_canister_version;
@@ -231,7 +221,7 @@ actor WorkspaceIndex {
         #ok;
     };
 
-    private func saveWorkspace(workspaceId : Principal, details : { name : Text }) {
+    private func saveWorkspaceDetails(workspaceId : Principal, details : { name : Text }) {
         ignore Map.put<Principal, WorkspaceDetails>(
             _workspaces,
             Map.phash,

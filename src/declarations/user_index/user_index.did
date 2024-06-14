@@ -11,6 +11,14 @@ type UserEvent =
    event: variant {profileUpdated: ProfileUpdatedEventData;};
    userId: principal;
  };
+type UserDetailsByIdentityResult = 
+ variant {
+   err: variant {userNotFound;};
+   ok: record {
+         canisterId: principal;
+         username: text;
+       };
+ };
 type UpdateInformationRequest = record {
                                   metrics: opt CollectMetricsRequestType;};
 type UpdateCallsAggregatedData = vec nat64;
@@ -27,22 +35,13 @@ type StatusRequest =
    heap_memory_size: bool;
    memory_size: bool;
  };
-type Result_4 = 
+type Result_3 = 
  variant {
    err: variant {
           unauthorized;
           userNotFound;
         };
    ok: record {accepted: nat64;};
- };
-type Result_3 = 
- variant {
-   err: variant {
-          failed: text;
-          unauthorized;
-          workspaceNotFound: text;
-        };
-   ok;
  };
 type Result_2 = 
  variant {
@@ -214,13 +213,14 @@ service : {
    (GetInformationResponse) query;
   onUserEvent: (UserEvent) -> ();
   registerUser: () -> (RegisterUserResult);
-  requestCycles: (nat) -> (Result_4);
+  requestCycles: (nat) -> (Result_3);
   settings: () -> (record {loginDisabled: bool;}) query;
   /// * Updates canister information based on passed parameters at current time.
   ///     * Called from browser or any canister "update" method.
   updateCanistergeekInformation: (UpdateInformationRequest) -> ();
-  upgradePersonalWorkspaces: (blob) -> (Result_3);
+  upgradeUser: (principal, blob) -> (Result_2);
   upgradeUsers: (blob) -> (Result_2);
+  userDetailsByIdentity: (principal) -> (UserDetailsByIdentityResult) query;
   userId: (principal) -> (Result_1) query;
   walletReceive: () -> (Result);
 }

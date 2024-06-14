@@ -101,13 +101,37 @@ actor UserIndex {
     };
 
     public query func checkUsername(username : Text) : async Types.CheckUsernameResult {
-        return state.data.checkUsername(username);
+        state.data.checkUsername(username);
     };
 
     public query func userId(userIdentity : Principal) : async Result.Result<Principal, { #userNotFound }> {
-        return switch (state.data.getUserIdByOwner(userIdentity)) {
+        switch (state.data.getUserIdByOwner(userIdentity)) {
             case (null) { #err(#userNotFound) };
             case (?userId) { #ok(userId) };
+        };
+    };
+
+    public query func userDetailsByIdentity(userIdentity : Principal) : async Types.Queries.UserDetailsByIdentityResult {
+        var username : ?Text = null;
+
+        // TODO: Implement a more efficient way to get the username
+        for (entry in state.data.username_to_user_id.entries()) {
+            if (entry.1 == userIdentity) {
+                username := ?entry.0;
+            };
+        };
+
+        switch (username) {
+            case (null) {
+                return #err(#userNotFound);
+            };
+            case (?username) {
+                let canisterId = state.data.user_identity_to_canister_id.get(userIdentity);
+                switch (canisterId) {
+                    case (null) { #err(#userNotFound) };
+                    case (?canisterId) { #ok({ canisterId; username }) };
+                };
+            };
         };
     };
 
