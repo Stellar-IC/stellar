@@ -5,16 +5,16 @@ import { useUpdate } from '@/hooks/useUpdate';
 import { CanisterId } from '@/types';
 
 import {
-  UpdateSettingsUpdateInput,
-  UpdateSettingsUpdateOutput,
+  UpdateSettingsInput,
+  UpdateSettingsOutput,
 } from '../../../../../../declarations/workspace/workspace.did';
 
 export const useUpdateSettings = (options: {
   workspaceId: CanisterId;
   identity: Identity;
 }): [
-  (input: [UpdateSettingsUpdateInput]) => Promise<UpdateSettingsUpdateOutput>,
-  { data: UpdateSettingsUpdateOutput | null; isLoading: boolean }
+  (input: [UpdateSettingsInput]) => Promise<UpdateSettingsOutput>,
+  { data: UpdateSettingsOutput | null; isLoading: boolean }
 ] => {
   const actor = useWorkspaceActor();
 

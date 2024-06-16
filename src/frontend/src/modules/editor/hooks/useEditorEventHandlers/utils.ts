@@ -12,7 +12,7 @@ import { Block } from '@/types';
 import { createActor } from '../../../../../../declarations/workspace';
 import {
   BlockEvent,
-  SaveEventTransactionUpdateInput,
+  SaveEventTransactionInput,
 } from '../../../../../../declarations/workspace/workspace.did';
 
 import { PartialBlockEvent } from './types';
@@ -29,7 +29,7 @@ type UpdateOptions = {
 
 async function _saveEvents(
   workspaceId: Principal,
-  args: SaveEventTransactionUpdateInput
+  args: SaveEventTransactionInput
 ) {
   const authClient = await getAuthClient();
   const identity = authClient.getIdentity();

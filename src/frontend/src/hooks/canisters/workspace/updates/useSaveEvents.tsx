@@ -6,18 +6,16 @@ import { useUpdate } from '@/hooks/useUpdate';
 import { CanisterId } from '@/types';
 
 import {
-  SaveEventTransactionUpdateInput,
-  SaveEventTransactionUpdateOutput,
+  SaveEventTransactionInput,
+  SaveEventTransactionOutput,
 } from '../../../../../../declarations/workspace/workspace.did';
 
 export const useSaveEvents = (options: {
   identity: Identity;
   workspaceId: CanisterId;
 }): [
-  (
-    input: SaveEventTransactionUpdateInput
-  ) => Promise<SaveEventTransactionUpdateOutput>,
-  { data: SaveEventTransactionUpdateOutput | null; isLoading: boolean }
+  (input: SaveEventTransactionInput) => Promise<SaveEventTransactionOutput>,
+  { data: SaveEventTransactionOutput | null; isLoading: boolean }
 ] => {
   const actor = useWorkspaceActor();
   const [_saveEvents, ...other] = useUpdate(
@@ -25,7 +23,7 @@ export const useSaveEvents = (options: {
     actor.saveEvents
   );
   const saveEvents = useCallback(
-    (input: SaveEventTransactionUpdateInput) => _saveEvents([{ ...input }]),
+    (input: SaveEventTransactionInput) => _saveEvents([{ ...input }]),
     [_saveEvents]
   );
 

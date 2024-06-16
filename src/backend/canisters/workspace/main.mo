@@ -48,10 +48,10 @@ shared ({ caller = initializer }) actor class Workspace(
      * Types
      *************************************************************************/
 
-    type BlockUserRole = Types.BlockUserRole;
     type PrimaryKey = Types.PrimaryKey;
     type WorkspaceUser = Types.WorkspaceUser;
     type WorkspaceOwner = Types.WorkspaceOwner;
+    type HydratedBlock = Types.HydratedBlock;
 
     type Block = BlocksTypes.Block;
     type ShareableBlock = BlocksTypes.ShareableBlock;
@@ -162,36 +162,35 @@ shared ({ caller = initializer }) actor class Workspace(
         };
     };
 
+    private func isWorkspaceMember(caller : Principal) : Bool {
+        let user = UserRegistryV2.findUser(_users, caller);
+
+        switch (user) {
+            case (null) { return false };
+            case (?user) {
+                switch (user.role) {
+                    case (#admin) { true };
+                    case (#moderator) { true };
+                    case (#member) { true };
+                    case (#guest) { false };
+                };
+            };
+        };
+    };
+
     private func getUserAccessLevel(
         caller : Principal,
         pageId : UUID.UUID,
     ) : Types.PageAccessLevel {
         let pageIdText = UUID.toText(pageId);
-        let user = UserRegistry.findUser(userRegistry, caller);
-        let page = switch (State.findBlock(_state, pageIdText)) {
-            case (null) { null };
-            case (?page) { ?page };
-        };
         let pageAccessSetting = _pageAccessSettings(pageId);
 
-        switch (user) {
-            case (null) { return #none };
-            case (?user) {
-                let isMember = switch (user.role) {
-                    case (#admin) { true };
-                    case (#guest) { false };
-                    case (#member) { true };
-                    case (#moderator) { true };
-                };
-
-                return PageAccessManager.getUserAccessLevel(
-                    _pageAccessManager,
-                    pageIdText,
-                    caller,
-                    isMember,
-                );
-            };
-        };
+        return PageAccessManager.getUserAccessLevel(
+            _pageAccessManager,
+            pageIdText,
+            caller,
+            isWorkspaceMember(caller),
+        );
     };
 
     private func userHasViewAccess(
@@ -206,6 +205,13 @@ shared ({ caller = initializer }) actor class Workspace(
             case (#edit) { true };
             case (#full) { true };
         };
+    };
+
+    private func hydrateBlock(
+        caller : Principal,
+        block : ShareableBlock,
+    ) : HydratedBlock {
+        { block with userAccessLevel = getUserAccessLevel(caller, block.uuid) };
     };
 
     /*************************************************************************
@@ -278,19 +284,28 @@ shared ({ caller = initializer }) actor class Workspace(
         };
 
         let contentBlocks = State.getContentForBlock(_state, blockIdText, options.contentPagination);
-        var blockRecords = Buffer.fromArray<(Text, ShareableBlock)>([]);
+        var blockRecords = Buffer.fromArray<(Text, HydratedBlock)>([]);
 
-        blockRecords.add((blockIdText, BlockModule.toShareable(block)));
+        // Add the parent block to the list of blocks to return
+        blockRecords.add((
+            blockIdText,
+            hydrateBlock(caller, BlockModule.toShareable(block)),
+        ));
 
+        // Add the content blocks to the list of blocks to return
         label contentLoop for (contentBlock in contentBlocks) {
-            // Check if the user has access to view the block
+            // Skip pages that the user doesn't have access to
             if (block.blockType == #page) {
                 let canView = userHasViewAccess(caller, blockId);
                 if (not canView) { continue contentLoop };
             };
 
             let contentBlockId = UUID.toText(contentBlock.uuid);
-            let record = (contentBlockId, BlockModule.toShareable(contentBlock));
+            let record = (
+                contentBlockId,
+                hydrateBlock(caller, BlockModule.toShareable(contentBlock)),
+            );
+
             blockRecords.add(record);
         };
 
@@ -339,7 +354,7 @@ shared ({ caller = initializer }) actor class Workspace(
                 case (?cursor) { cursor };
             };
         };
-        var blockRecords = List.fromArray<(Text, ShareableBlock)>([]);
+        var blockRecords = Buffer.fromArray<(Text, ShareableBlock)>([]);
 
         label pageLoop for (page in Array.vals(pages)) {
             let canViewPage = userHasViewAccess(caller, page.uuid);
@@ -355,9 +370,9 @@ shared ({ caller = initializer }) actor class Workspace(
                 pageId,
                 contentOptions,
             );
-            let pageRecord = (pageId, page);
+            let pageRecord = (pageId, hydrateBlock(caller, page));
 
-            blockRecords := List.append(blockRecords, List.fromArray([pageRecord]));
+            blockRecords.add(pageRecord);
 
             label contentLoop for (block in pageContent) {
                 if (block.blockType == #page) {
@@ -365,8 +380,11 @@ shared ({ caller = initializer }) actor class Workspace(
                     if (not canView) { continue contentLoop };
                 };
 
-                let record = (UUID.toText(block.uuid), BlockModule.toShareable(block));
-                blockRecords := List.append(blockRecords, List.fromArray([record]));
+                let record = (
+                    UUID.toText(block.uuid),
+                    hydrateBlock(caller, BlockModule.toShareable(block)),
+                );
+                blockRecords.add(record);
             };
         };
 
@@ -380,7 +398,7 @@ shared ({ caller = initializer }) actor class Workspace(
                 );
             };
             recordMap = {
-                blocks = List.toArray(blockRecords);
+                blocks = Buffer.toArray(blockRecords);
             };
         };
     };
@@ -496,34 +514,31 @@ shared ({ caller = initializer }) actor class Workspace(
         return #ok;
     };
 
-    public shared ({ caller }) func addUsers(
-        input : Types.Updates.AddUsers.AddUsersInput
-    ) : async Types.Updates.AddUsers.AddUsersResult {
-        if (not isOwner(caller)) {
-            return #err(#unauthorized);
-        };
-
-        for (item in input.vals()) {
-            let userIdentity = item.0;
-            let userDetails = item.1;
-            let userCanisterId = userDetails.canisterId;
-
-            UserRegistry.addUser<WorkspaceUser>(
-                userRegistry,
-                userIdentity,
-                userCanisterId,
-                userDetails,
-            );
-        };
-
-        return #ok;
-    };
-
     public shared ({ caller }) func createPage(
         input : Types.Updates.CreatePage.CreatePageInput
     ) : async Types.Updates.CreatePage.CreatePageOutput {
-        let result = CreatePage.execute(_state, caller, input);
+        let user = UserRegistry.findUser(userRegistry, caller);
 
+        // Check if the user is authorized to create a page
+        switch (user) {
+            case (null) {
+                return #err(#unauthorized);
+            };
+            case (?user) {
+                if (user.role != #admin) {
+                    return #err(#unauthorized);
+                };
+            };
+        };
+
+        PageAccessManager.addInvitedUser(
+            _pageAccessManager,
+            UUID.toText(input.uuid),
+            caller,
+            #full,
+        );
+
+        let result = CreatePage.execute(_state, caller, input);
         await updateCanistergeekInformation({ metrics = ? #force });
 
         return result;
@@ -552,6 +567,20 @@ shared ({ caller = initializer }) actor class Workspace(
     public shared ({ caller }) func deletePage(
         input : Types.Updates.DeletePage.DeletePageInput
     ) : async Types.Updates.DeletePage.DeletePageOutput {
+        let user = UserRegistry.findUser(userRegistry, caller);
+
+        // Check if the user is authorized to update the settings
+        switch (user) {
+            case (null) {
+                return #err(#unauthorized);
+            };
+            case (?user) {
+                if (user.role != #admin) {
+                    return #err(#unauthorized);
+                };
+            };
+        };
+
         State.deleteBlock(_state, UUID.toText(input.uuid));
         //  TODO: Delete all blocks in the page
         await updateCanistergeekInformation({ metrics = ? #normal });
@@ -576,7 +605,7 @@ shared ({ caller = initializer }) actor class Workspace(
     ) : async Types.Updates.UpdateSettings.UpdateSettingsOutput {
         let user = UserRegistry.findUser(userRegistry, caller);
 
-        // Check if the caller is an admin
+        // Check if the user is authorized to update the settings
         switch (user) {
             case (null) {
                 return #err(#unauthorized);

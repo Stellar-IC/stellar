@@ -11,18 +11,16 @@ import { store } from '@/modules/data-store';
 import { CanisterId } from '@/types';
 
 import {
-  CreatePageUpdateInput,
-  CreatePageUpdateOutput,
+  CreatePageInput,
+  CreatePageOutput,
 } from '../../../../../../declarations/workspace/workspace.did';
 import { useBlockQuery } from '../queries/useBlockQuery';
 
 export const useCreatePage = (options: {
   workspaceId: CanisterId;
 }): [
-  (
-    input: Omit<CreatePageUpdateInput, 'uuid'>
-  ) => Promise<CreatePageUpdateOutput>,
-  { data: CreatePageUpdateOutput | null; isLoading: boolean }
+  (input: Omit<CreatePageInput, 'uuid'>) => Promise<CreatePageOutput>,
+  { data: CreatePageOutput | null; isLoading: boolean }
 ] => {
   const actor = useWorkspaceActor();
   const [_createPage, ...other] = useUpdate(
@@ -32,11 +30,11 @@ export const useCreatePage = (options: {
   const queryBlock = useBlockQuery();
 
   const createPage = useCallback(
-    async (input: Omit<CreatePageUpdateInput, 'uuid'>) => {
+    async (input: Omit<CreatePageInput, 'uuid'>) => {
       const uuid = uuidv4();
       const pageData = { ...input, uuid: uuidParse(uuid) };
 
-      let result: CreatePageUpdateOutput;
+      let result: CreatePageOutput;
 
       try {
         result = await _createPage([pageData]);

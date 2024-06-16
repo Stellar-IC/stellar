@@ -23,6 +23,10 @@ module {
     public type ShareableBlockProperties = BlocksTypes.ShareableBlockProperties;
     public type WorkspaceOwner = Principal;
 
+    public type HydratedBlock = ShareableBlock and {
+        userAccessLevel : PageAccessLevel;
+    };
+
     public type PageAccessLevel = {
         #full;
         #edit;
@@ -240,6 +244,7 @@ module {
             };
             public type CreatePageOutputError = {
                 #anonymousUser;
+                #unauthorized;
                 #failedToCreate;
                 #inputTooLong;
                 #invalidBlockType;
@@ -251,7 +256,7 @@ module {
 
         public module DeletePage {
             public type DeletePageInput = { uuid : BlockId };
-            public type DeletePageOutputError = ();
+            public type DeletePageOutputError = { #unauthorized };
             public type DeletePageOutputResult = ();
             public type DeletePageOutput = Result.Result<DeletePageOutputResult, DeletePageOutputError>;
         };

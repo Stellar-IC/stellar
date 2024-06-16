@@ -15,9 +15,6 @@ export type AddBlockOutput = { 'ok' : AddBlockOutputResult } |
   { 'err' : AddBlockOutputError };
 export type AddBlockOutputError = { 'unauthorized' : null };
 export type AddBlockOutputResult = null;
-export type AddUsersInput = Array<[Principal, WorkspaceUser]>;
-export type AddUsersResult = { 'ok' : null } |
-  { 'err' : { 'unauthorized' : null } };
 export type AllocationStrategy = { 'boundaryPlus' : null } |
   { 'boundaryMinus' : null };
 export interface BlockBlockTypeUpdatedEventData {
@@ -128,6 +125,7 @@ export type CreatePageOutputError = { 'failedToCreate' : null } |
   { 'anonymousUser' : null } |
   { 'invalidBlockType' : null } |
   { 'insufficientCycles' : null } |
+  { 'unauthorized' : null } |
   { 'inputTooLong' : null };
 export interface CreatePageOutputResult {
   'content' : ShareableBlockContent,
@@ -146,7 +144,7 @@ export interface DailyMetricsData {
 export interface DeletePageInput { 'uuid' : BlockId__1 }
 export type DeletePageOutput = { 'ok' : DeletePageOutputResult } |
   { 'err' : DeletePageOutputError };
-export type DeletePageOutputError = null;
+export type DeletePageOutputError = { 'unauthorized' : null };
 export type DeletePageOutputResult = null;
 export interface Edge { 'node' : ExternalId }
 export interface Edge_1 { 'node' : Principal }
@@ -402,7 +400,6 @@ export interface Workspace {
   'activityLog' : ActorMethod<[UUID], ActivityLogOutput>,
   'addBlock' : ActorMethod<[AddBlockInput], AddBlockOutput>,
   'addOwner' : ActorMethod<[Principal], Result>,
-  'addUsers' : ActorMethod<[AddUsersInput], AddUsersResult>,
   'block' : ActorMethod<[UUID, BlockByUuidOptions], BlockByUuidResult>,
   'createPage' : ActorMethod<[CreatePageInput], CreatePageOutput>,
   'deletePage' : ActorMethod<[DeletePageInput], DeletePageOutput>,

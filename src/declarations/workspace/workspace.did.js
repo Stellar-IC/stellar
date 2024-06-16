@@ -117,23 +117,6 @@ export const idlFactory = ({ IDL }) => {
       'userUpdateFailure' : IDL.Null,
     }),
   });
-  const WorkspaceUserRole = IDL.Variant({
-    'member' : IDL.Null,
-    'admin' : IDL.Null,
-    'moderator' : IDL.Null,
-    'guest' : IDL.Null,
-  });
-  const WorkspaceUser = IDL.Record({
-    'username' : IDL.Text,
-    'role' : WorkspaceUserRole,
-    'identity' : IDL.Principal,
-    'canisterId' : IDL.Principal,
-  });
-  const AddUsersInput = IDL.Vec(IDL.Tuple(IDL.Principal, WorkspaceUser));
-  const AddUsersResult = IDL.Variant({
-    'ok' : IDL.Null,
-    'err' : IDL.Variant({ 'unauthorized' : IDL.Null }),
-  });
   const BlockByUuidOptions = IDL.Record({
     'contentPagination' : IDL.Record({ 'cursor' : IDL.Nat, 'limit' : IDL.Nat }),
   });
@@ -177,6 +160,7 @@ export const idlFactory = ({ IDL }) => {
     'anonymousUser' : IDL.Null,
     'invalidBlockType' : IDL.Null,
     'insufficientCycles' : IDL.Null,
+    'unauthorized' : IDL.Null,
     'inputTooLong' : IDL.Null,
   });
   const CreatePageOutput = IDL.Variant({
@@ -185,7 +169,7 @@ export const idlFactory = ({ IDL }) => {
   });
   const DeletePageInput = IDL.Record({ 'uuid' : BlockId__1 });
   const DeletePageOutputResult = IDL.Null;
-  const DeletePageOutputError = IDL.Null;
+  const DeletePageOutputError = IDL.Variant({ 'unauthorized' : IDL.Null });
   const DeletePageOutput = IDL.Variant({
     'ok' : DeletePageOutputResult,
     'err' : DeletePageOutputError,
@@ -306,6 +290,18 @@ export const idlFactory = ({ IDL }) => {
   });
   const Edge_1 = IDL.Record({ 'node' : IDL.Principal });
   const PaginatedResults_1 = IDL.Record({ 'edges' : IDL.Vec(Edge_1) });
+  const WorkspaceUserRole = IDL.Variant({
+    'member' : IDL.Null,
+    'admin' : IDL.Null,
+    'moderator' : IDL.Null,
+    'guest' : IDL.Null,
+  });
+  const WorkspaceUser = IDL.Record({
+    'username' : IDL.Text,
+    'role' : WorkspaceUserRole,
+    'identity' : IDL.Principal,
+    'canisterId' : IDL.Principal,
+  });
   const MembersOutput = IDL.Record({
     'users' : PaginatedResults_1,
     'recordMap' : IDL.Record({
@@ -502,7 +498,6 @@ export const idlFactory = ({ IDL }) => {
     'activityLog' : IDL.Func([UUID], [ActivityLogOutput], ['query']),
     'addBlock' : IDL.Func([AddBlockInput], [AddBlockOutput], []),
     'addOwner' : IDL.Func([IDL.Principal], [Result], []),
-    'addUsers' : IDL.Func([AddUsersInput], [AddUsersResult], []),
     'block' : IDL.Func(
         [UUID, BlockByUuidOptions],
         [BlockByUuidResult],

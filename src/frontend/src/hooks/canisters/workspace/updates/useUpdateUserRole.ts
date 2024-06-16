@@ -5,16 +5,16 @@ import { useUpdate } from '@/hooks/useUpdate';
 import { CanisterId } from '@/types';
 
 import {
-  UpdateUserRoleUpdateInput,
-  UpdateUserRoleUpdateOutput,
+  UpdateUserRoleInput,
+  UpdateUserRoleOutput,
 } from '../../../../../../declarations/workspace/workspace.did';
 
 export const useUpdateUserRole = (options: {
   workspaceId: CanisterId;
   identity: Identity;
 }): [
-  (input: [UpdateUserRoleUpdateInput]) => Promise<UpdateUserRoleUpdateOutput>,
-  { data: UpdateUserRoleUpdateOutput | null; isLoading: boolean }
+  (input: [UpdateUserRoleInput]) => Promise<UpdateUserRoleOutput>,
+  { data: UpdateUserRoleOutput | null; isLoading: boolean }
 ] => {
   const actor = useWorkspaceActor();
 

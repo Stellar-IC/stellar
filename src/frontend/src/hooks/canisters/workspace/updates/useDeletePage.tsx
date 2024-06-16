@@ -5,16 +5,16 @@ import { useUpdate } from '@/hooks/useUpdate';
 import { CanisterId } from '@/types';
 
 import {
-  DeletePageUpdateInput,
-  DeletePageUpdateOutput,
+  DeletePageInput,
+  DeletePageOutput,
 } from '../../../../../../declarations/workspace/workspace.did';
 
 export const useDeletePage = (options: {
   workspaceId: CanisterId;
   identity: Identity;
 }): [
-  (input: [DeletePageUpdateInput]) => Promise<DeletePageUpdateOutput>,
-  { data: DeletePageUpdateOutput | null; isLoading: boolean }
+  (input: [DeletePageInput]) => Promise<DeletePageOutput>,
+  { data: DeletePageOutput | null; isLoading: boolean }
 ] => {
   const actor = useWorkspaceActor();
 

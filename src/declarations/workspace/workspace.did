@@ -46,7 +46,6 @@ type Workspace =
    activityLog: (UUID) -> (ActivityLogOutput) query;
    addBlock: (AddBlockInput) -> (AddBlockOutput);
    addOwner: (principal) -> (Result);
-   addUsers: (AddUsersInput) -> (AddUsersResult);
    block: (UUID, BlockByUuidOptions) -> (BlockByUuidResult) query;
    createPage: (CreatePageInput) -> (CreatePageOutput);
    deletePage: (DeletePageInput) -> (DeletePageOutput);
@@ -423,7 +422,7 @@ type Edge_2 = record {node: HydratedActivity;};
 type Edge_1 = record {node: principal;};
 type Edge = record {node: ExternalId;};
 type DeletePageOutputResult = null;
-type DeletePageOutputError = null;
+type DeletePageOutputError = variant {unauthorized;};
 type DeletePageOutput = 
  variant {
    err: DeletePageOutputError;
@@ -453,6 +452,7 @@ type CreatePageOutputError =
    inputTooLong;
    insufficientCycles;
    invalidBlockType;
+   unauthorized;
  };
 type CreatePageOutput = 
  variant {
@@ -606,16 +606,6 @@ type AllocationStrategy =
    boundaryMinus;
    boundaryPlus;
  };
-type AddUsersResult = 
- variant {
-   err: variant {unauthorized;};
-   ok;
- };
-type AddUsersInput = 
- vec record {
-       principal;
-       WorkspaceUser;
-     };
 type AddBlockOutputResult = null;
 type AddBlockOutputError = variant {unauthorized;};
 type AddBlockOutput = 
