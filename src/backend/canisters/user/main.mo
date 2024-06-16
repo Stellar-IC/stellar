@@ -137,7 +137,7 @@ shared ({ caller = initializer }) actor class User(
         });
     };
 
-    public shared query ({ caller }) func personalWorkspace() : async Result.Result<?WorkspaceId, { #anonymousUser; #insufficientCycles; #unauthorized }> {
+    public query ({ caller }) func personalWorkspace() : async Result.Result<?WorkspaceId, { #anonymousUser; #insufficientCycles; #unauthorized }> {
         if (caller != _owner) {
             return #err(#unauthorized);
         };
@@ -145,7 +145,7 @@ shared ({ caller = initializer }) actor class User(
         return #ok(_personalWorkspaceId);
     };
 
-    public shared ({ caller }) func workspaces() : async Result.Result<[WorkspaceId], { #unauthorized }> {
+    public query ({ caller }) func workspaces() : async Result.Result<[WorkspaceId], { #unauthorized }> {
         if (caller != _owner) {
             return #err(#unauthorized);
         };

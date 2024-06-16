@@ -78,7 +78,7 @@ identity stewie;
 call user.personalWorkspace();
 let workspace = _.ok;
 // assert a principal for a workspace is returned
-call workspace.toObject(); // toObject is a method on the workspace actor
+call workspace.details(); // details is a method on the workspace actor
 
 
 // should return the same workspace on subsequent calls
