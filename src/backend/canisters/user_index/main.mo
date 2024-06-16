@@ -145,7 +145,12 @@ actor UserIndex {
 
         await IC0.install_code(
             {
-                arg = to_candid ();
+                arg = to_candid (
+                    {
+                        capacity = USER_CAPACITY;
+                        owner = Principal.fromActor(UserIndex);
+                    }
+                );
                 canister_id = userId;
                 mode = #upgrade(?{ skip_pre_upgrade = ?false });
                 sender_canister_version = sender_canister_version;
@@ -170,7 +175,12 @@ actor UserIndex {
             try {
                 await IC0.install_code(
                     {
-                        arg = to_candid ();
+                        arg = to_candid (
+                            {
+                                capacity = USER_CAPACITY;
+                                owner = Principal.fromActor(UserIndex);
+                            }
+                        );
                         canister_id = userId;
                         mode = #upgrade(?{ skip_pre_upgrade = ?false });
                         sender_canister_version = sender_canister_version;

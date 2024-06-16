@@ -96,25 +96,19 @@ export type Result = { 'ok' : Array<WorkspaceId> } |
   { 'err' : { 'unauthorized' : null } };
 export type Result_1 = { 'ok' : { 'accepted' : bigint } } |
   { 'err' : { 'unauthorized' : null } };
-export type Result_2 = { 'ok' : null } |
-  {
-    'err' : { 'unauthorized' : null } |
-      { 'workspaceNotFound' : string } |
-      { 'failed' : string }
-  };
-export type Result_3 = { 'ok' : UserProfile } |
+export type Result_2 = { 'ok' : UserProfile } |
   { 'err' : { 'unauthorized' : null } | { 'usernameTaken' : null } };
-export type Result_4 = { 'ok' : null } |
+export type Result_3 = { 'ok' : null } |
   { 'err' : { 'unauthorized' : null } };
-export type Result_5 = { 'ok' : UserProfile } |
+export type Result_4 = { 'ok' : UserProfile } |
   { 'err' : { 'fileUploadError' : string } | { 'unauthorized' : null } };
-export type Result_6 = { 'ok' : null } |
+export type Result_5 = { 'ok' : null } |
   { 'err' : { 'removalPrevented' : null } | { 'unauthorized' : null } };
-export type Result_7 = { 'ok' : PublicUserProfile } |
+export type Result_6 = { 'ok' : PublicUserProfile } |
   { 'err' : { 'unauthorized' : null } };
-export type Result_8 = { 'ok' : UserProfile } |
+export type Result_7 = { 'ok' : UserProfile } |
   { 'err' : { 'unauthorized' : null } };
-export type Result_9 = { 'ok' : [] | [WorkspaceId] } |
+export type Result_8 = { 'ok' : [] | [WorkspaceId] } |
   {
     'err' : { 'anonymousUser' : null } |
       { 'insufficientCycles' : null } |
@@ -136,15 +130,15 @@ export interface UpdateInformationRequest {
   'metrics' : [] | [CollectMetricsRequestType],
 }
 export interface User {
-  'addWorkspace' : ActorMethod<[{ 'canisterId' : Principal }], Result_4>,
+  'addWorkspace' : ActorMethod<[{ 'canisterId' : Principal }], Result_3>,
   'getCanistergeekInformation' : ActorMethod<
     [GetInformationRequest],
     GetInformationResponse
   >,
-  'personalWorkspace' : ActorMethod<[], Result_9>,
-  'profile' : ActorMethod<[], Result_8>,
-  'publicProfile' : ActorMethod<[], Result_7>,
-  'removeWorkspace' : ActorMethod<[{ 'canisterId' : Principal }], Result_6>,
+  'personalWorkspace' : ActorMethod<[], Result_8>,
+  'profile' : ActorMethod<[], Result_7>,
+  'publicProfile' : ActorMethod<[], Result_6>,
+  'removeWorkspace' : ActorMethod<[{ 'canisterId' : Principal }], Result_5>,
   'setAvatar' : ActorMethod<
     [
       {
@@ -153,16 +147,15 @@ export interface User {
         'content_type' : string,
       },
     ],
-    Result_5
+    Result_4
   >,
-  'setPersonalWorkspace' : ActorMethod<[WorkspaceId], Result_4>,
+  'setPersonalWorkspace' : ActorMethod<[WorkspaceId], Result_3>,
   'subscribe' : ActorMethod<[UserEventName, [Principal, string]], undefined>,
   'updateCanistergeekInformation' : ActorMethod<
     [UpdateInformationRequest],
     undefined
   >,
-  'updateProfile' : ActorMethod<[ProfileInput], Result_3>,
-  'upgradePersonalWorkspace' : ActorMethod<[Uint8Array | number[]], Result_2>,
+  'updateProfile' : ActorMethod<[ProfileInput], Result_2>,
   'walletReceive' : ActorMethod<[], Result_1>,
   'workspaces' : ActorMethod<[], Result>,
 }
