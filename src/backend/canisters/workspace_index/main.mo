@@ -145,7 +145,14 @@ actor WorkspaceIndex {
             case (#err(error)) { #err(error) };
             case (#ok(workspaceId)) {
                 let workspace = actor (Principal.toText(workspaceId)) : Workspace.Workspace;
-                let workspaceData = await workspace.toObject();
+                let workspaceData = switch (await workspace.details()) {
+                    case (#err(err)) {
+                        switch (err) {
+                            case (#unauthorized) { return #err(#Unauthorized) };
+                        };
+                    };
+                    case (#ok(data)) { data };
+                };
                 saveWorkspaceDetails(workspaceId, { name = workspaceData.name });
                 await workspace.subscribe("workspaceNameUpdated", handleWorkspaceEvents);
                 #ok(workspaceId);

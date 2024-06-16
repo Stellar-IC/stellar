@@ -258,14 +258,18 @@ export type PubSubEvent = {
     'workspaceNameUpdated' : { 'name' : string, 'workspaceId' : Principal }
   };
 export type PubSubEventHandler = ActorMethod<[string, PubSubEvent], undefined>;
-export type Result = { 'ok' : null } |
-  { 'err' : { 'unauthorized' : null } | { 'userUpdateFailure' : null } };
+export type Result = { 'ok' : SettingsOutput } |
+  { 'err' : { 'unauthorized' : null } };
 export type Result_1 = { 'ok' : null } |
+  { 'err' : { 'unauthorized' : null } | { 'userUpdateFailure' : null } };
+export type Result_2 = { 'ok' : null } |
   {
     'err' : { 'profileQueryFailure' : null } |
       { 'unauthorized' : null } |
       { 'userUpdateFailure' : null }
   };
+export type Result_3 = { 'ok' : Workspace__1 } |
+  { 'err' : { 'unauthorized' : null } };
 export interface SaveEventTransactionInput {
   'transaction' : BlockEventTransaction,
 }
@@ -399,19 +403,20 @@ export type UpdateUserRoleOutputOk = null;
 export interface Workspace {
   'activityLog' : ActorMethod<[UUID], ActivityLogOutput>,
   'addBlock' : ActorMethod<[AddBlockInput], AddBlockOutput>,
-  'addOwner' : ActorMethod<[Principal], Result>,
+  'addOwner' : ActorMethod<[Principal], Result_1>,
   'block' : ActorMethod<[UUID, BlockByUuidOptions], BlockByUuidResult>,
   'createPage' : ActorMethod<[CreatePageInput], CreatePageOutput>,
   'deletePage' : ActorMethod<[DeletePageInput], DeletePageOutput>,
+  'details' : ActorMethod<[], Result_3>,
   'getCanistergeekInformation' : ActorMethod<
     [GetInformationRequest],
     GetInformationResponse
   >,
-  'join' : ActorMethod<[], Result_1>,
+  'join' : ActorMethod<[], Result_2>,
   'members' : ActorMethod<[], MembersOutput>,
   'pageAccessSettings' : ActorMethod<[UUID], PageAccessSettingsOutput>,
   'pages' : ActorMethod<[PagesOptionsArg], PagesOutput>,
-  'removeOwner' : ActorMethod<[Principal], Result>,
+  'removeOwner' : ActorMethod<[Principal], Result_1>,
   'saveEvents' : ActorMethod<
     [SaveEventTransactionInput],
     SaveEventTransactionOutput
@@ -420,9 +425,8 @@ export interface Workspace {
     [SetPageAccessInput],
     SetPageAccessOutput
   >,
-  'settings' : ActorMethod<[], SettingsOutput>,
+  'settings' : ActorMethod<[], Result>,
   'subscribe' : ActorMethod<[string, [Principal, string]], undefined>,
-  'toObject' : ActorMethod<[], Workspace__1>,
   'unsubscribe' : ActorMethod<[string, [Principal, string]], undefined>,
   'updateBlock' : ActorMethod<[UpdateBlockInput], UpdateBlockOutput>,
   'updateCanistergeekInformation' : ActorMethod<

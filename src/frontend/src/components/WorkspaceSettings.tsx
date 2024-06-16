@@ -31,9 +31,13 @@ export const WorkspaceSettings = ({ onSubmit }: WorkspaceSettingsProps) => {
 
   useEffect(() => {
     queryWorkspaceSettings().then((result) => {
+      if ('err' in result) {
+        throw new Error(JSON.stringify(result.err));
+      }
+
       form.setValues({
-        ...result,
-        visibility: 'Public' in result.visibility ? 'public' : 'private',
+        ...result.ok,
+        visibility: 'Public' in result.ok.visibility ? 'public' : 'private',
       });
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps

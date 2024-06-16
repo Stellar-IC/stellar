@@ -27,18 +27,33 @@ const unauthenticatedRoutes: RouteObject[] = [
   { path: '/', element: <LandingPage /> },
   {
     path: '/spaces/:spaceId/',
+    element: (
+      <Box w="100%" h="100%">
+        <Flex h="100%">
+          <NavbarSearch />
+          <Box w="100%" h="100%">
+            <Outlet />
+          </Box>
+        </Flex>
+      </Box>
+    ),
     children: [
       {
         path: '/spaces/:spaceId/',
-        element: <SpaceHomePageConnector />,
-      },
-      {
-        path: '/spaces/:spaceId/pages/:pageId',
-        element: <PageDetailPageConnector />,
+        children: [
+          {
+            path: '/spaces/:spaceId/',
+            element: <SpaceHomePageConnector />,
+          },
+          {
+            path: '/spaces/:spaceId/pages/:pageId',
+            element: <PageDetailPageConnector />,
+          },
+        ],
       },
     ],
   },
-  { path: '*', element: <Navigate to="/" /> },
+  // { path: '*', element: <Navigate to="/" /> },
 ];
 const unauthenticatedRouter = createBrowserRouter(unauthenticatedRoutes);
 

@@ -166,23 +166,25 @@ export function NavbarSearch() {
         )}
       </div>
 
-      <div className={classes.section}>
-        <Link
-          to="/settings"
-          className={classes.pageLink}
-          style={{
-            flexGrow: 1,
-            alignSelf: 'center',
-          }}
-          onClick={() => {
-            if (document.body.clientWidth < xsBreakpoint) {
-              layoutManager.layout = 'CLOSED';
-            }
-          }}
-        >
-          Settings
-        </Link>
-      </div>
+      {isAuthenticated && (
+        <div className={classes.section}>
+          <Link
+            to="/settings"
+            className={classes.pageLink}
+            style={{
+              flexGrow: 1,
+              alignSelf: 'center',
+            }}
+            onClick={() => {
+              if (document.body.clientWidth < xsBreakpoint) {
+                layoutManager.layout = 'CLOSED';
+              }
+            }}
+          >
+            Settings
+          </Link>
+        </div>
+      )}
 
       <div className={classes.section}>
         <WorkspacesSection workspaces={workspaces} />

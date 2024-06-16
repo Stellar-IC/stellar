@@ -45,10 +45,11 @@ type Workspace =
    ///      ************************************************************************
    activityLog: (UUID) -> (ActivityLogOutput) query;
    addBlock: (AddBlockInput) -> (AddBlockOutput);
-   addOwner: (principal) -> (Result);
+   addOwner: (principal) -> (Result_1);
    block: (UUID, BlockByUuidOptions) -> (BlockByUuidResult) query;
    createPage: (CreatePageInput) -> (CreatePageOutput);
    deletePage: (DeletePageInput) -> (DeletePageOutput);
+   details: () -> (Result_3) query;
    /// ***********************************************************************
    ///      * Canister Monitoring
    ///      ************************************************************************
@@ -57,16 +58,15 @@ type Workspace =
    /// ***********************************************************************
    ///      * Updates
    ///      ************************************************************************
-   join: () -> (Result_1);
+   join: () -> (Result_2);
    members: () -> (MembersOutput) query;
    pageAccessSettings: (UUID) -> (PageAccessSettingsOutput) query;
    pages: (PagesOptionsArg) -> (PagesOutput) query;
-   removeOwner: (principal) -> (Result);
+   removeOwner: (principal) -> (Result_1);
    saveEvents: (SaveEventTransactionInput) -> (SaveEventTransactionOutput);
    setPageAccessSettings: (SetPageAccessInput) -> (SetPageAccessOutput);
-   settings: () -> (SettingsOutput) query;
+   settings: () -> (Result) query;
    subscribe: (text, PubSubEventHandler) -> ();
-   toObject: () -> (Workspace__1) query;
    unsubscribe: (text, PubSubEventHandler) -> ();
    updateBlock: (UpdateBlockInput) -> (UpdateBlockOutput);
    updateCanistergeekInformation: (UpdateInformationRequest) -> ();
@@ -252,7 +252,12 @@ type SaveEventTransactionOutput =
    ok: SaveEventTransactionOutputResult;
  };
 type SaveEventTransactionInput = record {transaction: BlockEventTransaction;};
-type Result_1 = 
+type Result_3 = 
+ variant {
+   err: variant {unauthorized;};
+   ok: Workspace__1;
+ };
+type Result_2 = 
  variant {
    err: variant {
           profileQueryFailure;
@@ -261,13 +266,18 @@ type Result_1 =
         };
    ok;
  };
-type Result = 
+type Result_1 = 
  variant {
    err: variant {
           unauthorized;
           userUpdateFailure;
         };
    ok;
+ };
+type Result = 
+ variant {
+   err: variant {unauthorized;};
+   ok: SettingsOutput;
  };
 type PubSubEventHandler = func (text, PubSubEvent) -> ();
 type PubSubEvent = variant {

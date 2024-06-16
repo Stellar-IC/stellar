@@ -2,7 +2,7 @@ import { useCallback } from 'react';
 
 import { useWorkspaceActor } from '@/hooks/canisters/workspace/useWorkspaceActor';
 
-import { SettingsOutput } from '../../../../../../declarations/workspace/workspace.did';
+import { Result as SettingsOutput } from '../../../../../../declarations/workspace/workspace.did';
 
 export const useSettingsQuery = (): (() => Promise<SettingsOutput>) => {
   const actor = useWorkspaceActor();

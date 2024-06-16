@@ -403,8 +403,13 @@ shared ({ caller = initializer }) actor class Workspace(
         };
     };
 
-    public query func settings() : async Types.Queries.Settings.SettingsOutput {
-        return {
+    public query ({ caller }) func settings() : async Result.Result<Types.Queries.Settings.SettingsOutput, { #unauthorized }> {
+        // Check if the user is authorized to view the workspace
+        if (_visibility == #Private and not isWorkspaceMember(caller)) {
+            return #err(#unauthorized);
+        };
+
+        return #ok({
             description = _description;
             name = _name;
             visibility = _visibility;
@@ -412,17 +417,22 @@ shared ({ caller = initializer }) actor class Workspace(
                 case (null) { "" };
                 case (?link) { link };
             };
-        };
+        });
     };
 
-    public query func toObject() : async CoreTypes.Workspaces.Workspace {
-        return {
+    public query ({ caller }) func details() : async Result.Result<CoreTypes.Workspaces.Workspace, { #unauthorized }> {
+        // Check if the user is authorized to view the workspace
+        if (_visibility == #Private and not isWorkspaceMember(caller)) {
+            return #err(#unauthorized);
+        };
+
+        return #ok({
             name = _name;
             description = _description;
             owners = _owners;
             createdAt = _createdAt;
             updatedAt = _updatedAt;
-        };
+        });
     };
 
     /*************************************************************************

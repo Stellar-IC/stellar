@@ -49,6 +49,7 @@ export function SpaceHomePage({
 
   const [pages, setPages] = useState<LocalStorageBlock[]>([]);
   const [workspace, setWorkspace] = useState<{ name: string } | null>(null);
+  const [showUnauthorized, setShowUnauthorized] = useState(false);
 
   useEffect(() => {
     queryPages().then((result) => {
@@ -57,12 +58,30 @@ export function SpaceHomePage({
   }, [queryPages]);
 
   useEffect(() => {
-    workspaceActor.toObject().then((result) => {
-      setWorkspace({ name: result.name });
+    workspaceActor.details().then((result) => {
+      if ('err' in result) {
+        if ('unauthorized' in result.err) {
+          setShowUnauthorized(true);
+        }
+        return;
+      }
+
+      setWorkspace({ name: result.ok.name });
     });
   }, [workspaceActor]);
 
-  return (
+  return showUnauthorized ? (
+    <>
+      <ActionBar />
+      <Box className={classes.SpaceHeader} py="md">
+        <Container>
+          <Title style={{ textAlign: 'center' }}>
+            Only members can access this Space
+          </Title>
+        </Container>
+      </Box>
+    </>
+  ) : (
     <>
       <ActionBar />
       <Box className={classes.SpaceHeader} py="md">

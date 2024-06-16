@@ -110,7 +110,7 @@ export const idlFactory = ({ IDL }) => {
     'ok' : AddBlockOutputResult,
     'err' : AddBlockOutputError,
   });
-  const Result = IDL.Variant({
+  const Result_1 = IDL.Variant({
     'ok' : IDL.Null,
     'err' : IDL.Variant({
       'unauthorized' : IDL.Null,
@@ -173,6 +173,16 @@ export const idlFactory = ({ IDL }) => {
   const DeletePageOutput = IDL.Variant({
     'ok' : DeletePageOutputResult,
     'err' : DeletePageOutputError,
+  });
+  const Workspace__1 = IDL.Record({
+    'name' : WorkspaceName,
+    'createdAt' : Time,
+    'description' : WorkspaceDescription,
+    'updatedAt' : Time,
+  });
+  const Result_3 = IDL.Variant({
+    'ok' : Workspace__1,
+    'err' : IDL.Variant({ 'unauthorized' : IDL.Null }),
   });
   const StatusRequest = IDL.Record({
     'memory_size' : IDL.Bool,
@@ -280,7 +290,7 @@ export const idlFactory = ({ IDL }) => {
     'logs' : IDL.Opt(CanisterLogResponse),
     'version' : IDL.Opt(IDL.Nat),
   });
-  const Result_1 = IDL.Variant({
+  const Result_2 = IDL.Variant({
     'ok' : IDL.Null,
     'err' : IDL.Variant({
       'profileQueryFailure' : IDL.Null,
@@ -431,6 +441,10 @@ export const idlFactory = ({ IDL }) => {
     'description' : IDL.Text,
     'visibility' : WorkspaceVisibility,
   });
+  const Result = IDL.Variant({
+    'ok' : SettingsOutput,
+    'err' : IDL.Variant({ 'unauthorized' : IDL.Null }),
+  });
   const PubSubEvent = IDL.Variant({
     'workspaceNameUpdated' : IDL.Record({
       'name' : IDL.Text,
@@ -438,12 +452,6 @@ export const idlFactory = ({ IDL }) => {
     }),
   });
   const PubSubEventHandler = IDL.Func([IDL.Text, PubSubEvent], [], []);
-  const Workspace__1 = IDL.Record({
-    'name' : WorkspaceName,
-    'createdAt' : Time,
-    'description' : WorkspaceDescription,
-    'updatedAt' : Time,
-  });
   const UpdateBlockInput = IDL.Record({
     'content' : ShareableBlockContent,
     'uuid' : BlockId,
@@ -497,7 +505,7 @@ export const idlFactory = ({ IDL }) => {
   const Workspace = IDL.Service({
     'activityLog' : IDL.Func([UUID], [ActivityLogOutput], ['query']),
     'addBlock' : IDL.Func([AddBlockInput], [AddBlockOutput], []),
-    'addOwner' : IDL.Func([IDL.Principal], [Result], []),
+    'addOwner' : IDL.Func([IDL.Principal], [Result_1], []),
     'block' : IDL.Func(
         [UUID, BlockByUuidOptions],
         [BlockByUuidResult],
@@ -505,12 +513,13 @@ export const idlFactory = ({ IDL }) => {
       ),
     'createPage' : IDL.Func([CreatePageInput], [CreatePageOutput], []),
     'deletePage' : IDL.Func([DeletePageInput], [DeletePageOutput], []),
+    'details' : IDL.Func([], [Result_3], ['query']),
     'getCanistergeekInformation' : IDL.Func(
         [GetInformationRequest],
         [GetInformationResponse],
         ['query'],
       ),
-    'join' : IDL.Func([], [Result_1], []),
+    'join' : IDL.Func([], [Result_2], []),
     'members' : IDL.Func([], [MembersOutput], ['query']),
     'pageAccessSettings' : IDL.Func(
         [UUID],
@@ -518,7 +527,7 @@ export const idlFactory = ({ IDL }) => {
         ['query'],
       ),
     'pages' : IDL.Func([PagesOptionsArg], [PagesOutput], ['query']),
-    'removeOwner' : IDL.Func([IDL.Principal], [Result], []),
+    'removeOwner' : IDL.Func([IDL.Principal], [Result_1], []),
     'saveEvents' : IDL.Func(
         [SaveEventTransactionInput],
         [SaveEventTransactionOutput],
@@ -529,9 +538,8 @@ export const idlFactory = ({ IDL }) => {
         [SetPageAccessOutput],
         [],
       ),
-    'settings' : IDL.Func([], [SettingsOutput], ['query']),
+    'settings' : IDL.Func([], [Result], ['query']),
     'subscribe' : IDL.Func([IDL.Text, PubSubEventHandler], [], []),
-    'toObject' : IDL.Func([], [Workspace__1], ['query']),
     'unsubscribe' : IDL.Func([IDL.Text, PubSubEventHandler], [], []),
     'updateBlock' : IDL.Func([UpdateBlockInput], [UpdateBlockOutput], []),
     'updateCanistergeekInformation' : IDL.Func(
