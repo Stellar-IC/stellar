@@ -292,6 +292,18 @@ export type SetPageAccessOutput = { 'ok' : SetPageAccessOutputResult } |
   { 'err' : SetPageAccessOutputError };
 export type SetPageAccessOutputError = { 'unauthorized' : null };
 export type SetPageAccessOutputResult = null;
+export interface SetUserAccessLevelForPageInput {
+  'accessLevel' : PageAccessLevel,
+  'userId' : Principal,
+  'pageId' : BlockId__1,
+}
+export type SetUserAccessLevelForPageOutput = {
+    'ok' : SetUserAccessLevelForPageOutputResult
+  } |
+  { 'err' : SetUserAccessLevelForPageOutputError };
+export type SetUserAccessLevelForPageOutputError = { 'userNotFound' : null } |
+  { 'unauthorized' : null };
+export type SetUserAccessLevelForPageOutputResult = null;
 export interface SettingsOutput {
   'websiteLink' : string,
   'name' : string,
@@ -440,6 +452,10 @@ export interface Workspace {
   'setPageAccessSettings' : ActorMethod<
     [SetPageAccessInput],
     SetPageAccessOutput
+  >,
+  'setUserAccessLevelForPage' : ActorMethod<
+    [SetUserAccessLevelForPageInput],
+    SetUserAccessLevelForPageOutput
   >,
   'settings' : ActorMethod<[], Result>,
   'subscribe' : ActorMethod<[string, [Principal, string]], undefined>,

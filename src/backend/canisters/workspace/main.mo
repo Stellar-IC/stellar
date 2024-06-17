@@ -191,7 +191,6 @@ shared ({ caller = initializer }) actor class Workspace(
         pageId : UUID.UUID,
     ) : Types.PageAccessLevel {
         let pageIdText = UUID.toText(pageId);
-        let pageAccessSetting = _pageAccessSettings(pageId);
 
         return PageAccessManager.getUserAccessLevel(
             _pageAccessManager,
@@ -252,6 +251,67 @@ shared ({ caller = initializer }) actor class Workspace(
                 identity;
             },
         );
+    };
+
+    private func processEvent(event : BlockEvent) : () {
+        let activityId = _activitiesIdCounter;
+
+        // TODO: Determine what page this event is for and if the user has access to it
+
+        switch (event.data) {
+            case (#blockCreated(blockCreatedEvent)) {
+                logger.info("Processing blockCreated event: " # debug_show UUID.toText(event.uuid));
+                let res = BlockCreatedConsumer.execute(_state, { event with data = blockCreatedEvent }, activityId);
+                switch (res) {
+                    case (#ok(_)) {
+                        logger.info("Processed blockCreated event: " # debug_show UUID.toText(event.uuid));
+                    };
+                    case (#err(error)) {
+                        logger.info("Failed to process blockCreated event: " # debug_show UUID.toText(event.uuid) # "\nError: " # debug_show error);
+                    };
+                };
+            };
+            case (#blockUpdated(blockUpdatedEvent)) {
+                logger.info("Processing blockUpdated event: " # debug_show UUID.toText(event.uuid));
+                let res = BlockUpdatedConsumer.execute(_state, { event with data = blockUpdatedEvent }, activityId);
+                switch (res) {
+                    case (#ok(_)) {
+                        logger.info("Processed blockUpdated event: " # debug_show UUID.toText(event.uuid));
+                    };
+                    case (#err(error)) {
+                        logger.info("Failed to process blockUpdated event: " # debug_show UUID.toText(event.uuid) # "\nError: " # debug_show error);
+                        return;
+                    };
+                };
+
+                switch (blockUpdatedEvent) {
+                    case (#updateBlockType(eventData)) {
+                        // if the block was changed to a page block, add the user to the page
+                        if (eventData.blockType == #page) {
+                            let userIdentity = switch (Map.get(_users.userIdentityByUserId, Map.phash, event.user)) {
+                                case (null) { return };
+                                case (?identity) { identity };
+                            };
+                            let user = switch (UserRegistryV2.findUserByUserId(_users, event.user)) {
+                                case (null) { return };
+                                case (?user) { user };
+                            };
+                            let pageId = UUID.toText(eventData.blockExternalId);
+
+                            PageAccessManager.addInvitedUser(
+                                _pageAccessManager,
+                                pageId,
+                                user.identity,
+                                #full,
+                            );
+                        };
+                    };
+                    case (_) {};
+                };
+            };
+        };
+
+        _activitiesIdCounter := _activitiesIdCounter + 1;
     };
 
     /*************************************************************************
@@ -741,6 +801,7 @@ shared ({ caller = initializer }) actor class Workspace(
             return #err(#unauthorized);
         };
 
+        UserRegistryV2.updateUserByUserId<WorkspaceUser>(_users, input.user, updatedUser);
         UserRegistry.updateUser<WorkspaceUser>(userRegistry, input.user, updatedUser);
 
         await updateCanistergeekInformation({ metrics = ? #normal });
@@ -751,6 +812,15 @@ shared ({ caller = initializer }) actor class Workspace(
     public shared ({ caller }) func setPageAccessSettings(
         input : Types.Updates.SetPageAccess.SetPageAccessInput
     ) : async Types.Updates.SetPageAccess.SetPageAccessOutput {
+        let accessLevel = getUserAccessLevel(caller, input.pageId);
+
+        switch (accessLevel) {
+            case (#none) { return #err(#unauthorized) };
+            case (#view) { return #err(#unauthorized) };
+            case (#edit) {};
+            case (#full) {};
+        };
+
         let pageId = UUID.toText(input.pageId);
         PageAccessManager.set(_pageAccessManager, pageId, input.access);
         await updateCanistergeekInformation({ metrics = ? #normal });
@@ -758,37 +828,35 @@ shared ({ caller = initializer }) actor class Workspace(
         return #ok;
     };
 
-    func processEvent(event : BlockEvent) : () {
-        let activityId = _activitiesIdCounter;
+    public shared ({ caller }) func setUserAccessLevelForPage(
+        input : Types.Updates.SetUserAccessLevelForPage.SetUserAccessLevelForPageInput
+    ) : async Types.Updates.SetUserAccessLevelForPage.SetUserAccessLevelForPageOutput {
+        let callerAccessLevel = getUserAccessLevel(caller, input.pageId);
 
-        switch (event.data) {
-            case (#blockCreated(blockCreatedEvent)) {
-                logger.info("Processing blockCreated event: " # debug_show UUID.toText(event.uuid));
-                let res = BlockCreatedConsumer.execute(_state, { event with data = blockCreatedEvent }, activityId);
-                switch (res) {
-                    case (#ok(_)) {
-                        logger.info("Processed blockCreated event: " # debug_show UUID.toText(event.uuid));
-                    };
-                    case (#err(error)) {
-                        logger.info("Failed to process blockCreated event: " # debug_show UUID.toText(event.uuid) # "\nError: " # debug_show error);
-                    };
-                };
-            };
-            case (#blockUpdated(blockUpdatedEvent)) {
-                logger.info("Processing blockUpdated event: " # debug_show UUID.toText(event.uuid));
-                let res = BlockUpdatedConsumer.execute(_state, { event with data = blockUpdatedEvent }, activityId);
-                switch (res) {
-                    case (#ok(_)) {
-                        logger.info("Processed blockUpdated event: " # debug_show UUID.toText(event.uuid));
-                    };
-                    case (#err(error)) {
-                        logger.info("Failed to process blockUpdated event: " # debug_show UUID.toText(event.uuid) # "\nError: " # debug_show error);
-                    };
-                };
-            };
+        switch (callerAccessLevel) {
+            case (#none) { return #err(#unauthorized) };
+            case (#view) { return #err(#unauthorized) };
+            case (#edit) {};
+            case (#full) {};
         };
 
-        _activitiesIdCounter := _activitiesIdCounter + 1;
+        let user = switch (UserRegistryV2.findUserByUserId(_users, input.userId)) {
+            case (null) { return #err(#userNotFound) };
+            case (?user) { user };
+        };
+        let accessLevel = input.accessLevel;
+        let pageId = UUID.toText(input.pageId);
+
+        PageAccessManager.addInvitedUser(
+            _pageAccessManager,
+            pageId,
+            user.identity,
+            accessLevel,
+        );
+
+        await updateCanistergeekInformation({ metrics = ? #normal });
+
+        return #ok;
     };
 
     /*************************************************************************
@@ -876,7 +944,6 @@ shared ({ caller = initializer }) actor class Workspace(
             // Additional initialization
             if (Map.size(_users.users) == 0) {
                 for ((identity, user) in Array.vals(initArgs.initialUsers)) {
-                    Debug.print("Adding user: " # debug_show user);
                     addUser(identity, user.canisterId, user.username, user.role);
                     let userActor = actor (Principal.toText(user.canisterId)) : UserActor;
                     ignore userActor.subscribe(#profileUpdated, handleUserEvent);

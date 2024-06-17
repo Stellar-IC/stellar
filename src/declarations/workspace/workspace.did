@@ -71,6 +71,8 @@ type Workspace =
    removeOwner: (principal) -> (Result_1);
    saveEvents: (SaveEventTransactionInput) -> (SaveEventTransactionOutput);
    setPageAccessSettings: (SetPageAccessInput) -> (SetPageAccessOutput);
+   setUserAccessLevelForPage: (SetUserAccessLevelForPageInput) ->
+    (SetUserAccessLevelForPageOutput);
    settings: () -> (Result) query;
    subscribe: (text, PubSubEventHandler) -> ();
    unsubscribe: (text, PubSubEventHandler) -> ();
@@ -246,6 +248,23 @@ type SettingsOutput =
    name: text;
    visibility: WorkspaceVisibility;
    websiteLink: text;
+ };
+type SetUserAccessLevelForPageOutputResult = null;
+type SetUserAccessLevelForPageOutputError = 
+ variant {
+   unauthorized;
+   userNotFound;
+ };
+type SetUserAccessLevelForPageOutput = 
+ variant {
+   err: SetUserAccessLevelForPageOutputError;
+   ok: SetUserAccessLevelForPageOutputResult;
+ };
+type SetUserAccessLevelForPageInput = 
+ record {
+   accessLevel: PageAccessLevel;
+   pageId: BlockId__1;
+   userId: principal;
  };
 type SetPageAccessOutputResult = null;
 type SetPageAccessOutputError = variant {unauthorized;};

@@ -120,7 +120,6 @@ export const WorkspaceMembers = () => {
   useEffect(() => {
     // Fetch workspace members
     queryMembers().then((res) => {
-      // console.log('Members:', res);
       setMembers(res.recordMap.users);
     });
   }, [queryMembers]);

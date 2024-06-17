@@ -121,30 +121,54 @@ module PageAccessManager {
 
         switch setting {
             case (#invited) {
-                let users = switch (
-                    Map.get(manager.invitedUsers, Map.thash, pageId)
-                ) {
-                    case (null) { return #none };
-                    case (?users) { users };
-                };
-
-                let accessLevel = switch (
-                    Map.get(users, Map.phash, userIdentity)
-                ) {
-                    case (null) { return #none };
-                    case (?level) { level };
-                };
+                _getExplicitlySetUserAccessLevelOrFallback(
+                    manager,
+                    pageId,
+                    userIdentity,
+                    #none,
+                );
             };
-            case (#workspaceMember(accessLevel)) {
+            case (#workspaceMember(workspaceMemberAccessLevel)) {
                 if (isWorkspaceMember) {
-                    return accessLevel;
+                    return _getExplicitlySetUserAccessLevelOrFallback(
+                        manager,
+                        pageId,
+                        userIdentity,
+                        workspaceMemberAccessLevel,
+                    );
                 };
 
                 return #none;
             };
-            case (#everyone(accessLevel)) {
-                return accessLevel;
+            case (#everyone(globalAccessLevel)) {
+                return _getExplicitlySetUserAccessLevelOrFallback(
+                    manager,
+                    pageId,
+                    userIdentity,
+                    globalAccessLevel,
+                );
             };
+        };
+    };
+
+    private func _getExplicitlySetUserAccessLevelOrFallback(
+        manager : PageAccessManager,
+        pageId : PageId,
+        userIdentity : Principal,
+        fallback : PageAccessLevel,
+    ) : PageAccessLevel {
+        let users = switch (
+            Map.get(manager.invitedUsers, Map.thash, pageId)
+        ) {
+            case (null) { return fallback };
+            case (?users) { users };
+        };
+
+        switch (
+            Map.get(users, Map.phash, userIdentity)
+        ) {
+            case (null) { return fallback };
+            case (?level) { level };
         };
     };
 };

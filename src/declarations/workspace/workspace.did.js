@@ -446,6 +446,20 @@ export const idlFactory = ({ IDL }) => {
     'ok' : SetPageAccessOutputResult,
     'err' : SetPageAccessOutputError,
   });
+  const SetUserAccessLevelForPageInput = IDL.Record({
+    'accessLevel' : PageAccessLevel,
+    'userId' : IDL.Principal,
+    'pageId' : BlockId__1,
+  });
+  const SetUserAccessLevelForPageOutputResult = IDL.Null;
+  const SetUserAccessLevelForPageOutputError = IDL.Variant({
+    'userNotFound' : IDL.Null,
+    'unauthorized' : IDL.Null,
+  });
+  const SetUserAccessLevelForPageOutput = IDL.Variant({
+    'ok' : SetUserAccessLevelForPageOutputResult,
+    'err' : SetUserAccessLevelForPageOutputError,
+  });
   const WorkspaceVisibility = IDL.Variant({
     'Private' : IDL.Null,
     'Public' : IDL.Null,
@@ -552,6 +566,11 @@ export const idlFactory = ({ IDL }) => {
     'setPageAccessSettings' : IDL.Func(
         [SetPageAccessInput],
         [SetPageAccessOutput],
+        [],
+      ),
+    'setUserAccessLevelForPage' : IDL.Func(
+        [SetUserAccessLevelForPageInput],
+        [SetUserAccessLevelForPageOutput],
         [],
       ),
     'settings' : IDL.Func([], [Result], ['query']),

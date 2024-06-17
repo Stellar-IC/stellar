@@ -8,20 +8,21 @@ import Map "mo:map/Map";
 
 module UserRegistry {
     type CanisterId = Principal;
+    type Identity = Principal;
 
     public class UserRegistry<UserT>() {
-        public let users = Map.new<CanisterId, UserT>();
-        public let userIdentityByUserId = Map.new<Principal, Principal>();
+        public let users = Map.new<Identity, UserT>();
+        public let userIdentityByUserId = Map.new<Identity, CanisterId>();
     };
 
     public func addUser<UserT>(
         userRegistry : UserRegistry<UserT>,
-        userIdentity : Principal,
-        userCanisterId : Principal,
+        userIdentity : Identity,
+        userCanisterId : CanisterId,
         user : UserT,
     ) {
         ignore Map.put<CanisterId, UserT>(userRegistry.users, Map.phash, userIdentity, user);
-        ignore Map.put<Principal, Principal>(userRegistry.userIdentityByUserId, Map.phash, userCanisterId, userIdentity);
+        ignore Map.put<CanisterId, Identity>(userRegistry.userIdentityByUserId, Map.phash, userCanisterId, userIdentity);
     };
 
     public func updateUser<UserT>(
@@ -31,10 +32,7 @@ module UserRegistry {
     ) {
         let user = findUser(userRegistry, userIdentity);
         switch (user) {
-            case (null) {
-                Debug.print("User not found");
-                return;
-            };
+            case (null) { return };
             case (?_) {};
         };
 
@@ -52,21 +50,18 @@ module UserRegistry {
         };
         let user = findUser(userRegistry, userIdentity);
         switch (user) {
-            case (null) {
-                Debug.print("User not found");
-                return;
-            };
+            case (null) { return };
             case (?_) {};
         };
 
         ignore Map.put(userRegistry.users, Map.phash, userIdentity, updatedUser);
     };
 
-    public func findUser<UserT>(userRegistry : UserRegistry<UserT>, userIdentity : Principal) : ?UserT {
+    public func findUser<UserT>(userRegistry : UserRegistry<UserT>, userIdentity : Identity) : ?UserT {
         return Map.get(userRegistry.users, Map.phash, userIdentity);
     };
 
-    public func findUserByUserId<UserT>(userRegistry : UserRegistry<UserT>, userCanisterId : Principal) : ?UserT {
+    public func findUserByUserId<UserT>(userRegistry : UserRegistry<UserT>, userCanisterId : CanisterId) : ?UserT {
         let userIdentity = switch (Map.get(userRegistry.userIdentityByUserId, Map.phash, userCanisterId)) {
             case (null) { return null };
             case (?userIdentity) { userIdentity };

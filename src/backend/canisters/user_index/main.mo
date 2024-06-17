@@ -77,8 +77,6 @@ actor UserIndex {
         let userId = user.canisterId;
         let userIdentity = switch (Map.get(_userRegistry.userIdentityByUserId, Map.phash, userId)) {
             case (null) {
-                Debug.print("User not found in UserRegistryV3: " #debug_show (userId));
-
                 continue _loop;
             };
             case (?userIdentity) { userIdentity };

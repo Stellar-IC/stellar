@@ -102,8 +102,6 @@ shared ({ caller = initializer }) actor class User(
         };
     };
 
-    /* public shared ({ caller }) func unsubscribe() : async () {} */
-
     func publishEvent(event : Types.UserEvent) : async () {
         let subscriptions = getEventSubscriptions(event);
 

@@ -279,6 +279,20 @@ module {
             public type SetPageAccessOutput = Result.Result<SetPageAccessOutputResult, SetPageAccessOutputError>;
         };
 
+        public module SetUserAccessLevelForPage {
+            public type SetUserAccessLevelForPageInput = {
+                pageId : BlockId;
+                userId : Principal;
+                accessLevel : PageAccessLevel;
+            };
+            public type SetUserAccessLevelForPageOutputError = {
+                #unauthorized;
+                #userNotFound;
+            };
+            public type SetUserAccessLevelForPageOutputResult = ();
+            public type SetUserAccessLevelForPageOutput = Result.Result<SetUserAccessLevelForPageOutputResult, SetUserAccessLevelForPageOutputError>;
+        };
+
         public module UpdateBlock {
             public type UpdateBlockInput = ShareableBlock;
             public type UpdateBlockOutputError = {
