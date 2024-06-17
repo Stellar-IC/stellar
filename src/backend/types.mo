@@ -78,6 +78,20 @@ module {
         public type WorkspaceOwner = Principal;
         public type WorkspaceMember = Principal;
 
+        public type WorkspaceUserRole = {
+            #admin;
+            #moderator;
+            #member;
+            #guest;
+        };
+
+        public type WorkspaceUser = {
+            identity : Principal;
+            canisterId : Principal;
+            username : Text;
+            role : WorkspaceUserRole;
+        };
+
         public type Workspace = {
             createdAt : Time.Time;
             description : WorkspaceDescription;
@@ -93,7 +107,12 @@ module {
             uuid : UUID.UUID;
             updatedAt : Time.Time;
             userIndexCanisterId : CanisterId;
+            owner : WorkspaceOwner;
             owners : [WorkspaceOwner];
+            initialUsers : [(
+                Principal,
+                WorkspaceUser,
+            )];
         };
     };
 

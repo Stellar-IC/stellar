@@ -5,13 +5,27 @@ export const idlFactory = ({ IDL }) => {
   const Time = IDL.Int;
   const UUID = IDL.Vec(IDL.Nat8);
   const WorkspaceDescription = IDL.Text;
+  const WorkspaceUserRole = IDL.Variant({
+    'member' : IDL.Null,
+    'admin' : IDL.Null,
+    'moderator' : IDL.Null,
+    'guest' : IDL.Null,
+  });
+  const WorkspaceUser = IDL.Record({
+    'username' : IDL.Text,
+    'role' : WorkspaceUserRole,
+    'identity' : IDL.Principal,
+    'canisterId' : IDL.Principal,
+  });
   const CanisterId = IDL.Principal;
   const WorkspaceInitArgs = IDL.Record({
     'owners' : IDL.Vec(WorkspaceOwner),
+    'owner' : WorkspaceOwner,
     'name' : WorkspaceName,
     'createdAt' : Time,
     'uuid' : UUID,
     'description' : WorkspaceDescription,
+    'initialUsers' : IDL.Vec(IDL.Tuple(IDL.Principal, WorkspaceUser)),
     'updatedAt' : Time,
     'userIndexCanisterId' : CanisterId,
     'capacity' : IDL.Nat,
@@ -290,6 +304,18 @@ export const idlFactory = ({ IDL }) => {
     'logs' : IDL.Opt(CanisterLogResponse),
     'version' : IDL.Opt(IDL.Nat),
   });
+  const Username = IDL.Text;
+  const UserProfile = IDL.Record({
+    'username' : Username,
+    'created_at' : Time,
+    'updatedAt' : Time,
+    'avatarUrl' : IDL.Opt(IDL.Text),
+  });
+  const ProfileUpdatedEventData = IDL.Record({ 'profile' : UserProfile });
+  const UserEvent = IDL.Record({
+    'userId' : IDL.Principal,
+    'event' : IDL.Variant({ 'profileUpdated' : ProfileUpdatedEventData }),
+  });
   const Result_2 = IDL.Variant({
     'ok' : IDL.Null,
     'err' : IDL.Variant({
@@ -300,18 +326,6 @@ export const idlFactory = ({ IDL }) => {
   });
   const Edge_1 = IDL.Record({ 'node' : IDL.Principal });
   const PaginatedResults_1 = IDL.Record({ 'edges' : IDL.Vec(Edge_1) });
-  const WorkspaceUserRole = IDL.Variant({
-    'member' : IDL.Null,
-    'admin' : IDL.Null,
-    'moderator' : IDL.Null,
-    'guest' : IDL.Null,
-  });
-  const WorkspaceUser = IDL.Record({
-    'username' : IDL.Text,
-    'role' : WorkspaceUserRole,
-    'identity' : IDL.Principal,
-    'canisterId' : IDL.Principal,
-  });
   const MembersOutput = IDL.Record({
     'users' : PaginatedResults_1,
     'recordMap' : IDL.Record({
@@ -324,10 +338,16 @@ export const idlFactory = ({ IDL }) => {
     'none' : IDL.Null,
     'view' : IDL.Null,
   });
-  const PageAccessSettingsOutput = IDL.Variant({
+  const PageAccessSetting = IDL.Variant({
     'everyone' : PageAccessLevel,
     'invited' : IDL.Null,
     'workspaceMember' : PageAccessLevel,
+  });
+  const PageAccessSettingsOutput = IDL.Record({
+    'invitedUsers' : IDL.Vec(
+      IDL.Record({ 'access' : PageAccessLevel, 'user' : WorkspaceUser })
+    ),
+    'accessSetting' : PageAccessSetting,
   });
   const SortDirection = IDL.Variant({ 'asc' : IDL.Null, 'desc' : IDL.Null });
   const SortOrder = IDL.Record({
@@ -415,11 +435,6 @@ export const idlFactory = ({ IDL }) => {
   const SaveEventTransactionOutput = IDL.Variant({
     'ok' : SaveEventTransactionOutputResult,
     'err' : SaveEventTransactionOutputError,
-  });
-  const PageAccessSetting = IDL.Variant({
-    'everyone' : PageAccessLevel,
-    'invited' : IDL.Null,
-    'workspaceMember' : PageAccessLevel,
   });
   const SetPageAccessInput = IDL.Record({
     'access' : PageAccessSetting,
@@ -519,6 +534,7 @@ export const idlFactory = ({ IDL }) => {
         [GetInformationResponse],
         ['query'],
       ),
+    'handleUserEvent' : IDL.Func([UserEvent], [], []),
     'join' : IDL.Func([], [Result_2], []),
     'members' : IDL.Func([], [MembersOutput], ['query']),
     'pageAccessSettings' : IDL.Func(
@@ -571,13 +587,27 @@ export const init = ({ IDL }) => {
   const Time = IDL.Int;
   const UUID = IDL.Vec(IDL.Nat8);
   const WorkspaceDescription = IDL.Text;
+  const WorkspaceUserRole = IDL.Variant({
+    'member' : IDL.Null,
+    'admin' : IDL.Null,
+    'moderator' : IDL.Null,
+    'guest' : IDL.Null,
+  });
+  const WorkspaceUser = IDL.Record({
+    'username' : IDL.Text,
+    'role' : WorkspaceUserRole,
+    'identity' : IDL.Principal,
+    'canisterId' : IDL.Principal,
+  });
   const CanisterId = IDL.Principal;
   const WorkspaceInitArgs = IDL.Record({
     'owners' : IDL.Vec(WorkspaceOwner),
+    'owner' : WorkspaceOwner,
     'name' : WorkspaceName,
     'createdAt' : Time,
     'uuid' : UUID,
     'description' : WorkspaceDescription,
+    'initialUsers' : IDL.Vec(IDL.Tuple(IDL.Principal, WorkspaceUser)),
     'updatedAt' : Time,
     'userIndexCanisterId' : CanisterId,
     'capacity' : IDL.Nat,

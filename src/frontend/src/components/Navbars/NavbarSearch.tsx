@@ -145,13 +145,25 @@ export function NavbarSearch() {
       <div className={classes.section}>
         {isAuthenticated ? (
           <Flex>
-            <Menu width="10rem">
+            <Menu>
               <MenuTarget>
                 <Button size="sm" variant="transparent" px="xs">
                   {profile.username || '---'}
                 </Button>
               </MenuTarget>
               <MenuDropdown>
+                <MenuItem
+                  onClick={() => {
+                    navigator.clipboard.writeText(userId.toString());
+                  }}
+                >
+                  <div>
+                    Copy Principal
+                    <Text size="xs" c="dimmed">
+                      {userId.toString()}
+                    </Text>
+                  </div>
+                </MenuItem>
                 <MenuItem onClick={() => logout()}>Logout</MenuItem>
               </MenuDropdown>
             </Menu>

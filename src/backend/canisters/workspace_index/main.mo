@@ -145,15 +145,7 @@ actor WorkspaceIndex {
             case (#err(error)) { #err(error) };
             case (#ok(workspaceId)) {
                 let workspace = actor (Principal.toText(workspaceId)) : Workspace.Workspace;
-                let workspaceData = switch (await workspace.details()) {
-                    case (#err(err)) {
-                        switch (err) {
-                            case (#unauthorized) { return #err(#Unauthorized) };
-                        };
-                    };
-                    case (#ok(data)) { data };
-                };
-                saveWorkspaceDetails(workspaceId, { name = workspaceData.name });
+                saveWorkspaceDetails(workspaceId, { name });
                 await workspace.subscribe("workspaceNameUpdated", handleWorkspaceEvents);
                 #ok(workspaceId);
             };
@@ -181,6 +173,46 @@ actor WorkspaceIndex {
         };
     };
 
+    public shared ({ caller }) func upgradeWorkspace(workspaceId : Principal, wasm_module : Blob) : async Result.Result<(), { #unauthorized }> {
+        if ((AuthUtils.isDev(caller)) == false) {
+            return #err(#unauthorized);
+        };
+
+        let IC0 : CoreTypes.Management = actor "aaaaa-aa";
+        let sender_canister_version : ?Nat64 = null;
+
+        await IC0.install_code(
+            {
+                arg = to_candid (
+                    // These values will not be used since the canister
+                    // stores the init args as stable variables.
+                    //
+                    // TODO: Remove these values from the install_code
+                    // and create a separate initialization function for the
+                    // canister.
+                    {
+                        capacity = Constants.WORKSPACE__CAPACITY.scalar;
+                        userIndexCanisterId = Principal.fromActor(UserIndex);
+                        owner = caller;
+                        owners = [];
+                        name = "";
+                        uuid = await Source.Source().new();
+                        description = "";
+                        initialUsers = [];
+                        createdAt = Time.now();
+                        updatedAt = Time.now();
+                    },
+                );
+                canister_id = workspaceId;
+                mode = #upgrade(?{ skip_pre_upgrade = ?false });
+                sender_canister_version = sender_canister_version;
+                wasm_module = wasm_module;
+            }
+        );
+
+        #ok;
+    };
+
     public shared ({ caller }) func upgradeWorkspaces(wasm_module : Blob) : async Result.Result<(), { #unauthorized }> {
         if ((AuthUtils.isDev(caller)) == false) {
             return #err(#unauthorized);
@@ -190,39 +222,40 @@ actor WorkspaceIndex {
         let sender_canister_version : ?Nat64 = null;
 
         for (canisterId in Map.keys(_workspaces)) {
-            try {
-                await IC0.install_code(
-                    {
-                        arg = to_candid (
-                            // These values will not be used since the canister
-                            // stores the init args as stable variables.
-                            //
-                            // TODO: Remove these values from the install_code
-                            // and create a separate initialization function for the
-                            // canister.
-                            {
-                                capacity = Constants.WORKSPACE__CAPACITY.scalar;
-                                userIndexCanisterId = Principal.fromActor(UserIndex);
-                                owners = [];
-                                name = "";
-                                uuid = await Source.Source().new();
-                                description = "";
-                                createdAt = Time.now();
-                                updatedAt = Time.now();
-                            },
-                        );
-                        canister_id = canisterId;
-                        mode = #upgrade(?{ skip_pre_upgrade = ?false });
-                        sender_canister_version = sender_canister_version;
-                        wasm_module = wasm_module;
-                    }
-                );
-            } catch (err) {
-                Debug.print(
-                    "Error upgrading workspace canister: " # debug_show (Error.code(err)) #
-                    ": " # debug_show (Error.message(err))
-                );
-            };
+            // try {
+            await IC0.install_code(
+                {
+                    arg = to_candid (
+                        // These values will not be used since the canister
+                        // stores the init args as stable variables.
+                        //
+                        // TODO: Remove these values from the install_code
+                        // and create a separate initialization function for the
+                        // canister.
+                        {
+                            capacity = Constants.WORKSPACE__CAPACITY.scalar;
+                            userIndexCanisterId = Principal.fromActor(UserIndex);
+                            owners = [];
+                            name = "";
+                            uuid = await Source.Source().new();
+                            description = "";
+                            initialUsers = [];
+                            createdAt = Time.now();
+                            updatedAt = Time.now();
+                        },
+                    );
+                    canister_id = canisterId;
+                    mode = #upgrade(?{ skip_pre_upgrade = ?false });
+                    sender_canister_version = sender_canister_version;
+                    wasm_module = wasm_module;
+                }
+            );
+            // } catch (err) {
+            //     Debug.print(
+            //         "Error upgrading workspace canister: " # debug_show (Error.code(err)) #
+            //         ": " # debug_show (Error.message(err))
+            //     );
+            // };
         };
 
         #ok;

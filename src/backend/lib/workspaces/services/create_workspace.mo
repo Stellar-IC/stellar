@@ -8,7 +8,7 @@ import Buffer "mo:base/Buffer";
 import Source "mo:uuid/async/SourceV4";
 
 import Workspace "../../../canisters/workspace/main";
-import Types "../../../canisters/workspace/types/v2";
+import CoreTypes "../../../types";
 
 import Constants "../../../constants";
 
@@ -18,7 +18,7 @@ module CreateWorkspace {
         description : Text;
         initialUsers : [(
             Principal,
-            Types.WorkspaceUser,
+            CoreTypes.Workspaces.WorkspaceUser,
         )];
         name : Text;
         owners : [Principal];
@@ -54,7 +54,9 @@ module CreateWorkspace {
 
         let workspaceInitArgs = {
             capacity = WORKSPACE_CAPACITY;
+            initialUsers = input.initialUsers;
             userIndexCanisterId;
+            owner = owners[0];
             owners;
             uuid = await Source.Source().new();
             name;

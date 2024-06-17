@@ -38,7 +38,7 @@ export function PageDetailPage({ pageId }: { pageId: string }) {
   if (!workspaceContext || !workspaceContext.actor) return null;
 
   return (
-    <PageWrapper>
+    <PageWrapper pageId={pageId}>
       <Page>
         <Container maw="container.xs">
           <Stack gap="xs" className={classes.editorWrapper}>

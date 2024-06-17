@@ -3,12 +3,13 @@ import Principal "mo:base/Principal";
 
 import UserRegistry "../../../lib/user_registry";
 import UserRegistryV2 "../../../lib/user_registry_v2";
+import CoreTypes "../../../types";
 
 import Types "../types/v2";
 
 module Migration001ConvertUserRegistryToStableMap {
     type BlockUserRole = Types.BlockUserRole;
-    type WorkspaceUser = Types.WorkspaceUser;
+    type WorkspaceUser = CoreTypes.Workspaces.WorkspaceUser;
 
     public func up(
         initial : UserRegistry.UserRegistry<WorkspaceUser>,

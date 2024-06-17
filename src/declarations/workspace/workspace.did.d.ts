@@ -239,9 +239,12 @@ export type PageAccessLevel = { 'edit' : null } |
 export type PageAccessSetting = { 'everyone' : PageAccessLevel } |
   { 'invited' : null } |
   { 'workspaceMember' : PageAccessLevel };
-export type PageAccessSettingsOutput = { 'everyone' : PageAccessLevel } |
-  { 'invited' : null } |
-  { 'workspaceMember' : PageAccessLevel };
+export interface PageAccessSettingsOutput {
+  'invitedUsers' : Array<
+    { 'access' : PageAccessLevel, 'user' : WorkspaceUser }
+  >,
+  'accessSetting' : PageAccessSetting,
+}
 export interface PagesOptionsArg {
   'order' : [] | [SortOrder],
   'cursor' : [] | [PrimaryKey],
@@ -254,6 +257,7 @@ export interface PagesOutput {
 export interface PaginatedResults { 'edges' : Array<Edge> }
 export interface PaginatedResults_1 { 'edges' : Array<Edge_1> }
 export type PrimaryKey = bigint;
+export interface ProfileUpdatedEventData { 'profile' : UserProfile }
 export type PubSubEvent = {
     'workspaceNameUpdated' : { 'name' : string, 'workspaceId' : Principal }
   };
@@ -400,6 +404,17 @@ export type UpdateUserRoleOutput = { 'ok' : UpdateUserRoleOutputOk } |
   { 'err' : UpdateUserRoleOutputError };
 export type UpdateUserRoleOutputError = { 'unauthorized' : null };
 export type UpdateUserRoleOutputOk = null;
+export interface UserEvent {
+  'userId' : Principal,
+  'event' : { 'profileUpdated' : ProfileUpdatedEventData },
+}
+export interface UserProfile {
+  'username' : Username,
+  'created_at' : Time,
+  'updatedAt' : Time,
+  'avatarUrl' : [] | [string],
+}
+export type Username = string;
 export interface Workspace {
   'activityLog' : ActorMethod<[UUID], ActivityLogOutput>,
   'addBlock' : ActorMethod<[AddBlockInput], AddBlockOutput>,
@@ -412,6 +427,7 @@ export interface Workspace {
     [GetInformationRequest],
     GetInformationResponse
   >,
+  'handleUserEvent' : ActorMethod<[UserEvent], undefined>,
   'join' : ActorMethod<[], Result_2>,
   'members' : ActorMethod<[], MembersOutput>,
   'pageAccessSettings' : ActorMethod<[UUID], PageAccessSettingsOutput>,
@@ -440,10 +456,12 @@ export interface Workspace {
 export type WorkspaceDescription = string;
 export interface WorkspaceInitArgs {
   'owners' : Array<WorkspaceOwner>,
+  'owner' : WorkspaceOwner,
   'name' : WorkspaceName,
   'createdAt' : Time,
   'uuid' : UUID,
   'description' : WorkspaceDescription,
+  'initialUsers' : Array<[Principal, WorkspaceUser]>,
   'updatedAt' : Time,
   'userIndexCanisterId' : CanisterId,
   'capacity' : bigint,

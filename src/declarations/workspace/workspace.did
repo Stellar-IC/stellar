@@ -31,7 +31,12 @@ type WorkspaceInitArgs =
    capacity: nat;
    createdAt: Time;
    description: WorkspaceDescription;
+   initialUsers: vec record {
+                       principal;
+                       WorkspaceUser;
+                     };
    name: WorkspaceName;
+   owner: WorkspaceOwner;
    owners: vec WorkspaceOwner;
    updatedAt: Time;
    userIndexCanisterId: CanisterId;
@@ -58,6 +63,7 @@ type Workspace =
    /// ***********************************************************************
    ///      * Updates
    ///      ************************************************************************
+   handleUserEvent: (UserEvent) -> ();
    join: () -> (Result_2);
    members: () -> (MembersOutput) query;
    pageAccessSettings: (UUID) -> (PageAccessSettingsOutput) query;
@@ -76,6 +82,19 @@ type Workspace =
    ///      * Cycles Management
    ///      ************************************************************************
    walletReceive: () -> (record {accepted: nat64;});
+ };
+type Username = text;
+type UserProfile = 
+ record {
+   avatarUrl: opt text;
+   created_at: Time;
+   updatedAt: Time;
+   username: Username;
+ };
+type UserEvent = 
+ record {
+   event: variant {profileUpdated: ProfileUpdatedEventData;};
+   userId: principal;
  };
 type UpdateUserRoleOutputOk = null;
 type UpdateUserRoleOutputError = variant {unauthorized;};
@@ -286,6 +305,7 @@ type PubSubEvent = variant {
                         name: text;
                         workspaceId: principal;
                       };};
+type ProfileUpdatedEventData = record {profile: UserProfile;};
 type PrimaryKey = nat;
 type PaginatedResults_1 = record {edges: vec Edge_1;};
 type PaginatedResults = record {edges: vec Edge;};
@@ -304,10 +324,12 @@ type PagesOptionsArg =
    order: opt SortOrder;
  };
 type PageAccessSettingsOutput = 
- variant {
-   everyone: PageAccessLevel;
-   invited;
-   workspaceMember: PageAccessLevel;
+ record {
+   accessSetting: PageAccessSetting;
+   invitedUsers: vec record {
+                       access: PageAccessLevel;
+                       user: WorkspaceUser;
+                     };
  };
 type PageAccessSetting = 
  variant {

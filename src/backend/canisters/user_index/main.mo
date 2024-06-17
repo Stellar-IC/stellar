@@ -13,11 +13,15 @@ import Time "mo:base/Time";
 import Blob "mo:base/Blob";
 import Int64 "mo:base/Int64";
 import Error "mo:base/Error";
+import Array "mo:base/Array";
 import Canistergeek "mo:canistergeek/canistergeek";
+import Map "mo:map/Map";
 
 import Constants "../../constants";
 import AuthUtils "../../utils/auth";
 import CanisterTopUp "../../lib/canister_top_up";
+import UserRegistryV2 "../../lib/user_registry_v2";
+import UserRegistryV3 "../../lib/user_registry_v3";
 import CoreTypes "../../types";
 import User "../user/main";
 import UserTypes "../user/types";
@@ -28,20 +32,25 @@ import Types "./types";
 
 actor UserIndex {
     type UserId = Principal;
+    type UserDetails = { canisterId : Principal; username : Text };
 
     stable let USER_CAPACITY = Constants.USER__CAPACITY.scalar;
     stable let MAX_TOP_UP_AMOUNT = Constants.USER__TOP_UP_AMOUNT.scalar;
     stable let MIN_TOP_UP_INTERVAL = 3 * 60 * 60 * 1_000_000_000_000; // 3 hours
 
-    stable var stable_user_identity_to_canister_id : RBTree.Tree<Principal, UserId> = #leaf;
-    stable var stable_user_canister_id_to_identity : RBTree.Tree<UserId, Principal> = #leaf;
-    stable var stable_username_to_user_id : RBTree.Tree<Text, UserId> = #leaf;
-    stable var stable_topUps : RBTree.Tree<Principal, CanisterTopUp.CanisterTopUp> = #leaf;
+    stable var _userRegistry3 = UserRegistryV3.UserRegistry<UserDetails>();
 
+    stable var stable_topUps : RBTree.Tree<Principal, CanisterTopUp.CanisterTopUp> = #leaf;
     stable let stable_capacity = 100_000_000_000_000;
     stable var stable_balance = 0 : Nat;
 
     stable var loginDisabled = true;
+
+    // deprecated fields
+    stable var _userRegistry = UserRegistryV2.UserRegistry<UserDetails>();
+    stable var stable_user_identity_to_canister_id : RBTree.Tree<Principal, UserId> = #leaf;
+    stable var stable_user_canister_id_to_identity : RBTree.Tree<UserId, Principal> = #leaf;
+    stable var stable_username_to_user_id : RBTree.Tree<Text, UserId> = #leaf;
 
     var stable_data = {
         user_identity_to_canister_id = stable_user_identity_to_canister_id;
@@ -50,6 +59,34 @@ actor UserIndex {
     };
 
     var state = State.State(State.Data(stable_data));
+
+    // Migrate existing users from state to UserRegistryV2
+    label _loop for (entry in state.data.username_to_user_id.entries()) {
+        let username = entry.0;
+        let userId = entry.1;
+        let userIdentity = switch (state.data.user_canister_id_to_identity.get(userId)) {
+            case (null) { continue _loop };
+            case (?userIdentity) { userIdentity };
+        };
+
+        UserRegistryV2.addUser<UserDetails>(_userRegistry, userIdentity, userId, { canisterId = userId; username = username });
+    };
+
+    // Migrate from UserRegistryV2 to UserRegistryV3
+    label _loop for (user in Array.vals(UserRegistryV2.getUsers<UserDetails>(_userRegistry))) {
+        let userId = user.canisterId;
+        let userIdentity = switch (Map.get(_userRegistry.userIdentityByUserId, Map.phash, userId)) {
+            case (null) {
+                Debug.print("User not found in UserRegistryV3: " #debug_show (userId));
+
+                continue _loop;
+            };
+            case (?userIdentity) { userIdentity };
+        };
+
+        UserRegistryV3.addUser<UserDetails>(_userRegistry3, userIdentity, userId, { canisterId = userId; username = user.username });
+    };
+
     let topUps = RBTree.RBTree<Principal, CanisterTopUp.CanisterTopUp>(Principal.compare);
 
     public shared ({ caller }) func registerUser() : async Types.RegisterUserResult {
@@ -80,58 +117,52 @@ actor UserIndex {
         };
         let user = actor (Principal.toText(userId)) : User.User;
 
+        UserRegistryV3.addUser(_userRegistry3, caller, userId, { canisterId = userId; username = "" });
+        UserRegistryV2.addUser(_userRegistry, caller, userId, { canisterId = userId; username = "" });
+
+        // TODO: Remove this once state is fully deprecated
         state.data.addUser({ user; userId; owner = caller });
+
         initializeTopUpsForCanister(userId);
         await user.subscribe(#profileUpdated, onUserEvent);
 
         return #ok(userId);
     };
 
-    public shared ({ caller }) func onUserEvent(event : UserTypes.UserEvent) : async () {
-        if (state.data.user_canister_id_to_identity.get(caller) == null) {
+    public shared ({ caller = canisterId }) func onUserEvent(event : UserTypes.UserEvent) : async () {
+        if (UserRegistryV3.findUserByUserId<UserDetails>(_userRegistry3, canisterId) == null) {
             // caller is not a registered user
             return;
         };
 
         switch (event.event) {
             case (#profileUpdated(data)) {
-                state.data.username_to_user_id.put(data.profile.username, caller);
+                UserRegistryV3.updateUserByUserId<UserDetails>(_userRegistry3, canisterId, { canisterId; username = data.profile.username });
+
+                // TODO: Remove this once state is fully deprecated
+                state.data.username_to_user_id.put(data.profile.username, canisterId);
             };
         };
     };
 
     public query func checkUsername(username : Text) : async Types.CheckUsernameResult {
-        state.data.checkUsername(username);
+        switch (UserRegistryV3.findUserByUsername(_userRegistry3, username)) {
+            case (null) { #ok };
+            case (?_) { #err(#UsernameTaken) };
+        };
     };
 
     public query func userId(userIdentity : Principal) : async Result.Result<Principal, { #userNotFound }> {
-        switch (state.data.getUserIdByOwner(userIdentity)) {
+        switch (UserRegistryV3.findUserByIdentity(_userRegistry3, userIdentity)) {
             case (null) { #err(#userNotFound) };
-            case (?userId) { #ok(userId) };
+            case (?{ canisterId }) { #ok(canisterId) };
         };
     };
 
     public query func userDetailsByIdentity(userIdentity : Principal) : async Types.Queries.UserDetailsByIdentityResult {
-        var username : ?Text = null;
-
-        // TODO: Implement a more efficient way to get the username
-        for (entry in state.data.username_to_user_id.entries()) {
-            if (entry.1 == userIdentity) {
-                username := ?entry.0;
-            };
-        };
-
-        switch (username) {
-            case (null) {
-                return #err(#userNotFound);
-            };
-            case (?username) {
-                let canisterId = state.data.user_identity_to_canister_id.get(userIdentity);
-                switch (canisterId) {
-                    case (null) { #err(#userNotFound) };
-                    case (?canisterId) { #ok({ canisterId; username }) };
-                };
-            };
+        switch (UserRegistryV3.findUserByIdentity(_userRegistry3, userIdentity)) {
+            case (null) { #err(#userNotFound) };
+            case (?details) { #ok(details) };
         };
     };
 

@@ -12,11 +12,14 @@ import Time = "mo:base/Time";
 import Buffer "mo:base/Buffer";
 import Option "mo:base/Option";
 import Iter "mo:base/Iter";
+import Timer "mo:base/Timer";
 
 import Canistergeek "mo:canistergeek/canistergeek";
 import StableBuffer "mo:stablebuffer/StableBuffer";
 import UUID "mo:uuid/UUID";
 import Map "mo:map/Map";
+
+import UserTypes "../../canisters/user/types";
 
 import ActivitiesTypes "../../lib/activities/types";
 import BlockModule "../../lib/blocks/block";
@@ -48,8 +51,9 @@ shared ({ caller = initializer }) actor class Workspace(
      * Types
      *************************************************************************/
 
+    type WorkspaceUser = CoreTypes.Workspaces.WorkspaceUser;
+
     type PrimaryKey = Types.PrimaryKey;
-    type WorkspaceUser = Types.WorkspaceUser;
     type WorkspaceOwner = Types.WorkspaceOwner;
     type HydratedBlock = Types.HydratedBlock;
 
@@ -60,6 +64,10 @@ shared ({ caller = initializer }) actor class Workspace(
     type UserActor = actor {
         publicProfile : (Principal) -> async Result.Result<CoreTypes.User.PublicUserProfile, { #unauthorized }>;
         addWorkspace({ canisterId : Principal }) : async Result.Result<[CoreTypes.Workspaces.WorkspaceId], { #unauthorized }>;
+        subscribe : (
+            event : UserTypes.UserEventName,
+            eventHandler : UserTypes.UserEventSubscription,
+        ) -> async ();
     };
 
     /*************************************************************************
@@ -134,7 +142,7 @@ shared ({ caller = initializer }) actor class Workspace(
 
     private func _pageAccessSettings(
         pageId : UUID.UUID
-    ) : Types.Queries.PageAccessSettings.PageAccessSettingsOutput {
+    ) : Types.PageAccessSetting {
         let pageIdText = UUID.toText(pageId);
         let page = switch (State.findBlock(_state, pageIdText)) {
             case (null) { return PageAccessManager.defaultAccessSetting };
@@ -212,6 +220,38 @@ shared ({ caller = initializer }) actor class Workspace(
         block : ShareableBlock,
     ) : HydratedBlock {
         { block with userAccessLevel = getUserAccessLevel(caller, block.uuid) };
+    };
+
+    private func addUser(
+        identity : Principal,
+        canisterId : Principal,
+        username : Text,
+        role : CoreTypes.Workspaces.WorkspaceUserRole,
+    ) {
+        // TODO: Remove once userRegistry is fully replaced
+        UserRegistry.addUser<WorkspaceUser>(
+            userRegistry,
+            identity,
+            canisterId,
+            {
+                canisterId;
+                role;
+                username;
+                identity;
+            },
+        );
+
+        UserRegistryV2.addUser<WorkspaceUser>(
+            _users,
+            identity,
+            canisterId,
+            {
+                canisterId;
+                role;
+                username;
+                identity;
+            },
+        );
     };
 
     /*************************************************************************
@@ -337,7 +377,27 @@ shared ({ caller = initializer }) actor class Workspace(
     public query ({ caller }) func pageAccessSettings(
         pageId : UUID.UUID
     ) : async Types.Queries.PageAccessSettings.PageAccessSettingsOutput {
-        _pageAccessSettings(pageId);
+        let setting = _pageAccessSettings(pageId);
+        let invitedUsers = PageAccessManager.getInvitedUsers(
+            _pageAccessManager,
+            UUID.toText(pageId),
+        );
+        let invitedUsersHydrated = Array.mapFilter<(Principal, Types.PageAccessLevel), { user : WorkspaceUser; access : Types.PageAccessLevel }>(
+            invitedUsers,
+            func(user) {
+                let fullUser = switch (UserRegistryV2.findUser(_users, user.0)) {
+                    case (null) { return null };
+                    case (?user) { user };
+                };
+
+                ?{ user = fullUser; access = user.1 };
+            },
+        );
+
+        return {
+            accessSetting = setting;
+            invitedUsers = invitedUsersHydrated;
+        };
     };
 
     public query ({ caller }) func pages(
@@ -439,6 +499,20 @@ shared ({ caller = initializer }) actor class Workspace(
      * Updates
      *************************************************************************/
 
+    public shared ({ caller }) func handleUserEvent(event : UserTypes.UserEvent) : async () {
+        let user = switch (UserRegistryV2.findUserByUserId(_users, caller)) {
+            case (null) { return };
+            case (?user) { user };
+        };
+
+        switch (event.event) {
+            case (#profileUpdated(data)) {
+                let updatedUser = { user with username = data.profile.username };
+                UserRegistryV2.updateUserByUserId<WorkspaceUser>(_users, caller, updatedUser);
+            };
+        };
+    };
+
     public shared ({ caller }) func join() : async Result.Result<(), { #unauthorized; #profileQueryFailure; #userUpdateFailure }> {
         let UserIndex = actor (Principal.toText(_userIndexCanisterId)) : actor {
             userDetailsByIdentity : (Principal) -> async Result.Result<{ canisterId : Principal; username : Text }, { #notFound }>;
@@ -453,29 +527,10 @@ shared ({ caller = initializer }) actor class Workspace(
         let user = actor (Principal.toText(canisterId)) : UserActor;
 
         // TODO: Remove once userRegistry is fully replaced
-        UserRegistry.addUser<WorkspaceUser>(
-            userRegistry,
-            caller,
-            canisterId,
-            {
-                canisterId;
-                role = #member;
-                username;
-                identity = caller;
-            },
-        );
+        addUser(caller, canisterId, username, #member);
 
-        UserRegistryV2.addUser<WorkspaceUser>(
-            _users,
-            caller,
-            canisterId,
-            {
-                canisterId;
-                role = #member;
-                username;
-                identity = caller;
-            },
-        );
+        // Subscribe to the user's canister
+        await user.subscribe(#profileUpdated, handleUserEvent);
 
         switch (await user.addWorkspace({ canisterId = Principal.fromActor(self) })) {
             case (#err(_)) {
@@ -815,6 +870,21 @@ shared ({ caller = initializer }) actor class Workspace(
      * System Functions
      *************************************************************************/
 
+    ignore Timer.setTimer(
+        #seconds(0),
+        func() : async () {
+            // Additional initialization
+            if (Map.size(_users.users) == 0) {
+                for ((identity, user) in Array.vals(initArgs.initialUsers)) {
+                    Debug.print("Adding user: " # debug_show user);
+                    addUser(identity, user.canisterId, user.username, user.role);
+                    let userActor = actor (Principal.toText(user.canisterId)) : UserActor;
+                    ignore userActor.subscribe(#profileUpdated, handleUserEvent);
+                };
+            };
+        },
+    );
+
     system func preupgrade() {
         doCanisterGeekPreUpgrade();
         _eventStreamUpgradeData := ?eventStream.preupgrade();
@@ -831,5 +901,15 @@ shared ({ caller = initializer }) actor class Workspace(
                 _eventStreamUpgradeData := null;
             };
         };
+
+        ignore Timer.setTimer(
+            #seconds(0),
+            func() : async () {
+                for (user in UserRegistryV2.getUsers(_users).vals()) {
+                    let userActor = actor (Principal.toText(user.canisterId)) : UserActor;
+                    await userActor.subscribe(#profileUpdated, handleUserEvent);
+                };
+            },
+        );
     };
 };

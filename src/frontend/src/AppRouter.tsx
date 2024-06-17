@@ -53,7 +53,7 @@ const unauthenticatedRoutes: RouteObject[] = [
       },
     ],
   },
-  // { path: '*', element: <Navigate to="/" /> },
+  { path: '*', element: <Navigate to="/" /> },
 ];
 const unauthenticatedRouter = createBrowserRouter(unauthenticatedRoutes);
 

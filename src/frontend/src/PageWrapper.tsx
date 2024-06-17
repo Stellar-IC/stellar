@@ -2,10 +2,13 @@ import { Flex, useMantineTheme } from '@mantine/core';
 import { PropsWithChildren } from 'react';
 
 import { ActionBar } from './components/ActionBar';
+import { SharePageButton } from './pages/pages/SharePageButton';
 
-type PageWrapperProps = PropsWithChildren<{}>;
+type PageWrapperProps = PropsWithChildren<{
+  pageId: string;
+}>;
 
-export function PageWrapper({ children }: PageWrapperProps) {
+export function PageWrapper({ children, pageId }: PageWrapperProps) {
   const theme = useMantineTheme();
 
   return (
@@ -20,7 +23,7 @@ export function PageWrapper({ children }: PageWrapperProps) {
           position: 'relative',
         }}
       >
-        <ActionBar />
+        <ActionBar additionalActions={<SharePageButton pageId={pageId} />} />
         <div style={{ paddingTop: theme.spacing.lg }}>{children}</div>
       </div>
     </Flex>

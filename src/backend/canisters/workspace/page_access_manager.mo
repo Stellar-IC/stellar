@@ -2,6 +2,7 @@ import Map "mo:map/Map";
 import Buffer "mo:base/Buffer";
 import Principal "mo:base/Principal";
 import Nat "mo:base/Nat";
+import Iter "mo:base/Iter";
 import Types "./types/v2";
 
 module PageAccessManager {
@@ -70,6 +71,18 @@ module PageAccessManager {
 
         ignore Map.put(users, Map.phash, userId, accessLevel);
         ignore Map.put(manager.invitedUsers, Map.thash, pageId, users);
+    };
+
+    public func getInvitedUsers(
+        manager : PageAccessManager,
+        pageId : PageId,
+    ) : [(Principal, PageAccessLevel)] {
+        switch (Map.get(manager.invitedUsers, Map.thash, pageId)) {
+            case (null) { [] };
+            case (?users) {
+                Iter.toArray(Map.entries<Principal, PageAccessLevel>(users));
+            };
+        };
     };
 
     public func removeInvitedUser(

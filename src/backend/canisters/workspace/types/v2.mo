@@ -51,13 +51,6 @@ module {
         event : PubSubEvent,
     ) -> async ();
 
-    public type WorkspaceUserRole = {
-        #admin;
-        #moderator;
-        #member;
-        #guest;
-    };
-
     public type BlockUserRole = {
         #owner;
         #editor;
@@ -67,13 +60,6 @@ module {
     public type WorkspaceVisibility = {
         #Public;
         #Private;
-    };
-
-    public type WorkspaceUser = {
-        identity : Principal;
-        canisterId : Principal;
-        username : Text;
-        role : WorkspaceUserRole;
     };
 
     public module Services {
@@ -179,7 +165,13 @@ module {
         };
 
         public module PageAccessSettings {
-            public type PageAccessSettingsOutput = PageAccessSetting;
+            public type PageAccessSettingsOutput = {
+                accessSetting : PageAccessSetting;
+                invitedUsers : [{
+                    access : PageAccessLevel;
+                    user : CoreTypes.Workspaces.WorkspaceUser;
+                }];
+            };
         };
 
         public module PageByUuid {
@@ -201,7 +193,9 @@ module {
         public module Members {
             public type MembersOutput = {
                 users : CoreTypes.PaginatedResults<Principal>;
-                recordMap : { users : [(Principal, WorkspaceUser)] };
+                recordMap : {
+                    users : [(Principal, CoreTypes.Workspaces.WorkspaceUser)];
+                };
             };
         };
 
@@ -230,7 +224,7 @@ module {
         };
 
         public module AddUsers {
-            public type AddUsersInput = [(Principal, WorkspaceUser)];
+            public type AddUsersInput = [(Principal, CoreTypes.Workspaces.WorkspaceUser)];
             public type AddUsersResult = Result.Result<(), { #unauthorized }>;
         };
 
@@ -311,7 +305,7 @@ module {
         public module UpdateUserRole {
             public type UpdateUserRoleInput = {
                 user : Principal;
-                role : WorkspaceUserRole;
+                role : CoreTypes.Workspaces.WorkspaceUserRole;
             };
             public type UpdateUserRoleOutputError = {
                 #unauthorized;
