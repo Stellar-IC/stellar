@@ -14,7 +14,6 @@ import {
   Title,
   useMantineTheme,
 } from '@mantine/core';
-import { toText } from '@stellar-ic/lseq-ts/Tree';
 import { IconDotsVertical, IconPlus } from '@tabler/icons-react';
 import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
@@ -25,6 +24,7 @@ import { WorkspaceContextProvider } from '@/contexts/WorkspaceContext/WorkspaceC
 import { usePagesQuery } from '@/hooks/canisters/workspace/queries/usePagesQuery';
 import { useCreatePageWithRedirect } from '@/hooks/canisters/workspace/updates/useCreatePageWithRedirect';
 import { toLocalStorage } from '@/modules/blocks/serializers';
+import { toText } from '@/modules/lseq/Tree';
 import { LocalStorageBlock } from '@/types';
 
 import { _SERVICE } from '../../../../declarations/workspace/workspace.did';

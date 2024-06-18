@@ -1,4 +1,4 @@
-import { Node } from '@stellar-ic/lseq-ts';
+import { Node } from '@/modules/lseq';
 
 export class NodeRenderer {
   private ctx: CanvasRenderingContext2D;

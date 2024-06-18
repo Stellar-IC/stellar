@@ -1,6 +1,5 @@
 import { Identity } from '@dfinity/agent';
 
-import { useWorkspaceActor } from '@/hooks/canisters/workspace/useWorkspaceActor';
 import { useUpdate } from '@/hooks/useUpdate';
 import { CanisterId } from '@/types';
 
@@ -8,6 +7,7 @@ import {
   UpdateUserRoleInput,
   UpdateUserRoleOutput,
 } from '../../../../../../declarations/workspace/workspace.did';
+import { useWorkspaceActor } from '../useWorkspaceActor';
 
 export const useUpdateUserRole = (options: {
   workspaceId: CanisterId;

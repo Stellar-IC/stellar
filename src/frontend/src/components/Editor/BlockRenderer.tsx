@@ -1,6 +1,4 @@
 import { Box, Flex, MantineTheme, rem, Text } from '@mantine/core';
-import { Tree } from '@stellar-ic/lseq-ts';
-import { getNodeAtPosition } from '@stellar-ic/lseq-ts/Tree';
 import { IconBulbFilled } from '@tabler/icons-react';
 import { memo, useCallback, useEffect, useState } from 'react';
 
@@ -8,6 +6,8 @@ import { useSettingsContext } from '@/contexts/SettingsContext';
 import { db } from '@/db';
 import * as BlockModule from '@/modules/blocks';
 import { store, useStoreQuery } from '@/modules/data-store';
+import { Tree } from '@/modules/lseq';
+import { getNodeAtPosition } from '@/modules/lseq/Tree';
 import { Block } from '@/types';
 
 import { BlockWithActions } from './BlockWithActions';
@@ -281,7 +281,7 @@ export const _BlockRenderer = ({
   });
 
   return (
-    <Box className="FocusableBlock" data-id={block.uuid}>
+    <Box className="FocusableBlock" data-blockid={block.uuid}>
       <BlockWithActions
         key={block.uuid}
         blockExternalId={externalId}

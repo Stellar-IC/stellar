@@ -1,11 +1,11 @@
 import { Principal } from '@dfinity/principal';
-import { DEFAULT_BOUNDARY } from '@stellar-ic/lseq-ts/constants';
-import { base } from '@stellar-ic/lseq-ts/utils';
 import { useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { parse, stringify, v4 } from 'uuid';
 
 import { useCreatePage } from '@/hooks/canisters/workspace/updates/useCreatePage';
+import { DEFAULT_BOUNDARY } from '@/modules/lseq/constants';
+import { base } from '@/modules/lseq/utils';
 
 type Options = {
   workspaceId: Principal;

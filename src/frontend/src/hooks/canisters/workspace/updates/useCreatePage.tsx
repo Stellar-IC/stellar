@@ -1,5 +1,4 @@
 import { notifications } from '@mantine/notifications';
-import { Tree } from '@stellar-ic/lseq-ts';
 import { useCallback } from 'react';
 import { v4 as uuidv4, parse as uuidParse, parse } from 'uuid';
 
@@ -8,6 +7,7 @@ import { useWorkspaceActor } from '@/hooks/canisters/workspace/useWorkspaceActor
 import { useUpdate } from '@/hooks/useUpdate';
 import { serializeBlock } from '@/modules/blocks/serializers';
 import { store } from '@/modules/data-store';
+import { Tree } from '@/modules/lseq';
 import { CanisterId } from '@/types';
 
 import {

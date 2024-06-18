@@ -1,5 +1,4 @@
-import { Tree } from '@stellar-ic/lseq-ts';
-
+import { Tree } from '@/modules/lseq';
 import { Block } from '@/types';
 
 import { TreeEvent } from '../../../../declarations/workspace/workspace.did';

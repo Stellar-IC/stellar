@@ -1,11 +1,11 @@
 import { Box } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
-import { Tree } from '@stellar-ic/lseq-ts';
 import { createRef, memo, useEffect, useMemo, useState } from 'react';
 import { useErrorBoundary } from 'react-error-boundary';
 
 import { useEditorSave } from '@/hooks/editor/useEditorSave';
 import { useEditorEventHandlers } from '@/modules/editor/hooks/useEditorEventHandlers';
+import { Tree } from '@/modules/lseq';
 
 import { useTextStyles } from './hooks/useTextStyles';
 import { TextBlockProps } from './types';

@@ -1,8 +1,8 @@
-import { Node, Tree } from '@stellar-ic/lseq-ts';
-import { DEFAULT_BOUNDARY } from '@stellar-ic/lseq-ts/constants';
-import * as Identifier from '@stellar-ic/lseq-ts/identifier';
 import { stringify } from 'uuid';
 
+import { Node, Tree } from '@/modules/lseq';
+import { DEFAULT_BOUNDARY } from '@/modules/lseq/constants';
+import * as Identifier from '@/modules/lseq/identifier';
 import { Block, LocalStorageBlock } from '@/types';
 
 import {

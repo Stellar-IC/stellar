@@ -1,4 +1,3 @@
-import { Tree } from '@stellar-ic/lseq-ts';
 import { isEqual } from 'lodash';
 import { KeyboardEvent, useCallback } from 'react';
 import { parse } from 'uuid';
@@ -10,6 +9,7 @@ import { store, useStoreQuery } from '@/modules/data-store';
 import * as EditorActionModule from '@/modules/editor/EditorAction';
 import { useEditorActions } from '@/modules/editor/hooks/useEditorActions';
 import { setCursorAtEnd } from '@/modules/editor/utils/selection';
+import { Tree } from '@/modules/lseq';
 
 import { BlockType } from '../../../../../../declarations/workspace/workspace.did';
 import { EditorController } from '../../EditorController';
