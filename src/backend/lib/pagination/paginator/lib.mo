@@ -2,7 +2,7 @@ import List "mo:base/List";
 import Array "mo:base/Array";
 import Buffer "mo:base/Buffer";
 
-import CoreTypes "../../types";
+import CoreTypes "../../../types";
 
 module Paginator {
     public func paginateBuffer<DataT>(items : Buffer.Buffer<DataT>) : CoreTypes.PaginatedResults<DataT> {

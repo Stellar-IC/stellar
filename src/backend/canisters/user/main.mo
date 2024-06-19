@@ -3,29 +3,20 @@ import FileUpload "canister:file_upload";
 import Principal "mo:base/Principal";
 import Cycles "mo:base/ExperimentalCycles";
 import Nat64 "mo:base/Nat64";
-import Debug "mo:base/Debug";
 import Nat "mo:base/Nat";
 import Result "mo:base/Result";
 import Time "mo:base/Time";
 import Timer "mo:base/Timer";
-import ExperimentalCycles "mo:base/ExperimentalCycles";
-import Error "mo:base/Error";
 import Text "mo:base/Text";
 import Array "mo:base/Array";
 import Iter "mo:base/Iter";
 import Canistergeek "mo:canistergeek/canistergeek";
-import Source "mo:uuid/async/SourceV4";
 import Map "mo:map/Map";
 import StableBuffer "mo:stablebuffer/StableBuffer";
 
-import Constants "../../constants";
-import Block "../../lib/blocks/block";
-import BlockBuilder "../../lib/blocks/block_builder";
 import UserProfile "../../lib/users/user_profile";
 import UsersTypes "../../lib/users/types";
 import CoreTypes "../../types";
-import AuthUtils "../../utils/auth";
-import Tree "../../utils/data/lseq/Tree";
 
 import Types "./types";
 
@@ -255,7 +246,7 @@ shared ({ caller = initializer }) actor class User(
     };
 
     // Returns the cycles received up to the capacity allowed
-    public shared ({ caller }) func walletReceive() : async Result.Result<{ accepted : Nat64 }, { #unauthorized }> {
+    public shared ({ caller }) func walletReceive<system>() : async Result.Result<{ accepted : Nat64 }, { #unauthorized }> {
         if (caller != initializer) {
             return #err(#unauthorized);
         };
@@ -263,7 +254,7 @@ shared ({ caller = initializer }) actor class User(
         let amount = Cycles.available();
         let limit : Nat = _capacity - _balance;
         let accepted = if (amount <= limit) amount else limit;
-        let deposit = Cycles.accept(accepted);
+        let deposit = Cycles.accept<system>(accepted);
 
         assert (deposit == accepted);
         _balance += accepted;
@@ -284,7 +275,7 @@ shared ({ caller = initializer }) actor class User(
 
     private func getEventSubscriptions(event : Types.UserEvent) : [(Principal, Types.ProfileUpdatedSubscription)] {
         let eventSubscriptions = switch (event.event) {
-            case (#profileUpdated({ profile })) {
+            case (#profileUpdated(_)) {
                 Map.get(canisterSubscriptions, userEventNameHash, #profileUpdated);
             };
         };
@@ -306,18 +297,17 @@ shared ({ caller = initializer }) actor class User(
                 accepted : Nat64;
             };
         };
-        let result = await userIndexCanister.requestCycles(amount);
-        let accepted = result.accepted;
+        let _result = await userIndexCanister.requestCycles(amount);
     };
 
     /*************************************************************************
      * Timers
      *************************************************************************/
-    private func startRecurringTimers() {
+    private func startRecurringTimers<system>() {
         if (timersHaveBeenStarted) {
             return;
         };
-        ignore Timer.recurringTimer(
+        ignore Timer.recurringTimer<system>(
             #seconds(60),
             checkCyclesBalance,
         );
@@ -338,8 +328,7 @@ shared ({ caller = initializer }) actor class User(
     * Returns canister information based on passed parameters.
     * Called from browser.
     */
-    public query ({ caller }) func getCanistergeekInformation(request : Canistergeek.GetInformationRequest) : async Canistergeek.GetInformationResponse {
-        validateCaller(caller);
+    public query func getCanistergeekInformation(request : Canistergeek.GetInformationRequest) : async Canistergeek.GetInformationResponse {
         Canistergeek.getInformation(?canistergeekMonitor, ?canistergeekLogger, request);
     };
 
@@ -347,13 +336,8 @@ shared ({ caller = initializer }) actor class User(
     * Updates canister information based on passed parameters at current time.
     * Called from browser or any canister "update" method.
     */
-    public shared ({ caller }) func updateCanistergeekInformation(request : Canistergeek.UpdateInformationRequest) : async () {
-        validateCaller(caller);
+    public shared func updateCanistergeekInformation(request : Canistergeek.UpdateInformationRequest) : async () {
         canistergeekMonitor.updateInformation(request);
-    };
-
-    private func validateCaller(principal : Principal) : () {
-        //limit access here!
     };
 
     private func doCanisterGeekPreUpgrade() {
@@ -384,7 +368,7 @@ shared ({ caller = initializer }) actor class User(
         doCanisterGeekPostUpgrade();
         timersHaveBeenStarted := false;
         // Restart timers
-        startRecurringTimers();
+        startRecurringTimers<system>();
 
     };
 };
