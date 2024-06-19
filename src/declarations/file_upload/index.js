@@ -10,8 +10,7 @@ export { idlFactory } from "./file_upload.did.js";
  * beginning in dfx 0.15.0
  */
 export const canisterId =
-  process.env.CANISTER_ID_FILE_UPLOAD ||
-  process.env.FILE_UPLOAD_CANISTER_ID;
+  process.env.CANISTER_ID_FILE_UPLOAD;
 
 export const createActor = (canisterId, options = {}) => {
   const agent = options.agent || new HttpAgent({ ...options.agentOptions });

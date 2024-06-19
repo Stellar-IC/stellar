@@ -10,8 +10,7 @@ export { idlFactory } from "./workspace_index.did.js";
  * beginning in dfx 0.15.0
  */
 export const canisterId =
-  process.env.CANISTER_ID_WORKSPACE_INDEX ||
-  process.env.WORKSPACE_INDEX_CANISTER_ID;
+  process.env.CANISTER_ID_WORKSPACE_INDEX;
 
 export const createActor = (canisterId, options = {}) => {
   const agent = options.agent || new HttpAgent({ ...options.agentOptions });

@@ -3,8 +3,6 @@ import Cycles "mo:base/ExperimentalCycles";
 import Principal "mo:base/Principal";
 import Result "mo:base/Result";
 import Time "mo:base/Time";
-import Debug "mo:base/Debug";
-import Buffer "mo:base/Buffer";
 import Source "mo:uuid/async/SourceV4";
 
 import Workspace "../../../canisters/workspace/main";
@@ -65,7 +63,11 @@ module CreateWorkspace {
             updatedAt = Time.now();
         };
 
-        Cycles.add(WORKSPACE_INITIAL_CYCLES_BALANCE);
+        if (Cycles.balance() < WORKSPACE_INITIAL_CYCLES_BALANCE) {
+            return #err(#InsufficientCycles);
+        };
+
+        Cycles.add<system>(WORKSPACE_INITIAL_CYCLES_BALANCE);
 
         let workspace = await (system Workspace.Workspace)(
             #new {

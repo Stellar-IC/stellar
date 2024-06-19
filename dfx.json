@@ -2,18 +2,21 @@
   "canisters": {
     "cycles_dispenser": {
       "main": "src/backend/canisters/cycles_dispenser/main.mo",
-      "type": "motoko"
+      "type": "motoko",
+      "specified_id": "skqz7-jiaaa-aaaag-ak7wa-cai"
     },
     "file_upload": {
       "main": "src/backend/canisters/file_upload/main.mo",
-      "type": "motoko"
+      "type": "motoko",
+      "specified_id": "mwobu-biaaa-aaaan-qmlxq-cai"
     },
     "frontend": {
       "frontend": {
         "entrypoint": "src/frontend/src/index.html"
       },
       "source": ["src/frontend/dist"],
-      "type": "assets"
+      "type": "assets",
+      "specified_id": "4ldlg-kaaaa-aaaan-qdupa-cai"
     },
     "internet_identity": {
       "__0": "The development build of Internet Identity. For more information, see https://github.com/dfinity/internet-identity#build-features-and-flavors",
@@ -22,6 +25,7 @@
       "wasm": "https://github.com/dfinity/internet-identity/releases/latest/download/internet_identity_dev.wasm.gz",
       "frontend": {},
       "__2": "The remote block indicates that this canister is only used locally and should not be deployed on the IC.",
+      "specified_id": "rdmx6-jaaaa-aaaaa-aaadq-cai",
       "remote": {
         "id": {
           "ic": "rdmx6-jaaaa-aaaaa-aaadq-cai"
@@ -32,12 +36,14 @@
       "dependencies": ["cycles_dispenser", "file_upload"],
       "main": "src/backend/canisters/user_index/main.mo",
       "type": "motoko",
+      "specified_id": "4mcns-hyaaa-aaaan-qdupq-cai",
       "gzip": true
     },
     "workspace_index": {
       "dependencies": ["user_index", "cycles_dispenser", "file_upload"],
       "main": "src/backend/canisters/workspace_index/main.mo",
-      "type": "motoko"
+      "type": "motoko",
+      "specified_id": "zqzxx-mqaaa-aaaan-qduqa-cai"
     }
   },
   "defaults": {

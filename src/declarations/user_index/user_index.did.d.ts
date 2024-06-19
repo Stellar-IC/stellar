@@ -168,4 +168,4 @@ export interface _SERVICE {
   'walletReceive' : ActorMethod<[], Result>,
 }
 export declare const idlFactory: IDL.InterfaceFactory;
-export declare const init: ({ IDL }: { IDL: IDL }) => IDL.Type[];
+export declare const init: (args: { IDL: typeof IDL }) => IDL.Type[];

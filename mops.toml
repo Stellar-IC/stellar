@@ -1,5 +1,5 @@
 [dependencies]
-base = "0.10.4"
+base = "0.11.1"
 matchers = "https://github.com/kritzcreek/motoko-matchers#v1.3.0"
 encoding = "https://github.com/aviate-labs/encoding.mo#v0.4.1"
 io = "https://github.com/aviate-labs/io.mo#v0.3.2"

@@ -177,4 +177,4 @@ export type Username__1 = string;
 export type WorkspaceId = Principal;
 export interface _SERVICE extends User {}
 export declare const idlFactory: IDL.InterfaceFactory;
-export declare const init: ({ IDL }: { IDL: IDL }) => IDL.Type[];
+export declare const init: (args: { IDL: typeof IDL }) => IDL.Type[];
