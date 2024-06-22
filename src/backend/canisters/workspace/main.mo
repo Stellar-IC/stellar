@@ -938,7 +938,7 @@ shared ({ caller = initializer }) actor class Workspace(
      * System Functions
      *************************************************************************/
 
-    ignore Timer.setTimer(
+    ignore Timer.setTimer<system>(
         #seconds(0),
         func() : async () {
             // Additional initialization
@@ -969,7 +969,7 @@ shared ({ caller = initializer }) actor class Workspace(
             };
         };
 
-        ignore Timer.setTimer(
+        ignore Timer.setTimer<system>(
             #seconds(0),
             func() : async () {
                 for (user in UserRegistryV2.getUsers(_users).vals()) {
