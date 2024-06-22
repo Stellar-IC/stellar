@@ -24,7 +24,7 @@ import { WorkspaceContextProvider } from '@/contexts/WorkspaceContext/WorkspaceC
 import { usePagesQuery } from '@/hooks/canisters/workspace/queries/usePagesQuery';
 import { useCreatePageWithRedirect } from '@/hooks/canisters/workspace/updates/useCreatePageWithRedirect';
 import { toLocalStorage } from '@/modules/blocks/serializers';
-import { toText } from '@/modules/lseq/Tree';
+import { toText } from '@/modules/lseq/tree';
 import { LocalStorageBlock } from '@/types';
 
 import { _SERVICE } from '../../../../declarations/workspace/workspace.did';

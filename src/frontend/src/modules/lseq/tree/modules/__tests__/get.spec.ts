@@ -1,42 +1,19 @@
 import { describe, expect, beforeEach, it } from '@jest/globals';
 
 import {
-  clone,
   findNextNode,
   findPreviousNode,
   getNodeAtPosition,
   getNodeAtPositionFromEnd,
-  insertCharacter,
-  iterate,
-  removeCharacter,
   toArray,
   toText,
   Tree,
-} from '..';
-import { TreeFactory } from '../../__tests__/factories';
-import { END_NODE_ID } from '../../constants';
+} from '../..';
+import { END_NODE_ID } from '../../../constants';
+import { TreeFactory } from '../../factory';
 
-const text =
-  "Nested numbered block don't show the right numbers and shift+tab doesn't work. Same for bulleted blocks";
+const text = 'All the blocks you could ever want';
 const characters = text.split('');
-
-describe('clone', () => {
-  let tree: Tree;
-
-  beforeEach(() => {
-    tree = TreeFactory.create({ values: ['1', '2', '3'] });
-  });
-
-  it('should create an copy of the tree', () => {
-    const copy = clone(tree);
-    expect(copy).not.toBe(tree);
-    expect(copy.boundary).toEqual(tree.boundary);
-    // TODO: allocationStategies and rootNode should have different references
-    expect(copy.allocationStrategies).toEqual(tree.allocationStrategies);
-    expect(copy.rootNode).toEqual(tree.rootNode);
-    expect(toText(copy)).toEqual(toText(tree));
-  });
-});
 
 describe('findNextNode', () => {
   let tree: Tree;
@@ -56,7 +33,7 @@ describe('findNextNode', () => {
   });
 });
 
-describe.only('findPreviousNode', () => {
+describe('findPreviousNode', () => {
   let tree: Tree;
 
   it('should return the previous node', () => {
@@ -175,104 +152,6 @@ describe('getNodeAtPositionFromEnd', () => {
     tree.delete(result.identifier);
     result = getNodeAtPositionFromEnd(tree, 0, options);
     expect(result?.value).toBe('3');
-  });
-});
-
-describe('insertCharacter', () => {
-  let tree: Tree;
-
-  beforeEach(() => {
-    tree = TreeFactory.create({ values: characters });
-  });
-
-  it('should insert a character at the given position', () => {
-    const treeSize = tree.size();
-
-    for (let i = 0; i < treeSize; i += 1) {
-      const index = i;
-      const character = 'HELLO WORLD';
-      insertCharacter(tree, index, character);
-      const result = toText(tree);
-      const expected = text.slice(0, index) + character + text.slice(index);
-      expect(result).toBe(expected);
-      tree = TreeFactory.create({ values: characters });
-    }
-  });
-
-  it('should return an event for the insertion', () => {
-    const index = 10;
-    const character = 'x';
-    const result = insertCharacter(tree, index, character);
-
-    expect(result).toEqual([
-      {
-        insert: {
-          position: expect.any(Array),
-          value: character,
-          transactionType: {
-            insert: null,
-          },
-        },
-      },
-    ]);
-  });
-});
-
-describe('iterate', () => {
-  let tree: Tree;
-
-  beforeEach(() => {
-    tree = TreeFactory.create({ values: characters });
-  });
-
-  it('should iterate over the tree', () => {
-    let result = '';
-    iterate(tree, (node) => {
-      result += node.value;
-    });
-    expect(result).toBe(text);
-  });
-});
-
-describe('removeCharacter', () => {
-  let tree: Tree;
-
-  beforeEach(() => {
-    tree = TreeFactory.create({ values: characters });
-  });
-
-  it('should raise an error if the position is out of bounds', () => {
-    expect(() => removeCharacter(new Tree(), 0)).toThrowError(
-      'There was an error finding the node to delete'
-    );
-    expect(() => removeCharacter(tree, text.length)).toThrowError(
-      'There was an error finding the node to delete'
-    );
-  });
-
-  it('should remove the character at the given position', () => {
-    const index = 10;
-    const node = getNodeAtPosition(tree, index);
-    const now = new Date();
-    removeCharacter(tree, index);
-    const result = toText(tree);
-    expect(result).toBe(text.slice(0, index) + text.slice(index + 1));
-    expect(node?.deletedAt?.toISOString()).toBe(now.toISOString());
-  });
-
-  it('should return an event for the deletion', () => {
-    const index = 10;
-    const node = getNodeAtPosition(tree, index);
-    if (!node) throw new Error('Expected to find node');
-    const result = removeCharacter(tree, index);
-    expect(result).toEqual({
-      delete: {
-        position: node.identifier.value,
-        transactionType: {
-          delete: null,
-        },
-      },
-    });
   });
 });
 

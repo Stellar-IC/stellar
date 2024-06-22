@@ -1,6 +1,7 @@
-import * as Node from '../Node';
-import * as Tree from '../Tree';
+import * as Node from '../node';
 import { AllocationStrategy, NodeBoundary } from '../types';
+
+import * as Tree from '.';
 
 export type TreeFactoryOverrides = {
   allocationStrategies?: Map<number, AllocationStrategy>;
@@ -16,11 +17,12 @@ export const TreeFactory = {
     } = {}
   ) => {
     const { values, ...options } = overrides;
-
     const tree = new Tree.Tree(options);
+
     if (values) {
       values.forEach((value) => {
-        tree.insert(Tree.buildNodeForEndInsert(tree, value));
+        const position = Tree.size(tree);
+        Tree.insertValue(tree, position, value);
       });
     }
 

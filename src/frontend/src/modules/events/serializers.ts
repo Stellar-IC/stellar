@@ -1,6 +1,6 @@
 import { stringify } from 'uuid';
 
-import { base } from '@/modules/lseq/Node';
+import { base } from '@/modules/lseq/node';
 import { DEFAULT_BOUNDARY } from '@/modules/lseq/constants';
 
 import { BlockEvent } from '../../../../declarations/workspace/workspace.did';

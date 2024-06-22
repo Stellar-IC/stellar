@@ -5,13 +5,6 @@ export type NodeDepth = number;
 export type NodeValue = string;
 export type NodeBoundary = number;
 
-export type ShareableNode = {
-  base: NodeBase;
-  identifier: NodeIdentifier;
-  value: NodeValue;
-  children: [[NodeIndex, ShareableNode]];
-};
-
 export type AllocationStrategy =
   | { boundaryPlus: null }
   | { boundaryMinus: null };

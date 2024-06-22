@@ -1,4 +1,4 @@
-import * as Node from './Node';
-import * as Tree from './Tree';
+import * as Node from './node';
+import * as Tree from './tree';
 
 export { Node, Tree };

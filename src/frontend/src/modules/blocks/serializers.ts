@@ -27,7 +27,6 @@ function nodefromShareable(shareable: ShareableNode): Node.Node {
     node.children.set(index, nodefromShareable(childNode));
   });
 
-  node.base = shareable.base;
   node.deletedAt =
     shareable.deletedAt.length > 0
       ? new Date(Number(shareable.deletedAt[0]) / 1000000)

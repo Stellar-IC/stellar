@@ -10,68 +10,69 @@ export class Interval {
   constructor(value: NodeIndex[] | Uint16Array) {
     this.value = value;
   }
+}
 
-  isAllZeros(): boolean {
-    for (const x of this.value) if (x !== 0) return false;
+function _calculateDifference(
+  index: number,
+  valueB: NodeIndex,
+  valueA: NodeIndex
+): [diff: number, borrowed: boolean] {
+  const base = Base.at(index);
+  let _valueB = valueB;
+  let borrowed = false;
 
-    return true;
+  if (valueA > _valueB && index === 0) {
+    throw new Error('Prefix A must be less than prefix B');
   }
+
+  if (valueA > _valueB) {
+    _valueB += base;
+    borrowed = true;
+  }
+
+  const diff = _valueB - valueA;
+  if (diff < 0) throw new Error('Out of bounds');
+
+  return [diff, borrowed];
 }
 
 export function between(
-  prefixA: Identifier.Identifier,
-  prefixB: Identifier.Identifier
+  identifierA: Identifier.Identifier,
+  identifierB: Identifier.Identifier
 ): Interval {
-  if (prefixA.value.length !== prefixB.value.length) {
-    throw new Error('Prefixes must be of equal length');
+  const lengthA = identifierA.value.length;
+  const lengthB = identifierB.value.length;
+
+  if (lengthA !== lengthB) {
+    throw new Error('Identifiers must be of equal length');
   }
 
   const updatedIntervalValue: NodeIndex[] = [];
   let borrowedAmount = 0;
 
-  for (let i = prefixA.value.length - 1; i >= 0; i -= 1) {
-    const valueAtIndex = {
-      a: prefixA.value[i],
-      b: prefixB.value[i],
-    };
-
-    if (borrowedAmount < 0) {
-      throw new Error('Borrowed amount cannot be less than 0');
+  // Calculate the interval by comparing the identifiers at each index,
+  // starting from the rightmost index.
+  for (let i = lengthA - 1; i >= 0; i -= 1) {
+    const valueA = identifierA.value[i];
+    let valueB = identifierB.value[i];
+    if (borrowedAmount < 0 || borrowedAmount > 1) {
+      throw new Error('Borrowed amount should be either 0 or 1');
     }
-
     // Handle borrowing
     if (borrowedAmount > 0) {
-      valueAtIndex.b -= borrowedAmount;
+      valueB -= borrowedAmount;
       borrowedAmount = 0;
-
-      calculateValueAtIndex(
-        i,
-        valueAtIndex,
-        borrowedAmount,
-        (newValue, borrowed) => {
-          updatedIntervalValue.unshift(newValue);
-          borrowedAmount = borrowed;
-        }
-      );
-
-      continue;
     }
+    const [diff, borrowed] = _calculateDifference(i, valueB, valueA);
+    updatedIntervalValue.unshift(diff);
 
-    calculateValueAtIndex(
-      i,
-      valueAtIndex,
-      borrowedAmount,
-      (newValue, borrowed) => {
-        updatedIntervalValue.unshift(newValue);
-        borrowedAmount = borrowed;
-      }
-    );
+    if (borrowed) borrowedAmount = 1;
   }
 
   let final = new Interval(updatedIntervalValue);
+  if (isAllZeros(final)) return final;
 
-  if (final.isAllZeros()) return final;
-
+  // Subtract 1 from the final interval
   final = new Interval(
     Identifier.subtract(new Identifier.Identifier(final.value), 1).value
   );
@@ -79,28 +80,8 @@ export function between(
   return final;
 }
 
-function calculateValueAtIndex(
-  index: number,
-  valueAtIndex: { a: NodeIndex; b: NodeIndex },
-  borrowedAmount: number,
-  onSuccess: (newValue: number, borrowedAmount: number) => void
-) {
-  const base = Base.at(index);
+export function isAllZeros(interval: Interval): boolean {
+  for (const x of interval.value) if (x !== 0) return false;
 
-  if (valueAtIndex.a > valueAtIndex.b && index === 0) {
-    throw new Error('Prefix A must be less than prefix B');
-  }
-
-  if (valueAtIndex.a > valueAtIndex.b) {
-    const amountToBorrow = 1;
-
-    // Borrow from the next index
-    valueAtIndex.b += base;
-    borrowedAmount = amountToBorrow;
-  }
-
-  const newValue = valueAtIndex.b - valueAtIndex.a;
-  if (newValue < 0) throw new Error('Out of bounds');
-
-  onSuccess(newValue, borrowedAmount);
+  return true;
 }

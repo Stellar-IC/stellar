@@ -115,7 +115,7 @@ export class EditorController {
   ) => {
     data.forEach((x) => {
       const { index, item } = x;
-      const transaction = Tree.insertCharacter(block.content, index, item);
+      const transaction = Tree.insertValue(block.content, index, item);
 
       this._events.push({
         blockUpdated: {
@@ -133,7 +133,7 @@ export class EditorController {
 
   _removeContentBlocks = (block: Block, indexes: number[]) => {
     indexes.forEach((index) => {
-      const treeEvent = Tree.removeCharacter(block.content, index);
+      const treeEvent = Tree.deleteValue(block.content, index);
 
       if (treeEvent) {
         this._events.push({
@@ -209,7 +209,7 @@ export class EditorController {
     }
 
     transaction.forEach((event) => {
-      Tree.applyEvent(block.properties.title, event);
+      Tree.applyUpdate(block.properties.title, event);
     });
 
     const event: PartialBlockEvent = {
@@ -272,7 +272,7 @@ export class EditorController {
     };
 
     transaction.forEach((event) => {
-      Tree.applyEvent(block.content, event);
+      Tree.applyUpdate(block.content, event);
     });
 
     this._events.push(event);
@@ -410,7 +410,7 @@ export class EditorController {
         updateContent: {
           data: {
             blockExternalId: parentExternalId,
-            transaction: Tree.insertCharacter(
+            transaction: Tree.insertValue(
               parentBlock.content,
               index,
               blockExternalId
@@ -434,7 +434,7 @@ export class EditorController {
       throw new Error('Parent block not found');
     }
 
-    const transaction = [Tree.removeCharacter(parentBlock.content, index - 1)];
+    const transaction = [Tree.deleteValue(parentBlock.content, index - 1)];
     const event: PartialBlockEvent = {
       blockUpdated: {
         updateContent: {
@@ -473,7 +473,7 @@ export class EditorController {
     const allEvents: TreeEvent[] = [];
 
     characterIndexes.forEach((index) => {
-      const event = Tree.removeCharacter(block.properties.title, index);
+      const event = Tree.deleteValue(block.properties.title, index);
       if (event) allEvents.push(event);
     });
 
@@ -514,7 +514,7 @@ export class EditorController {
     const newTitle = Tree.clone(title);
 
     indexes.forEach((index) => {
-      const event = Tree.removeCharacter(newTitle, index);
+      const event = Tree.deleteValue(newTitle, index);
       if (event) allEvents.push(event);
     });
 

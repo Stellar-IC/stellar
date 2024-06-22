@@ -12,13 +12,16 @@ describe('Interval', () => {
   });
 
   describe('between', () => {
-    test('throws when prefixes are not of equal length', () => {
+    test('throws when identifiers are not of equal length', () => {
       expect(() => {
         Interval.between(new Identifier([1, 2, 3]), new Identifier([1, 2]));
-      }).toThrow('Prefixes must be of equal length');
+      }).toThrow('Identifiers must be of equal length');
+      expect(() => {
+        Interval.between(new Identifier([1, 2, 3]), new Identifier([1, 2, 3]));
+      }).not.toThrow();
     });
 
-    test('throws when prefixA is greater than prefixB', () => {
+    test('throws when identifierA is greater than identifierA', () => {
       expect(() => {
         Interval.between(new Identifier([1, 2, 3]), new Identifier([1, 2, 2]));
       }).toThrow('Prefix A must be less than prefix B');
@@ -52,7 +55,7 @@ describe('Interval', () => {
         new Identifier([1, 0]),
         new Identifier([2, 0])
       );
-      expect(interval.value).toEqual(new Identifier([0, 31]));
+      expect(interval.value).toEqual([0, 31]);
 
       // Note:
       // I ran into an out of order insert error attempting to insert between [14, 31] and [14, 31, 1]
@@ -70,6 +73,18 @@ describe('Interval', () => {
         new Identifier([13, 0])
       );
       expect(interval.value).toEqual([0, 31]);
+    });
+  });
+
+  describe('isAllZeros', () => {
+    test('returns true when all values are zero', () => {
+      const interval = new Interval.Interval([0, 0, 0]);
+      expect(Interval.isAllZeros(interval)).toBe(true);
+    });
+
+    test('returns false when any value is not zero', () => {
+      const interval = new Interval.Interval([0, 0, 1]);
+      expect(Interval.isAllZeros(interval)).toBe(false);
     });
   });
 });

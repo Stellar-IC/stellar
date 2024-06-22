@@ -10,7 +10,23 @@ describe('Identifier', () => {
     });
   });
 
-  describe('#subtract', () => {
+  describe.skip('compare', () => {});
+
+  describe('equal', () => {
+    test('returns true if identifiers are equal', () => {
+      const identifierA = new Identifier.Identifier([1, 2, 3]);
+      const identifierB = new Identifier.Identifier([1, 2, 3]);
+      expect(Identifier.equal(identifierA, identifierB)).toBe(true);
+    });
+
+    test('returns false if identifiers are not equal', () => {
+      const identifierA = new Identifier.Identifier([1, 2, 3]);
+      const identifierB = new Identifier.Identifier([1, 2, 4]);
+      expect(Identifier.equal(identifierA, identifierB)).toBe(false);
+    });
+  });
+
+  describe('subtract', () => {
     test('throws if identifier is empty', () => {
       const identifier = new Identifier.Identifier([]);
       expect(() => Identifier.subtract(identifier, 1)).toThrow(
@@ -27,7 +43,11 @@ describe('Identifier', () => {
 
     test('can subtract a constant', () => {
       let identifier = new Identifier.Identifier([1, 2, 3]);
-      let result = Identifier.subtract(identifier, 1);
+      let result = Identifier.subtract(identifier, 0);
+      expect(result.value).toEqual([1, 2, 3]);
+
+      identifier = new Identifier.Identifier([1, 2, 3]);
+      result = Identifier.subtract(identifier, 1);
       expect(result.value).toEqual([1, 2, 2]);
 
       identifier = new Identifier.Identifier([1, 2, 3]);

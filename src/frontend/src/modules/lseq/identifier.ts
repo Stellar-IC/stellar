@@ -3,6 +3,9 @@ import * as Types from './types';
 
 type NodeIndex = Types.NodeIndex;
 
+/**
+ * Identifier is a unique identifier for each element in the LSEQ tree.
+ */
 export class Identifier {
   value: NodeIndex[] | Uint16Array;
 
@@ -11,6 +14,13 @@ export class Identifier {
   }
 }
 
+/**
+ * Compare two identifiers.
+ * @param identifierA
+ * @param identifierB
+ * @returns -1 if identifierA is less than identifierB, 0 if they are equal,
+ *           1 if identifierA is greater than identifierB
+ */
 export function compare(
   identifierA: Identifier,
   identifierB: Identifier
@@ -57,6 +67,26 @@ export function compare(
   return -1;
 }
 
+export function equal(
+  identifierA: Identifier,
+  identifierB: Identifier
+): boolean {
+  const idValueA = identifierA.value;
+  const idValueB = identifierB.value;
+
+  if (idValueA.length !== idValueB.length) {
+    return false;
+  }
+
+  for (let i = 0; i < idValueA.length; i += 1) {
+    if (idValueA[i] !== idValueB[i]) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
 export function subtract(
   identifier: Identifier,
   constant: NodeIndex
@@ -81,52 +111,26 @@ export function subtract(
   }
 
   const updatedIntervalValue: NodeIndex[] = [];
-  let borrowedAmount = 0;
+  let borrowed = false;
   let tempConstant = constant;
 
   for (let i = identifierLength - 1; i >= 0; i -= 1) {
     let valueAtIndex = identifierValue[i];
-    const base = Base.at(i);
-
-    if (borrowedAmount < 0) {
-      throw new Error('Borrowed amount cannot be less than 0');
+    if (borrowed) {
+      valueAtIndex -= 1;
+      borrowed = false; // Reset borrowed flag
     }
-
-    // Handle borrowing
-    if (borrowedAmount > 0) {
-      valueAtIndex -= borrowedAmount;
-      borrowedAmount = 0;
-
-      if (tempConstant > valueAtIndex) {
-        const amountToBorrow = 1;
-
-        // Borrow from the next index
-        valueAtIndex = identifierValue[i] - 1 + base;
-        borrowedAmount = amountToBorrow;
-      }
-
-      const newValue = valueAtIndex - tempConstant;
-      if (newValue < 0) throw new Error('Out of bounds');
-
-      updatedIntervalValue.unshift(newValue);
-      tempConstant = 0;
-
-      continue;
+    if (valueAtIndex < tempConstant) {
+      const base = Base.at(i);
+      valueAtIndex += base; // Borrow from higher level
+      borrowed = true;
     }
-
-    if (tempConstant > valueAtIndex) {
-      const amountToBorrow = 1;
-
-      // Borrow from the next index
-      valueAtIndex = identifierValue[i] + base;
-      borrowedAmount = amountToBorrow;
-    }
-
-    const newValue = valueAtIndex - tempConstant;
-    if (newValue < 0) throw new Error('Out of bounds');
-
-    updatedIntervalValue.unshift(newValue);
+    const diff = valueAtIndex - tempConstant;
+    if (diff < 0) throw new Error('Out of bounds');
+    updatedIntervalValue.unshift(diff);
     tempConstant = 0;
+
+    continue;
   }
 
   return new Identifier(updatedIntervalValue);

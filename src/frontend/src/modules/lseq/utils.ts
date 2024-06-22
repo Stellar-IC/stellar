@@ -10,7 +10,13 @@ export function base(depth: NodeDepth): NodeBase {
   return 2 ** (4 + depth);
 }
 
-// https://stackoverflow.com/questions/4959975/generate-random-number-between-two-numbers-in-javascript
+/**
+ * Get a random number between min and max (inclusive of both).
+ *
+ * @param min
+ * @param max
+ * @returns the random number
+ */
 export function getRandomNumberBetween(min: number, max: number) {
   // min and max included
   return Math.floor(Math.random() * (max - min + 1) + min);

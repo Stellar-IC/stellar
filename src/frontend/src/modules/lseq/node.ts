@@ -1,3 +1,4 @@
+import * as Base from './base';
 import { END_NODE_ID, START_NODE_ID } from './constants';
 import * as Identifier from './identifier';
 import * as Interval from './interval';
@@ -6,19 +7,20 @@ import * as Types from './types';
 type NodeBase = Types.NodeBase;
 type NodeIndex = Types.NodeIndex;
 type NodeDepth = Types.NodeDepth;
+type NodeValue = Types.NodeValue;
 
 export class Node {
-  identifier: Identifier.Identifier;
-  value: string;
+  readonly identifier: Identifier.Identifier;
+  readonly value: NodeValue;
   children: Map<NodeIndex, Node>;
-  base: NodeBase;
+  readonly base: NodeBase;
   deletedAt: Date | null;
 
-  constructor(identifier: Identifier.Identifier, value: string) {
+  constructor(identifier: Identifier.Identifier, value: NodeValue) {
     this.identifier = identifier;
     this.value = value;
     this.children = new Map<NodeIndex, Node>();
-    this.base = base(identifier.value.length);
+    this.base = Base.at(identifier.value.length);
     this.deletedAt = null;
   }
 
@@ -27,18 +29,38 @@ export class Node {
   }
 }
 
+/**
+ * Checks if the given node is the root node.
+ *
+ * @param node
+ * @returns
+ */
 export function isRootNode(node: Node) {
   return node.identifier.value.length === 0;
 }
 
+/**
+ * Checks if the given node are the edge nodes.
+ * These are the nodes at [0] and [15].
+ *
+ * @param node
+ * @returns
+ */
 export function isEdgeNode(node: Node) {
   return (
-    node.identifier.value.length === 1 &&
-    (node.identifier.value[0] === START_NODE_ID.value[0] ||
-      node.identifier.value[0] === END_NODE_ID.value[0])
+    Identifier.equal(node.identifier, START_NODE_ID) ||
+    Identifier.equal(node.identifier, END_NODE_ID)
   );
 }
 
+/**
+ * Checks if the given node has children.
+ *
+ * @param node
+ * @param options
+ * @param options.shouldSkipDeleted If true, deleted nodes will be ignored.
+ * @returns
+ */
 export function hasChildren(
   node: Node,
   options: { shouldSkipDeleted?: boolean } = {}
@@ -72,16 +94,6 @@ export function equal(node1: Node | null, node2: Node | null): boolean {
   if (!node1 && node2) return false;
 
   return true;
-}
-
-/**
- * Get the base for a given node depth.
- *
- * @param depth The depth of the node.
- * @return The base for the given node depth.
- */
-export function base(depth: NodeDepth): NodeBase {
-  return 2 ** (4 + depth);
 }
 
 export function getShallowInsertDepth(
@@ -121,17 +133,19 @@ export function prefix(
   identifier: Identifier.Identifier,
   depth: NodeDepth
 ): Identifier.Identifier {
-  const finalValue = [];
+  const result = [];
 
+  // Push the values of the identifier up to the depth.
   for (let i = 0; i < depth; i += 1) {
     if (i < identifier.value.length) {
-      finalValue.push(identifier.value[i]);
+      result.push(identifier.value[i]);
     } else {
-      finalValue.push(0);
+      // If the identifier is shorter than the depth, pad with zeros.
+      result.push(0);
     }
   }
 
-  return new Identifier.Identifier(finalValue);
+  return new Identifier.Identifier(result);
 }
 
 function _isValidInterval(interval: Interval.Interval): boolean {
@@ -140,7 +154,7 @@ function _isValidInterval(interval: Interval.Interval): boolean {
     return false;
   }
 
-  if (interval.isAllZeros()) {
+  if (Interval.isAllZeros(interval)) {
     return false;
   }
 

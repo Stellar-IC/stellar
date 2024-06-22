@@ -7,7 +7,7 @@ import { db } from '@/db';
 import * as BlockModule from '@/modules/blocks';
 import { store, useStoreQuery } from '@/modules/data-store';
 import { Tree } from '@/modules/lseq';
-import { getNodeAtPosition } from '@/modules/lseq/Tree';
+import { getNodeAtPosition } from '@/modules/lseq/tree';
 import { Block } from '@/types';
 
 import { BlockWithActions } from './BlockWithActions';

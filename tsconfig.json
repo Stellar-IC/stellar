@@ -20,7 +20,7 @@
       "@/*": ["./src/frontend/src/*"],
       "@test-utils": ["./src/frontend//test-utils"]
     },
-    "types": ["vite-plugin-pwa/client"]
+    "types": ["vite-plugin-pwa/client", "jest", "node"]
   },
   "include": [
     "./src/e2e",
