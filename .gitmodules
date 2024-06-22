@@ -1,0 +1,3 @@
+[submodule "src/backend/lib/ic-websocket-cdk-mo"]
+	path = src/backend/lib/ic-websocket-cdk
+	url = https://github.com/omnia-network/ic-websocket-cdk-mo
