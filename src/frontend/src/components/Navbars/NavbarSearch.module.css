@@ -6,7 +6,6 @@
     var(--mantine-color-dark-8)
   );
   padding: var(--mantine-spacing-md);
-  padding-top: rem(56px);
   display: flex;
   flex-direction: column;
   flex-shrink: 0;
@@ -14,6 +13,13 @@
   @media (min-width: $mantine-breakpoint-xs) {
     width: rem(300px);
     padding-top: 0;
+  }
+}
+
+.closeButton {
+  margin-left: auto;
+  @media (min-width: $mantine-breakpoint-xs) {
+    display: none;
   }
 }
 

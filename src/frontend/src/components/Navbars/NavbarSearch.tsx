@@ -11,7 +11,9 @@ import {
   MenuItem,
   MenuTarget,
   Stack,
+  ActionIcon,
 } from '@mantine/core';
+import { IconX } from '@tabler/icons-react';
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 
@@ -127,6 +129,19 @@ export function NavbarSearch() {
       });
   }, [userActor]);
 
+  const closeButton = (
+    <ActionIcon
+      className={classes.closeButton}
+      onClick={() => {
+        layoutManager.layout = 'CLOSED';
+      }}
+      variant="transparent"
+      color="gray"
+    >
+      <IconX />
+    </ActionIcon>
+  );
+
   return (
     <nav
       className={classes.navbar}
@@ -142,6 +157,7 @@ export function NavbarSearch() {
             }
       }
     >
+      {closeButton}
       <div className={classes.section}>
         {isAuthenticated ? (
           <Flex>
