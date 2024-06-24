@@ -4,7 +4,7 @@ type LayoutState = 'CLOSED' | 'NAVIGATION_OPEN' | 'PANEL_OPEN';
 type Listener = (layout: LayoutState) => void;
 
 class LayoutManager {
-  state: LayoutState = 'NAVIGATION_OPEN';
+  state: LayoutState = 'CLOSED';
   listeners: Array<Listener> = [];
 
   get layout() {
