@@ -1,5 +1,6 @@
-import { InputLabel, Stack, TextInput } from '@mantine/core';
+import { Box, Flex, InputLabel, Stack, TextInput } from '@mantine/core';
 import { useForm } from '@mantine/form';
+import { notifications } from '@mantine/notifications';
 import { useCallback } from 'react';
 
 import { useUserActor } from '@/hooks/canisters/user/useUserActor';
@@ -13,9 +14,13 @@ export type UserProfileFormFormValues = {
 
 interface UserProfileFormProps {
   onSubmit: (input: UserProfileFormFormValues) => void;
+  setLoadingState: (state: 'idle' | 'saving' | 'success') => void;
 }
 
-export const UserProfileForm = ({ onSubmit }: UserProfileFormProps) => {
+export const UserProfileForm = ({
+  onSubmit,
+  setLoadingState,
+}: UserProfileFormProps) => {
   const { identity, userId } = useAuthContext();
   const { actor: userActor } = useUserActor({ identity, userId });
   const { profile, setProfile } = useAuthContext();
@@ -47,7 +52,7 @@ export const UserProfileForm = ({ onSubmit }: UserProfileFormProps) => {
               setProfile({ ...profile, avatarUrl: [avatarUrl] });
             }
           } else {
-            throw new Error('Failed to set avatar');
+            throw new Error(`Failed to set avatar. ${JSON.stringify(res.err)}`);
           }
         }),
     [profile, setProfile, userActor]
@@ -57,10 +62,22 @@ export const UserProfileForm = ({ onSubmit }: UserProfileFormProps) => {
     (e: React.ChangeEvent<HTMLInputElement>) => {
       const file = e.target.files?.[0];
       if (file) {
-        setAvatar(file);
+        setLoadingState('saving');
+        setAvatar(file)
+          .then(() => {
+            setLoadingState('success');
+          })
+          .catch((e) => {
+            notifications.show({
+              title: 'Error',
+              message: e.message,
+              color: 'red',
+            });
+            setLoadingState('idle');
+          });
       }
     },
-    [setAvatar]
+    [setAvatar, setLoadingState]
   );
 
   const onUsernameChange = useCallback(
@@ -74,22 +91,24 @@ export const UserProfileForm = ({ onSubmit }: UserProfileFormProps) => {
   );
 
   return (
-    <form>
-      <Stack>
-        <div>
-          <InputLabel>
-            <IcImage src={profile.avatarUrl[0]} fallbackSrc="/user.png" />
-            <input hidden type="file" onChange={onAvatarChange} />
-          </InputLabel>
-        </div>
-        <TextInput
-          label="Username"
-          name="username"
-          w="100%"
-          {...form.getInputProps('username')}
-          onChange={onUsernameChange}
-        />
-      </Stack>
-    </form>
+    <Box pos="relative">
+      <form>
+        <Stack>
+          <Flex>
+            <InputLabel>
+              <IcImage src={profile.avatarUrl[0]} fallbackSrc="/user.png" />
+              <input hidden type="file" onChange={onAvatarChange} />
+            </InputLabel>
+          </Flex>
+          <TextInput
+            label="Username"
+            name="username"
+            w="100%"
+            {...form.getInputProps('username')}
+            onChange={onUsernameChange}
+          />
+        </Stack>
+      </form>
+    </Box>
   );
 };

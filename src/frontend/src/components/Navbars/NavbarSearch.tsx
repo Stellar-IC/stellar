@@ -84,7 +84,7 @@ export function NavbarSearch() {
   );
 
   const logo = (
-    <Anchor c="white" component={Link} to="/" onClick={close} underline="never">
+    <Anchor component={Link} to="/" onClick={close} underline="never">
       <Text className={classes.logo}>Stellar</Text>
     </Anchor>
   );
@@ -124,7 +124,7 @@ export function NavbarSearch() {
                   }}
                 >
                   <div>
-                    Copy Principal
+                    Copy User ID
                     <Text size="xs" c="dimmed">
                       {userId.toString()}
                     </Text>

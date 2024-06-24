@@ -117,7 +117,10 @@ export function SettingsPage() {
               )}
             </Flex>
             {activeTab === TABS.ACCOUNT_PROFILE && (
-              <UserProfileForm onSubmit={_.debounce(updateProfile, 1000)} />
+              <UserProfileForm
+                onSubmit={_.debounce(updateProfile, 1000)}
+                setLoadingState={setSavingState}
+              />
             )}
             {activeTab === TABS.APPEARANCE && <AppearanceSettingsForm />}
           </Stack>
