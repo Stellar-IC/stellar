@@ -1,8 +1,9 @@
 import { Principal } from '@dfinity/principal';
-import { Container, Stack } from '@mantine/core';
+import { ActionIcon, Container, Stack } from '@mantine/core';
+import { IconArrowLeft } from '@tabler/icons-react';
 import { useEffect } from 'react';
 import { ErrorBoundary } from 'react-error-boundary';
-import { useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { parse } from 'uuid';
 
 import { PageWrapper } from '@/PageWrapper';
@@ -34,6 +35,7 @@ function PageDetailPageInner(props: { pageId: string }) {
 
 export function PageDetailPage({ pageId }: { pageId: string }) {
   const workspaceContext = useWorkspaceContext();
+  const navigate = useNavigate();
 
   if (!workspaceContext || !workspaceContext.actor) return null;
 
@@ -41,6 +43,15 @@ export function PageDetailPage({ pageId }: { pageId: string }) {
     <PageWrapper pageId={pageId}>
       <Page>
         <Container maw="container.xs">
+          <ActionIcon
+            onClick={() => {
+              navigate(-1);
+            }}
+            variant="transparent"
+            color="white"
+          >
+            <IconArrowLeft />
+          </ActionIcon>
           <Stack gap="xs" className={classes.editorWrapper}>
             <ErrorBoundary
               fallback={
