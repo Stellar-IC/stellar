@@ -1,4 +1,4 @@
-import { Button, Card, Checkbox, Flex, Group, TextInput } from '@mantine/core';
+import { Button, Card, Flex, Group, TextInput } from '@mantine/core';
 import { useForm } from '@mantine/form';
 
 import { useUpdateProfile } from '@/hooks/canisters/user/updates/useUpdateProfile';
@@ -71,11 +71,11 @@ export function OnboardingPage() {
             placeholder="daringdragon"
             {...form.getInputProps('username')}
           />
-          <Checkbox
+          {/* <Checkbox
             mt="md"
             label="I agree to adhere to Stellar's community guidelines and terms of service."
             {...form.getInputProps('termsOfService', { type: 'checkbox' })}
-          />
+          /> */}
           <Group justify="flex-end" mt="md">
             <Button type="submit">Submit</Button>
           </Group>

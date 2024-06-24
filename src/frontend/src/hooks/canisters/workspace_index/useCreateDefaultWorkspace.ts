@@ -1,7 +1,10 @@
+import { useState } from 'react';
+
 import * as actors from '@/ic/actors/store';
 import { useAuthContext } from '@/modules/auth/contexts/AuthContext';
 
 export const useCreateDefaultWorkspace = () => {
+  const [loading, setLoading] = useState(false);
   const { profile } = useAuthContext();
 
   const createWorkspace = () => {
@@ -15,6 +18,8 @@ export const useCreateDefaultWorkspace = () => {
     if (!userActor) {
       throw new Error('User actor is not available');
     }
+
+    setLoading(true);
 
     const { username } = profile;
 
@@ -35,8 +40,11 @@ export const useCreateDefaultWorkspace = () => {
           Promise.resolve(workspaceId),
           userActor.setPersonalWorkspace(workspaceId),
         ]);
+      })
+      .finally(() => {
+        setLoading(false);
       });
   };
 
-  return { createWorkspace };
+  return { createWorkspace, loading };
 };

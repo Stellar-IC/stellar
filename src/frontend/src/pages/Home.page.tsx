@@ -1,6 +1,7 @@
 import { DelegationIdentity } from '@dfinity/identity';
 import { Principal } from '@dfinity/principal';
 import { Button, Container, Flex, Loader, Stack, Text } from '@mantine/core';
+import { notifications } from '@mantine/notifications';
 import { useEffect, useState } from 'react';
 import { Navigate, useNavigate } from 'react-router-dom';
 
@@ -31,21 +32,30 @@ function WorkspaceLoader({
   useEffect(() => {
     const timeout = setTimeout(async () => {
       if (isAuthenticated) {
-        const result = await userActor.personalWorkspace();
+        try {
+          const result = await userActor.personalWorkspace();
 
-        setIsLoadingWorkspace(false);
+          setIsLoadingWorkspace(false);
 
-        if (!('ok' in result)) {
-          throw new Error(
-            `There was an error loading the user's default workspace: ${result.err}`
-          );
+          if (!('ok' in result)) {
+            throw new Error(
+              `There was an error loading the user's default workspace: ${result.err}`
+            );
+          }
+
+          if (result.ok.length === 0) {
+            return;
+          }
+
+          setWorkspaceId(result.ok[0]);
+        } catch (e: any) {
+          setIsLoadingWorkspace(false);
+          notifications.show({
+            title: 'Error',
+            message: e.message,
+            color: 'red',
+          });
         }
-
-        if (result.ok.length === 0) {
-          return;
-        }
-
-        setWorkspaceId(result.ok[0]);
       }
     }, 0);
 
@@ -58,7 +68,7 @@ function WorkspaceLoader({
 }
 
 function CreateDefaultWorkspaceView() {
-  const { createWorkspace } = useCreateDefaultWorkspace();
+  const { createWorkspace, loading } = useCreateDefaultWorkspace();
   const navigate = useNavigate();
 
   return (
@@ -77,6 +87,8 @@ function CreateDefaultWorkspaceView() {
         </Text>
         <Flex justify="center" style={{ marginTop: '50px' }}>
           <Button
+            loading={loading}
+            disabled={loading}
             onClick={() =>
               createWorkspace().then(([workspaceId]) => {
                 navigate(`/spaces/${workspaceId.toString()}`);
