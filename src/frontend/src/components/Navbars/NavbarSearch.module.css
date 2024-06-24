@@ -16,6 +16,15 @@
   }
 }
 
+.logo {
+  font-size: var(--mantine-font-size-lg);
+  font-weight: 100;
+  letter-spacing: 0.4em;
+  width: fit-content;
+  margin: 0;
+  margin-right: -0.4em;
+}
+
 .closeButton {
   margin-left: auto;
   @media (min-width: $mantine-breakpoint-xs) {

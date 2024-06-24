@@ -12,9 +12,10 @@ import {
   MenuTarget,
   Stack,
   ActionIcon,
+  Anchor,
 } from '@mantine/core';
 import { IconX } from '@tabler/icons-react';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 
 import { useLayoutManager } from '@/LayoutManager';
@@ -25,68 +26,6 @@ import { useAuthContext } from '@/modules/auth/contexts/AuthContext';
 import { workspace_index } from '../../../../declarations/workspace_index';
 
 import classes from './NavbarSearch.module.css';
-
-function WorkspaceItem(props: { workspaceDetails: WorkspaceDetails }) {
-  const { workspaceDetails } = props;
-  const { id, name } = workspaceDetails;
-
-  const theme = useMantineTheme();
-  const { layoutManager } = useLayoutManager();
-
-  const xsBreakpoint = Number(`${px(theme.breakpoints.xs)}`.replace('px', ''));
-
-  return (
-    <Link
-      to={`/spaces/${id}`}
-      onClick={() => {
-        if (document.body.clientWidth < xsBreakpoint) {
-          layoutManager.layout = 'CLOSED';
-        }
-      }}
-    >
-      <Flex gap="sm">
-        <div
-          style={{
-            borderRadius: '0.25rem',
-            backgroundColor: '#aaa',
-            width: '2rem',
-            height: '2rem',
-          }}
-        />
-        <Text size="sm" style={{ marginTop: '0.5rem' }}>
-          {name || 'Untitled'}
-        </Text>
-      </Flex>
-    </Link>
-  );
-}
-
-type WorkspaceDetails = {
-  id: Principal;
-  name: string;
-};
-
-function WorkspacesSection({ workspaces }: { workspaces: WorkspaceDetails[] }) {
-  return (
-    <div className={classes.section}>
-      <Group className={classes.pagesHeader} justify="space-between">
-        <Text size="xs" fw={500} c="dimmed">
-          Spaces
-        </Text>
-      </Group>
-      <div className={classes.pages}>
-        <Stack px="xs" py="sm" gap="xs">
-          {workspaces.map((workspace) => (
-            <WorkspaceItem
-              key={workspace.id.toText()}
-              workspaceDetails={workspace}
-            />
-          ))}
-        </Stack>
-      </div>
-    </div>
-  );
-}
 
 export function NavbarSearch() {
   const theme = useMantineTheme();
@@ -129,17 +68,25 @@ export function NavbarSearch() {
       });
   }, [userActor]);
 
+  const close = useCallback(() => {
+    layoutManager.layout = 'CLOSED';
+  }, [layoutManager]);
+
   const closeButton = (
     <ActionIcon
       className={classes.closeButton}
-      onClick={() => {
-        layoutManager.layout = 'CLOSED';
-      }}
+      onClick={close}
       variant="transparent"
       color="gray"
     >
       <IconX />
     </ActionIcon>
+  );
+
+  const logo = (
+    <Anchor c="white" component={Link} to="/" onClick={close} underline="never">
+      <Text className={classes.logo}>Stellar</Text>
+    </Anchor>
   );
 
   return (
@@ -157,7 +104,10 @@ export function NavbarSearch() {
             }
       }
     >
-      {closeButton}
+      <Flex>
+        {logo}
+        {closeButton}
+      </Flex>
       <div className={classes.section}>
         {isAuthenticated ? (
           <Flex>
@@ -218,5 +168,67 @@ export function NavbarSearch() {
         <WorkspacesSection workspaces={workspaces} />
       </div>
     </nav>
+  );
+}
+
+function WorkspaceItem(props: { workspaceDetails: WorkspaceDetails }) {
+  const { workspaceDetails } = props;
+  const { id, name } = workspaceDetails;
+
+  const theme = useMantineTheme();
+  const { layoutManager } = useLayoutManager();
+
+  const xsBreakpoint = Number(`${px(theme.breakpoints.xs)}`.replace('px', ''));
+
+  return (
+    <Link
+      to={`/spaces/${id}`}
+      onClick={() => {
+        if (document.body.clientWidth < xsBreakpoint) {
+          layoutManager.layout = 'CLOSED';
+        }
+      }}
+    >
+      <Flex gap="sm">
+        <div
+          style={{
+            borderRadius: '0.25rem',
+            backgroundColor: '#aaa',
+            width: '2rem',
+            height: '2rem',
+          }}
+        />
+        <Text size="sm" style={{ marginTop: '0.5rem' }}>
+          {name || 'Untitled'}
+        </Text>
+      </Flex>
+    </Link>
+  );
+}
+
+type WorkspaceDetails = {
+  id: Principal;
+  name: string;
+};
+
+function WorkspacesSection({ workspaces }: { workspaces: WorkspaceDetails[] }) {
+  return (
+    <div className={classes.section}>
+      <Group className={classes.pagesHeader} justify="space-between">
+        <Text size="xs" fw={500} c="dimmed">
+          Spaces
+        </Text>
+      </Group>
+      <div className={classes.pages}>
+        <Stack px="xs" py="sm" gap="xs">
+          {workspaces.map((workspace) => (
+            <WorkspaceItem
+              key={workspace.id.toText()}
+              workspaceDetails={workspace}
+            />
+          ))}
+        </Stack>
+      </div>
+    </div>
   );
 }
