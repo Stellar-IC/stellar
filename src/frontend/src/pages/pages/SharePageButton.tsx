@@ -1,4 +1,6 @@
 import {
+  ActionIcon,
+  Box,
   Button,
   Flex,
   Image,
@@ -8,9 +10,14 @@ import {
   MenuTarget,
   Stack,
   Text,
+  Title,
   useMantineTheme,
 } from '@mantine/core';
-import { IconTriangleInvertedFilled } from '@tabler/icons-react';
+import {
+  IconClipboard,
+  IconTriangleInvertedFilled,
+  IconX,
+} from '@tabler/icons-react';
 import { MouseEvent, useEffect, useState } from 'react';
 import { parse } from 'uuid';
 
@@ -124,6 +131,7 @@ export const SharePageButton = ({ pageId }: SharePageButtonProps) => {
   const workspaceContext = useWorkspaceContext();
   const { userId } = useAuthContext();
   const { actor } = workspaceContext;
+  const [isOpen, setIsOpen] = useState(false);
 
   if (!actor) throw new Error('Workspace Actor not found');
 
@@ -190,47 +198,72 @@ export const SharePageButton = ({ pageId }: SharePageButtonProps) => {
   return (
     <Menu
       width="20rem"
-      closeOnClickOutside={false}
+      opened={isOpen}
+      closeOnClickOutside
       closeOnItemClick={false}
       closeOnEscape
+      onClose={() => setIsOpen(false)}
     >
       <MenuTarget>
-        <Button variant="transparent" color="gray">
+        <Button
+          variant="transparent"
+          color="gray"
+          onClick={() => {
+            setIsOpen((prev) => !prev);
+          }}
+        >
           Share
         </Button>
       </MenuTarget>
-      <MenuDropdown>
-        <Text size="xs">Who has access to this page?</Text>
-        <form>
-          <Stack gap="sm" my="sm">
-            {'workspaceMember' in pageAccessSetting && (
-              <SharePageMenuItem
-                text={getPageAccessSettingText(pageAccessSetting)}
-                access={pageAccessSetting.workspaceMember}
-                onAcessLevelChange={onWorkspaceMemberAccessChange}
-              />
-            )}
-            {'everyone' in pageAccessSetting && (
-              <SharePageMenuItem
-                text={getPageAccessSettingText(pageAccessSetting)}
-                access={pageAccessSetting.everyone}
-                onAcessLevelChange={onEveryoneAccessChange}
-              />
-            )}
-            {invitedUsers.map((item) => {
-              const { user, access } = item;
+      <MenuDropdown p={0}>
+        <Flex align="center" justify="space-between" p="xs">
+          <Title size="sm">Share</Title>
+          <ActionIcon
+            variant="transparent"
+            onClick={() => {
+              setIsOpen(false);
+            }}
+          >
+            <IconX size="20px" color="gray" />
+          </ActionIcon>
+        </Flex>
+        <Flex direction="column" p="xs">
+          <Text size="xs">Who has access to this page?</Text>
+          <Box>
+            <form>
+              <Stack gap="sm" my="sm">
+                {'workspaceMember' in pageAccessSetting && (
+                  <SharePageMenuItem
+                    text={getPageAccessSettingText(pageAccessSetting)}
+                    access={pageAccessSetting.workspaceMember}
+                    onAcessLevelChange={onWorkspaceMemberAccessChange}
+                  />
+                )}
+                {'everyone' in pageAccessSetting && (
+                  <SharePageMenuItem
+                    text={getPageAccessSettingText(pageAccessSetting)}
+                    access={pageAccessSetting.everyone}
+                    onAcessLevelChange={onEveryoneAccessChange}
+                  />
+                )}
+                {invitedUsers.map((item) => {
+                  const { user, access } = item;
 
-              return (
-                <SharePageMenuItem
-                  text={user.username}
-                  access={access}
-                  onAcessLevelChange={(access) => {
-                    onInvitedUserAccessChange(user, access);
-                  }}
-                />
-              );
-            })}
-          </Stack>
+                  return (
+                    <SharePageMenuItem
+                      text={user.username}
+                      access={access}
+                      onAcessLevelChange={(access) => {
+                        onInvitedUserAccessChange(user, access);
+                      }}
+                    />
+                  );
+                })}
+              </Stack>
+            </form>
+          </Box>
+        </Flex>
+        <Flex align="center" justify="space-between" p="xs">
           <Menu width="10rem">
             <MenuTarget>
               <Button
@@ -280,7 +313,19 @@ export const SharePageButton = ({ pageId }: SharePageButtonProps) => {
               </MenuItem>
             </MenuDropdown>
           </Menu>
-        </form>
+          <Button
+            size="xs"
+            color="gray"
+            leftSection={<IconClipboard color="gray" />}
+            variant="subtle"
+            onClick={() => {
+              navigator.clipboard.writeText(window.location.href);
+              setIsOpen(false);
+            }}
+          >
+            Copy Link
+          </Button>
+        </Flex>
       </MenuDropdown>
     </Menu>
   );
