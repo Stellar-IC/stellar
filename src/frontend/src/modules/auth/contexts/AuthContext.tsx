@@ -18,6 +18,7 @@ const AuthContext = createContext<{
   userId: Principal;
   profile: SerializedUserProfile;
   setProfile: React.Dispatch<React.SetStateAction<PublicUserProfile>>;
+  error: Error | null;
 } | null>(null);
 
 export const useAuthContext = () => {
@@ -39,6 +40,7 @@ export const AuthContextProvider = ({ children }: PropsWithChildren) => {
     userId,
     profile,
     setProfile,
+    error,
   } = useAuthState();
 
   const serializedProfile: SerializedUserProfile = {
@@ -56,6 +58,7 @@ export const AuthContextProvider = ({ children }: PropsWithChildren) => {
         userId,
         profile: serializedProfile,
         setProfile,
+        error,
       }}
     >
       {children}

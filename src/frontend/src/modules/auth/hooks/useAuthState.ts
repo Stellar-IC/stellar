@@ -30,6 +30,7 @@ export const useAuthState = () => {
   const [profile, setProfile] = useState<PublicUserProfile>(
     new AnonymousUserProfile()
   );
+  const [error, setError] = useState<Error | null>(null);
 
   const logger = baseLogger.getLogger('auth');
   logger.setDefaultLevel(baseLogger.levels.INFO);
@@ -58,7 +59,9 @@ export const useAuthState = () => {
         };
       }
 
-      throw new Error(`Failed to get user profile. ${profileResult.err}`);
+      const err = new Error(`Failed to get user profile. ${profileResult.err}`);
+      setError(err);
+      throw err;
     },
     []
   );
@@ -70,16 +73,16 @@ export const useAuthState = () => {
       .then(agentManager.authenticate)
       .then(async (identity): Promise<AuthenticatedUserDetails | undefined> => {
         if (identity instanceof DelegationIdentity) {
-          const result = getUserProfile(identity);
-          // eslint-disable-next-line consistent-return
-          return result;
+          return getUserProfile(identity);
         }
 
-        logger.info('Failed to login');
-
+        setError(new Error('Failed to authenticate'));
         return undefined;
       })
       .then(updateState)
+      .catch((e) => {
+        setError(e);
+      })
       .finally(() => {
         setIsLoading(false);
       });
@@ -92,18 +95,16 @@ export const useAuthState = () => {
     return agentManager
       .authenticate()
       .then(async (identity): Promise<AuthenticatedUserDetails | undefined> => {
-        if (identity instanceof AnonymousIdentity) {
-          logger.info('Anonymous identity found. Done hydrating.');
-          return;
+        if (identity instanceof DelegationIdentity) {
+          return getUserProfile(identity);
         }
 
-        if (identity instanceof DelegationIdentity) {
-          const result = getUserProfile(identity);
-          // eslint-disable-next-line consistent-return
-          return result;
-        }
+        return undefined;
       })
       .then(updateState)
+      .catch((e) => {
+        setError(e);
+      })
       .finally(() => {
         setIsLoading(false);
       });
@@ -132,5 +133,6 @@ export const useAuthState = () => {
     setProfile,
     userId,
     login,
+    error,
   };
 };

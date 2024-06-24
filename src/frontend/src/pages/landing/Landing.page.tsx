@@ -10,7 +10,7 @@ import classes from './Landing.module.css';
 const sectionContainerWidth = '26rem';
 
 export function LandingPage() {
-  const { login } = useAuthContext();
+  const { login, error } = useAuthContext();
   const [loginEnabled, setLoginEnabled] = useState(false);
 
   useEffect(() => {
@@ -24,6 +24,48 @@ export function LandingPage() {
       setLoginEnabled(!settings.loginDisabled);
     });
   });
+
+  if (error) {
+    return (
+      <Box style={{ width: '100%', overflowY: 'scroll' }}>
+        {/* <LandingPageHeader login={login} /> */}
+        <Box
+          className={classes.ScrollContainer}
+          style={{ height: '100%', overflowY: 'scroll' }}
+        >
+          <section className={classes.Section}>
+            <Container maw={sectionContainerWidth}>
+              <Stack gap="xl">
+                <Flex
+                  style={{
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    textAlign: 'center',
+                  }}
+                >
+                  <h1
+                    className={classes.LandingHeading}
+                    style={{ fontSize: '3rem' }}
+                  >
+                    Stellar
+                  </h1>
+                  <h4 className={classes.TagLine}>
+                    Space to shape our future.
+                  </h4>
+                </Flex>
+                {loginEnabled && (
+                  <Flex style={{ justifyContent: 'center' }}>
+                    <Button onClick={login}>Sign In</Button>
+                  </Flex>
+                )}
+                <Text color="red">{error.message}</Text>
+              </Stack>
+            </Container>
+          </section>
+        </Box>
+      </Box>
+    );
+  }
 
   return (
     <Box style={{ width: '100%', overflowY: 'scroll' }}>
