@@ -1,6 +1,6 @@
 import { stringify } from 'uuid';
 
-import { base } from '@/modules/lseq/node';
+import * as Base from '@/modules/lseq/base';
 import { DEFAULT_BOUNDARY } from '@/modules/lseq/constants';
 
 import { BlockEvent } from '../../../../declarations/workspace/workspace.did';
@@ -35,7 +35,7 @@ export function serializeBlockEvent(event: BlockEvent): SerializedBlockEvent {
               allocationStrategies: [],
               boundary: DEFAULT_BOUNDARY,
               rootNode: {
-                base: base(0),
+                base: Base.at(0),
                 children: [],
                 deletedAt: [],
                 identifier: [],

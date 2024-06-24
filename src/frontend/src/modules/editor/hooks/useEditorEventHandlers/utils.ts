@@ -175,11 +175,7 @@ export function insertCharacter(
 ) {
   const { block, workspaceId, userId } = context;
   const { onError } = opts;
-  const events = Tree.insertCharacter(
-    block.properties.title,
-    position,
-    character
-  );
+  const events = Tree.insertValue(block.properties.title, position, character);
   _updateBlock({ block, workspaceId, userId }, events, {
     onError,
   });
@@ -196,7 +192,7 @@ export function insertCharacters(
   const allEvents: TreeEvent[] = [];
 
   characters.forEach((character, i) => {
-    const events = Tree.insertCharacter(
+    const events = Tree.insertValue(
       block.properties.title,
       position + i,
       character
@@ -216,7 +212,7 @@ export function onCharacterRemoved(
 ) {
   const { block, workspaceId, userId } = context;
   const { onError } = opts;
-  const event = Tree.removeCharacter(block.properties.title, position - 1);
+  const event = Tree.deleteValue(block.properties.title, position - 1);
 
   _updateBlock({ block, workspaceId, userId }, [event], {
     onError,
@@ -234,10 +230,7 @@ export function removeCharacters(
 
   // Remove the character at the start position
   if (endPosition === undefined) {
-    const event = Tree.removeCharacter(
-      block.properties.title,
-      startPosition - 1
-    );
+    const event = Tree.deleteValue(block.properties.title, startPosition - 1);
 
     _updateBlock({ block, workspaceId, userId }, [event], {
       onError,
@@ -256,7 +249,7 @@ export function removeCharacters(
   const allEvents: TreeEvent[] = [];
 
   characterIndexes.forEach((index) => {
-    const event = Tree.removeCharacter(block.properties.title, index - 1);
+    const event = Tree.deleteValue(block.properties.title, index - 1);
     if (event) allEvents.push(event);
   });
 

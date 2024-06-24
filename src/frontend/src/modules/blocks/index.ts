@@ -17,7 +17,7 @@ export function insertTitleCharacters(
   const { title } = block.properties;
 
   characters.split('').forEach((character, index) => {
-    const events = Tree.insertCharacter(title, index, character);
+    const events = Tree.insertValue(title, index, character);
     allEvents.push(...events);
   });
 
@@ -47,7 +47,7 @@ export function removeTitleCharactersByIndex(
   const newTitle = Tree.clone(title);
 
   characterIndexes.forEach((characterIndex) => {
-    const event = Tree.removeCharacter(newTitle, characterIndex - 1);
+    const event = Tree.deleteValue(newTitle, characterIndex - 1);
     if (event) allEvents.push(event);
   });
 
