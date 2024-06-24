@@ -1,4 +1,5 @@
-import { Box, Button, Container, Flex, Stack } from '@mantine/core';
+import { Box, Button, Container, Flex, Stack, Text } from '@mantine/core';
+import { IconCircleArrowDown } from '@tabler/icons-react';
 import { useEffect, useState } from 'react';
 
 import { actorStore } from '@/ic/actors/store';
@@ -56,6 +57,18 @@ export function LandingPage() {
               )}
             </Stack>
           </Container>
+          <Flex
+            direction="column"
+            align="center"
+            mt="auto"
+            pos="absolute"
+            bottom={0}
+            w="100%"
+            pb="1rem"
+          >
+            <Text size="lg">Features</Text>
+            <IconCircleArrowDown size={32} />
+          </Flex>
         </section>
 
         <section className={classes.Section}>
@@ -166,7 +179,7 @@ export function LandingPage() {
           </Container>
         </section>
 
-        <section className={classes.Section}>
+        <section className={classes.Section} style={{ height: 'auto' }}>
           <Container maw="50rem" style={{ textAlign: 'center' }}>
             <h4 className={classes.SubHeading}>The Mission</h4>
             <p

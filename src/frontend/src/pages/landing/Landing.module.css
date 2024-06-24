@@ -21,6 +21,8 @@
   display: flex;
   height: 100%;
   align-items: center;
+  position: relative;
+  padding: var(--mantine-spacing-sm) 0;
 }
 
 .TagLine {
