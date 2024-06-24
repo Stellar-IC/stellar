@@ -10,12 +10,13 @@
 }
 
 .actionBar {
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
+  position: absolute;
+  bottom: -3.5rem;
+  left: 1rem;
+  right: 2rem;
   padding: var(--mantine-spacing-xs);
   background-color: #ffffff1a;
+  border-radius: 0.25rem;
 
   @media (min-width: $mantine-breakpoint-xs) {
     display: none;

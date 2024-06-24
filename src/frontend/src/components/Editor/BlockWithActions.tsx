@@ -159,7 +159,7 @@ export const BlockWithActions = ({
             size="xs"
             px="xs"
           >
-            Transform
+            Turn into...
           </Button>
         </Group>
 
