@@ -1,0 +1,24 @@
+.actionButtons {
+  display: none;
+
+  @media (min-width: $mantine-breakpoint-xs) {
+    display: flex;
+    position: absolute;
+    left: -4.5rem;
+    flex-shrink: 0;
+  }
+}
+
+.actionBar {
+  position: absolute;
+  bottom: -3.5rem;
+  left: 1rem;
+  right: 2rem;
+  padding: var(--mantine-spacing-xs);
+  background-color: #ffffff1a;
+  border-radius: 0.25rem;
+
+  @media (min-width: $mantine-breakpoint-xs) {
+    display: none;
+  }
+}

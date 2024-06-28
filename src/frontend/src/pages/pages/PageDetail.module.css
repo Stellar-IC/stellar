@@ -6,3 +6,13 @@
     padding: 0 5rem;
   }
 }
+
+.statusIndicator {
+  width: rem(10px);
+  height: rem(10px);
+  border-radius: 50%;
+  margin: auto rem(4px);
+  vertical-align: middle;
+  align-items: center;
+  justify-content: center;
+}

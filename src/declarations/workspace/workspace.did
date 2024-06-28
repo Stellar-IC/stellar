@@ -70,12 +70,13 @@ type Workspace =
    pages: (PagesOptionsArg) -> (PagesOutput) query;
    removeOwner: (principal) -> (Result_1);
    saveEvents: (SaveEventTransactionInput) -> (SaveEventTransactionOutput);
+   sendMessage: (principal, blob) -> ();
    setPageAccessSettings: (SetPageAccessInput) -> (SetPageAccessOutput);
    setUserAccessLevelForPage: (SetUserAccessLevelForPageInput) ->
     (SetUserAccessLevelForPageOutput);
    settings: () -> (Result) query;
    subscribe: (text, PubSubEventHandler) -> ();
-   unsubscribe: (text, PubSubEventHandler) -> ();
+   unsubscribe: (text) -> ();
    updateBlock: (UpdateBlockInput) -> (UpdateBlockOutput);
    updateCanistergeekInformation: (UpdateInformationRequest) -> ();
    updateSettings: (UpdateSettingsInput) -> (UpdateSettingsOutput);
@@ -84,6 +85,27 @@ type Workspace =
    ///      * Cycles Management
    ///      ************************************************************************
    walletReceive: () -> (record {accepted: nat64;});
+   ws_close: (CanisterWsCloseArguments) -> (CanisterWsCloseResult);
+   ws_get_messages: (CanisterWsGetMessagesArguments) ->
+    (CanisterWsGetMessagesResult) query;
+   ws_message: (CanisterWsMessageArguments, opt WebSocketMessage) ->
+    (CanisterWsMessageResult);
+   ws_open: (CanisterWsOpenArguments) -> (CanisterWsOpenResult);
+ };
+type WebsocketMessage = 
+ record {
+   client_key: ClientKey;
+   content: blob;
+   is_service_message: bool;
+   sequence_num: nat64;
+   timestamp: nat64;
+ };
+type WebSocketMessage = 
+ variant {
+   associateUser: record {userId: principal;};
+   syncDone;
+   syncStep1: SyncStep1Message;
+   syncStep2: SyncStep2Message;
  };
 type Username = text;
 type UserProfile = 
@@ -129,11 +151,11 @@ type UpdateInformationRequest = record {
 type UpdateCallsAggregatedData = vec nat64;
 type UpdateBlockOutputResult = 
  record {
-   blockType: BlockType;
+   blockType: BlockType__1;
    content: ShareableBlockContent;
-   parent: opt BlockId;
+   parent: opt BlockId__1;
    properties: ShareableBlockProperties;
-   uuid: BlockId;
+   uuid: BlockId__1;
  };
 type UpdateBlockOutputError = variant {primaryKeyAttrNotFound;};
 type UpdateBlockOutput = 
@@ -143,13 +165,27 @@ type UpdateBlockOutput =
  };
 type UpdateBlockInput = 
  record {
-   blockType: BlockType;
+   blockType: BlockType__1;
    content: ShareableBlockContent;
-   parent: opt BlockId;
+   parent: opt BlockId__1;
    properties: ShareableBlockProperties;
-   uuid: BlockId;
+   uuid: BlockId__1;
  };
 type UUID = vec nat8;
+type TreeEvent__1 = 
+ variant {
+   delete:
+    record {
+      position: NodeIdentifier;
+      transactionType: variant {delete;};
+    };
+   insert:
+    record {
+      position: NodeIdentifier;
+      transactionType: variant {insert;};
+      value: NodeValue;
+    };
+ };
 type TreeEvent = 
  variant {
    delete:
@@ -165,6 +201,12 @@ type TreeEvent =
     };
  };
 type Time = int;
+type SyncStep2Message = vec DocumentUpdate;
+type SyncStep1Message = 
+ record {
+   id: BlockId;
+   updates: vec DocumentUpdate;
+ };
 type StatusResponse = 
  record {
    cycles: opt nat64;
@@ -200,11 +242,11 @@ type ShareableNode =
  };
 type ShareableBlock__1 = 
  record {
-   blockType: BlockType;
+   blockType: BlockType__1;
    content: ShareableBlockContent;
-   parent: opt BlockId;
+   parent: opt BlockId__1;
    properties: ShareableBlockProperties;
-   uuid: BlockId;
+   uuid: BlockId__1;
  };
 type ShareableBlockText = 
  record {
@@ -236,11 +278,11 @@ type ShareableBlockContent =
  };
 type ShareableBlock = 
  record {
-   blockType: BlockType;
+   blockType: BlockType__1;
    content: ShareableBlockContent;
-   parent: opt BlockId;
+   parent: opt BlockId__1;
    properties: ShareableBlockProperties;
-   uuid: BlockId;
+   uuid: BlockId__1;
  };
 type SettingsOutput = 
  record {
@@ -263,7 +305,7 @@ type SetUserAccessLevelForPageOutput =
 type SetUserAccessLevelForPageInput = 
  record {
    accessLevel: PageAccessLevel;
-   pageId: BlockId__1;
+   pageId: BlockId__2;
    userId: principal;
  };
 type SetPageAccessOutputResult = null;
@@ -276,7 +318,7 @@ type SetPageAccessOutput =
 type SetPageAccessInput = 
  record {
    access: PageAccessSetting;
-   pageId: BlockId__1;
+   pageId: BlockId__2;
  };
 type SaveEventTransactionOutputResult = null;
 type SaveEventTransactionOutputError = 
@@ -468,10 +510,20 @@ type GetInformationRequest =
    status: opt StatusRequest;
    version: bool;
  };
+type GatewayPrincipal = principal;
 type ExternalId = text;
 type Edge_2 = record {node: HydratedActivity;};
 type Edge_1 = record {node: principal;};
 type Edge = record {node: ExternalId;};
+type DocumentUpdateId = text;
+type DocumentUpdate = 
+ record {
+   awareness: opt Awareness;
+   changes: vec BlockChange;
+   id: DocumentUpdateId;
+   time: Time;
+   userId: text;
+ };
 type DeletePageOutputResult = null;
 type DeletePageOutputError = variant {unauthorized;};
 type DeletePageOutput = 
@@ -479,7 +531,7 @@ type DeletePageOutput =
    err: DeletePageOutputError;
    ok: DeletePageOutputResult;
  };
-type DeletePageInput = record {uuid: BlockId__1;};
+type DeletePageInput = record {uuid: BlockId__2;};
 type DailyMetricsData = 
  record {
    canisterCycles: NumericEntity;
@@ -490,11 +542,11 @@ type DailyMetricsData =
  };
 type CreatePageOutputResult = 
  record {
-   blockType: BlockType;
+   blockType: BlockType__1;
    content: ShareableBlockContent;
-   parent: opt BlockId;
+   parent: opt BlockId__1;
    properties: ShareableBlockProperties;
-   uuid: BlockId;
+   uuid: BlockId__1;
  };
 type CreatePageOutputError = 
  variant {
@@ -513,15 +565,62 @@ type CreatePageOutput =
 type CreatePageInput = 
  record {
    content: ShareableBlockContent;
-   initialBlockUuid: opt BlockId__1;
-   parent: opt BlockId__1;
+   initialBlockUuid: opt BlockId__2;
+   parent: opt BlockId__2;
    properties: ShareableBlockProperties__1;
-   uuid: BlockId__1;
+   uuid: BlockId__2;
  };
 type CollectMetricsRequestType = 
  variant {
    force;
    normal;
+ };
+type ClientPrincipal = principal;
+type ClientKey = 
+ record {
+   client_nonce: nat64;
+   client_principal: ClientPrincipal;
+ };
+type CanisterWsOpenResult = 
+ variant {
+   Err: text;
+   Ok;
+ };
+type CanisterWsOpenArguments = 
+ record {
+   client_nonce: nat64;
+   gateway_principal: GatewayPrincipal;
+ };
+type CanisterWsMessageResult = 
+ variant {
+   Err: text;
+   Ok;
+ };
+type CanisterWsMessageArguments = record {msg: WebsocketMessage;};
+type CanisterWsGetMessagesResult = 
+ variant {
+   Err: text;
+   Ok: CanisterOutputCertifiedMessages;
+ };
+type CanisterWsGetMessagesArguments = record {nonce: nat64;};
+type CanisterWsCloseResult = 
+ variant {
+   Err: text;
+   Ok;
+ };
+type CanisterWsCloseArguments = record {client_key: ClientKey;};
+type CanisterOutputMessage = 
+ record {
+   client_key: ClientKey;
+   content: blob;
+   key: text;
+ };
+type CanisterOutputCertifiedMessages = 
+ record {
+   cert: blob;
+   is_end_of_queue: bool;
+   messages: vec CanisterOutputMessage;
+   tree: blob;
  };
 type CanisterMetricsData = 
  variant {
@@ -569,6 +668,23 @@ type BlockUpdatedEventData =
    updatePropertyChecked: BlockPropertyCheckedUpdatedEventData;
    updatePropertyTitle: BlockPropertyTitleUpdatedEventData;
  };
+type BlockType__1 = 
+ variant {
+   bulletedList;
+   callout;
+   code;
+   heading1;
+   heading2;
+   heading3;
+   numberedList;
+   page;
+   paragraph;
+   quote;
+   todoList;
+   toggleHeading1;
+   toggleHeading2;
+   toggleHeading3;
+ };
 type BlockType = 
  variant {
    bulletedList;
@@ -588,21 +704,27 @@ type BlockType =
  };
 type BlockPropertyTitleUpdatedEventData = 
  record {
-   blockExternalId: BlockId;
-   transaction: vec TreeEvent;
+   blockExternalId: BlockId__1;
+   transaction: vec TreeEvent__1;
  };
 type BlockPropertyCheckedUpdatedEventData = 
  record {
-   blockExternalId: BlockId;
+   blockExternalId: BlockId__1;
    checked: bool;
+ };
+type BlockProperty = 
+ variant {
+   boolean: bool;
+   "text": text;
  };
 type BlockParentUpdatedEventData = 
  record {
-   blockExternalId: BlockId;
-   parentBlockExternalId: BlockId;
+   blockExternalId: BlockId__1;
+   parentBlockExternalId: BlockId__1;
  };
+type BlockId__2 = vec nat8;
 type BlockId__1 = vec nat8;
-type BlockId = vec nat8;
+type BlockId = text;
 type BlockEventTransaction = vec BlockEvent;
 type BlockEvent = 
  record {
@@ -613,21 +735,27 @@ type BlockEvent =
     };
    timestamp: Time;
    user: principal;
-   uuid: BlockId;
+   uuid: BlockId__1;
  };
 type BlockCreatedEventData = 
  record {
-   block: record {
-            blockType: BlockType;
-            parent: opt BlockId;
-            uuid: BlockId;
-          };
+   block:
+    record {
+      blockType: BlockType__1;
+      parent: opt BlockId__1;
+      uuid: BlockId__1;
+    };
    index: nat;
  };
 type BlockContentUpdatedEventData = 
  record {
-   blockExternalId: BlockId;
-   transaction: vec TreeEvent;
+   blockExternalId: BlockId__1;
+   transaction: vec TreeEvent__1;
+ };
+type BlockChange = 
+ record {
+   blockId: text;
+   data: BlockAttributeUpdate;
  };
 type BlockByUuidResult = 
  variant {
@@ -649,8 +777,35 @@ type BlockByUuidOptions = record {
                              };};
 type BlockBlockTypeUpdatedEventData = 
  record {
-   blockExternalId: BlockId;
+   blockExternalId: BlockId__1;
+   blockType: BlockType__1;
+ };
+type BlockAttributeUpdate = 
+ variant {
    blockType: BlockType;
+   children: TreeEvent;
+   content: TreeEvent;
+   props: vec record {
+                text;
+                BlockProperty;
+              };
+ };
+type Awareness = 
+ record {
+   color: text;
+   selection:
+    opt
+     record {
+       end: record {
+              blockId: BlockId;
+              position: nat;
+            };
+       start: record {
+                blockId: BlockId;
+                position: nat;
+              };
+     };
+   username: text;
  };
 type AllocationStrategy = 
  variant {
@@ -666,11 +821,11 @@ type AddBlockOutput =
  };
 type AddBlockInput = 
  record {
-   blockType: BlockType;
+   blockType: BlockType__1;
    content: ShareableBlockContent;
-   parent: opt BlockId__1;
+   parent: opt BlockId__2;
    properties: ShareableBlockProperties;
-   uuid: BlockId__1;
+   uuid: BlockId__2;
  };
 type ActivityLogOutput = record {edges: vec Edge_2;};
 type ActivityId = nat;

@@ -3,7 +3,7 @@ module.exports = {
   testEnvironment: 'jest-environment-jsdom',
   setupFilesAfterEnv: ['<rootDir>/jest.setup.js'],
   moduleNameMapper: {
-    '^@test-utils': '<rootDir>/test-utils',
+    '^@/modules/(.*)$': '<rootDir>/src/frontend/src/modules/$1',
     '\\.css$': 'identity-obj-proxy',
   },
   transform: {

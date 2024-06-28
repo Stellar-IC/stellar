@@ -251,6 +251,7 @@ export const SharePageButton = ({ pageId }: SharePageButtonProps) => {
 
                   return (
                     <SharePageMenuItem
+                      key={user.username}
                       text={user.username}
                       access={access}
                       onAcessLevelChange={(access) => {

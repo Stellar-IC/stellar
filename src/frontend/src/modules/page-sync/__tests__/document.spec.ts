@@ -1,8 +1,9 @@
-import { parse, v4 } from 'uuid';
+import { v4 } from 'uuid';
 
-import { CollaborativeDocument, DocumentStateUpdate } from '../document';
-import { documentStateObject } from '../fixtures/doc';
+import { CollaborativeDocument } from '../document';
+import { DocumentObject } from '../fixtures/doc';
 import { helloExclamation } from '../mocks/document_changes';
+import { DocumentUpdate } from '../types';
 
 const mockWebSocketProvider = {
   on: jest.fn(),
@@ -15,25 +16,32 @@ describe('CollaborativeDocument', () => {
   beforeEach(() => {
     doc = new CollaborativeDocument({
       provider: mockWebSocketProvider,
-      pageId: 'page-id',
+      page: {
+        id: 'page-id',
+        parent: {
+          id: 'workspace-id',
+          type: { workspace: null },
+        },
+      },
+      userId: 'test_user',
     });
   });
 
   it('should be created', () => {
-    const stateObject = doc.toObject();
+    const stateObject = doc.toJson();
     expect(stateObject.children).toEqual([]);
     expect(stateObject.content).toEqual('');
     expect(stateObject.id).toEqual(doc.state.id);
     expect(stateObject.props).toEqual({});
   });
 
-  describe('toObject', () => {
+  describe('toJson', () => {
     it('should return a state object', () => {
       const pageId = doc.state.id;
-      const updates: DocumentStateUpdate[] = [
+      const updates: DocumentUpdate[] = [
         // Create heading block
         {
-          id: parse(v4()), // update id
+          id: v4(), // update id
           changes: [
             {
               blockId: pageId,
@@ -59,7 +67,7 @@ describe('CollaborativeDocument', () => {
         },
         // Change props of heading block
         {
-          id: parse(v4()), // update id
+          id: v4(), // update id
           changes: [
             {
               blockId: 'block-id-1',
@@ -76,14 +84,14 @@ describe('CollaborativeDocument', () => {
         },
         // Change content of heading block
         {
-          id: parse(v4()), // update id
+          id: v4(), // update id
           changes: helloExclamation('block-id-1'),
           time: 0n,
           userId: 'test',
         },
         // Insert a new block wih a nested block
         {
-          id: parse(v4()), // update id
+          id: v4(), // update id
           changes: [
             {
               blockId: pageId,
@@ -117,8 +125,8 @@ describe('CollaborativeDocument', () => {
 
       doc.state.updates.push(...updates);
 
-      const stateObject = doc.toObject();
-      expect(stateObject).toEqual(documentStateObject);
+      const stateObject = doc.toJson();
+      expect(stateObject).toEqual(DocumentObject);
     });
   });
 });

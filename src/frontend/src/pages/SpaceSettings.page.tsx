@@ -156,6 +156,7 @@ export function SpaceSettingsPageConnector() {
         {(context) => {
           if (!context) return null;
           if (!context.actor) return null;
+
           return <SpaceSettingsPage />;
         }}
       </WorkspaceContext.Consumer>

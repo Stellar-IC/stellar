@@ -1,3 +1,4 @@
+import { ActorSubclass } from '@dfinity/agent';
 import { Principal } from '@dfinity/principal';
 import { PropsWithChildren, useEffect, useState } from 'react';
 
@@ -13,7 +14,7 @@ export function WorkspaceContextProvider({
 }: PropsWithChildren<{
   workspaceId: Principal;
 }>) {
-  const [actor, setActor] = useState<_SERVICE | null>(null);
+  const [actor, setActor] = useState<ActorSubclass<_SERVICE> | null>(null);
 
   useEffect(() => {
     const { manager } = actors.setWorkspace(workspaceId);

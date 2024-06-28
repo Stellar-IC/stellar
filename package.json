@@ -34,6 +34,7 @@
     "dayjs": "^1.11.10",
     "dexie": "^3.2.6",
     "dexie-react-hooks": "^1.1.7",
+    "ic-websocket-js": "^0.3.4",
     "js-sdsl": "^4.4.2",
     "lodash": "^4.17.21",
     "loglevel": "^1.8.1",

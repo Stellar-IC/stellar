@@ -20,7 +20,17 @@ export function deleteValue(tree: Tree, position: number): TreeEvent {
 
   tree.delete(nodeToDelete.identifier);
 
-  const event = {
+  return buildDeleteEvent(tree, position);
+}
+
+export function buildDeleteEvent(tree: Tree, position: number): TreeEvent {
+  const nodeToDelete = getNodeAtPosition(tree, position);
+
+  if (!nodeToDelete) {
+    throw new Error('There was an error finding the node to delete');
+  }
+
+  return {
     delete: {
       position: nodeToDelete.identifier.value,
       transactionType: {
@@ -28,6 +38,4 @@ export function deleteValue(tree: Tree, position: number): TreeEvent {
       },
     },
   };
-
-  return event;
 }

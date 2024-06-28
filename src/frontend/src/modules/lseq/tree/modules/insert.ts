@@ -393,3 +393,39 @@ export function insertValue(
 
   return [event];
 }
+
+export function buildInsertEvents(
+  tree: Tree,
+  position: number,
+  character: string
+): TreeEvent[] {
+  const treeSize = size(tree);
+  const isAtStart = position === 0;
+  const isAtEnd = position === treeSize;
+
+  if (position < 0 || position > treeSize) {
+    throw new Error(
+      `Position (${position}) out of range. Tree size: ${treeSize}`
+    );
+  }
+
+  if (isAtStart) {
+    const nodes = _buildNodesForFrontInsert(tree, character);
+    const { node, nodeToDelete, replacementNode } = nodes;
+    const events: TreeEvent[] = [_createInsertEvent(node)];
+    if (nodeToDelete) events.push(_createDeleteEvent(nodeToDelete));
+    if (replacementNode) events.push(_createInsertEvent(replacementNode));
+    return events;
+  }
+
+  if (isAtEnd) {
+    const node = buildNodeForEndInsert(tree, character);
+    const events = [_createInsertEvent(node)];
+    return events;
+  }
+
+  const node = _buildNodeForMiddleInsert(tree, character, position);
+  const events = [_createInsertEvent(node)];
+
+  return events;
+}

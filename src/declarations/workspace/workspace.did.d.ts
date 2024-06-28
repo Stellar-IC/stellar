@@ -6,10 +6,10 @@ export type ActivityId = bigint;
 export interface ActivityLogOutput { 'edges' : Array<Edge_2> }
 export interface AddBlockInput {
   'content' : ShareableBlockContent,
-  'uuid' : BlockId__1,
-  'blockType' : BlockType,
+  'uuid' : BlockId__2,
+  'blockType' : BlockType__1,
   'properties' : ShareableBlockProperties,
-  'parent' : [] | [BlockId__1],
+  'parent' : [] | [BlockId__2],
 }
 export type AddBlockOutput = { 'ok' : AddBlockOutputResult } |
   { 'err' : AddBlockOutputError };
@@ -17,9 +17,23 @@ export type AddBlockOutputError = { 'unauthorized' : null };
 export type AddBlockOutputResult = null;
 export type AllocationStrategy = { 'boundaryPlus' : null } |
   { 'boundaryMinus' : null };
+export interface Awareness {
+  'username' : string,
+  'color' : string,
+  'selection' : [] | [
+    {
+      'end' : { 'blockId' : BlockId, 'position' : bigint },
+      'start' : { 'blockId' : BlockId, 'position' : bigint },
+    }
+  ],
+}
+export type BlockAttributeUpdate = { 'content' : TreeEvent } |
+  { 'blockType' : BlockType } |
+  { 'children' : TreeEvent } |
+  { 'props' : Array<[string, BlockProperty]> };
 export interface BlockBlockTypeUpdatedEventData {
-  'blockType' : BlockType,
-  'blockExternalId' : BlockId,
+  'blockType' : BlockType__1,
+  'blockExternalId' : BlockId__1,
 }
 export interface BlockByUuidOptions {
   'contentPagination' : { 'cursor' : bigint, 'limit' : bigint },
@@ -31,15 +45,19 @@ export type BlockByUuidResult = {
     }
   } |
   { 'err' : { 'notFound' : null } };
+export interface BlockChange {
+  'data' : BlockAttributeUpdate,
+  'blockId' : string,
+}
 export interface BlockContentUpdatedEventData {
-  'transaction' : Array<TreeEvent>,
-  'blockExternalId' : BlockId,
+  'transaction' : Array<TreeEvent__1>,
+  'blockExternalId' : BlockId__1,
 }
 export interface BlockCreatedEventData {
   'block' : {
-    'uuid' : BlockId,
-    'blockType' : BlockType,
-    'parent' : [] | [BlockId],
+    'uuid' : BlockId__1,
+    'blockType' : BlockType__1,
+    'parent' : [] | [BlockId__1],
   },
   'index' : bigint,
 }
@@ -47,25 +65,42 @@ export interface BlockEvent {
   'data' : { 'blockCreated' : BlockCreatedEventData } |
     { 'blockUpdated' : BlockUpdatedEventData },
   'user' : Principal,
-  'uuid' : BlockId,
+  'uuid' : BlockId__1,
   'timestamp' : Time,
 }
 export type BlockEventTransaction = Array<BlockEvent>;
-export type BlockId = Uint8Array | number[];
+export type BlockId = string;
 export type BlockId__1 = Uint8Array | number[];
+export type BlockId__2 = Uint8Array | number[];
 export interface BlockParentUpdatedEventData {
-  'parentBlockExternalId' : BlockId,
-  'blockExternalId' : BlockId,
+  'parentBlockExternalId' : BlockId__1,
+  'blockExternalId' : BlockId__1,
 }
+export type BlockProperty = { 'text' : string } |
+  { 'boolean' : boolean };
 export interface BlockPropertyCheckedUpdatedEventData {
   'checked' : boolean,
-  'blockExternalId' : BlockId,
+  'blockExternalId' : BlockId__1,
 }
 export interface BlockPropertyTitleUpdatedEventData {
-  'transaction' : Array<TreeEvent>,
-  'blockExternalId' : BlockId,
+  'transaction' : Array<TreeEvent__1>,
+  'blockExternalId' : BlockId__1,
 }
 export type BlockType = { 'numberedList' : null } |
+  { 'todoList' : null } |
+  { 'toggleHeading1' : null } |
+  { 'toggleHeading2' : null } |
+  { 'toggleHeading3' : null } |
+  { 'code' : null } |
+  { 'heading1' : null } |
+  { 'heading2' : null } |
+  { 'heading3' : null } |
+  { 'page' : null } |
+  { 'callout' : null } |
+  { 'quote' : null } |
+  { 'bulletedList' : null } |
+  { 'paragraph' : null };
+export type BlockType__1 = { 'numberedList' : null } |
   { 'todoList' : null } |
   { 'toggleHeading1' : null } |
   { 'toggleHeading2' : null } |
@@ -110,14 +145,47 @@ export type CanisterMemoryAggregatedData = BigUint64Array | bigint[];
 export interface CanisterMetrics { 'data' : CanisterMetricsData }
 export type CanisterMetricsData = { 'hourly' : Array<HourlyMetricsData> } |
   { 'daily' : Array<DailyMetricsData> };
+export interface CanisterOutputCertifiedMessages {
+  'messages' : Array<CanisterOutputMessage>,
+  'cert' : Uint8Array | number[],
+  'tree' : Uint8Array | number[],
+  'is_end_of_queue' : boolean,
+}
+export interface CanisterOutputMessage {
+  'key' : string,
+  'content' : Uint8Array | number[],
+  'client_key' : ClientKey,
+}
+export interface CanisterWsCloseArguments { 'client_key' : ClientKey }
+export type CanisterWsCloseResult = { 'Ok' : null } |
+  { 'Err' : string };
+export interface CanisterWsGetMessagesArguments { 'nonce' : bigint }
+export type CanisterWsGetMessagesResult = {
+    'Ok' : CanisterOutputCertifiedMessages
+  } |
+  { 'Err' : string };
+export interface CanisterWsMessageArguments { 'msg' : WebsocketMessage }
+export type CanisterWsMessageResult = { 'Ok' : null } |
+  { 'Err' : string };
+export interface CanisterWsOpenArguments {
+  'gateway_principal' : GatewayPrincipal,
+  'client_nonce' : bigint,
+}
+export type CanisterWsOpenResult = { 'Ok' : null } |
+  { 'Err' : string };
+export interface ClientKey {
+  'client_principal' : ClientPrincipal,
+  'client_nonce' : bigint,
+}
+export type ClientPrincipal = Principal;
 export type CollectMetricsRequestType = { 'force' : null } |
   { 'normal' : null };
 export interface CreatePageInput {
-  'initialBlockUuid' : [] | [BlockId__1],
+  'initialBlockUuid' : [] | [BlockId__2],
   'content' : ShareableBlockContent,
-  'uuid' : BlockId__1,
+  'uuid' : BlockId__2,
   'properties' : ShareableBlockProperties__1,
-  'parent' : [] | [BlockId__1],
+  'parent' : [] | [BlockId__2],
 }
 export type CreatePageOutput = { 'ok' : CreatePageOutputResult } |
   { 'err' : CreatePageOutputError };
@@ -129,10 +197,10 @@ export type CreatePageOutputError = { 'failedToCreate' : null } |
   { 'inputTooLong' : null };
 export interface CreatePageOutputResult {
   'content' : ShareableBlockContent,
-  'uuid' : BlockId,
-  'blockType' : BlockType,
+  'uuid' : BlockId__1,
+  'blockType' : BlockType__1,
   'properties' : ShareableBlockProperties,
-  'parent' : [] | [BlockId],
+  'parent' : [] | [BlockId__1],
 }
 export interface DailyMetricsData {
   'updateCalls' : bigint,
@@ -141,15 +209,24 @@ export interface DailyMetricsData {
   'canisterMemorySize' : NumericEntity,
   'timeMillis' : bigint,
 }
-export interface DeletePageInput { 'uuid' : BlockId__1 }
+export interface DeletePageInput { 'uuid' : BlockId__2 }
 export type DeletePageOutput = { 'ok' : DeletePageOutputResult } |
   { 'err' : DeletePageOutputError };
 export type DeletePageOutputError = { 'unauthorized' : null };
 export type DeletePageOutputResult = null;
+export interface DocumentUpdate {
+  'id' : DocumentUpdateId,
+  'userId' : string,
+  'awareness' : [] | [Awareness],
+  'time' : Time,
+  'changes' : Array<BlockChange>,
+}
+export type DocumentUpdateId = string;
 export interface Edge { 'node' : ExternalId }
 export interface Edge_1 { 'node' : Principal }
 export interface Edge_2 { 'node' : HydratedActivity }
 export type ExternalId = string;
+export type GatewayPrincipal = Principal;
 export interface GetInformationRequest {
   'status' : [] | [StatusRequest],
   'metrics' : [] | [MetricsRequest],
@@ -286,7 +363,7 @@ export type SaveEventTransactionOutputError = { 'anonymousUser' : null } |
 export type SaveEventTransactionOutputResult = null;
 export interface SetPageAccessInput {
   'access' : PageAccessSetting,
-  'pageId' : BlockId__1,
+  'pageId' : BlockId__2,
 }
 export type SetPageAccessOutput = { 'ok' : SetPageAccessOutputResult } |
   { 'err' : SetPageAccessOutputError };
@@ -295,7 +372,7 @@ export type SetPageAccessOutputResult = null;
 export interface SetUserAccessLevelForPageInput {
   'accessLevel' : PageAccessLevel,
   'userId' : Principal,
-  'pageId' : BlockId__1,
+  'pageId' : BlockId__2,
 }
 export type SetUserAccessLevelForPageOutput = {
     'ok' : SetUserAccessLevelForPageOutputResult
@@ -312,10 +389,10 @@ export interface SettingsOutput {
 }
 export interface ShareableBlock {
   'content' : ShareableBlockContent,
-  'uuid' : BlockId,
-  'blockType' : BlockType,
+  'uuid' : BlockId__1,
+  'blockType' : BlockType__1,
   'properties' : ShareableBlockProperties,
-  'parent' : [] | [BlockId],
+  'parent' : [] | [BlockId__1],
 }
 export interface ShareableBlockContent {
   'boundary' : NodeBoundary,
@@ -337,10 +414,10 @@ export interface ShareableBlockText {
 }
 export interface ShareableBlock__1 {
   'content' : ShareableBlockContent,
-  'uuid' : BlockId,
-  'blockType' : BlockType,
+  'uuid' : BlockId__1,
+  'blockType' : BlockType__1,
   'properties' : ShareableBlockProperties,
-  'parent' : [] | [BlockId],
+  'parent' : [] | [BlockId__1],
 }
 export interface ShareableNode {
   'value' : NodeValue,
@@ -362,8 +439,26 @@ export interface StatusResponse {
   'cycles' : [] | [bigint],
   'heap_memory_size' : [] | [bigint],
 }
+export interface SyncStep1Message {
+  'id' : BlockId,
+  'updates' : Array<DocumentUpdate>,
+}
+export type SyncStep2Message = Array<DocumentUpdate>;
 export type Time = bigint;
 export type TreeEvent = {
+    'delete' : {
+      'transactionType' : { 'delete' : null },
+      'position' : NodeIdentifier,
+    }
+  } |
+  {
+    'insert' : {
+      'transactionType' : { 'insert' : null },
+      'value' : NodeValue,
+      'position' : NodeIdentifier,
+    }
+  };
+export type TreeEvent__1 = {
     'delete' : {
       'transactionType' : { 'delete' : null },
       'position' : NodeIdentifier,
@@ -379,20 +474,20 @@ export type TreeEvent = {
 export type UUID = Uint8Array | number[];
 export interface UpdateBlockInput {
   'content' : ShareableBlockContent,
-  'uuid' : BlockId,
-  'blockType' : BlockType,
+  'uuid' : BlockId__1,
+  'blockType' : BlockType__1,
   'properties' : ShareableBlockProperties,
-  'parent' : [] | [BlockId],
+  'parent' : [] | [BlockId__1],
 }
 export type UpdateBlockOutput = { 'ok' : UpdateBlockOutputResult } |
   { 'err' : UpdateBlockOutputError };
 export type UpdateBlockOutputError = { 'primaryKeyAttrNotFound' : null };
 export interface UpdateBlockOutputResult {
   'content' : ShareableBlockContent,
-  'uuid' : BlockId,
-  'blockType' : BlockType,
+  'uuid' : BlockId__1,
+  'blockType' : BlockType__1,
   'properties' : ShareableBlockProperties,
-  'parent' : [] | [BlockId],
+  'parent' : [] | [BlockId__1],
 }
 export type UpdateCallsAggregatedData = BigUint64Array | bigint[];
 export interface UpdateInformationRequest {
@@ -427,6 +522,17 @@ export interface UserProfile {
   'avatarUrl' : [] | [string],
 }
 export type Username = string;
+export type WebSocketMessage = { 'syncStep1' : SyncStep1Message } |
+  { 'syncStep2' : SyncStep2Message } |
+  { 'syncDone' : null } |
+  { 'associateUser' : { 'userId' : Principal } };
+export interface WebsocketMessage {
+  'sequence_num' : bigint,
+  'content' : Uint8Array | number[],
+  'client_key' : ClientKey,
+  'timestamp' : bigint,
+  'is_service_message' : boolean,
+}
 export interface Workspace {
   'activityLog' : ActorMethod<[UUID], ActivityLogOutput>,
   'addBlock' : ActorMethod<[AddBlockInput], AddBlockOutput>,
@@ -449,6 +555,7 @@ export interface Workspace {
     [SaveEventTransactionInput],
     SaveEventTransactionOutput
   >,
+  'sendMessage' : ActorMethod<[Principal, Uint8Array | number[]], undefined>,
   'setPageAccessSettings' : ActorMethod<
     [SetPageAccessInput],
     SetPageAccessOutput
@@ -459,7 +566,7 @@ export interface Workspace {
   >,
   'settings' : ActorMethod<[], Result>,
   'subscribe' : ActorMethod<[string, [Principal, string]], undefined>,
-  'unsubscribe' : ActorMethod<[string, [Principal, string]], undefined>,
+  'unsubscribe' : ActorMethod<[string], undefined>,
   'updateBlock' : ActorMethod<[UpdateBlockInput], UpdateBlockOutput>,
   'updateCanistergeekInformation' : ActorMethod<
     [UpdateInformationRequest],
@@ -468,6 +575,16 @@ export interface Workspace {
   'updateSettings' : ActorMethod<[UpdateSettingsInput], UpdateSettingsOutput>,
   'updateUserRole' : ActorMethod<[UpdateUserRoleInput], UpdateUserRoleOutput>,
   'walletReceive' : ActorMethod<[], { 'accepted' : bigint }>,
+  'ws_close' : ActorMethod<[CanisterWsCloseArguments], CanisterWsCloseResult>,
+  'ws_get_messages' : ActorMethod<
+    [CanisterWsGetMessagesArguments],
+    CanisterWsGetMessagesResult
+  >,
+  'ws_message' : ActorMethod<
+    [CanisterWsMessageArguments, [] | [WebSocketMessage]],
+    CanisterWsMessageResult
+  >,
+  'ws_open' : ActorMethod<[CanisterWsOpenArguments], CanisterWsOpenResult>,
 }
 export type WorkspaceDescription = string;
 export interface WorkspaceInitArgs {

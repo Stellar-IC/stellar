@@ -55,8 +55,8 @@ export const idlFactory = ({ IDL }) => {
     'allocationStrategies' : IDL.Vec(IDL.Tuple(NodeDepth, AllocationStrategy)),
     'rootNode' : ShareableNode,
   });
-  const BlockId = IDL.Vec(IDL.Nat8);
-  const BlockType = IDL.Variant({
+  const BlockId__1 = IDL.Vec(IDL.Nat8);
+  const BlockType__1 = IDL.Variant({
     'numberedList' : IDL.Null,
     'todoList' : IDL.Null,
     'toggleHeading1' : IDL.Null,
@@ -83,10 +83,10 @@ export const idlFactory = ({ IDL }) => {
   });
   const ShareableBlock__1 = IDL.Record({
     'content' : ShareableBlockContent,
-    'uuid' : BlockId,
-    'blockType' : BlockType,
+    'uuid' : BlockId__1,
+    'blockType' : BlockType__1,
     'properties' : ShareableBlockProperties,
-    'parent' : IDL.Opt(BlockId),
+    'parent' : IDL.Opt(BlockId__1),
   });
   const HydratedEditItemUser = IDL.Record({
     'username' : IDL.Text,
@@ -110,13 +110,13 @@ export const idlFactory = ({ IDL }) => {
   });
   const Edge_2 = IDL.Record({ 'node' : HydratedActivity });
   const ActivityLogOutput = IDL.Record({ 'edges' : IDL.Vec(Edge_2) });
-  const BlockId__1 = IDL.Vec(IDL.Nat8);
+  const BlockId__2 = IDL.Vec(IDL.Nat8);
   const AddBlockInput = IDL.Record({
     'content' : ShareableBlockContent,
-    'uuid' : BlockId__1,
-    'blockType' : BlockType,
+    'uuid' : BlockId__2,
+    'blockType' : BlockType__1,
     'properties' : ShareableBlockProperties,
-    'parent' : IDL.Opt(BlockId__1),
+    'parent' : IDL.Opt(BlockId__2),
   });
   const AddBlockOutputResult = IDL.Null;
   const AddBlockOutputError = IDL.Variant({ 'unauthorized' : IDL.Null });
@@ -137,10 +137,10 @@ export const idlFactory = ({ IDL }) => {
   const ExternalId = IDL.Text;
   const ShareableBlock = IDL.Record({
     'content' : ShareableBlockContent,
-    'uuid' : BlockId,
-    'blockType' : BlockType,
+    'uuid' : BlockId__1,
+    'blockType' : BlockType__1,
     'properties' : ShareableBlockProperties,
-    'parent' : IDL.Opt(BlockId),
+    'parent' : IDL.Opt(BlockId__1),
   });
   const BlockByUuidResult = IDL.Variant({
     'ok' : IDL.Record({
@@ -156,18 +156,18 @@ export const idlFactory = ({ IDL }) => {
     'checked' : IDL.Opt(IDL.Bool),
   });
   const CreatePageInput = IDL.Record({
-    'initialBlockUuid' : IDL.Opt(BlockId__1),
+    'initialBlockUuid' : IDL.Opt(BlockId__2),
     'content' : ShareableBlockContent,
-    'uuid' : BlockId__1,
+    'uuid' : BlockId__2,
     'properties' : ShareableBlockProperties__1,
-    'parent' : IDL.Opt(BlockId__1),
+    'parent' : IDL.Opt(BlockId__2),
   });
   const CreatePageOutputResult = IDL.Record({
     'content' : ShareableBlockContent,
-    'uuid' : BlockId,
-    'blockType' : BlockType,
+    'uuid' : BlockId__1,
+    'blockType' : BlockType__1,
     'properties' : ShareableBlockProperties,
-    'parent' : IDL.Opt(BlockId),
+    'parent' : IDL.Opt(BlockId__1),
   });
   const CreatePageOutputError = IDL.Variant({
     'failedToCreate' : IDL.Null,
@@ -181,7 +181,7 @@ export const idlFactory = ({ IDL }) => {
     'ok' : CreatePageOutputResult,
     'err' : CreatePageOutputError,
   });
-  const DeletePageInput = IDL.Record({ 'uuid' : BlockId__1 });
+  const DeletePageInput = IDL.Record({ 'uuid' : BlockId__2 });
   const DeletePageOutputResult = IDL.Null;
   const DeletePageOutputError = IDL.Variant({ 'unauthorized' : IDL.Null });
   const DeletePageOutput = IDL.Variant({
@@ -370,21 +370,21 @@ export const idlFactory = ({ IDL }) => {
   });
   const BlockCreatedEventData = IDL.Record({
     'block' : IDL.Record({
-      'uuid' : BlockId,
-      'blockType' : BlockType,
-      'parent' : IDL.Opt(BlockId),
+      'uuid' : BlockId__1,
+      'blockType' : BlockType__1,
+      'parent' : IDL.Opt(BlockId__1),
     }),
     'index' : IDL.Nat,
   });
   const BlockPropertyCheckedUpdatedEventData = IDL.Record({
     'checked' : IDL.Bool,
-    'blockExternalId' : BlockId,
+    'blockExternalId' : BlockId__1,
   });
   const BlockBlockTypeUpdatedEventData = IDL.Record({
-    'blockType' : BlockType,
-    'blockExternalId' : BlockId,
+    'blockType' : BlockType__1,
+    'blockExternalId' : BlockId__1,
   });
-  const TreeEvent = IDL.Variant({
+  const TreeEvent__1 = IDL.Variant({
     'delete' : IDL.Record({
       'transactionType' : IDL.Variant({ 'delete' : IDL.Null }),
       'position' : NodeIdentifier,
@@ -396,16 +396,16 @@ export const idlFactory = ({ IDL }) => {
     }),
   });
   const BlockContentUpdatedEventData = IDL.Record({
-    'transaction' : IDL.Vec(TreeEvent),
-    'blockExternalId' : BlockId,
+    'transaction' : IDL.Vec(TreeEvent__1),
+    'blockExternalId' : BlockId__1,
   });
   const BlockParentUpdatedEventData = IDL.Record({
-    'parentBlockExternalId' : BlockId,
-    'blockExternalId' : BlockId,
+    'parentBlockExternalId' : BlockId__1,
+    'blockExternalId' : BlockId__1,
   });
   const BlockPropertyTitleUpdatedEventData = IDL.Record({
-    'transaction' : IDL.Vec(TreeEvent),
-    'blockExternalId' : BlockId,
+    'transaction' : IDL.Vec(TreeEvent__1),
+    'blockExternalId' : BlockId__1,
   });
   const BlockUpdatedEventData = IDL.Variant({
     'updatePropertyChecked' : BlockPropertyCheckedUpdatedEventData,
@@ -420,7 +420,7 @@ export const idlFactory = ({ IDL }) => {
       'blockUpdated' : BlockUpdatedEventData,
     }),
     'user' : IDL.Principal,
-    'uuid' : BlockId,
+    'uuid' : BlockId__1,
     'timestamp' : Time,
   });
   const BlockEventTransaction = IDL.Vec(BlockEvent);
@@ -438,7 +438,7 @@ export const idlFactory = ({ IDL }) => {
   });
   const SetPageAccessInput = IDL.Record({
     'access' : PageAccessSetting,
-    'pageId' : BlockId__1,
+    'pageId' : BlockId__2,
   });
   const SetPageAccessOutputResult = IDL.Null;
   const SetPageAccessOutputError = IDL.Variant({ 'unauthorized' : IDL.Null });
@@ -449,7 +449,7 @@ export const idlFactory = ({ IDL }) => {
   const SetUserAccessLevelForPageInput = IDL.Record({
     'accessLevel' : PageAccessLevel,
     'userId' : IDL.Principal,
-    'pageId' : BlockId__1,
+    'pageId' : BlockId__2,
   });
   const SetUserAccessLevelForPageOutputResult = IDL.Null;
   const SetUserAccessLevelForPageOutputError = IDL.Variant({
@@ -483,17 +483,17 @@ export const idlFactory = ({ IDL }) => {
   const PubSubEventHandler = IDL.Func([IDL.Text, PubSubEvent], [], []);
   const UpdateBlockInput = IDL.Record({
     'content' : ShareableBlockContent,
-    'uuid' : BlockId,
-    'blockType' : BlockType,
+    'uuid' : BlockId__1,
+    'blockType' : BlockType__1,
     'properties' : ShareableBlockProperties,
-    'parent' : IDL.Opt(BlockId),
+    'parent' : IDL.Opt(BlockId__1),
   });
   const UpdateBlockOutputResult = IDL.Record({
     'content' : ShareableBlockContent,
-    'uuid' : BlockId,
-    'blockType' : BlockType,
+    'uuid' : BlockId__1,
+    'blockType' : BlockType__1,
     'properties' : ShareableBlockProperties,
-    'parent' : IDL.Opt(BlockId),
+    'parent' : IDL.Opt(BlockId__1),
   });
   const UpdateBlockOutputError = IDL.Variant({
     'primaryKeyAttrNotFound' : IDL.Null,
@@ -531,6 +531,124 @@ export const idlFactory = ({ IDL }) => {
     'ok' : UpdateUserRoleOutputOk,
     'err' : UpdateUserRoleOutputError,
   });
+  const ClientPrincipal = IDL.Principal;
+  const ClientKey = IDL.Record({
+    'client_principal' : ClientPrincipal,
+    'client_nonce' : IDL.Nat64,
+  });
+  const CanisterWsCloseArguments = IDL.Record({ 'client_key' : ClientKey });
+  const CanisterWsCloseResult = IDL.Variant({
+    'Ok' : IDL.Null,
+    'Err' : IDL.Text,
+  });
+  const CanisterWsGetMessagesArguments = IDL.Record({ 'nonce' : IDL.Nat64 });
+  const CanisterOutputMessage = IDL.Record({
+    'key' : IDL.Text,
+    'content' : IDL.Vec(IDL.Nat8),
+    'client_key' : ClientKey,
+  });
+  const CanisterOutputCertifiedMessages = IDL.Record({
+    'messages' : IDL.Vec(CanisterOutputMessage),
+    'cert' : IDL.Vec(IDL.Nat8),
+    'tree' : IDL.Vec(IDL.Nat8),
+    'is_end_of_queue' : IDL.Bool,
+  });
+  const CanisterWsGetMessagesResult = IDL.Variant({
+    'Ok' : CanisterOutputCertifiedMessages,
+    'Err' : IDL.Text,
+  });
+  const WebsocketMessage = IDL.Record({
+    'sequence_num' : IDL.Nat64,
+    'content' : IDL.Vec(IDL.Nat8),
+    'client_key' : ClientKey,
+    'timestamp' : IDL.Nat64,
+    'is_service_message' : IDL.Bool,
+  });
+  const CanisterWsMessageArguments = IDL.Record({ 'msg' : WebsocketMessage });
+  const BlockId = IDL.Text;
+  const DocumentUpdateId = IDL.Text;
+  const Awareness = IDL.Record({
+    'username' : IDL.Text,
+    'color' : IDL.Text,
+    'selection' : IDL.Opt(
+      IDL.Record({
+        'end' : IDL.Record({ 'blockId' : BlockId, 'position' : IDL.Nat }),
+        'start' : IDL.Record({ 'blockId' : BlockId, 'position' : IDL.Nat }),
+      })
+    ),
+  });
+  const TreeEvent = IDL.Variant({
+    'delete' : IDL.Record({
+      'transactionType' : IDL.Variant({ 'delete' : IDL.Null }),
+      'position' : NodeIdentifier,
+    }),
+    'insert' : IDL.Record({
+      'transactionType' : IDL.Variant({ 'insert' : IDL.Null }),
+      'value' : NodeValue,
+      'position' : NodeIdentifier,
+    }),
+  });
+  const BlockType = IDL.Variant({
+    'numberedList' : IDL.Null,
+    'todoList' : IDL.Null,
+    'toggleHeading1' : IDL.Null,
+    'toggleHeading2' : IDL.Null,
+    'toggleHeading3' : IDL.Null,
+    'code' : IDL.Null,
+    'heading1' : IDL.Null,
+    'heading2' : IDL.Null,
+    'heading3' : IDL.Null,
+    'page' : IDL.Null,
+    'callout' : IDL.Null,
+    'quote' : IDL.Null,
+    'bulletedList' : IDL.Null,
+    'paragraph' : IDL.Null,
+  });
+  const BlockProperty = IDL.Variant({
+    'text' : IDL.Text,
+    'boolean' : IDL.Bool,
+  });
+  const BlockAttributeUpdate = IDL.Variant({
+    'content' : TreeEvent,
+    'blockType' : BlockType,
+    'children' : TreeEvent,
+    'props' : IDL.Vec(IDL.Tuple(IDL.Text, BlockProperty)),
+  });
+  const BlockChange = IDL.Record({
+    'data' : BlockAttributeUpdate,
+    'blockId' : IDL.Text,
+  });
+  const DocumentUpdate = IDL.Record({
+    'id' : DocumentUpdateId,
+    'userId' : IDL.Text,
+    'awareness' : IDL.Opt(Awareness),
+    'time' : Time,
+    'changes' : IDL.Vec(BlockChange),
+  });
+  const SyncStep1Message = IDL.Record({
+    'id' : BlockId,
+    'updates' : IDL.Vec(DocumentUpdate),
+  });
+  const SyncStep2Message = IDL.Vec(DocumentUpdate);
+  const WebSocketMessage = IDL.Variant({
+    'syncStep1' : SyncStep1Message,
+    'syncStep2' : SyncStep2Message,
+    'syncDone' : IDL.Null,
+    'associateUser' : IDL.Record({ 'userId' : IDL.Principal }),
+  });
+  const CanisterWsMessageResult = IDL.Variant({
+    'Ok' : IDL.Null,
+    'Err' : IDL.Text,
+  });
+  const GatewayPrincipal = IDL.Principal;
+  const CanisterWsOpenArguments = IDL.Record({
+    'gateway_principal' : GatewayPrincipal,
+    'client_nonce' : IDL.Nat64,
+  });
+  const CanisterWsOpenResult = IDL.Variant({
+    'Ok' : IDL.Null,
+    'Err' : IDL.Text,
+  });
   const Workspace = IDL.Service({
     'activityLog' : IDL.Func([UUID], [ActivityLogOutput], ['query']),
     'addBlock' : IDL.Func([AddBlockInput], [AddBlockOutput], []),
@@ -563,6 +681,7 @@ export const idlFactory = ({ IDL }) => {
         [SaveEventTransactionOutput],
         [],
       ),
+    'sendMessage' : IDL.Func([IDL.Principal, IDL.Vec(IDL.Nat8)], [], []),
     'setPageAccessSettings' : IDL.Func(
         [SetPageAccessInput],
         [SetPageAccessOutput],
@@ -575,7 +694,7 @@ export const idlFactory = ({ IDL }) => {
       ),
     'settings' : IDL.Func([], [Result], ['query']),
     'subscribe' : IDL.Func([IDL.Text, PubSubEventHandler], [], []),
-    'unsubscribe' : IDL.Func([IDL.Text, PubSubEventHandler], [], []),
+    'unsubscribe' : IDL.Func([IDL.Text], [], []),
     'updateBlock' : IDL.Func([UpdateBlockInput], [UpdateBlockOutput], []),
     'updateCanistergeekInformation' : IDL.Func(
         [UpdateInformationRequest],
@@ -597,6 +716,22 @@ export const idlFactory = ({ IDL }) => {
         [IDL.Record({ 'accepted' : IDL.Nat64 })],
         [],
       ),
+    'ws_close' : IDL.Func(
+        [CanisterWsCloseArguments],
+        [CanisterWsCloseResult],
+        [],
+      ),
+    'ws_get_messages' : IDL.Func(
+        [CanisterWsGetMessagesArguments],
+        [CanisterWsGetMessagesResult],
+        ['query'],
+      ),
+    'ws_message' : IDL.Func(
+        [CanisterWsMessageArguments, IDL.Opt(WebSocketMessage)],
+        [CanisterWsMessageResult],
+        [],
+      ),
+    'ws_open' : IDL.Func([CanisterWsOpenArguments], [CanisterWsOpenResult], []),
   });
   return Workspace;
 };

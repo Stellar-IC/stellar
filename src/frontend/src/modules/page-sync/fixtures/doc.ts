@@ -1,4 +1,4 @@
-export const documentStateObject = {
+export const DocumentObject = {
   id: 'page-id',
   props: {},
   children: [

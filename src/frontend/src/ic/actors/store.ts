@@ -1,3 +1,4 @@
+import { ActorSubclass } from '@dfinity/agent';
 import { Principal } from '@dfinity/principal';
 import { createActorManager } from '@ic-reactor/core';
 import { ActorManager } from '@ic-reactor/core/dist/types';
@@ -13,19 +14,21 @@ import * as workspaceIndexDid from '../../../../declarations/workspace_index/wor
 import { agentManager } from '../agentManager';
 
 type ActorStore = {
-  user: ActorManager<userDid._SERVICE> | null;
-  user_index: ActorManager<userIndexDid._SERVICE>;
-  workspace: ActorManager<workspaceDid._SERVICE> | null;
-  workspace_index: ActorManager<workspaceIndexDid._SERVICE>;
+  user: ActorManager<ActorSubclass<userDid._SERVICE>> | null;
+  user_index: ActorManager<ActorSubclass<userIndexDid._SERVICE>>;
+  workspace: ActorManager<ActorSubclass<workspaceDid._SERVICE>> | null;
+  workspace_index: ActorManager<ActorSubclass<workspaceIndexDid._SERVICE>>;
 };
 
-const defaultActorManagers = {
-  userIndex: createActorManager<userIndexDid._SERVICE>({
+const defaultActorManagers: ActorStore = {
+  user: null,
+  user_index: createActorManager({
     agentManager,
     canisterId: userIndex.canisterId,
     idlFactory: userIndex.idlFactory,
   }),
-  workspaceIndex: createActorManager<workspaceIndexDid._SERVICE>({
+  workspace: null,
+  workspace_index: createActorManager({
     agentManager,
     canisterId: workspaceIndex.canisterId,
     idlFactory: workspaceIndex.idlFactory,
@@ -34,31 +37,29 @@ const defaultActorManagers = {
 
 export const actorStore: ActorStore = {
   user: null,
-  user_index: defaultActorManagers.userIndex,
+  user_index: defaultActorManagers.user_index,
   workspace: null,
-  workspace_index: defaultActorManagers.workspaceIndex,
+  workspace_index: defaultActorManagers.workspace_index,
 };
 
 // Subscribe to auth state changes to update the actors with a static canister id
 agentManager.subscribeAuthState((authState, prevState) => {
   if (prevState.authenticated !== authState.authenticated) {
-    actorStore.user_index = createActorManager<userIndexDid._SERVICE>({
+    actorStore.user_index = createActorManager({
       agentManager,
       canisterId: userIndex.canisterId,
       idlFactory: userIndex.idlFactory,
     });
-    actorStore.workspace_index = createActorManager<workspaceIndexDid._SERVICE>(
-      {
-        agentManager,
-        canisterId: workspaceIndex.canisterId,
-        idlFactory: workspaceIndex.idlFactory,
-      }
-    );
+    actorStore.workspace_index = createActorManager({
+      agentManager,
+      canisterId: workspaceIndex.canisterId,
+      idlFactory: workspaceIndex.idlFactory,
+    });
   }
 });
 
 export function setUser(canisterId: Principal) {
-  actorStore.user = createActorManager<userDid._SERVICE>({
+  actorStore.user = createActorManager({
     agentManager,
     canisterId,
     idlFactory: user.idlFactory,
@@ -73,7 +74,7 @@ export function setUser(canisterId: Principal) {
 }
 
 export function setWorkspace(canisterId: Principal) {
-  actorStore.workspace = createActorManager<workspaceDid._SERVICE>({
+  actorStore.workspace = createActorManager({
     agentManager,
     canisterId,
     idlFactory: workspace.idlFactory,
